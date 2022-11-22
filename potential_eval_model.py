@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model
+import re
 import csv
 
 PLAYER_FIELDS = {
@@ -362,12 +363,6 @@ def calculate_fielding_score(player):
         ):
             position_scores[fielding_position] = 0
 
-        player_attrs = [
-            int(player[model_config["fields_mapping"][field]])
-            for field in model_config["fields"]
-        ]
-        poly_features = PolynomialFeatures(degree=len(player_attrs))
-        fit_predict_ = poly_features.fit_transform([player_attrs])
         position_scores[fielding_position] = run_model_for_player(
             model, model_config, player
         )
@@ -427,9 +422,6 @@ def calculate_position_player_modifier(player):
 
     modifier *= calculate_age_modifier(player)
 
-    signability = player[PLAYER_FIELDS["signability"]]
-    if signability == "Impossible":
-        modifier *= 0.5
     return modifier
 
 
@@ -441,8 +433,7 @@ def calculate_position_player_score(player):
         (batting_score * 0.75) + (fielding_score * 0.20) + (running_score * 0.05)
     )
     overall_modifier = calculate_position_player_modifier(player)
-    # Hard code this to prefer additional position players
-    overall_score = (overall_score * overall_modifier) ** 1.02
+    overall_score = overall_score * overall_modifier
     return [overall_score, batting_score, fielding_score]
 
 
@@ -509,10 +500,6 @@ def calculate_rp_modifier(player):
 
     gb_type = player[PLAYER_FIELDS["groundball_type"]]
     modifier *= rp_groundball_type_modifier_map[gb_type]
-
-    signability = player[PLAYER_FIELDS["signability"]]
-    if signability == "Impossible":
-        modifier *= 0.5
 
     stamina = player[PLAYER_FIELDS["stamina"]]
     stamina_modifier = rp_stamina_modifier_map[stamina]
@@ -616,10 +603,6 @@ def calculate_sp_modifier(player):
     gb_type = player[PLAYER_FIELDS["groundball_type"]]
     modifier *= sp_groundball_type_modifier_map[gb_type]
 
-    signability = player[PLAYER_FIELDS["signability"]]
-    if signability == "Impossible":
-        modifier *= 0.5
-
     stamina_modifier = sp_stamina_modifier_map[player[PLAYER_FIELDS["stamina"]]]
     pitches = find_pitches(player)
     third_pitch_modifier = 1
@@ -684,6 +667,78 @@ def aggregate_pitcher_batter_scores(batter_score, pitcher_score):
     return total_score
 
 
+def parse_demand(demand):
+    is_thousands = demand[-1] == "k"
+    is_millions = demand[-1] == "m"
+    if not is_thousands and not is_millions:
+        raise ValueError("Invalid Demand", demand)
+    demand_as_number = int(re.sub("[^0-9]", "", demand))
+    return demand_as_number * 1000 if is_thousands else demand_as_number * 100000
+
+
+def calculate_demand_adjusted_ranking(ranking, demand, score):
+
+    if demand == "Slot":
+        return score
+    if demand == "Impossible":
+        return score * 0.4
+    parsed_demand = parse_demand(demand)
+    if ranking < 10:
+        return score
+    elif ranking < 20:
+        if parsed_demand > 8000000:
+            return score * 0.85
+        elif parsed_demand > 5000000:
+            return score * 0.95
+        return score
+    elif ranking < 30:
+        if parsed_demand > 8000000:
+            return score * 0.75
+        elif parsed_demand > 5000000:
+            return score * 0.9
+        return score
+    elif ranking < 60:
+        if parsed_demand > 8000000:
+            return score * 0.4
+        if parsed_demand > 5000000:
+            return score * 0.65
+        elif parsed_demand > 2500000:
+            return score * 0.8
+        elif parsed_demand > 1500000:
+            return score * 0.95
+        return score
+    elif ranking < 100:
+        if parsed_demand > 3000000:
+            return score * 0.4
+        elif parsed_demand > 1200000:
+            return score * 0.8
+        elif parsed_demand > 900000:
+            return score * 0.95
+        return score
+    elif ranking < 150:
+        if parsed_demand > 2000000:
+            return score * 0.4
+        elif parsed_demand > 900000:
+            return score * 0.8
+        elif parsed_demand > 700000:
+            return score * 0.95
+        return score
+    elif ranking < 250:
+        if parsed_demand > 1000000:
+            return score * 0.4
+        elif parsed_demand > 700000:
+            return score * 0.7
+        elif parsed_demand > 500000:
+            return score * 0.8
+        return score
+    else:
+        if parsed_demand > 550000:
+            return score * 0.4
+        elif parsed_demand > 350000:
+            return score * 0.8
+        return score
+
+
 def score_players():
     # Player should probably be a class
     output_field_names = [
@@ -697,6 +752,8 @@ def score_players():
         "overall_score",
         "in_game_potential",
         "demand",
+        "raw_overall_score",
+        "raw_ranking",
     ]
     scored_players = []
     with open(player_dataset["file_path"], newline="") as csvfile:
@@ -721,13 +778,25 @@ def score_players():
                 "age": player[PLAYER_FIELDS["age"]],
                 "position_player_score": round(position_player_score, 2),
                 "pitcher_score": round(pitcher_score, 2),
-                "overall_score": aggregate_pitcher_batter_scores(
+                "raw_overall_score": aggregate_pitcher_batter_scores(
                     position_player_score, pitcher_score
                 ),
                 "in_game_potential": player[PLAYER_FIELDS["potential"]],
                 "demand": player[PLAYER_FIELDS["demand"]],
             }
             scored_players.append(scored_player)
+
+    scored_players = sorted(
+        scored_players, key=lambda player: player["raw_overall_score"], reverse=True
+    )
+
+    for i, player in enumerate(scored_players):
+        player["raw_ranking"] = i
+        player["overall_score"] = calculate_demand_adjusted_ranking(
+            player["raw_ranking"],
+            player["demand"],
+            player["raw_overall_score"],
+        )
 
     scored_players = sorted(
         scored_players, key=lambda player: player["overall_score"], reverse=True
@@ -770,7 +839,6 @@ def score_players():
             position_players_by_100s[dict_key] += 1
         if is_rp:
             rps_by_100s[dict_key] += 1
-    print("position player distribution: ", position_players_by_100s)
 
     with open("./processed_data/eval_model.csv", "w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=output_field_names)
@@ -778,6 +846,7 @@ def score_players():
         for i, player in enumerate(scored_players):
             player["ranking"] = i
             player["overall_score"] = round(player["overall_score"], 2)
+            player["raw_overall_score"] = round(player["raw_overall_score"], 2)
             writer.writerow(player)
 
 
