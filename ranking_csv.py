@@ -13,11 +13,11 @@ def read_players():
 
 
 preference_list_files = [
-    "./preference_lists/round_2_picks.csv",
-    "./preference_lists/round_3_picks.csv",
-    "./preference_lists/round_4_picks.csv",
-    "./preference_lists/round_5_picks.csv",
-    "./preference_lists/post_round_5_picks.csv",
+    # "./preference_lists/round_2_picks.csv",
+    # "./preference_lists/round_3_picks.csv",
+    # "./preference_lists/round_4_picks.csv",
+    # "./preference_lists/round_5_picks.csv",
+    # "./preference_lists/post_round_5_picks.csv",
     # Ignore this list for now
     # './preference_lists/post_tenth_round_picks.csv',
 ]
