@@ -14,12 +14,23 @@ def print_player(player):
     print(f'Demand: {player["demand"]}')
     position_player_score = float(player["position_player_score"])
     pitcher_score = float(player["pitcher_score"])
+    is_batter = False
+    if position_player_score > pitcher_score:
+        is_batter = True
     if max(pitcher_score, position_player_score) / 2 < min(
         pitcher_score, position_player_score
     ):
+        is_batter = True
         print(
             f"Position player score: {position_player_score}, Pitcher score: {pitcher_score}"
         )
+
+    if is_batter:
+        print(
+            f"Batting component: {player['batting_score_component']}, Fielding score component: {player['fielding_score_component']}"
+        )
+
+    print(f'ID: {player["id"]}')
 
 
 if __name__ == "__main__":

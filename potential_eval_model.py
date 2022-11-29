@@ -750,6 +750,8 @@ def score_players(filepath):
         "position",
         "age",
         "position_player_score",
+        "fielding_score_component",
+        "batting_score_component",
         "pitcher_score",
         "overall_score",
         "in_game_potential",
@@ -778,6 +780,8 @@ def score_players(filepath):
                 "name": player[PLAYER_FIELDS["name"]],
                 "position": player[PLAYER_FIELDS["position"]],
                 "age": player[PLAYER_FIELDS["age"]],
+                "batting_score_component": round(batting_score, 2),
+                "fielding_score_component": round(fielding_score, 2),
                 "position_player_score": round(position_player_score, 2),
                 "pitcher_score": round(pitcher_score, 2),
                 "raw_overall_score": aggregate_pitcher_batter_scores(
