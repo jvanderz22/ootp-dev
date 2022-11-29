@@ -102,7 +102,10 @@ def create_ranking_csv():
         "id",
         "name",
         "position",
+        "age",
         "model_score",
+        "position_player_score",
+        "pitcher_score",
         "in_game_potential",
         "demand",
     ]
@@ -133,6 +136,9 @@ def create_ranking_csv():
                 "model_score": player["overall_score"],
                 "demand": player["demand"],
                 "in_game_potential": player["in_game_potential"],
+                "age": player["age"],
+                "pitcher_score": player["pitcher_score"],
+                "position_player_score": player["position_player_score"],
             }
 
             writer.writerow(row)
