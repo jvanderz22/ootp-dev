@@ -76,8 +76,8 @@ fielding_model_configs = [
         "rightHandedOnly": True,
         "fields": ["C Ability", "C Arm"],
         "fields_mapping": {
-            "C Arm": PLAYER_FIELDS["cAbility"],
-            "C Ability": PLAYER_FIELDS["cArm"],
+            "C Arm": PLAYER_FIELDS["cArm"],
+            "C Ability": PLAYER_FIELDS["cAbility"],
         },
     },
     {
@@ -432,6 +432,10 @@ def calculate_position_player_score(player):
         (batting_score * 0.75) + (fielding_score * 0.20) + (running_score * 0.05)
     )
     overall_modifier = calculate_position_player_modifier(player)
+
+    if player[PLAYER_FIELDS["position"]] == "C" and fielding_score > 40:
+        overall_modifier *= 1.10
+
     overall_score = overall_score * overall_modifier
     return [overall_score, batting_score, fielding_score]
 
