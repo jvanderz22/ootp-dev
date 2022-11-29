@@ -68,7 +68,6 @@ pitch_fields = [
     "knucklecurve",
 ]
 
-player_dataset = {"file_path": "./datasets/2028-yfmlb-draft-class.csv"}
 
 fielding_model_configs = [
     {
@@ -677,7 +676,6 @@ def parse_demand(demand):
 
 
 def calculate_demand_adjusted_ranking(ranking, demand, score):
-
     if demand == "Slot":
         return score
     if demand == "Impossible":
@@ -739,7 +737,7 @@ def calculate_demand_adjusted_ranking(ranking, demand, score):
         return score
 
 
-def score_players():
+def score_players(filepath):
     # Player should probably be a class
     output_field_names = [
         "ranking",
@@ -756,7 +754,7 @@ def score_players():
         "raw_ranking",
     ]
     scored_players = []
-    with open(player_dataset["file_path"], newline="") as csvfile:
+    with open(filepath, newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         best_pitcher_score = 0
         best_position_player_score = 0
