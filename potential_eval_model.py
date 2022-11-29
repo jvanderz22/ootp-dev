@@ -398,7 +398,7 @@ def calculate_personality_modifier(player):
     return modifier
 
 
-age_modifiers = {17: 1.1, 18: 1.1, 19: 1.05, 20: 1, 21: 1, 22: 0.96, 23: 0.90}
+age_modifiers = {17: 1.1, 18: 1.05, 19: 1.02, 20: 1, 21: 1, 22: 0.98, 23: 0.90}
 
 
 def calculate_age_modifier(player):
