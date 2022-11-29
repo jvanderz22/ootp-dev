@@ -1,5 +1,6 @@
 import csv
-import math
+import getopt
+import sys
 
 from constants import RANKED_PLAYERS_FILE_PATH
 
@@ -35,10 +36,27 @@ def print_player(player):
 
 if __name__ == "__main__":
     print_count = 50
+    position = None
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "p:t:")
+    except getopt.GetoptError:
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == "-p":
+            position = arg
+        if opt == "-t":
+            print_count = int(arg)
+
     with open(RANKED_PLAYERS_FILE_PATH, newline="") as csvfile:
         reader = csv.DictReader(csvfile)
+        printed_players = 0
         for i, player in enumerate(reader):
-            if i > print_count:
+            if printed_players > print_count:
                 break
+            if position is not None:
+                if position != player["position"]:
+                    continue
+
+            printed_players += 1
             print_player(player)
             print("")
