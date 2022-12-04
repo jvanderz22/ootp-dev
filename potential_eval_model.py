@@ -578,9 +578,9 @@ sp_third_pitch_value_modifier_map = {
 }
 
 sp_fourth_pitch_value_modifier_map = {
-    20: 1,
-    25: 1,
-    30: 1,
+    20: 0.97,
+    25: 0.97,
+    30: 0.97,
     35: 1,
     40: 1,
     45: 1.03,
@@ -593,18 +593,38 @@ sp_fourth_pitch_value_modifier_map = {
     80: 1.2,
 }
 
+sp_fifth_pitch_value_modifier_map = {
+    20: 1,
+    25: 1,
+    30: 1.01,
+    35: 1.02,
+    40: 1.03,
+    45: 1.03,
+    50: 1.05,
+    55: 1.05,
+    60: 1.05,
+    65: 1.1,
+    70: 1.2,
+    75: 1.2,
+    80: 1.2,
+}
 
-def calculate_sp_modifier(player):
+
+def calculate_sp_modifiers(player):
     modifier = 1
 
-    injuryProne = player[PLAYER_FIELDS["injuryProne"]]
-    if injuryProne == "Durable":
-        modifier *= 1.2
-    elif injuryProne == "Fragile":
-        modifier *= 0.6
+    injury_prone = player[PLAYER_FIELDS["injuryProne"]]
+    injury_prone_modifier = 1
+
+    if injury_prone == "Durable":
+        injury_prone_modifier = 1.2
+    elif injury_prone == "Fragile":
+        injury_prone_modifier *= 0.6
+    modifier *= injury_prone_modifier
 
     gb_type = player[PLAYER_FIELDS["groundball_type"]]
-    modifier *= sp_groundball_type_modifier_map[gb_type]
+    gb_type_modifier = sp_groundball_type_modifier_map[gb_type]
+    modifier *= gb_type_modifier
 
     stamina_modifier = sp_stamina_modifier_map[player[PLAYER_FIELDS["stamina"]]]
     pitches = find_pitches(player)
@@ -614,12 +634,19 @@ def calculate_sp_modifier(player):
     else:
         third_pitch_modifier = sp_third_pitch_value_modifier_map[pitches[2]]
 
-    fourth_pitch_modifier = 1
+    fourth_pitch_modifier = 0.97
     if len(pitches) >= 4:
         fourth_pitch_modifier = sp_fourth_pitch_value_modifier_map[pitches[3]]
 
+    fifth_pitch_modifier = 1
+    if len(pitches) >= 5:
+        fifth_pitch_modifier = sp_fifth_pitch_value_modifier_map[pitches[4]]
+
     total_sp_value_modifier = (
-        stamina_modifier * third_pitch_modifier * fourth_pitch_modifier
+        stamina_modifier
+        * third_pitch_modifier
+        * fourth_pitch_modifier
+        * fifth_pitch_modifier
     )
     # Treat SP as an RP instead
     if total_sp_value_modifier < 0.45:
@@ -636,15 +663,25 @@ def calculate_sp_modifier(player):
 
     modifier *= home_run_risk_modifier
 
-    modifier *= calculate_personality_modifier(player)
-    modifier *= calculate_age_modifier(player)
-    return modifier
+    personality_modifier = calculate_personality_modifier(player)
+    age_modifier = calculate_age_modifier(player)
+    modifier *= personality_modifier
+    modifier *= age_modifier
+    return {
+        "total_modifier": modifier,
+        "injury_prone_modifier": injury_prone_modifier,
+        "gb_type_modifier": gb_type_modifier,
+        "sp_value_modifier": total_sp_value_modifier,
+        "home_run_risk_modifier": home_run_risk_modifier,
+        "personality_modifier": personality_modifier,
+        "age_modifier": age_modifier,
+    }
 
 
 def calculate_sp_score(player):
     base_score = run_model_for_player(sp_model, sp_model_config, player)
-    modifier = calculate_sp_modifier(player)
-    score = base_score * modifier
+    modifiers = calculate_sp_modifiers(player)
+    score = base_score * modifiers["total_modifier"]
     return score
 
 
