@@ -891,7 +891,3 @@ def score_players(filepath):
             player["overall_score"] = round(player["overall_score"], 2)
             player["raw_overall_score"] = round(player["raw_overall_score"], 2)
             writer.writerow(player)
-
-
-if __name__ == "__main__":
-    score_players()
