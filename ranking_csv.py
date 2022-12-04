@@ -1,5 +1,7 @@
 import csv
 
+from drafted_players import get_drafted_player_ids
+
 
 def read_players():
     players_by_id = {}
@@ -23,32 +25,6 @@ preference_list_files = [
 ]
 
 end_of_draft_pref_list = "./preference_lists/post_round_10_picks.csv"
-drafted_players = "./preference_lists/drafted_players.csv"
-stats_plus_drafted_players = (
-    "./preference_lists/OOTP Prospect Lists - Drafted Players.csv"
-)
-
-
-def get_drafted_player_ids():
-    players_by_name = {}
-    with open("./processed_data/eval_model.csv", newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
-        for player in reader:
-            name = player["name"].lower()
-            players_by_name[name] = player
-
-    drafted_player_id_set = set()
-    with open(stats_plus_drafted_players, newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
-        for i, drafted_player in enumerate(reader):
-            player_data = drafted_player["Player"]
-            player_name_arr = player_data.split(" ")[1:]
-            if len(player_name_arr[-1]) == 1:
-                player_name_arr = player_name_arr[0:-1]
-            player_name = " ".join(player_name_arr).lower()
-            player = players_by_name[player_name]
-            drafted_player_id_set.add(player["id"])
-    return drafted_player_id_set
 
 
 def create_ranking_csv():
