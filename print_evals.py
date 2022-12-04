@@ -17,6 +17,9 @@ def print_player(player, index, is_drafted):
     )
     print(f'Potential: {player["in_game_potential"]}')
     print(f'Demand: {player["demand"]}')
+    print(
+        f'Raw (demand-excluded) score: {player["raw_overall_score"]}, Raw Ranking: {player["raw_ranking"]}'
+    )
     position_player_score = float(player["position_player_score"])
     pitcher_score = float(player["pitcher_score"])
     is_batter = False

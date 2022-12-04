@@ -86,6 +86,8 @@ def create_ranking_csv():
         "pitcher_score",
         "in_game_potential",
         "demand",
+        "raw_overall_score",
+        "raw_ranking",
     ]
     with open("./processed_data/ranked_players.csv", "w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=ranked_player_field_names)
@@ -119,6 +121,8 @@ def create_ranking_csv():
                 "age": player["age"],
                 "pitcher_score": player["pitcher_score"],
                 "position_player_score": player["position_player_score"],
+                "raw_overall_score": player["raw_overall_score"],
+                "raw_ranking": player["raw_ranking"],
             }
 
             writer.writerow(row)
