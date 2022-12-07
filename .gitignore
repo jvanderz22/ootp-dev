@@ -2,3 +2,4 @@
 *.code-workspace
 *.vscode
 env
+processed_data/*.csv
