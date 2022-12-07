@@ -1,3 +1,5 @@
+import string
+
 PLAYER_FIELDS = {
     "position": "POS",
     "id": "ID",
@@ -89,11 +91,11 @@ class GamePlayer:
 
     @property
     def name(self):
-        return self._name
+        return string.capwords(self._name)
 
     @property
     def potential(self):
-        return self._potential
+        return int(self._potential)
 
     @property
     def demand(self):
