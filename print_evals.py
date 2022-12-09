@@ -122,7 +122,7 @@ if __name__ == "__main__":
                 if not show_drafted:
                     continue
             if position is not None:
-                if position != player["position"]:
+                if position.lower() != player["position"].lower():
                     continue
 
             printed_players += 1
