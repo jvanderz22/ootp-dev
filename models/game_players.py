@@ -13,6 +13,7 @@ PLAYER_FIELDS = {
     "injury_prone": "Prone",
     "intelligence": "INT",
     "work_ethic": "WE",
+    "leadership": "LEA",
     "contact": "CON P",
     "gap": "GAP P",
     "power": "POW P",
@@ -124,6 +125,10 @@ class GamePlayer:
     @property
     def work_ethic(self):
         return self._work_ethic
+
+    @property
+    def leadership(self):
+        return self._leadership
 
     @property
     def contact(self):

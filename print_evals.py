@@ -74,7 +74,7 @@ def print_player(player, index, is_drafted, game_player, print_opts={}):
         print("")
     if not print_minimal:
         print(
-            f"Durability: {game_player.injury_prone}, Work Ethic: {game_player.work_ethic}, Intelligence: {game_player.intelligence}"
+            f"Durability: {game_player.injury_prone}, Work Ethic: {game_player.work_ethic}, Intelligence: {game_player.intelligence}, Leadership: {game_player.leadership}"
         )
         print(f'Demand: {player["demand"]}')
 

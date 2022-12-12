@@ -17,6 +17,10 @@ PLAYER_FIELDS = {
     "injuryProne": "Prone",
     "intelligence": "INT",
     "workEthic": "WE",
+    "leadership": "LEA",
+    "loyalty": "LOY",
+    "adaptibility": "AD",
+    "greed": "GRE",
     "contact": "CON P",
     "gap": "GAP P",
     "power": "POW P",
@@ -716,7 +720,72 @@ def parse_demand(demand):
     return demand_as_number * 1000 if is_thousands else demand_as_number * 100000
 
 
-def calculate_demand_adjusted_ranking(ranking, demand, score):
+def calculate_adjusted_score(scored_player, player):
+    raw_ranking = scored_player["raw_ranking"]
+    raw_score = scored_player["raw_overall_score"]
+    demand_adjusted_score = calculate_demand_adjusted_score(
+        raw_ranking,
+        scored_player["demand"],
+        raw_score,
+    )
+    return calculate_personality_adjusted_score(
+        raw_ranking, demand_adjusted_score, player
+    )
+
+
+def calculate_personality_adjusted_score(ranking, score, player):
+    leadership = player[PLAYER_FIELDS["leadership"]]
+    adaptibility = player[PLAYER_FIELDS["adaptibility"]]
+    greed = player[PLAYER_FIELDS["greed"]]
+    work_ethic = player[PLAYER_FIELDS["workEthic"]]
+    intelligence = player[PLAYER_FIELDS["intelligence"]]
+    loyalty = player[PLAYER_FIELDS["loyalty"]]
+    modifier_weight = 0
+    personality_modifier = 1
+
+    if ranking < 100:
+        pass
+    elif ranking < 200:
+        modifier_weight = 0.4
+    elif ranking < 300:
+        modifier_weight = 0.7
+    elif ranking < 400:
+        modifier_weight = 0.9
+    else:
+        modifier_weight = 1
+
+    bad_personalities = 0
+    if work_ethic == "Low":
+        bad_personalities += 1
+    if intelligence == "Low":
+        bad_personalities += 1
+    if adaptibility == "Low":
+        bad_personalities += 1
+    if loyalty == "Low":
+        bad_personalities += 1
+    if leadership == "Low":
+        bad_personalities += 1
+    if greed == "High":
+        bad_personalities += 1
+
+    if bad_personalities > 5:
+        personality_modifier *= 0.5
+    elif bad_personalities > 4:
+        personality_modifier *= 0.7
+    elif bad_personalities > 3:
+        personality_modifier *= 0.92
+
+    if leadership == "High":
+        personality_modifier *= 1.2
+    if work_ethic == "High" and intelligence == "High":
+        personality_modifier *= 1.2
+
+    total_modifier = personality_modifier**modifier_weight
+
+    return score * total_modifier
+
+
+def calculate_demand_adjusted_score(ranking, demand, score):
     if demand == "Slot":
         return score
     if demand == "Impossible":
@@ -797,11 +866,13 @@ def score_players(filepath):
         "raw_ranking",
     ]
     scored_players = []
+    all_players = {}
     with open(filepath, newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         best_pitcher_score = 0
         best_position_player_score = 0
         for i, player in enumerate(reader):
+            all_players[player[PLAYER_FIELDS["id"]]] = player
             [
                 position_player_score,
                 batting_score,
@@ -835,10 +906,8 @@ def score_players(filepath):
 
     for i, player in enumerate(scored_players):
         player["raw_ranking"] = i
-        player["overall_score"] = calculate_demand_adjusted_ranking(
-            player["raw_ranking"],
-            player["demand"],
-            player["raw_overall_score"],
+        player["overall_score"] = calculate_adjusted_score(
+            player, all_players[player["id"]]
         )
 
     scored_players = sorted(
