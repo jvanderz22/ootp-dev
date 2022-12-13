@@ -1,4 +1,6 @@
 import csv
+import getopt
+import sys
 
 from drafted_players import get_drafted_player_ids
 
@@ -27,7 +29,7 @@ preference_list_files = [
 end_of_draft_pref_list = "./preference_lists/post_round_10_picks.csv"
 
 
-def create_ranking_csv():
+def create_ranking_csv(modifiers=None):
     debug_overvalued = False
     debug_undervalued = False
     [model_ranked_players, model_players_by_id] = read_players()
@@ -89,6 +91,22 @@ def create_ranking_csv():
         "raw_overall_score",
         "raw_ranking",
     ]
+    if modifiers is not None:
+        for player in ranked_players:
+            modifier = modifiers.get(player["position"])
+            if modifier is not None and modifier != 1:
+                player["overall_score"] = float(player["overall_score"]) * modifier
+
+        players_by_score = sorted(
+            ranked_players,
+            key=lambda player: float(player["overall_score"]),
+            reverse=True,
+        )
+
+        for i, player in enumerate(players_by_score):
+            player["ranking"] = i + 1
+        ranked_players = players_by_score
+
     with open("./processed_data/ranked_players.csv", "w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=ranked_player_field_names)
         writer.writeheader()
@@ -149,4 +167,40 @@ def create_ranking_csv():
 
 
 if __name__ == "__main__":
-    create_ranking_csv()
+    try:
+        opts, args = getopt.getopt(
+            sys.argv[1:],
+            "c:",
+            ["C=", "1B=", "2B=", "SS=", "3B=", "OF=", "SP=", "RP="],
+        )
+    except getopt.GetoptError:
+        print("Invalid Option!")
+        sys.exit(2)
+
+    catcher = 1
+    first_base = 1
+    second_base = 1
+    third_base = 1
+    shortstop = 1
+    outfielder = 1
+    starting_pitcher = 1
+    relief_pitcher = 1
+    for opt, arg in opts:
+        if opt == "--C":
+            catcher = float(arg)
+        if opt == "--1B":
+            first_base = float(arg)
+        if opt == "--2B":
+            second_base = float(arg)
+        if opt == "--3B":
+            third_base = float(arg)
+        if opt == "--SS":
+            shortstop = float(arg)
+        if opt == "--OF":
+            outfielder = float(arg)
+        if opt == "--SP":
+            starting_pitcher = float(arg)
+        if opt == "--RP":
+            relief_pitcher = float(arg)
+
+    create_ranking_csv({"C": catcher, "1B": first_base})
