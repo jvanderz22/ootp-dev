@@ -498,7 +498,7 @@ rp_third_pitch_value_modifier_map = {
 
 def calculate_rp_modifier(player):
     # Base rp score is lower
-    modifier = 0.45
+    modifier = 0.60
     injuryProne = player[PLAYER_FIELDS["injuryProne"]]
     if injuryProne == "Durable":
         modifier *= 1.1
