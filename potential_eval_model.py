@@ -433,7 +433,7 @@ def calculate_position_player_score(player):
     batting_score = calculate_batting_score(player)
     running_score = calculate_running_score(player)
     overall_score = (
-        (batting_score * 0.75) + (fielding_score * 0.20) + (running_score * 0.05)
+        (batting_score * 0.71) + (fielding_score * 0.24) + (running_score * 0.05)
     )
     overall_modifier = calculate_position_player_modifier(player)
 
@@ -698,7 +698,7 @@ def calculate_pitcher_score(player):
         score = calculate_sp_score(player)
     # Try to fix the batter/pitcher distribution by round
     score = score if score > 0 else 0
-    return (score**0.75) * 2.5
+    return (score**0.73) * 2.5
 
 
 def aggregate_pitcher_batter_scores(batter_score, pitcher_score):
