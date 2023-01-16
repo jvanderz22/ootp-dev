@@ -13,7 +13,7 @@ def get_drafted_player_ids():
 
 def get_drafted_player_ids_stats_plus():
     players_by_name = {}
-    with open(get_draft_class_drafted_players_file(), newline="") as csvfile:
+    with open(get_draft_class_eval_model_file(), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for player in reader:
             name = player["name"].lower()
@@ -30,14 +30,14 @@ def get_drafted_player_ids_stats_plus():
         reader = csv.DictReader(csvfile)
         for i, drafted_player in enumerate(reader):
             player_data = drafted_player["Selection"].split(" ")
-            # player_name_arr = player_data[1:]
-            player_name_arr = player_data[0:]
+            player_name_arr = player_data[1:]
             if len(player_name_arr[-1]) == 1:
                 player_name_arr = player_name_arr[0:-1]
             player_name = " ".join(player_name_arr).lower()
-            print(player_name)
             player_position = player_data[0].lower()
-            player = players_by_name[player_name][player_position]
+            player = players_by_name[player_name].get(player_position)
+            if player is None:
+                player = list(players_by_name[player_name].values())[0]
             drafted_player_id_set.add(player["id"])
     return drafted_player_id_set
 

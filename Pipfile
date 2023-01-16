@@ -9,6 +9,7 @@ scikit-learn = "*"
 pandas = "*"
 bs4 = "*"
 selenium = "*"
+python-dotenv = "*"
 
 [dev-packages]
 

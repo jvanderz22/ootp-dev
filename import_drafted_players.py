@@ -7,7 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
 from draft_class_files import get_draft_class_drafted_players_file
-from constants import DRAFT_CLASS_NAME, DRAFTED_PLAYERS_URL
+from constants import DRAFT_CLASS_NAME, STATS_PLUS_URL
 
 
 def go_to_round(driver, round):
@@ -46,15 +46,20 @@ def save_drafted_players(driver):
                 data.append(row_data)
         round += 1
     draft_class_file = get_draft_class_drafted_players_file()
-    headers = ["Round", "Pick", "Overall", "Team", "Player", "Time"]
+    headers = ["Round", "Pick", "Overall", "Team", "Selection", "Time"]
     data_frame = pd.DataFrame(data=data, columns=headers)
     data_frame.to_csv(draft_class_file, index=False)
 
 
-if __name__ == "__main__":
+def build_drafted_players_list():
+    drafted_players_url = f"{STATS_PLUS_URL}/draft/#current"
     print(
-        f"Building drafted players list for {DRAFT_CLASS_NAME} from {DRAFTED_PLAYERS_URL}"
+        f"Building drafted players list for {DRAFT_CLASS_NAME} from {drafted_players_url}"
     )
     driver = webdriver.Chrome()
-    driver.get(DRAFTED_PLAYERS_URL)
+    driver.get(drafted_players_url)
     save_drafted_players(driver)
+
+
+if __name__ == "__main__":
+    build_drafted_players_list()
