@@ -28,8 +28,8 @@ def create_csv(file_path, draft_class_path):
                 continue
         data.append(row_data)
 
-    dataFrame = pd.DataFrame(data=data, columns=header)
-    dataFrame.to_csv(draft_class_path)
+    data_frame = pd.DataFrame(data=data, columns=header)
+    data_frame.to_csv(draft_class_path)
 
 
 if __name__ == "__main__":
