@@ -1,6 +1,9 @@
 import csv
 
-from constants import DRAFTED_PLAYERS_FILE_PATH
+from draft_class_files import (
+    get_draft_class_drafted_players_file,
+    get_draft_class_eval_model_file,
+)
 
 
 def get_drafted_player_ids():
@@ -10,7 +13,7 @@ def get_drafted_player_ids():
 
 def get_drafted_player_ids_stats_plus():
     players_by_name = {}
-    with open("./processed_data/eval_model.csv", newline="") as csvfile:
+    with open(get_draft_class_drafted_players_file(), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for player in reader:
             name = player["name"].lower()
@@ -23,7 +26,7 @@ def get_drafted_player_ids_stats_plus():
                 players_by_name[name][position] = player
 
     drafted_player_id_set = set()
-    with open(DRAFTED_PLAYERS_FILE_PATH, newline="") as csvfile:
+    with open(get_draft_class_drafted_players_file(), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for i, drafted_player in enumerate(reader):
             player_data = drafted_player["Selection"].split(" ")
@@ -41,7 +44,7 @@ def get_drafted_player_ids_stats_plus():
 
 def get_drafted_player_ids_in_game():
     players_by_name = {}
-    with open("./processed_data/eval_model.csv", newline="") as csvfile:
+    with open(get_draft_class_eval_model_file(), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for player in reader:
             name = player["name"].lower()
@@ -54,7 +57,7 @@ def get_drafted_player_ids_in_game():
                 players_by_name[name][position] = player
 
     drafted_player_id_set = set()
-    with open(DRAFTED_PLAYERS_FILE_PATH, newline="") as csvfile:
+    with open(get_draft_class_drafted_players_file(), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for i, drafted_player in enumerate(reader):
             player_data = drafted_player["Selection"].split(" ")

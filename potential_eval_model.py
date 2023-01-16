@@ -1,6 +1,10 @@
 import numpy as np
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model
+from draft_class_files import (
+    get_draft_class_eval_model_file,
+    get_draft_class_data_file,
+)
 import re
 import csv
 
@@ -847,7 +851,7 @@ def calculate_demand_adjusted_score(ranking, demand, score):
         return score
 
 
-def score_players(filepath):
+def score_players():
     # Player should probably be a class
     output_field_names = [
         "ranking",
@@ -867,7 +871,7 @@ def score_players(filepath):
     ]
     scored_players = []
     all_players = {}
-    with open(filepath, newline="") as csvfile:
+    with open(get_draft_class_data_file(), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         best_pitcher_score = 0
         best_position_player_score = 0
@@ -952,7 +956,7 @@ def score_players(filepath):
         if is_rp:
             rps_by_100s[dict_key] += 1
 
-    with open("./processed_data/eval_model.csv", "w", newline="") as csvfile:
+    with open(get_draft_class_eval_model_file(), "w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=output_field_names)
         writer.writeheader()
         for i, player in enumerate(scored_players):

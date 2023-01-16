@@ -3,12 +3,17 @@ import getopt
 import sys
 
 from drafted_players import get_drafted_player_ids
+from draft_class_files import (
+    get_draft_class_eval_model_file,
+    get_draft_class_ranked_players_file,
+    get_draft_class_upload_players_file,
+)
 
 
 def read_players():
     players_by_id = {}
     ranked_players = []
-    with open("./processed_data/eval_model.csv", newline="") as csvfile:
+    with open(get_draft_class_eval_model_file(), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for player in reader:
             ranked_players.append(player)
@@ -107,7 +112,7 @@ def create_ranking_csv(modifiers=None):
             player["ranking"] = i + 1
         ranked_players = players_by_score
 
-    with open("./processed_data/ranked_players.csv", "w", newline="") as csvfile:
+    with open(get_draft_class_ranked_players_file(), "w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=ranked_player_field_names)
         writer.writeheader()
         for i, player in enumerate(ranked_players):
@@ -146,7 +151,7 @@ def create_ranking_csv(modifiers=None):
             writer.writerow(row)
 
     upload_field_names = ["id", "name", "position", "age", "model_score", "demand"]
-    with open("./processed_data/upload_ranked_players.csv", "w", newline="") as csvfile:
+    with open(get_draft_class_upload_players_file(), "w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=upload_field_names)
         num_ranked_players = 0
         for player in ranked_players:

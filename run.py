@@ -1,21 +1,37 @@
+import os
+import csv
+
 import potential_eval_model
 import ranking_csv
-from constants import DATASET_FILE_PATH
+from constants import DRAFT_CLASS_NAME
+from draft_class_files import (
+    get_draft_class_data_file,
+    get_draft_class_drafted_players_file,
+)
 
 
 def process_file():
-    with open(DATASET_FILE_PATH, newline="") as file:
+    with open(get_draft_class_data_file(), newline="") as file:
         filedata = file.read()
     has_duplicate_con_p = filedata.find("MOV P,CON P")
 
     if has_duplicate_con_p:
         # Replace duplicate CON P field. Pitching control field needs to be CONT P instead of CON P
         filedata = filedata.replace("MOV P,CON P", "MOV P,CONT P")
-        with open(DATASET_FILE_PATH, "w") as file:
+
+        with open(get_draft_class_data_file(), "w", newline="") as file:
             file.write(filedata)
 
 
 if __name__ == "__main__":
+    # Create a directory to store info about the draft class if it doesn't exist
+    if not os.path.exists(f"processed_classes/{DRAFT_CLASS_NAME}"):
+        os.makedirs(f"processed_classes/{DRAFT_CLASS_NAME}")
+        with open(get_draft_class_drafted_players_file(), "w", newline="") as file:
+            header = ["Round", "Pick", "Overall", "Team", "Player", "Time"]
+            writer = csv.DictWriter(file, fieldnames=header)
+            writer.writeheader()
+
     process_file()
-    potential_eval_model.score_players(DATASET_FILE_PATH)
+    potential_eval_model.score_players()
     ranking_csv.create_ranking_csv()

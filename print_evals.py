@@ -2,7 +2,7 @@ import csv
 import getopt
 import sys
 
-from constants import RANKED_PLAYERS_FILE_PATH
+from draft_class_files import get_draft_class_ranked_players_file
 from get_game_players import get_game_players
 from drafted_players import get_drafted_player_ids
 
@@ -107,7 +107,7 @@ if __name__ == "__main__":
             print_count = int(arg)
 
     drafted_players = get_drafted_player_ids()
-    with open(RANKED_PLAYERS_FILE_PATH, newline="") as csvfile:
+    with open(get_draft_class_ranked_players_file(), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         printed_players = 0
         for i, player in enumerate(reader):

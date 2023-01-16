@@ -3,3 +3,4 @@
 *.vscode
 env
 processed_data/*.csv
+processed_classes/*.csv
