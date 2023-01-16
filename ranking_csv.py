@@ -21,19 +21,6 @@ def read_players():
     return [ranked_players, players_by_id]
 
 
-preference_list_files = [
-    # "./preference_lists/round_2_picks.csv",
-    # "./preference_lists/round_3_picks.csv",
-    # "./preference_lists/round_4_picks.csv",
-    # "./preference_lists/round_5_picks.csv",
-    # "./preference_lists/post_round_5_picks.csv",
-    # Ignore this list for now
-    # './preference_lists/post_tenth_round_picks.csv',
-]
-
-end_of_draft_pref_list = "./preference_lists/post_round_10_picks.csv"
-
-
 def create_ranking_csv(modifiers=None):
     debug_overvalued = False
     debug_undervalued = False
@@ -42,41 +29,10 @@ def create_ranking_csv(modifiers=None):
     ranked_players = []
     ranked_player_ids = set()
 
-    for file in preference_list_files:
-        with open(file, newline="") as csvfile:
-            reader = csv.DictReader(csvfile)
-            players_to_rank = []
-            for player in reader:
-                model_player = model_players_by_id[player["ID"]]
-                if model_player["id"] not in ranked_player_ids:
-                    ranked_player_ids.add(model_player["id"])
-                    players_to_rank.append(model_player)
-
-        sorted_players = sorted(
-            players_to_rank, key=lambda player: int(player["ranking"])
-        )
-        ranked_players.extend(sorted_players)
     for player in model_ranked_players:
         if player["id"] not in ranked_player_ids:
             ranked_player_ids.add(player["id"])
             ranked_players.append(player)
-
-        # Add players I'm interested in at the end of the draft
-        if len(ranked_player_ids) == 320:
-            with open(end_of_draft_pref_list, newline="") as csvfile:
-                reader = csv.DictReader(csvfile)
-                players_to_rank = []
-                for player in reader:
-                    model_player = model_players_by_id[player["ID"]]
-                    if model_player["id"] not in ranked_player_ids:
-                        players_to_rank.append(model_player)
-                sorted_players = sorted(
-                    players_to_rank, key=lambda player: int(player["ranking"])
-                )
-                for player in sorted_players:
-                    if player["id"] not in ranked_player_ids:
-                        ranked_player_ids.add(player["id"])
-                        ranked_players.append(player)
 
     ranked_player_field_names = [
         "overall_ranking",

@@ -2,5 +2,6 @@
 *.code-workspace
 *.vscode
 env
+datasets/**/*.csv
 processed_data/*.csv
-processed_classes/*.csv
+processed_classes/**/*.csv

@@ -31,6 +31,7 @@ if __name__ == "__main__":
             header = ["Round", "Pick", "Overall", "Team", "Player", "Time"]
             writer = csv.DictWriter(file, fieldnames=header)
             writer.writeheader()
+    print(f"Running evals for {DRAFT_CLASS_NAME}!")
 
     process_file()
     potential_eval_model.score_players()
