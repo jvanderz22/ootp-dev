@@ -31,6 +31,8 @@ def get_drafted_player_ids_stats_plus():
         for i, drafted_player in enumerate(reader):
             player_data = drafted_player["Selection"].split(" ")
             player_name_arr = player_data[1:]
+            if len(player_name_arr) < 1:
+                continue
             if len(player_name_arr[-1]) == 1:
                 player_name_arr = player_name_arr[0:-1]
             player_name = " ".join(player_name_arr).lower()

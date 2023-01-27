@@ -20,7 +20,7 @@ def login_to_stats_plus(driver):
     login.click()
     link = driver.find_element(
         By.CSS_SELECTOR,
-        'div.container div.container a img[src="/static2/statsplus/statsplus_login_button.png"]',
+        'div.container div.container a img[src$="statsplus_login_button.png"]',
     )
     link.click()
     user_name = os.environ.get("splus-user-name")
