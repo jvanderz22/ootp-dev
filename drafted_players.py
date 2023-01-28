@@ -37,10 +37,13 @@ def get_drafted_player_ids_stats_plus():
                 player_name_arr = player_name_arr[0:-1]
             player_name = " ".join(player_name_arr).lower()
             player_position = player_data[0].lower()
-            player = players_by_name[player_name].get(player_position)
+            player = players_by_name.get(player_name, {}).get(player_position)
             if player is None:
-                player = list(players_by_name[player_name].values())[0]
-            drafted_player_id_set.add(player["id"])
+                player_obj = players_by_name.get(player_name)
+                if player_obj is not None:
+                    player = list(player_obj.values())[0]
+            if player is not None:
+                drafted_player_id_set.add(player["id"])
     return drafted_player_id_set
 
 

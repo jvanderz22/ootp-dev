@@ -33,17 +33,24 @@ def save_drafted_players(driver):
         if int(row_round) != round:
             print(f"Could not load round {round}. Exiting.")
             raise RuntimeError("Error loading data.")
+        empty_row = False
         for table_row in table_rows:
             row_data = []
-            for td in table_row.find_all("td"):
+            for i, td in enumerate(table_row.find_all("td")):
                 try:
                     text_data = td.get_text().strip()
+                    if i == 4 and len(text_data) == 0:
+                        empty_row = True
                     text_data = re.sub("\n.*\nA", "", text_data)
                     row_data.append(text_data)
                 except:
                     continue
+            if empty_row:
+                break
             if len(row_data) > 0:
                 data.append(row_data)
+        if empty_row:
+            break
         round += 1
     draft_class_file = get_draft_class_drafted_players_file()
     headers = ["Round", "Pick", "Overall", "Team", "Selection", "Time"]
