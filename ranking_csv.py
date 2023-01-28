@@ -22,9 +22,7 @@ def read_players():
 
 
 def create_ranking_csv(modifiers=None):
-    debug_overvalued = False
-    debug_undervalued = False
-    [model_ranked_players, model_players_by_id] = read_players()
+    [model_ranked_players, players_by_id] = read_players()
     drafted_players_set = get_drafted_player_ids()
     ranked_players = []
     ranked_player_ids = set()
@@ -73,18 +71,6 @@ def create_ranking_csv(modifiers=None):
         writer.writeheader()
         for i, player in enumerate(ranked_players):
 
-            ranking_difference = i - int(player["ranking"])
-            if debug_overvalued:
-                if i > 5 and i < 100 and ranking_difference < -30:
-                    print("\n\n\novervalued player", i, player["ranking"], player)
-            if debug_undervalued:
-                if (
-                    i > 120
-                    and i < 200
-                    and ranking_difference > 30
-                    and int(player["in_game_potential"]) >= 35
-                ):
-                    print("\n\n\nundervalued player", i, player["ranking"], player)
             row = {
                 "overall_ranking": i,
                 "model_ranking": player["ranking"],
