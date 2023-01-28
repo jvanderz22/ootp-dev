@@ -1,3 +1,5 @@
+import getopt
+import sys
 import ranking_csv
 import time
 from selenium import webdriver
@@ -53,9 +55,28 @@ def upload_draft_list():
 
 
 if __name__ == "__main__":
-    build_drafted_players_list()
-    print("Retreived list of all drafted players.")
-    ranking_csv.create_ranking_csv()
-    print("Built new preference list.")
+    refresh_drafted_players = False
+    rerank_players = False
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "dr")
+    except getopt.GetoptError:
+        print("Invalid Option!")
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == "-d":
+            refresh_drafted_players = True
+        if opt == "-r":
+            rerank_players = True
+
+    if refresh_drafted_players:
+        build_drafted_players_list()
+        print("Retreived list of all drafted players.")
+    else:
+        print("Using existing list of all drafted players. (use -d to refresh.)")
+    if rerank_players:
+        ranking_csv.create_ranking_csv()
+        print("Built new preference list.")
+    else:
+        print("Using existing list of ranked players. (use -r to refresh.)")
     upload_draft_list()
     print("Uploaded new list to StatsPlus.")
