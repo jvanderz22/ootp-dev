@@ -56,21 +56,28 @@ def upload_draft_list():
 
 if __name__ == "__main__":
     refresh_drafted_players = False
+    rerank_players = True
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "dr")
+        opts, args = getopt.getopt(sys.argv[1:], "di")
     except getopt.GetoptError:
         print("Invalid Option!")
         sys.exit(2)
     for opt, arg in opts:
         if opt == "-d":
             refresh_drafted_players = True
+        if opt == "-i":
+            rerank_players = False
 
     if refresh_drafted_players:
         build_drafted_players_list()
         print("Retreived list of all drafted players.")
     else:
         print("Using existing list of all drafted players. (use -d to refresh.)")
-    ranking_csv.create_ranking_csv()
-    print("Built new preference list.")
+
+    if rerank_players:
+        ranking_csv.create_ranking_csv()
+        print("Built new preference list. Use -i to ignore next time.")
+    else:
+        print("Using existing preference list")
     upload_draft_list()
     print("Uploaded new list to StatsPlus.")
