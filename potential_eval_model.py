@@ -1,12 +1,13 @@
 import numpy as np
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model
+import re
+import csv
+from constants import USE_PITCHER_MODIFIER
 from draft_class_files import (
     get_draft_class_eval_model_file,
     get_draft_class_data_file,
 )
-import re
-import csv
 
 PLAYER_FIELDS = {
     "position": "POS",
@@ -702,7 +703,9 @@ def calculate_pitcher_score(player):
         score = calculate_sp_score(player)
     # Try to fix the batter/pitcher distribution by round
     score = score if score > 0 else 0
-    return (score**0.73) * 2.5
+    if USE_PITCHER_MODIFIER:
+        return (score**0.73) * 2.5
+    return score
 
 
 def aggregate_pitcher_batter_scores(batter_score, pitcher_score):
