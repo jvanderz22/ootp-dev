@@ -1,3 +1,5 @@
 DRAFT_CLASS_NAME = "2029-yfmlb-draft-class"
 STATS_PLUS_URL = "https://statsplus.net/yfmlb/"
 USE_PITCHER_MODIFIER = True
+PITCHER_EXPONENT = 0.46
+PITCHER_MULTIPLIER = 8.45

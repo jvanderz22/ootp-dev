@@ -3,7 +3,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model
 import re
 import csv
-from constants import USE_PITCHER_MODIFIER
+from constants import USE_PITCHER_MODIFIER, PITCHER_EXPONENT, PITCHER_MULTIPLIER
 from draft_class_files import (
     get_draft_class_eval_model_file,
     get_draft_class_data_file,
@@ -704,7 +704,7 @@ def calculate_pitcher_score(player):
     # Try to fix the batter/pitcher distribution by round
     score = score if score > 0 else 0
     if USE_PITCHER_MODIFIER:
-        return (score**0.73) * 2.5
+        score = (score**PITCHER_EXPONENT) * PITCHER_MULTIPLIER
     return score
 
 
