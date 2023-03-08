@@ -8,6 +8,7 @@ from draft_class_files import (
     get_draft_class_data_file,
     get_draft_class_drafted_players_file,
 )
+from print_pos_distribution import print_top_distribution
 
 
 def process_file():
@@ -36,3 +37,15 @@ if __name__ == "__main__":
     process_file()
     potential_eval_model.score_players()
     ranking_csv.create_ranking_csv()
+
+    print_top_distribution(10)
+    print("\n\n\n")
+    print_top_distribution(20)
+    print("\n\n\n")
+    print_top_distribution(50)
+    print("\n\n\n")
+    print_top_distribution(100)
+    print("\n\n\n")
+    print_top_distribution(400)
+    print("\n\n\n")
+    print_top_distribution(1000)
