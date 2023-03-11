@@ -84,11 +84,12 @@ if __name__ == "__main__":
     print_count = 50
     position = None
     show_drafted = False
+    sort_by_potential = False
     print_raw = False
     print_minimal = False
     player_name = None
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "n:p:t:arm")
+        opts, args = getopt.getopt(sys.argv[1:], "n:p:t:arms")
     except getopt.GetoptError:
         print("Invalid Option!")
         sys.exit(2)
@@ -105,12 +106,20 @@ if __name__ == "__main__":
             player_name = arg
         if opt == "-t":
             print_count = int(arg)
+        if opt == "-s":
+            sort_by_potential = True
 
     drafted_players = get_drafted_player_ids()
     with open(get_draft_class_ranked_players_file(), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         printed_players = 0
-        for i, player in enumerate(reader):
+        players = [player for player in reader]
+
+        if sort_by_potential:
+            players = sorted(
+                players, key=lambda player: player["in_game_potential"], reverse=True
+            )
+        for i, player in enumerate(players):
             is_drafted = False
             if printed_players >= print_count:
                 break
