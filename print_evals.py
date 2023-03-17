@@ -4,10 +4,10 @@ import sys
 
 from draft_class_files import get_draft_class_ranked_players_file
 from get_game_players import get_game_players
-from drafted_players import get_drafted_player_ids
+from drafted_players import get_drafted_player_ids, get_drafted_players_info
 
 
-def print_player(player, index, is_drafted, game_player, print_opts={}):
+def print_player(player, index, draft_info, game_player, print_opts={}):
     print_raw = print_opts.get("print_raw", False)
     print_minimal = print_opts.get("print_minimal", False)
     print("---------------------------")
@@ -16,8 +16,10 @@ def print_player(player, index, is_drafted, game_player, print_opts={}):
     )
     if not print_minimal:
         print(f"Bat Hand: {game_player.bat_hand}, Throw Hand: {game_player.throw_hand}")
-    if is_drafted:
-        print(f"DRAFTED!")
+    if draft_info:
+        print(
+            f"Drafted by {draft_info['team']} in round {draft_info['round']} at pick {draft_info['round_selection']} (#{draft_info['overall_selection']} overall)"
+        )
 
     print(
         f'Overall Ranking: {int(player["overall_ranking"]) + 1}, Model score: {player["model_score"]}, Potential: {player["in_game_potential"]}'
@@ -57,6 +59,10 @@ def print_player(player, index, is_drafted, game_player, print_opts={}):
             print(
                 f"IF Range: {game_player.if_range}, IF Error: {game_player.if_error}, IF Arm: {game_player.if_arm}, Turn DP: {game_player.turn_dp}"
             )
+        elif game_player.if_range >= 30:
+            print(
+                f"1B ONLY! IF Range: {game_player.if_range}, IF Error: {game_player.if_error}, IF Arm: {game_player.if_arm}, Turn DP: {game_player.turn_dp}"
+            )
         if game_player.of_range >= 40:
             print(
                 f"OF Range: {game_player.of_range}, OF Error: {game_player.of_error}, OF Arm: {game_player.of_arm}"
@@ -85,11 +91,12 @@ if __name__ == "__main__":
     position = None
     show_drafted = False
     sort_by_potential = False
+    show_drafted_only = False
     print_raw = False
     print_minimal = False
     player_name = None
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "n:p:t:arms")
+        opts, args = getopt.getopt(sys.argv[1:], "n:p:t:armsd")
     except getopt.GetoptError:
         print("Invalid Option!")
         sys.exit(2)
@@ -104,12 +111,15 @@ if __name__ == "__main__":
             position = arg
         if opt == "-n":
             player_name = arg
+        if opt == "-d":
+            show_drafted_only = True
         if opt == "-t":
             print_count = int(arg)
         if opt == "-s":
             sort_by_potential = True
 
     drafted_players = get_drafted_player_ids()
+    drafted_player_info = get_drafted_players_info()
     with open(get_draft_class_ranked_players_file(), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         printed_players = 0
@@ -128,17 +138,28 @@ if __name__ == "__main__":
                     continue
             if player["id"] in drafted_players:
                 is_drafted = True
-                if not show_drafted:
+                if not show_drafted and not show_drafted_only:
+                    continue
+            else:
+                if show_drafted_only:
                     continue
             if position is not None:
-                if position.lower() != player["position"].lower():
+                if position.lower() == "pos":
+                    search_pos = ["c", "1b", "2b", "3b", "ss" "rf", "cf", "lf", "dh"]
+                elif position.lower() == "pit":
+                    search_pos = ["sp", "rp", "cl"]
+                elif position.lower() == "of":
+                    search_pos = ["rf", "cf", "lf"]
+                else:
+                    search_pos = [position.lower()]
+                if player["position"].lower() not in search_pos:
                     continue
 
             printed_players += 1
             print_player(
                 player,
                 printed_players,
-                is_drafted,
+                drafted_player_info.get(player["id"]),
                 game_players.get_player(player["id"]),
                 {"print_raw": print_raw, "print_minimal": print_minimal},
             )

@@ -8,10 +8,14 @@ from draft_class_files import (
 
 def get_drafted_player_ids():
     # return get_drafted_player_ids_in_game()
-    return get_drafted_player_ids_stats_plus()
+    return get_drafted_players_stats_plus().keys()
 
 
-def get_drafted_player_ids_stats_plus():
+def get_drafted_players_info():
+    return get_drafted_players_stats_plus()
+
+
+def get_drafted_players_stats_plus():
     players_by_name = {}
     with open(get_draft_class_eval_model_file(), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
@@ -25,7 +29,7 @@ def get_drafted_player_ids_stats_plus():
             else:
                 players_by_name[name][position] = player
 
-    drafted_player_id_set = set()
+    drafted_players = {}
     with open(get_draft_class_drafted_players_file(), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for i, drafted_player in enumerate(reader):
@@ -43,8 +47,14 @@ def get_drafted_player_ids_stats_plus():
                 if player_obj is not None:
                     player = list(player_obj.values())[0]
             if player is not None:
-                drafted_player_id_set.add(player["id"])
-    return drafted_player_id_set
+                drafted_players[player["id"]] = {
+                    "name": player_name,
+                    "team": drafted_player["Team"],
+                    "round": drafted_player["Round"],
+                    "round_selection": drafted_player["Pick"],
+                    "overall_selection": drafted_player["Overall"],
+                }
+    return drafted_players
 
 
 def get_drafted_player_ids_in_game():

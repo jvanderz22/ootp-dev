@@ -695,7 +695,6 @@ def calculate_sp_score(player):
 
 
 def calculate_pitcher_score(player):
-    score = run_model_for_player(sp_model, sp_model_config, player)
     position = player[PLAYER_FIELDS["position"]]
     if position == "RP" or position == "CL":
         score = calculate_rp_score(player)
