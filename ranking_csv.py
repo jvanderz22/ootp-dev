@@ -70,7 +70,6 @@ def create_ranking_csv(modifiers=None):
         writer = csv.DictWriter(csvfile, fieldnames=ranked_player_field_names)
         writer.writeheader()
         for i, player in enumerate(ranked_players):
-
             row = {
                 "overall_ranking": i,
                 "model_ranking": player["ranking"],
@@ -150,4 +149,15 @@ if __name__ == "__main__":
         if opt == "--RP":
             relief_pitcher = float(arg)
 
-    create_ranking_csv({"C": catcher, "1B": first_base})
+    create_ranking_csv(
+        {
+            "C": catcher,
+            "1B": first_base,
+            "2B": second_base,
+            "3B": third_base,
+            "SS": shortstop,
+            "OF": outfielder,
+            "SP": starting_pitcher,
+            "RP": relief_pitcher,
+        }
+    )
