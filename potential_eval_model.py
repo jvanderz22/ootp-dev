@@ -752,9 +752,9 @@ def calculate_personality_adjusted_score(ranking, score, player):
     if ranking < 100:
         pass
     elif ranking < 200:
-        modifier_weight = 0.4
+        modifier_weight = 0.6
     elif ranking < 300:
-        modifier_weight = 0.7
+        modifier_weight = 0.8
     elif ranking < 400:
         modifier_weight = 0.9
     else:
