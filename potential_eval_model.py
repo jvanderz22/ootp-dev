@@ -374,10 +374,10 @@ def calculate_fielding_score(player):
         position_scores[fielding_position] = run_model_for_player(
             model, model_config, player
         )
-    [best_score, _] = calculate_best_position_score(position_scores)
+    [best_score, best_position] = calculate_best_position_score(position_scores)
     utility_bonus = calculate_utility_bonuses(position_scores)
     overall_score = best_score + utility_bonus
-    return [overall_score, best_score, utility_bonus]
+    return [overall_score, best_score, utility_bonus, best_position]
 
 
 def calculate_batting_score(player):
@@ -434,16 +434,20 @@ def calculate_position_player_modifier(player):
 
 
 def calculate_position_player_score(player):
-    [fielding_score, _, _] = calculate_fielding_score(player)
+    [fielding_score, _, _, best_position] = calculate_fielding_score(player)
     batting_score = calculate_batting_score(player)
     running_score = calculate_running_score(player)
     overall_score = (
-        (batting_score * 0.71) + (fielding_score * 0.24) + (running_score * 0.05)
+        (batting_score * 0.71) + (fielding_score * 0.3) + (running_score * 0.04)
     )
     overall_modifier = calculate_position_player_modifier(player)
 
-    if player[PLAYER_FIELDS["position"]] == "C" and fielding_score > 40:
-        overall_modifier *= 1.10
+    if best_position == "C" and fielding_score > 40:
+        overall_modifier *= 1.07
+    if best_position == "SS" and fielding_score > 70:
+        overall_modifier *= 1.07
+    if best_position == "CF" and fielding_score > 70:
+        overall_modifier *= 1.07
 
     overall_score = overall_score * overall_modifier
     return [overall_score, batting_score, fielding_score]
