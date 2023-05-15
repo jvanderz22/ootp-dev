@@ -26,7 +26,8 @@ def create_csv(file_path, draft_class_path):
                 row_data.append(td.get_text())
             except:
                 continue
-        data.append(row_data)
+        rows = [row.strip() for row in row_data]
+        data.append(rows)
 
     data_frame = pd.DataFrame(data=data, columns=header)
     data_frame.to_csv(draft_class_path)
