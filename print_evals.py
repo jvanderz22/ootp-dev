@@ -55,6 +55,9 @@ def print_player(player, index, draft_info, game_player, print_opts={}):
         print(
             f"Speed: {game_player.speed}, Steal: {game_player.steal}, Running Ability: {game_player.running_ability}"
         )
+        print(
+            f"Contact Ovr: {game_player.contact_ovr}, Gap Ovr: {game_player.gap_ovr}, Power Ovr: {game_player.power_ovr}, Eye Ovr: {game_player.eye_ovr}, Avoid K: {game_player.avoid_k_ovr}"
+        )
         if game_player.if_range >= 40 and game_player.throw_hand == "Right":
             print(
                 f"IF Range: {game_player.if_range}, IF Error: {game_player.if_error}, IF Arm: {game_player.if_arm}, Turn DP: {game_player.turn_dp}"
@@ -73,6 +76,9 @@ def print_player(player, index, draft_info, game_player, print_opts={}):
     if is_pitcher and not print_minimal:
         print(
             f"Stuff: {game_player.stuff}, Movement: {game_player.movement}, Control: {game_player.control}, Stamina: {game_player.stamina}"
+        )
+        print(
+            f"Stuff Ovr: {game_player.stuff_ovr}, Movement Ovr: {game_player.movement_ovr}, Control Ovr: {game_player.control_ovr}"
         )
         print(f"Pitches: ", end="")
         for pitch in game_player.get_pitches():

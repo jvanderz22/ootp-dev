@@ -2,7 +2,7 @@ Commands:
 
 Get data from exported game file:
 
-python3 load_draft_class.py -c draft-class-name -f /path/to/file.csv
+python3 load_draft_class.py -c draft-class-name -f /path/to/file.html
 
 Run evals on draft class:
 python3 run.py

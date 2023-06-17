@@ -15,10 +15,17 @@ def process_file():
     with open(get_draft_class_data_file(), newline="") as file:
         filedata = file.read()
     has_duplicate_con_p = filedata.find("MOV P,CON P")
+    has_duplicate_con = filedata.find("MOV,CON")
 
     if has_duplicate_con_p:
         # Replace duplicate CON P field. Pitching control field needs to be CONT P instead of CON P
         filedata = filedata.replace("MOV P,CON P", "MOV P,CONT P")
+
+        with open(get_draft_class_data_file(), "w", newline="") as file:
+            file.write(filedata)
+    if has_duplicate_con:
+        # Replace duplicate CON field. Pitching control field needs to be CONT instead of CON
+        filedata = filedata.replace("MOV,CON,", "MOV,CONT,")
 
         with open(get_draft_class_data_file(), "w", newline="") as file:
             file.write(filedata)

@@ -19,6 +19,11 @@ PLAYER_FIELDS = {
     "power": "POW P",
     "eye": "EYE P",
     "avoid_k": "K P",
+    "contact_ovr": "CON",
+    "gap_ovr": "GAP",
+    "power_ovr": "POW",
+    "eye_ovr": "EYE",
+    "avoid_k_ovr": "K's",
     "speed": "SPE",
     "steal": "STE",
     "running_ability": "RUN",
@@ -34,6 +39,9 @@ PLAYER_FIELDS = {
     "stuff": "STU P",
     "movement": "MOV P",
     "control": "CONT P",
+    "stuff_ovr": "STU",
+    "movement_ovr": "MOV",
+    "control_ovr": "CONT",
     "stamina": "STM",
     "groundball_type": "G/F",
     "fastball": "FBP",
@@ -79,7 +87,7 @@ class GamePlayer:
             "knuckleball",
             "knucklecurve",
         ]
-        for (attr, dict_attr) in PLAYER_FIELDS.items():
+        for attr, dict_attr in PLAYER_FIELDS.items():
             setattr(self, f"_{attr}", player_dict[dict_attr])
 
     @property
@@ -151,6 +159,30 @@ class GamePlayer:
         return int(self._avoid_k)
 
     @property
+    def contact_ovr(self):
+        return int(self._contact_ovr)
+
+    @property
+    def gap_ovr(self):
+        return int(self._gap_ovr)
+
+    @property
+    def power_ovr(self):
+        return int(self._power_ovr)
+
+    @property
+    def eye_ovr(self):
+        return int(self._eye_ovr)
+
+    @property
+    def avoid_k(self):
+        return int(self._avoid_k)
+
+    @property
+    def avoid_k_ovr(self):
+        return int(self._avoid_k_ovr)
+
+    @property
     def speed(self):
         return int(self._speed)
 
@@ -209,6 +241,18 @@ class GamePlayer:
     @property
     def control(self):
         return int(self._control)
+
+    @property
+    def stuff_ovr(self):
+        return int(self._stuff_ovr)
+
+    @property
+    def movement_ovr(self):
+        return int(self._movement_ovr)
+
+    @property
+    def control_ovr(self):
+        return int(self._control_ovr)
 
     @property
     def stamina(self):

@@ -31,6 +31,11 @@ PLAYER_FIELDS = {
     "power": "POW P",
     "eye": "EYE P",
     "k": "K P",
+    "contactOvr": "CON",
+    "powerOvr": "POW",
+    "eyeOvr": "EYE",
+    "gapOvr": "GAP",
+    "kOvr": "K's",
     "speed": "SPE",
     "steal": "STE",
     "runningAbility": "RUN",
@@ -46,6 +51,9 @@ PLAYER_FIELDS = {
     "stuff": "STU P",
     "movement": "MOV P",
     "control": "CONT P",
+    "stuffOvr": "STU",
+    "movementOvr": "MOV",
+    "controlOvr": "CONT",
     "stamina": "STM",
     "groundball_type": "G/F",
     "fastball": "FBP",
@@ -407,12 +415,39 @@ def calculate_personality_modifier(player):
     return modifier
 
 
-age_modifiers = {17: 1.05, 18: 1.05, 19: 1.02, 20: 1, 21: 1, 22: 0.99, 23: 0.93}
+age_modifiers = {17: 1.1, 18: 1.07, 19: 1.02, 20: 1, 21: 1, 22: 0.97, 23: 0.93}
 
 
 def calculate_age_modifier(player):
     age = int(player[PLAYER_FIELDS["age"]])
     return age_modifiers[age]
+
+
+def get_overall_attribute_modifier(attribute):
+    if attribute >= 45:
+        return 1.14
+    elif attribute >= 40:
+        return 1.08
+    elif attribute >= 35:
+        return 1.035
+    elif attribute >= 30:
+        return 1
+    elif attribute >= 25:
+        return 0.985
+    return 0.95
+
+
+def calculate_position_player_overall_modifier(player):
+    modifier = 1
+    contactOverall = int(player[PLAYER_FIELDS["contactOvr"]])
+    modifier *= get_overall_attribute_modifier(contactOverall)
+    powOverall = int(player[PLAYER_FIELDS["powerOvr"]])
+    modifier *= get_overall_attribute_modifier(powOverall)
+    eyeOverall = int(player[PLAYER_FIELDS["eyeOvr"]])
+    modifier *= get_overall_attribute_modifier(eyeOverall)
+    kOverall = int(player[PLAYER_FIELDS["kOvr"]])
+    modifier *= get_overall_attribute_modifier(kOverall)
+    return modifier
 
 
 def calculate_position_player_modifier(player):
@@ -425,6 +460,8 @@ def calculate_position_player_modifier(player):
         modifier *= 1.05
     elif injuryProne == "Fragile":
         modifier *= 0.8
+
+    modifier *= calculate_position_player_overall_modifier(player)
 
     modifier *= calculate_personality_modifier(player)
 
@@ -468,8 +505,8 @@ rp_groundball_type_modifier_map = {
     "EX FB": 0.93,
     "FB": 1,
     "NEU": 1,
-    "GB": 1.05,
-    "EX GB": 1.1,
+    "GB": 1.02,
+    "EX GB": 1.07,
 }
 
 rp_stamina_modifier_map = {
@@ -540,7 +577,11 @@ def calculate_rp_modifier(player):
 
     modifier *= home_run_risk_modifier
 
+    overall_modifier = calculate_pitcher_overall_modifier(player)
+    age_modifier = calculate_age_modifier(player)
     modifier *= calculate_personality_modifier(player)
+    modifier *= age_modifier
+    modifier *= overall_modifier
     return modifier
 
 
@@ -567,11 +608,11 @@ sp_stamina_modifier_map = {
 }
 
 sp_groundball_type_modifier_map = {
-    "EX FB": 0.85,
+    "EX FB": 0.96,
     "FB": 1,
     "NEU": 1,
-    "GB": 1.1,
-    "EX GB": 1.2,
+    "GB": 1.03,
+    "EX GB": 1.08,
 }
 
 sp_third_pitch_value_modifier_map = {
@@ -621,6 +662,17 @@ sp_fifth_pitch_value_modifier_map = {
     75: 1.2,
     80: 1.2,
 }
+
+
+def calculate_pitcher_overall_modifier(player):
+    modifier = 1
+    stuffOverall = int(player[PLAYER_FIELDS["stuffOvr"]])
+    modifier *= get_overall_attribute_modifier(stuffOverall)
+    movementOverall = int(player[PLAYER_FIELDS["movementOvr"]])
+    modifier *= get_overall_attribute_modifier(movementOverall)
+    controlOverall = int(player[PLAYER_FIELDS["controlOvr"]])
+    modifier *= get_overall_attribute_modifier(controlOverall)
+    return modifier
 
 
 def calculate_sp_modifiers(player):
@@ -678,8 +730,10 @@ def calculate_sp_modifiers(player):
 
     personality_modifier = calculate_personality_modifier(player)
     age_modifier = calculate_age_modifier(player)
+    overall_modifier = calculate_pitcher_overall_modifier(player)
     modifier *= personality_modifier
     modifier *= age_modifier
+    modifier *= overall_modifier
     return {
         "total_modifier": modifier,
         "injury_prone_modifier": injury_prone_modifier,
