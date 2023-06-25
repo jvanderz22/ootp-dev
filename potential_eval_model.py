@@ -770,8 +770,8 @@ def aggregate_pitcher_batter_scores(batter_score, pitcher_score):
     low_score = batter_score if batter_score < pitcher_score else pitcher_score
     total_score = high_score
     # Add a bonus for potential two way players
-    if (high_score - low_score) < (high_score / 2):
-        total_score += low_score * 0.25
+    if (high_score - low_score) < (high_score / 1.75):
+        total_score += low_score * 0.15
     return total_score
 
 
