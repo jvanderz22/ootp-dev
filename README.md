@@ -21,3 +21,6 @@ python3 rankings_csv.py --C 0.9
 
 Upload draft preference list to stats plus:
 python3 upload_drafted_players.py
+
+Refresh drafted list and upload draft preference list to stats plus:
+python3 upload_drafted_players.py -d

@@ -8,7 +8,6 @@ from drafted_players import get_drafted_player_ids, get_drafted_players_info
 
 
 def print_player(player, index, draft_info, game_player, print_opts={}):
-    print_raw = print_opts.get("print_raw", False)
     print_minimal = print_opts.get("print_minimal", False)
     print("---------------------------")
     print(
@@ -24,10 +23,6 @@ def print_player(player, index, draft_info, game_player, print_opts={}):
     print(
         f'Overall Ranking: {int(player["overall_ranking"]) + 1}, Model score: {player["model_score"]}, Potential: {player["in_game_potential"]}'
     )
-    if print_raw:
-        print(
-            f'Raw (demand-excluded) score: {player["raw_overall_score"]}, Raw Ranking: {player["raw_ranking"]}'
-        )
     position_player_score = float(player["position_player_score"])
     pitcher_score = float(player["pitcher_score"])
     is_batter = False
@@ -98,17 +93,15 @@ if __name__ == "__main__":
     show_drafted = False
     sort_by_potential = False
     show_drafted_only = False
-    print_raw = False
+    drafted_round = None
     print_minimal = False
     player_name = None
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "n:p:t:armsd")
+        opts, args = getopt.getopt(sys.argv[1:], "n:p:t:r:amsd")
     except getopt.GetoptError:
         print("Invalid Option!")
         sys.exit(2)
     for opt, arg in opts:
-        if opt == "-r":
-            print_raw = True
         if opt == "-m":
             print_minimal = True
         if opt == "-a":
@@ -119,6 +112,8 @@ if __name__ == "__main__":
             player_name = arg
         if opt == "-d":
             show_drafted_only = True
+        if opt == "-r":
+            drafted_round = arg
         if opt == "-t":
             print_count = int(arg)
         if opt == "-s":
@@ -136,6 +131,7 @@ if __name__ == "__main__":
                 players, key=lambda player: player["in_game_potential"], reverse=True
             )
         for i, player in enumerate(players):
+            player_draft_info = drafted_player_info.get(player["id"])
             is_drafted = False
             if printed_players >= print_count:
                 break
@@ -145,6 +141,11 @@ if __name__ == "__main__":
             if player["id"] in drafted_players:
                 is_drafted = True
                 if not show_drafted and not show_drafted_only:
+                    continue
+                elif (
+                    drafted_round is not None
+                    and player_draft_info["round"] != drafted_round
+                ):
                     continue
             else:
                 if show_drafted_only:
@@ -165,8 +166,8 @@ if __name__ == "__main__":
             print_player(
                 player,
                 printed_players,
-                drafted_player_info.get(player["id"]),
+                player_draft_info,
                 game_players.get_player(player["id"]),
-                {"print_raw": print_raw, "print_minimal": print_minimal},
+                {"print_minimal": print_minimal},
             )
             print("")
