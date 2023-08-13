@@ -485,7 +485,7 @@ def calculate_position_player_score(player):
     batting_score = calculate_batting_score(player)
     running_score = calculate_running_score(player)
     overall_score = (
-        (batting_score * 0.71) + (fielding_score * 0.3) + (running_score * 0.04)
+        (batting_score * 0.76) + (fielding_score * 0.25) + (running_score * 0.04)
     )
     overall_modifier = calculate_position_player_modifier(player)
 
@@ -780,7 +780,7 @@ def aggregate_pitcher_batter_scores(batter_score, pitcher_score):
     low_score = batter_score if batter_score < pitcher_score else pitcher_score
     total_score = high_score
     # Add a bonus for potential two way players
-    if (high_score - low_score) < (high_score / 1.75):
+    if (high_score - low_score) < (high_score / 2.2):
         total_score += low_score * 0.15
     return total_score
 
