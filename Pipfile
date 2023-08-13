@@ -10,6 +10,7 @@ pandas = "*"
 bs4 = "*"
 selenium = "*"
 python-dotenv = "*"
+xgboost = "*"
 
 [dev-packages]
 

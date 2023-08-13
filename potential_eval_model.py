@@ -1,6 +1,9 @@
 import numpy as np
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model
+from sklearn.model_selection import train_test_split
+import xgboost as xgb
+import os
 import re
 import csv
 from constants import USE_PITCHER_MODIFIER, PITCHER_EXPONENT, PITCHER_MULTIPLIER
@@ -260,15 +263,24 @@ def create_model(model_config):
             independent_variables.append(independent_line_variables)
             y.append(int(line["Ovr"]))
 
-    # generate a model of polynomial features
-    poly = PolynomialFeatures(degree=len(model_properties))
-    # transform the x data for proper fitting (for single variable type it returns,[1,x,x**2])
-    x = poly.fit_transform(independent_variables)
-    # generate the regression object
-    clf = linear_model.LinearRegression(positive=True)
-    # preform the actual regression
-    clf.fit(x, y)
-    return clf
+    matrix = xgb.DMatrix(independent_variables, y)
+    params = {"objective": "reg:squarederror", "tree_method": "hist"}
+    X_train, X_test, y_train, y_test = train_test_split(
+        independent_variables, y, random_state=1
+    )
+    # Create regression matrices
+    dtrain_reg = xgb.DMatrix(X_train, y_train, enable_categorical=True)
+    dtest_reg = xgb.DMatrix(X_test, y_test, enable_categorical=True)
+
+    evals = [(dtrain_reg, "train"), (dtest_reg, "validation")]
+    n = 100
+    xgb_model = xgb.train(
+        params=params,
+        dtrain=matrix,
+        num_boost_round=n,
+        evals=evals,
+    )
+    return xgb_model
 
 
 def create_fielding_models_map():
@@ -311,10 +323,8 @@ def run_model_for_player(model, model_config, player):
         int(player[model_config["fields_mapping"][field]])
         for field in model_config["fields"]
     ]
-    poly_features = PolynomialFeatures(degree=len(player_attrs))
-    # transform the prediction to fit the model type
-    fit_predict_ = poly_features.fit_transform([player_attrs])
-    return model.predict(fit_predict_)[0]
+
+    return model.predict(xgb.DMatrix([player_attrs], []))[0]
 
 
 def calculate_best_position_score(position_scores):
