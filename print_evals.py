@@ -152,7 +152,7 @@ if __name__ == "__main__":
                     continue
             if position is not None:
                 if position.lower() == "pos":
-                    search_pos = ["c", "1b", "2b", "3b", "ss" "rf", "cf", "lf", "dh"]
+                    search_pos = ["c", "1b", "2b", "3b", "ss", "rf", "cf", "lf", "dh"]
                 elif position.lower() == "pit":
                     search_pos = ["sp", "rp", "cl"]
                 elif position.lower() == "of":

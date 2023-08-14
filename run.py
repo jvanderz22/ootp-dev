@@ -1,7 +1,7 @@
 import os
 import csv
 
-import potential_eval_model
+from models.game_players import GamePlayer
 import ranking_csv
 from constants import DRAFT_CLASS_NAME
 from draft_class_files import (
@@ -9,6 +9,10 @@ from draft_class_files import (
     get_draft_class_drafted_players_file,
 )
 from print_pos_distribution import print_top_distribution
+from rankers.draft_class_ranker import DraftClassRanker
+from draft_class_files import (
+    get_draft_class_eval_model_file,
+)
 
 
 def process_file():
@@ -31,6 +35,90 @@ def process_file():
             file.write(filedata)
 
 
+def write_player_scores_to_file(players):
+    output_field_names = [
+        "ranking",
+        "id",
+        "name",
+        "position",
+        "age",
+        "position_player_score",
+        "fielding_score_component",
+        "batting_score_component",
+        "pitcher_score",
+        "overall_score",
+        "in_game_potential",
+        "demand",
+        "raw_overall_score",
+    ]
+    all_players_by_id = {player.id: player for player in players}
+    player_scores = DraftClassRanker().rank(players)
+
+    position_players_by_100s = {
+        0: 0,
+        1: 0,
+        2: 0,
+        3: 0,
+        4: 0,
+        5: 0,
+        6: 0,
+        7: 0,
+        8: 0,
+        9: 0,
+        10: 0,
+        11: 0,
+    }
+
+    rps_by_100s = {
+        0: 0,
+        1: 0,
+        2: 0,
+        3: 0,
+        4: 0,
+        5: 0,
+        6: 0,
+        7: 0,
+        8: 0,
+        9: 0,
+        10: 0,
+        11: 0,
+    }
+    for i, player_score in enumerate(player_scores):
+        player = all_players_by_id[player_score.id]
+        is_position_player = (
+            player_score.position_player_score > player_score.pitcher_score
+        )
+        is_rp = player.position == "RP" or player.position == "CL"
+        dict_key = int(i / 100)
+        if is_position_player:
+            position_players_by_100s[dict_key] += 1
+        if is_rp:
+            rps_by_100s[dict_key] += 1
+
+    with open(get_draft_class_eval_model_file(), "w", newline="") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=output_field_names)
+        writer.writeheader()
+        for i, player_score in enumerate(player_scores):
+            player = all_players_by_id[player_score.id]
+            writer.writerow(
+                {
+                    "ranking": i,
+                    "id": player.id,
+                    "name": player.name,
+                    "position": player.position,
+                    "age": player.age,
+                    "position_player_score": player_score.position_player_score,
+                    "fielding_score_component": player_score.fielding_score_component,
+                    "batting_score_component": player_score.batting_score_component,
+                    "pitcher_score": player_score.pitcher_score,
+                    "overall_score": round(player_score.overall_score, 2),
+                    "in_game_potential": player.potential,
+                    "demand": player.demand,
+                    "raw_overall_score": player_score.raw_overall_score,
+                }
+            )
+
+
 if __name__ == "__main__":
     # Create a directory to store info about the draft class if it doesn't exist
     if not os.path.exists(f"processed_classes/{DRAFT_CLASS_NAME}"):
@@ -42,7 +130,16 @@ if __name__ == "__main__":
     print(f"Running evals for {DRAFT_CLASS_NAME}!")
 
     process_file()
-    potential_eval_model.score_players()
+
+    players = []
+    with open(get_draft_class_data_file(), newline="") as csvfile:
+        reader = csv.DictReader(csvfile)
+        best_pitcher_score = 0
+        best_position_player_score = 0
+        for i, player in enumerate(reader):
+            game_player = GamePlayer(player)
+            players.append(game_player)
+    write_player_scores_to_file(players)
     ranking_csv.create_ranking_csv()
 
     print_top_distribution(10)

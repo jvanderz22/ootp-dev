@@ -48,7 +48,6 @@ def create_ranking_csv(modifiers=None):
         "in_game_potential",
         "demand",
         "raw_overall_score",
-        "raw_ranking",
     ]
     if modifiers is not None:
         for player in ranked_players:
@@ -86,7 +85,6 @@ def create_ranking_csv(modifiers=None):
                 "pitcher_score": player["pitcher_score"],
                 "position_player_score": player["position_player_score"],
                 "raw_overall_score": player["raw_overall_score"],
-                "raw_ranking": player["raw_ranking"],
             }
 
             writer.writerow(row)

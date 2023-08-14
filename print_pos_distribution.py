@@ -16,7 +16,7 @@ def print_top_distribution(rank_count):
             if i >= rank_count:
                 break
             position = player["position"]
-            if position == "SP" or position == "RP" or position == "CP":
+            if position == "SP" or position == "RP" or position == "CL":
                 pitcher_count += 1
             else:
                 position_player_count += 1

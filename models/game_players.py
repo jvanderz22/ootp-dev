@@ -11,6 +11,9 @@ PLAYER_FIELDS = {
     "throw_hand": "T",
     "bat_hand": "B",
     "injury_prone": "Prone",
+    "adaptibility": "AD",
+    "loyalty": "LOY",
+    "greed": "GRE",
     "intelligence": "INT",
     "work_ethic": "WE",
     "leadership": "LEA",
@@ -115,6 +118,10 @@ class GamePlayer:
         return self._signability
 
     @property
+    def age(self):
+        return int(self._age)
+
+    @property
     def throw_hand(self):
         return self._throw_hand
 
@@ -137,6 +144,18 @@ class GamePlayer:
     @property
     def leadership(self):
         return self._leadership
+
+    @property
+    def adaptibility(self):
+        return self._adaptibility
+
+    @property
+    def greed(self):
+        return self._greed
+
+    @property
+    def loyalty(self):
+        return self._loyalty
 
     @property
     def contact(self):
