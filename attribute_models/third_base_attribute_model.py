@@ -27,3 +27,18 @@ class ThirdBaseAttributeModel(AttributeModel):
             "Arm": "if_arm",
             "Error": "if_error",
         }
+
+    @property
+    def test_data(self):
+        return [
+            [10, [50, 40, 50]],  # barely useable
+            [35, [50, 55, 70]],  # solid regular
+            [35, [60, 50, 60]],  # solid regular
+            [70, [70, 70, 70]],  # gold glove
+            [70, [80, 50, 80]],  # gold glove
+            [70, [80, 80, 60]],  # gold glove
+            [5, [35, 45, 55]],
+            [0, [70, 70, 25]],  # lower bounds
+            [0, [30, 70, 70]],  # lower bounds
+            [15, [80, 20, 80]],  # lower bounds
+        ]

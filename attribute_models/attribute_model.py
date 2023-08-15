@@ -27,6 +27,10 @@ class AttributeModel(ABC):
     def fields_mapping(self):
         pass
 
+    @property
+    def test_data(self):
+        return None
+
     def run(self, player):
         if self.right_hand_only and player.throw_hand != "Right":
             return 0
@@ -56,26 +60,33 @@ class AttributeModel(ABC):
                 independent_variables.append(independent_line_variables)
                 y.append(int(line["Ovr"]))
 
-        xgb.set_config(verbosity=0)
-        matrix = xgb.DMatrix(independent_variables, y)
         params = {
             "objective": "reg:squarederror",
-            "tree_method": "hist",
+            "tree_method": "exact",
             "verbosity": 0,
         }
-        X_train, X_test, y_train, y_test = train_test_split(
-            independent_variables, y, random_state=1
-        )
+        if self.test_data is None:
+            X_train, X_test, y_train, y_test = train_test_split(
+                independent_variables, y, random_state=1
+            )
+        else:
+            X_train = independent_variables
+            y_train = y
+            y_test = [test_item[0] for test_item in self.test_data]
+            X_test = [test_item[1] for test_item in self.test_data]
+        all_x = X_train + X_test
+        all_y = y_train + y_test
+
         # Create regression matrices
-        dtrain_reg = xgb.DMatrix(X_train, y_train, enable_categorical=True)
-        dtest_reg = xgb.DMatrix(X_test, y_test, enable_categorical=True)
+        dtrain_reg = xgb.DMatrix(all_x, all_y)
+        dtest_reg = xgb.DMatrix(X_test, y_test)
 
         evals = [(dtrain_reg, "train"), (dtest_reg, "validation")]
-        n = 100
-        return xgb.train(
+        n = 20
+        model = xgb.train(
             params=params,
-            dtrain=matrix,
+            dtrain=dtrain_reg,
             num_boost_round=n,
             evals=evals,
-            verbose_eval=False,
         )
+        return model
