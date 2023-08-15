@@ -4,7 +4,7 @@ import random
 test_file = "test_file.csv"
 # field_names = ["Ovr", "Contact", "Gap", "Power", "Eye", "K"]
 field_names = ["Ovr", "Range", "Error", "Arm"]
-rows = 35
+rows = 30
 
 
 def generate_test_data():
@@ -17,7 +17,7 @@ def generate_test_data():
             i += 1
             values = random.choices(
                 possibleRatings,
-                weights=(0.25, 0.25, 0.75, 1, 1, 1, 1, 1, 1, 1, 1, 0.75, 0.5),
+                weights=(0.25, 0.25, 0.75, 0.75, 1, 1, 1, 1, 1, 1, 1, 0.75, 0.5),
                 k=len(field_names) - 1,
             )
             overall_rating = None
@@ -33,14 +33,13 @@ def generate_test_data():
                         print("Invalid rating! Rate Again\n\n\n")
                 except ValueError:
                     continue
-            writer.writerow(
-                {
-                    "Ovr": overall_rating,
-                    field_names[0]: values[0],
-                    field_names[1]: values[1],
-                    field_names[2]: values[2],
-                }
-            )
+
+            row = {
+                "Ovr": overall_rating,
+            }
+            for j, value in enumerate(values):
+                row[field_names[j + 1]] = value
+            writer.writerow(row)
 
 
 if __name__ == "__main__":
