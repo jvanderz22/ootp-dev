@@ -31,16 +31,9 @@ class AttributeModel(ABC):
         if self.right_hand_only and player.throw_hand != "Right":
             return 0
 
-        try:
-            player_attrs = [
-                getattr(player, self.fields_mapping[field]) for field in self.fields
-            ]
-        except Exception as e:
-            print(e)
-            import pdb
-
-            pdb.set_trace()
-
+        player_attrs = [
+            getattr(player, self.fields_mapping[field]) for field in self.fields
+        ]
         model_prediction = self.model.predict(xgb.DMatrix([player_attrs], []))[0]
         return model_prediction if model_prediction > 0 else 0
 
@@ -63,8 +56,13 @@ class AttributeModel(ABC):
                 independent_variables.append(independent_line_variables)
                 y.append(int(line["Ovr"]))
 
+        xgb.set_config(verbosity=0)
         matrix = xgb.DMatrix(independent_variables, y)
-        params = {"objective": "reg:squarederror", "tree_method": "hist"}
+        params = {
+            "objective": "reg:squarederror",
+            "tree_method": "hist",
+            "verbosity": 0,
+        }
         X_train, X_test, y_train, y_test = train_test_split(
             independent_variables, y, random_state=1
         )
@@ -79,4 +77,5 @@ class AttributeModel(ABC):
             dtrain=matrix,
             num_boost_round=n,
             evals=evals,
+            verbose_eval=False,
         )

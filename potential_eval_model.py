@@ -28,7 +28,7 @@ PLAYER_FIELDS = {
     "leadership": "LEA",
     "loyalty": "LOY",
     "adaptibility": "AD",
-    "greed": "GRE",
+    "greed": "FIN",
     "contact": "CON P",
     "gap": "GAP P",
     "power": "POW P",

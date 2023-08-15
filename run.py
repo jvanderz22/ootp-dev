@@ -1,10 +1,15 @@
+import json
 import os
 import csv
 
 from models.game_players import GamePlayer
+from rankers.current_potential_ranker import CurrentPotentialRanker
+from rankers.overall_potential_ranker import OverallPotentialRanker
+from rankers.overall_ranker import OverallRanker
 import ranking_csv
 from constants import DRAFT_CLASS_NAME
 from draft_class_files import (
+    get_draft_class_config_file,
     get_draft_class_data_file,
     get_draft_class_drafted_players_file,
 )
@@ -35,6 +40,22 @@ def process_file():
             file.write(filedata)
 
 
+def get_ranker():
+    ranking_method = None
+    with open(get_draft_class_config_file(), "r") as jsonfile:
+        json_data = json.load(jsonfile)
+        ranking_method = json_data.get("ranking_method")
+    if ranking_method == "draft_class":
+        return DraftClassRanker()
+    elif ranking_method == "potential":
+        return OverallPotentialRanker()
+    elif ranking_method == "current_potential":
+        return CurrentPotentialRanker()
+    elif ranking_method == "overall":
+        return OverallRanker()
+    raise ValueError("Invalid Ranker")
+
+
 def write_player_scores_to_file(players):
     output_field_names = [
         "ranking",
@@ -51,8 +72,10 @@ def write_player_scores_to_file(players):
         "demand",
         "raw_overall_score",
     ]
+
     all_players_by_id = {player.id: player for player in players}
-    player_scores = DraftClassRanker().rank(players)
+    ranker = get_ranker()
+    player_scores = ranker.rank(players)
 
     position_players_by_100s = {
         0: 0,
@@ -119,26 +142,29 @@ def write_player_scores_to_file(players):
             )
 
 
+def load_player_data():
+    players = []
+    with open(get_draft_class_data_file(), newline="") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for i, player in enumerate(reader):
+            game_player = GamePlayer(player)
+            players.append(game_player)
+    return players
+
+
 if __name__ == "__main__":
     # Create a directory to store info about the draft class if it doesn't exist
     if not os.path.exists(f"processed_classes/{DRAFT_CLASS_NAME}"):
         os.makedirs(f"processed_classes/{DRAFT_CLASS_NAME}")
+    if not os.path.exists(get_draft_class_data_file()):
         with open(get_draft_class_drafted_players_file(), "w", newline="") as file:
             header = ["Round", "Pick", "Overall", "Team", "Player", "Time"]
             writer = csv.DictWriter(file, fieldnames=header)
             writer.writeheader()
+
     print(f"Running evals for {DRAFT_CLASS_NAME}!")
-
     process_file()
-
-    players = []
-    with open(get_draft_class_data_file(), newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
-        best_pitcher_score = 0
-        best_position_player_score = 0
-        for i, player in enumerate(reader):
-            game_player = GamePlayer(player)
-            players.append(game_player)
+    players = load_player_data()
     write_player_scores_to_file(players)
     ranking_csv.create_ranking_csv()
 

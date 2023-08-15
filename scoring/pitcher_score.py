@@ -7,33 +7,6 @@ from attribute_models.starting_pitcher_attribute_model import (
 PITCHER_EXPONENT = 0.40
 PITCHER_MULTIPLIER = 12
 
-pitch_fields = [
-    "fastball",
-    "changeup",
-    "curveball",
-    "slider",
-    "sinker",
-    "splitter",
-    "cutter",
-    "forkball",
-    "circlechange",
-    "screwball",
-    "knuckleball",
-    "knucklecurve",
-]
-
-sp_model = StartingPitcherAttributeModel()
-rp_model = ReliefPitcherAttributeModel()
-
-
-def find_pitches(player):
-    pitches = []
-    for field in pitch_fields:
-        pitch_attr = getattr(player, field)
-        if pitch_attr is not None:
-            pitches.append(pitch_attr)
-    return sorted(pitches, reverse=True)
-
 
 rp_groundball_type_modifier_map = {
     "EX FB": 0.93,
@@ -76,7 +49,7 @@ rp_third_pitch_value_modifier_map = {
 }
 
 
-def calculate_rp_modifier(player):
+def calculate_rp_modifier(player, type="potential"):
     # Base rp score is lower
     modifier = 0.60
 
@@ -85,14 +58,16 @@ def calculate_rp_modifier(player):
 
     stamina = player.stamina
     stamina_modifier = rp_stamina_modifier_map[stamina]
-    pitches = find_pitches(player)
+    pitches = player.get_pitches() if type == "potential" else player.get_ovr_pitches()
     third_pitch_modifier = 1
     if len(pitches) >= 3:
-        third_pitch_modifier = rp_third_pitch_value_modifier_map[pitches[2]]
+        third_pitch_modifier = rp_third_pitch_value_modifier_map[
+            getattr(player, pitches[2])
+        ]
 
     total_rp_value_modifier = stamina_modifier * third_pitch_modifier
     # Apply potential starter bonus instead
-    if int(stamina) >= 35 and len(pitches) >= 3 and pitches[2] >= 40:
+    if int(stamina) >= 35 and len(pitches) >= 3 and getattr(player, pitches[2]) >= 40:
         total_rp_value_modifier = 1.4
 
     modifier *= total_rp_value_modifier
@@ -104,12 +79,6 @@ def calculate_rp_modifier(player):
     modifier *= home_run_risk_modifier
 
     return modifier
-
-
-def calculate_rp_score(player):
-    rp_score = rp_model.run(player)
-    rp_modifier = calculate_rp_modifier(player)
-    return rp_score * rp_modifier
 
 
 sp_stamina_modifier_map = {
@@ -185,7 +154,7 @@ sp_fifth_pitch_value_modifier_map = {
 }
 
 
-def calculate_sp_modifiers(player):
+def calculate_sp_modifiers(player, type="potential"):
     modifier = 1
 
     gb_type = player.groundball_type
@@ -193,20 +162,26 @@ def calculate_sp_modifiers(player):
     modifier *= gb_type_modifier
 
     stamina_modifier = sp_stamina_modifier_map[player.stamina]
-    pitches = find_pitches(player)
+    pitches = player.get_pitches() if type == "potential" else player.get_ovr_pitches()
     third_pitch_modifier = 1
     if len(pitches) < 3:
         third_pitch_modifier = 0.35
     else:
-        third_pitch_modifier = sp_third_pitch_value_modifier_map[pitches[2]]
+        third_pitch_modifier = sp_third_pitch_value_modifier_map[
+            getattr(player, pitches[2])
+        ]
 
     fourth_pitch_modifier = 0.97
     if len(pitches) >= 4:
-        fourth_pitch_modifier = sp_fourth_pitch_value_modifier_map[pitches[3]]
+        fourth_pitch_modifier = sp_fourth_pitch_value_modifier_map[
+            getattr(player, pitches[3])
+        ]
 
     fifth_pitch_modifier = 1
     if len(pitches) >= 5:
-        fifth_pitch_modifier = sp_fifth_pitch_value_modifier_map[pitches[4]]
+        fifth_pitch_modifier = sp_fifth_pitch_value_modifier_map[
+            getattr(player, pitches[4])
+        ]
 
     total_sp_value_modifier = (
         stamina_modifier
@@ -233,20 +208,30 @@ def calculate_sp_modifiers(player):
     }
 
 
-def calculate_sp_score(player):
-    base_score = sp_model.run(player)
-    modifiers = calculate_sp_modifiers(player)
-    score = base_score * modifiers["total_modifier"]
-    return score
+class PitcherScorer:
+    def __init__(self, type="potential"):
+        self.type = type
+        self.sp_model = StartingPitcherAttributeModel(type)
+        self.rp_model = ReliefPitcherAttributeModel(type)
 
+    def score(self, player):
+        position = player.position
+        if position == "RP" or position == "CL":
+            score = self.__calculate_rp_score(player)
+        else:
+            score = self.__calculate_sp_score(player)
+        score = score if score > 0 else 0
+        # Try to fix the batter/pitcher distribution
+        score = (score**PITCHER_EXPONENT) * PITCHER_MULTIPLIER
+        return score
 
-def calculate_pitcher_score(player):
-    position = player.position
-    if position == "RP" or position == "CL":
-        score = calculate_rp_score(player)
-    else:
-        score = calculate_sp_score(player)
-    score = score if score > 0 else 0
-    # Try to fix the batter/pitcher distribution
-    score = (score**PITCHER_EXPONENT) * PITCHER_MULTIPLIER
-    return score
+    def __calculate_sp_score(self, player):
+        base_score = self.sp_model.run(player)
+        modifiers = calculate_sp_modifiers(player, self.type)
+        score = base_score * modifiers["total_modifier"]
+        return score
+
+    def __calculate_rp_score(self, player):
+        rp_score = self.rp_model.run(player)
+        rp_modifier = calculate_rp_modifier(player, self.type)
+        return rp_score * rp_modifier

@@ -1,8 +1,11 @@
 from attribute_models.attribute_model import AttributeModel
-from models.game_players import PLAYER_FIELDS
 
 
 class BattingAttributeModel(AttributeModel):
+    def __init__(self, type="potential"):
+        super().__init__()
+        self.type = type
+
     @property
     def model_type(self):
         return "batting"
@@ -17,10 +20,28 @@ class BattingAttributeModel(AttributeModel):
 
     @property
     def fields_mapping(self):
+        return (
+            self.potential_fields_mapping
+            if self.type == "potential"
+            else self.overall_fields_mapping
+        )
+
+    @property
+    def potential_fields_mapping(self):
         return {
             "Contact": "contact",
             "Gap": "gap",
             "Power": "power",
             "Eye": "eye",
             "K": "avoid_k",
+        }
+
+    @property
+    def overall_fields_mapping(self):
+        return {
+            "Contact": "contact_ovr",
+            "Gap": "gap_ovr",
+            "Power": "power_ovr",
+            "Eye": "eye_ovr",
+            "K": "avoid_k_ovr",
         }

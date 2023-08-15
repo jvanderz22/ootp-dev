@@ -1,7 +1,9 @@
 import getopt
+import os
 import sys
 import pandas as pd
 from bs4 import BeautifulSoup
+import json
 
 
 def create_csv(file_path, draft_class_path):
@@ -33,6 +35,22 @@ def create_csv(file_path, draft_class_path):
     data_frame.to_csv(draft_class_path)
 
 
+def create_dataset(file_path, class_name):
+    class_path = f"datasets/{class_name}.csv"
+    create_csv(file_path, class_path)
+    data_directory = f"processed_classes/{class_name}"
+    if not os.path.exists(data_directory):
+        os.makedirs(data_directory)
+    dataset_config = {
+        "ranking_method": "draft_class",
+    }
+    with open(f"{data_directory}/config.json", "w") as config_file:
+        config_file.write(json.dumps(dataset_config, indent=4))
+    print(
+        f'Created class at {class_path}. Set "{class_name}" to be the active draft class in constants.py to process it.'
+    )
+
+
 if __name__ == "__main__":
     class_name = None
     file_name = None
@@ -51,10 +69,7 @@ if __name__ == "__main__":
         sys.exit(2)
     if file_name is None:
         print("File name (-f) not specified.")
+        sys.exit(2)
 
     file_name = file_name.replace("%20", " ")
-    class_path = f"datasets/{class_name}.csv"
-    create_csv(file_name, class_path)
-    print(
-        f'Created class at {class_path}. Set "{class_name}" to be the active draft class in constants.py to process it.'
-    )
+    create_dataset(file_name, class_name)

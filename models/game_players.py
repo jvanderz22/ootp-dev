@@ -13,7 +13,7 @@ PLAYER_FIELDS = {
     "injury_prone": "Prone",
     "adaptibility": "AD",
     "loyalty": "LOY",
-    "greed": "GRE",
+    "greed": "FIN",
     "intelligence": "INT",
     "work_ethic": "WE",
     "leadership": "LEA",
@@ -59,6 +59,18 @@ PLAYER_FIELDS = {
     "screwball": "SCP",
     "knuckleball": "KNP",
     "knucklecurve": "KCP",
+    "fastball_ovr": "FBP",
+    "changeup_ovr": "CHP",
+    "curveball_ovr": "CBP",
+    "slider_ovr": "SLP",
+    "sinker_ovr": "SIP",
+    "splitter_ovr": "SPP",
+    "cutter_ovr": "CTP",
+    "forkball_ovr": "FOP",
+    "circlechange_ovr": "CCP",
+    "screwball_ovr": "SCP",
+    "knuckleball_ovr": "KNP",
+    "knucklecurve_ovr": "KCP",
 }
 
 
@@ -89,6 +101,20 @@ class GamePlayer:
             "screwball",
             "knuckleball",
             "knucklecurve",
+        ]
+        self.pitch_ovr_fields = [
+            "fastball_ovr",
+            "changeup_ovr",
+            "curveball_ovr",
+            "slider_ovr",
+            "sinker_ovr",
+            "splitter_ovr",
+            "cutter_ovr",
+            "forkball_ovr",
+            "circlechange_ovr",
+            "screwball_ovr",
+            "knuckleball_ovr",
+            "knucklecurve_ovr",
         ]
         for attr, dict_attr in PLAYER_FIELDS.items():
             setattr(self, f"_{attr}", player_dict[dict_attr])
@@ -365,9 +391,101 @@ class GamePlayer:
         except ValueError:
             return None
 
+    @property
+    def fastball_ovr(self):
+        try:
+            return int(self._fastball_ovr)
+        except ValueError:
+            return None
+
+    @property
+    def changeup_ovr(self):
+        try:
+            return int(self._changeup_ovr)
+        except ValueError:
+            return None
+
+    @property
+    def curveball_ovr(self):
+        try:
+            return int(self._curveball_ovr)
+        except ValueError:
+            return None
+
+    @property
+    def slider_ovr(self):
+        try:
+            return int(self._slider_ovr)
+        except ValueError:
+            return None
+
+    @property
+    def sinker_ovr(self):
+        try:
+            return int(self._sinker_ovr)
+        except ValueError:
+            return None
+
+    @property
+    def splitter_ovr(self):
+        try:
+            return int(self._splitter_ovr)
+        except ValueError:
+            return None
+
+    @property
+    def cutter_ovr(self):
+        try:
+            return int(self._cutter_ovr)
+        except ValueError:
+            return None
+
+    @property
+    def forkball_ovr(self):
+        try:
+            return int(self._forkball_ovr)
+        except ValueError:
+            return None
+
+    @property
+    def circlechange_ovr(self):
+        try:
+            return int(self._circlechange_ovr)
+        except ValueError:
+            return None
+
+    @property
+    def screwball_ovr(self):
+        try:
+            return int(self._screwball_ovr)
+        except ValueError:
+            return None
+
+    @property
+    def knuckleball_ovr(self):
+        try:
+            return int(self._knuckleball_ovr)
+        except ValueError:
+            return None
+
+    @property
+    def knucklecurve_ovr(self):
+        try:
+            return int(self._knucklecurve_ovr)
+        except ValueError:
+            return None
+
     def get_pitches(self):
         pitches = []
         for field in self.pitch_fields:
+            pitch_attr = getattr(self, field)
+            if pitch_attr is not None:
+                pitches.append(field)
+        return sorted(pitches, key=lambda p: getattr(self, p), reverse=True)
+
+    def get_ovr_pitches(self):
+        pitches = []
+        for field in self.pitch_ovr_fields:
             pitch_attr = getattr(self, field)
             if pitch_attr is not None:
                 pitches.append(field)

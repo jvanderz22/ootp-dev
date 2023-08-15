@@ -1,4 +1,5 @@
 import csv
+import os
 
 from draft_class_files import (
     get_draft_class_drafted_players_file,
@@ -17,6 +18,8 @@ def get_drafted_players_info():
 
 def get_drafted_players_stats_plus():
     players_by_name = {}
+    if not os.path.exists(get_draft_class_eval_model_file()):
+        return players_by_name
     with open(get_draft_class_eval_model_file(), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for player in reader:
@@ -30,6 +33,9 @@ def get_drafted_players_stats_plus():
                 players_by_name[name][position] = player
 
     drafted_players = {}
+    if not os.path.exists(get_draft_class_drafted_players_file()):
+        return drafted_players
+
     with open(get_draft_class_drafted_players_file(), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for i, drafted_player in enumerate(reader):
