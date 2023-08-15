@@ -19,17 +19,17 @@ class DraftRankPersonalityModifier(BaseRankModifier):
             modifier_weight = 1
 
         bad_personalities = 0
-        if player.work_ethic == "Low":
+        if player.work_ethic == "L":
             bad_personalities += 1
-        if player.intelligence == "Low":
+        if player.intelligence == "L":
             bad_personalities += 1
-        if player.adaptibility == "Low":
+        if player.adaptibility == "L":
             bad_personalities += 1
-        if player.loyalty == "Low":
+        if player.loyalty == "L":
             bad_personalities += 1
-        if player.leadership == "Low":
+        if player.leadership == "L":
             bad_personalities += 1
-        if player.greed == "High":
+        if player.greed == "H":
             bad_personalities += 1
 
         if bad_personalities > 5:
@@ -39,9 +39,9 @@ class DraftRankPersonalityModifier(BaseRankModifier):
         elif bad_personalities > 3:
             personality_modifier *= 0.92
 
-        if player.leadership == "High":
+        if player.leadership == "H":
             personality_modifier *= 1.2
-        if player.work_ethic == "High" and player.intelligence == "High":
+        if player.work_ethic == "H" and player.intelligence == "H":
             personality_modifier *= 1.2
 
         return personality_modifier**modifier_weight
