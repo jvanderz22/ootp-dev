@@ -64,6 +64,7 @@ class AttributeModel(ABC):
             "objective": "reg:squarederror",
             "tree_method": "exact",
             "verbosity": 0,
+            "monotone_constraints": tuple([1 for i in model_properties]),
         }
         if self.test_data is None:
             X_train, X_test, y_train, y_test = train_test_split(
