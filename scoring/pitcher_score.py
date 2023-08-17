@@ -23,13 +23,13 @@ rp_stamina_modifier_map = {
     35: 1,
     40: 1,
     45: 1.05,
-    50: 1.05,
-    55: 1.05,
-    60: 1.05,
-    65: 1.05,
-    70: 1.05,
-    75: 1.05,
-    80: 1.05,
+    50: 1.1,
+    55: 1.1,
+    60: 1.1,
+    65: 1.15,
+    70: 1.15,
+    75: 1.15,
+    80: 1.15,
 }
 
 rp_third_pitch_value_modifier_map = {
@@ -82,11 +82,11 @@ def calculate_rp_modifier(player, type="potential"):
 
 
 sp_stamina_modifier_map = {
-    20: 0.35,
-    25: 0.35,
-    30: 0.4,
-    35: 0.6,
-    40: 0.85,
+    20: 0.25,
+    25: 0.25,
+    30: 0.35,
+    35: 0.8,
+    40: 0.9,
     45: 0.95,
     50: 0.98,
     55: 1,
@@ -216,10 +216,15 @@ class PitcherScorer:
 
     def score(self, player):
         position = player.position
+        score = None
         if position == "RP" or position == "CL":
-            score = self.__calculate_rp_score(player)
+            relief_score = self.__calculate_rp_score(player)
+            starting_score = self.__calculate_sp_score(player) * 0.6
+            score = starting_score if starting_score > relief_score else relief_score
         else:
-            score = self.__calculate_sp_score(player)
+            starting_score = self.__calculate_sp_score(player)
+            relief_score = self.__calculate_rp_score(player) * 1.1
+            score = starting_score if starting_score > relief_score else relief_score
         score = score if score > 0 else 0
         # Try to fix the batter/pitcher distribution
         score = (score**PITCHER_EXPONENT) * PITCHER_MULTIPLIER
