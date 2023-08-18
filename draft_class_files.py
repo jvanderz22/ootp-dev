@@ -13,7 +13,7 @@ def get_draft_class_config_file():
     return f"./processed_classes/{DRAFT_CLASS_NAME}/config.json"
 
 
-def get_draft_class_ranked_players_file():
+def get_ranked_players_file():
     return f"./processed_classes/{DRAFT_CLASS_NAME}/ranked_players.csv"
 
 
