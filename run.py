@@ -42,9 +42,11 @@ def process_file():
 
 def get_ranker():
     ranking_method = None
+
     with open(get_draft_class_config_file(), "r") as jsonfile:
         json_data = json.load(jsonfile)
         ranking_method = json_data.get("ranking_method")
+        print(f"Ranking using ranking method {ranking_method}")
     if ranking_method == "draft_class":
         return DraftClassRanker()
     elif ranking_method == "potential":
@@ -77,35 +79,8 @@ def write_player_scores_to_file(players):
     ranker = get_ranker()
     player_scores = ranker.rank(players)
 
-    position_players_by_100s = {
-        0: 0,
-        1: 0,
-        2: 0,
-        3: 0,
-        4: 0,
-        5: 0,
-        6: 0,
-        7: 0,
-        8: 0,
-        9: 0,
-        10: 0,
-        11: 0,
-    }
-
-    rps_by_100s = {
-        0: 0,
-        1: 0,
-        2: 0,
-        3: 0,
-        4: 0,
-        5: 0,
-        6: 0,
-        7: 0,
-        8: 0,
-        9: 0,
-        10: 0,
-        11: 0,
-    }
+    position_players_by_100s = {}
+    rps_by_100s = {}
     for i, player_score in enumerate(player_scores):
         player = all_players_by_id[player_score.id]
         is_position_player = (
@@ -114,8 +89,13 @@ def write_player_scores_to_file(players):
         is_rp = player.position == "RP" or player.position == "CL"
         dict_key = int(i / 100)
         if is_position_player:
+            if position_players_by_100s.get(dict_key) is None:
+                position_players_by_100s[dict_key] = 0
+
             position_players_by_100s[dict_key] += 1
         if is_rp:
+            if rps_by_100s.get(dict_key) is None:
+                rps_by_100s[dict_key] = 0
             rps_by_100s[dict_key] += 1
 
     with open(get_draft_class_eval_model_file(), "w", newline="") as csvfile:

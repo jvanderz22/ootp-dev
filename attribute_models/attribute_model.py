@@ -9,6 +9,7 @@ class AttributeModel(ABC):
     def __init__(self):
         self._model = None
 
+    debug = False
     right_hand_only = False
 
     @abstractproperty
@@ -89,5 +90,25 @@ class AttributeModel(ABC):
             dtrain=dtrain_reg,
             num_boost_round=n,
             evals=evals,
+            verbose_eval=self.debug,
         )
+        if self.debug:
+            self.__print_test_results(model)
         return model
+
+    def __print_test_results(self, model):
+        print("test result", model.predict(xgb.DMatrix([[80, 80, 50, 80, 80]])))
+        print("test result", model.predict(xgb.DMatrix([[80, 50, 50, 50, 50]], [])))
+        print("test result", model.predict(xgb.DMatrix([[80, 30, 30, 40, 75]], [])))
+        print("test result", model.predict(xgb.DMatrix([[80, 80, 80, 45, 45]], [])))
+        print("test result", model.predict(xgb.DMatrix([[75, 75, 50, 35, 35]], [])))
+        print("test result", model.predict(xgb.DMatrix([[60, 50, 60, 35, 35]], [])))
+        print("test result", model.predict(xgb.DMatrix([[40, 55, 70, 70, 45]], [])))
+        print("test result", model.predict(xgb.DMatrix([[60, 40, 55, 60, 60]], [])))
+        print("test result", model.predict(xgb.DMatrix([[50, 55, 65, 70, 80]], [])))
+        print("test result", model.predict(xgb.DMatrix([[40, 45, 40, 50, 50]], [])))
+        print("test result", model.predict(xgb.DMatrix([[65, 75, 65, 80, 80]], [])))
+        print("test result", model.predict(xgb.DMatrix([[65, 55, 65, 55, 55]], [])))
+        import pdb
+
+        pdb.set_trace()

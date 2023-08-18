@@ -24,7 +24,7 @@ def get_printer():
 
 
 if __name__ == "__main__":
-    print_count = 50
+    print_count = 10
     position = None
     show_drafted = False
     sort_by_potential = False

@@ -17,7 +17,7 @@ def generate_test_data():
             i += 1
             values = random.choices(
                 possibleRatings,
-                weights=(0.25, 0.25, 0.75, 0.75, 1, 1, 1, 1, 1, 1, 1, 0.75, 0.5),
+                weights=(0.25, 0.25, 0.5, 0.75, 1, 1, 1, 1, 1, 1, 1, 0.6, 0.4),
                 k=len(field_names) - 1,
             )
             overall_rating = None
