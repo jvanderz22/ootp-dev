@@ -5,6 +5,7 @@ PLAYER_FIELDS = {
     "id": "ID",
     "name": "Name",
     "age": "Age",
+    "org": "ORG",
     "potential": "POT",
     "demand": "DEM",
     "signability": "Sign",
@@ -130,6 +131,10 @@ class GamePlayer:
     @property
     def name(self):
         return string.capwords(self._name)
+
+    @property
+    def org(self):
+        return self._org
 
     @property
     def potential(self):

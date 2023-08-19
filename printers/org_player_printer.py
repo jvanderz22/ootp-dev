@@ -7,10 +7,38 @@ class OrgPlayerPrinter:
     def __init__(self):
         self.game_players = get_game_players()
 
-    def print(self, player_scores, opts={}):
+    def get_args(self):
+        print_count = 10
+        position = None
+        player_name = None
+        org = None
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], "n:p:t:o:")
+        except getopt.GetoptError:
+            print("Invalid Option!")
+            sys.exit(2)
+        for opt, arg in opts:
+            if opt == "-p":
+                position = arg
+            if opt == "-n":
+                player_name = arg
+            if opt == "-t":
+                print_count = int(arg)
+            if opt == "-o":
+                org = arg
+        return {
+            "print_count": print_count,
+            "position": position,
+            "player_name": player_name,
+            "org": org,
+        }
+
+    def print(self, player_scores):
+        opts = self.get_args()
         print_count = opts.get("print_count", 50)
         player_name = opts.get("player_name")
         position = opts.get("position")
+        org = opts.get("org")
         printed_players = 0
         for i, player_score in enumerate(player_scores):
             player = self.game_players.get_player(player_score["id"])
@@ -29,6 +57,9 @@ class OrgPlayerPrinter:
                 else:
                     search_pos = [position.lower()]
                 if player.position.lower() not in search_pos:
+                    continue
+            if org is not None:
+                if player.org.lower() != org.lower():
                     continue
 
             printed_players += 1

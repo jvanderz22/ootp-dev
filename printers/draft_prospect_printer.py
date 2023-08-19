@@ -8,7 +8,53 @@ class DraftProspectPrinter:
         self.drafted_player_info = get_drafted_players_info()
         self.game_players = get_game_players()
 
-    def print(self, players, opts={}):
+    def get_args():
+        print_count = 10
+        position = None
+        show_drafted = False
+        sort_by_potential = False
+        show_drafted_only = False
+        drafted_round = None
+        print_minimal = False
+        player_name = None
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], "n:p:t:r:amsd")
+        except getopt.GetoptError:
+            print("Invalid Option!")
+            sys.exit(2)
+        for opt, arg in opts:
+            if opt == "-m":
+                print_minimal = True
+            if opt == "-a":
+                show_drafted = True
+            if opt == "-p":
+                position = arg
+            if opt == "-n":
+                player_name = arg
+            if opt == "-d":
+                show_drafted_only = True
+            if opt == "-r":
+                drafted_round = arg
+            if opt == "-t":
+                print_count = int(arg)
+            if opt == "-s":
+                sort_by_potential = True
+
+            return (
+                {
+                    "print_count": print_count,
+                    "player_name": player_name,
+                    "show_drafted": show_drafted,
+                    "show_drafted_only": show_drafted_only,
+                    "drafted_round": drafted_round,
+                    "print_minimal": print_minimal,
+                    "position": position,
+                    "sort_by_potential": sort_by_potential,
+                },
+            )
+
+    def print(self, players):
+        opts = self.get_args()
         print_count = opts.get("print_count", 50)
         player_name = opts.get("player_name")
         show_drafted = opts.get("show_drafted", False)
@@ -17,6 +63,11 @@ class DraftProspectPrinter:
         print_minimal = opts.get("print_minimal", False)
         position = opts.get("position")
         printed_players = 0
+
+        if sort_by_potential:
+            players = sorted(
+                players, key=lambda player: player["in_game_potential"], reverse=True
+            )
         for i, player in enumerate(players):
             player_draft_info = self.drafted_player_info.get(player["id"])
             is_drafted = False
