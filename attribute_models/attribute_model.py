@@ -84,7 +84,7 @@ class AttributeModel(ABC):
         dtest_reg = xgb.DMatrix(X_test, y_test)
 
         evals = [(dtrain_reg, "train"), (dtest_reg, "validation")]
-        n = 20
+        n = 40
         model = xgb.train(
             params=params,
             dtrain=dtrain_reg,

@@ -46,6 +46,14 @@ class BattingAttributeModel(AttributeModel):
             "K": "avoid_k_ovr",
         }
 
+    # need to score down for ratings below individual skill thresholds faster
+    # big drops at:
+    #   40 contact
+    #   50 power (without good contact skills)
+    #   40 power (regardless of contact skills)
+    #   30 power (regardless of contact skills)
+    #   40 eye
+    #   40/35 avoid k (40 can carry other elite skills, 35 really hurts regardless)
     @property
     def test_data(self):
         return [
@@ -56,21 +64,24 @@ class BattingAttributeModel(AttributeModel):
             [59, [60, 60, 60, 55, 55]],  # balanced archetype - 120 WRC+
             [58, [65, 50, 55, 65, 55]],  # balanced archetype - 120 WRC+
             [51, [55, 55, 55, 55, 55]],  # balanced archetype - 100 WRC+
-            [44, [50, 50, 50, 50, 50]],  # balanced archetype - 90 WRC+
-            [25, [45, 45, 45, 45, 45]],  # balanced archetype - 75 WRC+
-            [13, [40, 40, 40, 40, 40]],  # balanced archetype - 55 WRC+
-            [5, [35, 35, 35, 35, 35]],  # balanced archetype - 30 WRC+
+            [42, [50, 50, 50, 50, 50]],  # balanced archetype - 90 WRC+
+            [22, [45, 45, 45, 45, 45]],  # balanced archetype - 75 WRC+
+            [11, [40, 40, 40, 40, 40]],  # balanced archetype - 55 WRC+
+            [2, [35, 35, 35, 35, 35]],  # balanced archetype - 30 WRC+
             [95, [65, 70, 80, 70, 55]],  # power archetype - 180 WRC+
             [82, [55, 60, 75, 70, 50]],  # power archetype - 160 WRC+
-            [67, [50, 55, 70, 65, 45]],  # power archetype - 130 WRC+
-            [62, [45, 55, 70, 60, 45]],  # power archetype - 120 WRC+
-            [53, [45, 40, 65, 50, 45]],  # power archetype - 100 WRC+
-            [50, [50, 45, 70, 45, 35]],  # power archetype - 100 WRC+
+            [73, [50, 55, 70, 65, 45]],  # power archetype - 140 WRC+
+            [65, [45, 55, 70, 60, 45]],  # power archetype - 125 WRC+
+            [57, [45, 40, 65, 50, 45]],  # power archetype - 110 WRC+
+            [51, [45, 40, 65, 50, 45]],  # power archetype - 110 WRC+
+            [47, [45, 45, 70, 45, 35]],  # power archetype - 100 WRC+
+            [44, [40, 45, 70, 50, 35]],  # power archetype - 90 WRC+
+            [40, [45, 45, 70, 50, 30]],  # power archetype - 90 WRC+
             [31, [45, 40, 70, 35, 35]],  # power archetype - 80 WRC+
-            [26, [50, 35, 65, 45, 40]],  # power archetype - 80 WRC+
-            [25, [45, 50, 60, 45, 45]],  # power archetype - 80 WRC+
-            [13, [40, 40, 70, 40, 30]],  # power archetype - 55 WRC+
-            [6, [30, 35, 65, 30, 30]],  # power archetype - 30 WRC+
+            [26, [45, 35, 65, 45, 40]],  # power archetype - 80 WRC+
+            [24, [40, 50, 60, 45, 45]],  # power archetype - 80 WRC+
+            [10, [40, 40, 70, 40, 30]],  # power archetype - 55 WRC+
+            [3, [30, 35, 65, 30, 30]],  # power archetype - 30 WRC+
             [93, [80, 80, 60, 80, 80]],  # contact archetype - 180 WRC+
             [76, [70, 70, 50, 75, 70]],  # contact archetype - 150 WRC+
             [74, [80, 80, 40, 80, 80]],  # contact archetype - 150 WRC+
@@ -79,7 +90,22 @@ class BattingAttributeModel(AttributeModel):
             [54, [75, 70, 40, 40, 80]],  # contact archetype - 110 WRC+
             [47, [65, 60, 45, 60, 60]],  # contact archetype - 100 WRC+
             [44, [80, 60, 25, 25, 80]],  # contact archetype - 95 WRC+
-            [33, [65, 60, 30, 30, 60]],  # contact archetype - 80 WRC+
-            [20, [50, 45, 30, 45, 50]],  # contact archetype - 65 WRC+
-            [5, [45, 40, 20, 40, 45]],  # contact archetype - 30 WRC+
+            [28, [65, 60, 30, 30, 60]],  # contact archetype - 80 WRC+
+            [17, [50, 45, 30, 45, 50]],  # contact archetype - 65 WRC+
+            [2, [45, 40, 20, 40, 45]],  # contact archetype - 30 WRC+
+            # sd samples
+            # pache
+            [51, [55, 60, 50, 50, 50]],
+            # perez
+            [49, [50, 50, 45, 50, 55]],
+            # Ledesma
+            [68, [45, 55, 70, 65, 45]],
+            # Ramos
+            [53, [65, 60, 35, 55, 65]],
+            # Hiramo
+            [25, [50, 50, 25, 50, 65]],
+            # Karros
+            [27, [45, 55, 60, 55, 40]],
+            # Vukovich
+            [17, [40, 55, 55, 50, 30]],
         ]

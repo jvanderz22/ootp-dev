@@ -28,7 +28,7 @@ class PositionPlayerScorer:
         batting_score = self.batting_model.run(player)
         running_score = self.running_model.run(player)
         overall_score = (
-            (batting_score * 0.72) + (fielding_score * 0.24) + (running_score * 0.04)
+            (batting_score * 0.71) + (fielding_score * 0.23) + (running_score * 0.06)
         )
 
         return [overall_score, batting_score, fielding_score]
