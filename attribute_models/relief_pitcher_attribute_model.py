@@ -50,18 +50,18 @@ class ReliefPitcherAttributeModel(AttributeModel):
     @property
     def test_data(self):
         return [
-            [100, [80, 80, 80]],  # best reliever pitcher in world
-            [98, [80, 70, 70]],  # best reliever pitcher in world
-            [86, [80, 50, 60]],  # elite backend reliever
-            [83, [75, 60, 60]],  # elite backend reliever
-            [68, [75, 45, 70]],  # solid backend reliever
-            [63, [70, 55, 60]],  # solid backend reliever
-            [54, [75, 45, 45]],  # middle-reliever
-            [51, [60, 55, 60]],  # middle-reliever
-            [47, [70, 35, 50]],  # middle-reliever
-            [45, [50, 55, 75]],  # control-first middle-reliever
-            [37, [50, 55, 55]],  # swingman
-            [33, [65, 55, 45]],  # swingman
+            [100, [80, 80, 80]],  # best reliever pitcher ever
+            [89, [80, 70, 70]],  # best reliever pitcher in league
+            [81, [80, 50, 60]],  # elite backend reliever
+            [77, [75, 60, 60]],  # elite backend reliever
+            [63, [75, 45, 70]],  # solid backend reliever
+            [61, [70, 55, 60]],  # solid backend reliever
+            [51, [75, 45, 45]],  # middle-reliever
+            [49, [60, 55, 60]],  # middle-reliever
+            [44, [70, 35, 50]],  # middle-reliever
+            [43, [50, 55, 75]],  # control-first middle-reliever
+            [38, [65, 55, 45]],  # swingman
+            [32, [50, 55, 55]],  # swingman
             [21, [60, 50, 45]],  # fringy reliever
             [19, [50, 45, 50]],  # fringy reliever
             [17, [80, 30, 30]],  # fringy reliever

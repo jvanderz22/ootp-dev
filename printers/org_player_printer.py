@@ -1,3 +1,5 @@
+import getopt
+import sys
 from get_game_players import get_game_players
 
 

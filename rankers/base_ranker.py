@@ -18,6 +18,8 @@ class BaseRanker(ABC):
         self.position_player_scorer = position_player_scorer
         self.pitcher_scorer = pitcher_scorer
 
+    two_way_player_threshold = 1.8
+
     @property
     def position_player_modifiers(self) -> list[BaseModifier]:
         return []
@@ -108,6 +110,6 @@ class BaseRanker(ABC):
         low_score = batter_score if batter_score < pitcher_score else pitcher_score
         total_score = high_score
         # Add a bonus for potential two way players
-        if (high_score - low_score) < (high_score / 1.8):
+        if (high_score - low_score) < (high_score / self.two_way_player_threshold):
             total_score += low_score * 0.15
         return total_score

@@ -9,3 +9,5 @@ class OverallRanker(BaseRanker):
             position_player_scorer=PositionPlayerScorer("overall"),
             pitcher_scorer=PitcherScorer("overall"),
         )
+
+    two_way_player_threshold = 2.5
