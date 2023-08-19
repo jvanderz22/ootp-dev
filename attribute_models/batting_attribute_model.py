@@ -62,10 +62,10 @@ class BattingAttributeModel(AttributeModel):
             [5, [35, 35, 35, 35, 35]],  # balanced archetype - 30 WRC+
             [95, [65, 70, 80, 70, 55]],  # power archetype - 180 WRC+
             [82, [55, 60, 75, 70, 50]],  # power archetype - 160 WRC+
-            [65, [50, 55, 70, 65, 45]],  # power archetype - 130 WRC+
-            [58, [45, 55, 70, 60, 45]],  # power archetype - 120 WRC+
-            [50, [45, 40, 65, 50, 45]],  # power archetype - 100 WRC+
-            [47, [50, 45, 70, 45, 35]],  # power archetype - 100 WRC+
+            [67, [50, 55, 70, 65, 45]],  # power archetype - 130 WRC+
+            [62, [45, 55, 70, 60, 45]],  # power archetype - 120 WRC+
+            [53, [45, 40, 65, 50, 45]],  # power archetype - 100 WRC+
+            [50, [50, 45, 70, 45, 35]],  # power archetype - 100 WRC+
             [31, [45, 40, 70, 35, 35]],  # power archetype - 80 WRC+
             [26, [50, 35, 65, 45, 40]],  # power archetype - 80 WRC+
             [25, [45, 50, 60, 45, 45]],  # power archetype - 80 WRC+
