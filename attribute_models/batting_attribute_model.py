@@ -108,4 +108,8 @@ class BattingAttributeModel(AttributeModel):
             [27, [45, 55, 60, 55, 40]],
             # Vukovich
             [17, [40, 55, 55, 50, 30]],
+            # Soderstrom
+            [51, [50, 60, 55, 50, 45]],
+            # Medina
+            [24, [55, 55, 35, 25, 70]],
         ]
