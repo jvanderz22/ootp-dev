@@ -71,30 +71,30 @@ class PositionPlayerScorer:
         elif best_position == "RF":
             has_rf_bonus = True
 
-        if has_ss_bonus is False and position_scores["SS"] > 40:
+        if has_ss_bonus is False and position_scores["SS"] > 20:
             has_ss_bonus = True
-            bonus_score += position_scores["SS"] * 0.3
+            bonus_score += min(position_scores["SS"] * 0.1, 3)
 
-        if has_ss_bonus is False and position_scores["2B"] > 40:
-            bonus_score += position_scores["2B"] * 0.2
+        if has_ss_bonus is False and position_scores["2B"] > 25:
+            bonus_score += min(position_scores["2B"] * 0.06, 2)
 
-        if position_scores["3B"] > 40:
+        if position_scores["3B"] > 25:
             if has_ss_bonus:
-                bonus_score += position_scores["3B"] * 0.03
+                bonus_score += min(position_scores["3B"] * 0.02, 1)
             else:
-                bonus_score += position_scores["3B"] * 0.1
+                bonus_score += min(position_scores["3B"] * 0.06, 2)
 
-        if has_cf_bonus is False and position_scores["CF"] > 40:
+        if has_cf_bonus is False and position_scores["CF"] > 25:
             has_cf_bonus = True
-            bonus_score += position_scores["CF"] * 0.25
+            bonus_score += min(position_scores["CF"] * 0.1, 4)
 
         if (
             has_cf_bonus is False
             and has_rf_bonus is False
-            and position_scores["RF"] > 40
+            and position_scores["RF"] > 25
         ):
             has_rf_bonus = True
-            bonus_score += position_scores["RF"] * 0.10
+            bonus_score += min(position_scores["RF"] * 0.03, 2)
 
         if (
             has_cf_bonus is False
