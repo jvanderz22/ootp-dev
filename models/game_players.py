@@ -14,6 +14,7 @@ PLAYER_FIELDS = {
     "throw_hand": "T",
     "bat_hand": "B",
     "injury_prone": "Prone",
+    "scouting_accuracy": "SctAcc",
     "adaptibility": "AD",
     "loyalty": "LOY",
     "greed": "FIN",
@@ -169,6 +170,10 @@ class GamePlayer:
     @property
     def bat_hand(self):
         return self._bat_hand
+
+    @property
+    def scouting_accuracy(self):
+        return self._scouting_accuracy
 
     @property
     def injury_prone(self):
