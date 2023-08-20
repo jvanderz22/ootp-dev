@@ -9,6 +9,7 @@ from draft_class_files import (
 )
 from printers.draft_prospect_printer import DraftProspectPrinter
 from printers.org_player_printer import OrgPlayerPrinter
+from rankers.get_ranker import get_ranker
 
 
 def get_printer():
@@ -24,7 +25,9 @@ def get_printer():
 
 
 if __name__ == "__main__":
-    with open(get_ranked_players_file(), newline="") as csvfile:
+    ranker = get_ranker()
+    print(f"Printing evals from ranker: {ranker.__class__.__name__}")
+    with open(get_ranked_players_file(ranker), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         printed_players = 0
         players = [player for player in reader]

@@ -3,14 +3,14 @@ import getopt
 import sys
 
 from draft_class_files import get_ranked_players_file
-from get_game_players import get_game_players
-from drafted_players import get_drafted_player_ids
+from rankers.get_ranker import get_ranker
 
 
 def print_top_distribution(rank_count):
     position_player_count = 0
     pitcher_count = 0
-    with open(get_ranked_players_file(), newline="") as csvfile:
+    ranker = get_ranker()
+    with open(get_ranked_players_file(ranker), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for i, player in enumerate(reader):
             if i >= rank_count:

@@ -32,7 +32,6 @@ class PositionPlayerScorer:
         overall_score = (
             (batting_score * 0.71) + (fielding_score * 0.23) + (running_score * 0.06)
         )
-
         return [overall_score, batting_score, fielding_score]
 
     def __calculate_fielding_score(self, player):

@@ -1,20 +1,15 @@
-import json
 import os
 import csv
 
 from models.game_players import GamePlayer
-from rankers.current_potential_ranker import CurrentPotentialRanker
-from rankers.overall_potential_ranker import OverallPotentialRanker
-from rankers.overall_ranker import OverallRanker
+from rankers.get_ranker import get_ranker
 import ranking_csv
 from constants import DRAFT_CLASS_NAME
 from draft_class_files import (
-    get_draft_class_config_file,
     get_draft_class_data_file,
     get_draft_class_drafted_players_file,
 )
 from print_pos_distribution import print_top_distribution
-from rankers.draft_class_ranker import DraftClassRanker
 from draft_class_files import (
     get_draft_class_eval_model_file,
 )
@@ -38,24 +33,6 @@ def process_file():
 
         with open(get_draft_class_data_file(), "w", newline="") as file:
             file.write(filedata)
-
-
-def get_ranker():
-    ranking_method = None
-
-    with open(get_draft_class_config_file(), "r") as jsonfile:
-        json_data = json.load(jsonfile)
-        ranking_method = json_data.get("ranking_method")
-        print(f"Ranking using ranking method {ranking_method}")
-    if ranking_method == "draft_class":
-        return DraftClassRanker()
-    elif ranking_method == "potential":
-        return OverallPotentialRanker()
-    elif ranking_method == "current_potential":
-        return CurrentPotentialRanker()
-    elif ranking_method == "overall":
-        return OverallRanker()
-    raise ValueError("Invalid Ranker")
 
 
 def write_player_scores_to_file(players):
@@ -98,7 +75,7 @@ def write_player_scores_to_file(players):
                 rps_by_100s[dict_key] = 0
             rps_by_100s[dict_key] += 1
 
-    with open(get_draft_class_eval_model_file(), "w", newline="") as csvfile:
+    with open(get_draft_class_eval_model_file(ranker), "w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=output_field_names)
         writer.writeheader()
         for i, player_score in enumerate(player_scores):

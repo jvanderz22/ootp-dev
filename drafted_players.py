@@ -3,8 +3,8 @@ import os
 
 from draft_class_files import (
     get_draft_class_drafted_players_file,
-    get_draft_class_eval_model_file,
 )
+from get_game_players import get_game_players
 
 
 def get_drafted_player_ids():
@@ -18,19 +18,16 @@ def get_drafted_players_info():
 
 def get_drafted_players_stats_plus():
     players_by_name = {}
-    if not os.path.exists(get_draft_class_eval_model_file()):
-        return players_by_name
-    with open(get_draft_class_eval_model_file(), newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
-        for player in reader:
-            name = player["name"].lower()
-            position = player["position"].lower()
-            if position == "sp" or position == "rp" or position == "cl":
-                position = "p"
-            if players_by_name.get(name) is None:
-                players_by_name[name] = {position: player}
-            else:
-                players_by_name[name][position] = player
+    game_players = get_game_players().game_players
+    for player in game_players:
+        name = player.name.lower()
+        position = player.position.lower()
+        if position == "sp" or position == "rp" or position == "cl":
+            position = "p"
+        if players_by_name.get(name) is None:
+            players_by_name[name] = {position: player}
+        else:
+            players_by_name[name][position] = player
 
     drafted_players = {}
     if not os.path.exists(get_draft_class_drafted_players_file()):
@@ -52,6 +49,7 @@ def get_drafted_players_stats_plus():
                 player_obj = players_by_name.get(player_name)
                 if player_obj is not None:
                     player = list(player_obj.values())[0]
+            # TODO not sure this is working
             if player is not None:
                 drafted_players[player["id"]] = {
                     "name": player_name,
@@ -65,17 +63,16 @@ def get_drafted_players_stats_plus():
 
 def get_drafted_player_ids_in_game():
     players_by_name = {}
-    with open(get_draft_class_eval_model_file(), newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
-        for player in reader:
-            name = player["name"].lower()
-            position = player["position"].lower()
-            if position == "sp" or position == "rp" or position == "cl":
-                position = "p"
-            if players_by_name.get(name) is None:
-                players_by_name[name] = {position: player}
-            else:
-                players_by_name[name][position] = player
+    game_players = get_game_players().game_players
+    for player in game_players:
+        name = player.name.lower()
+        position = player.position.lower()
+        if position == "sp" or position == "rp" or position == "cl":
+            position = "p"
+        if players_by_name.get(name) is None:
+            players_by_name[name] = {position: player}
+        else:
+            players_by_name[name][position] = player
 
     drafted_player_id_set = set()
     with open(get_draft_class_drafted_players_file(), newline="") as csvfile:

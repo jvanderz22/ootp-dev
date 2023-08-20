@@ -8,12 +8,14 @@ from draft_class_files import (
     get_ranked_players_file,
     get_draft_class_upload_players_file,
 )
+from rankers.get_ranker import get_ranker
 
 
 def read_players():
+    ranker = get_ranker()
     players_by_id = {}
     ranked_players = []
-    with open(get_draft_class_eval_model_file(), newline="") as csvfile:
+    with open(get_draft_class_eval_model_file(ranker), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for player in reader:
             ranked_players.append(player)
@@ -65,7 +67,8 @@ def create_ranking_csv(modifiers=None):
             player["ranking"] = i + 1
         ranked_players = players_by_score
 
-    with open(get_ranked_players_file(), "w", newline="") as csvfile:
+    ranker = get_ranker()
+    with open(get_ranked_players_file(ranker), "w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=ranked_player_field_names)
         writer.writeheader()
         for i, player in enumerate(ranked_players):
