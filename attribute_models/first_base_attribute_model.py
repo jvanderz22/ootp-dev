@@ -29,15 +29,12 @@ class FirstBaseAttributeModel(AttributeModel):
         return [
             [4, [50, 50]],  # barely useable
             [7, [40, 65]],  # barely useable
-            [16, [45, 65]],  # below average
-            [19, [50, 60]],  # below average
-            [27, [50, 70]],  # solid regular
-            [29, [60, 60]],  # solid regular
-            [40, [55, 75]],  # above average
-            [43, [60, 70]],  # above average
-            [25, [70, 70]],  # gold glove
+            [11, [30, 80]],  # above average
+            [14, [80, 30]],  # above average
+            [15, [50, 50]],  # above average
+            [21, [60, 60]],  # gold glove
+            [23, [70, 70]],  # gold glove
             [25, [80, 60]],  # gold glove
-            [25, [60, 60]],  # gold glove
             [5, [30, 30]],  # minimal player
             [0, [25, 30]],  # lower bounds
             [0, [30, 25]],  # lower bounds
