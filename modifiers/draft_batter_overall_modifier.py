@@ -15,7 +15,7 @@ def get_overall_attribute_modifier(attribute):
     return 0.95
 
 
-class BatterOverallModifier(BaseModifier):
+class DraftBatterOverallModifier(BaseModifier):
     @classmethod
     def calculate_player_modifier(cls, player):
         modifier = 1

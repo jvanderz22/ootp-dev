@@ -1,10 +1,10 @@
 from modifiers.base_modifier import BaseModifier
 from modifiers.base_rank_modifier import BaseRankModifier
-from modifiers.batter_overall_modifier import BatterOverallModifier
+from modifiers.draft_batter_overall_modifier import DraftBatterOverallModifier
 from modifiers.draft_demand_modifier import DraftDemandModifier
 from modifiers.draft_rank_personality_modifier import DraftRankPersonalityModifier
 from modifiers.pitcher_injury_modifier import PitcherInjuryModifier
-from modifiers.pitcher_overall_modifier import PitcherOverallModifier
+from modifiers.draft_pitcher_overall_modifier import DraftPitcherOverallModifier
 from rankers.base_ranker import BaseRanker
 from modifiers.batter_injury_modifier import BatterInjuryModifier
 from modifiers.batter_handedness_modifier import BatterHandednessModifier
@@ -16,7 +16,7 @@ class DraftClassRanker(BaseRanker):
     @property
     def position_player_modifiers(self) -> list[BaseModifier]:
         return [
-            BatterOverallModifier,
+            DraftBatterOverallModifier,
             BatterHandednessModifier,
             BatterInjuryModifier,
             PersonalityModifier,
@@ -26,7 +26,7 @@ class DraftClassRanker(BaseRanker):
     @property
     def pitcher_modifiers(self) -> list[BaseModifier]:
         return [
-            PitcherOverallModifier,
+            DraftPitcherOverallModifier,
             PitcherInjuryModifier,
             PersonalityModifier,
             DraftAgeModifier,
