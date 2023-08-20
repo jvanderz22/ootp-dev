@@ -7,6 +7,7 @@ from attribute_models.right_field_attribute_model import RightFieldAttributeMode
 from attribute_models.shortstop_attribute_model import ShortstopAttributeModel
 from attribute_models.catcher_attribute_model import CatcherAttributeModel
 from attribute_models.third_base_attribute_model import ThirdBaseAttributeModel
+from attribute_models.first_base_attribute_model import FirstBaseAttributeModel
 
 
 class PositionPlayerScorer:
@@ -14,6 +15,7 @@ class PositionPlayerScorer:
         self.batting_model = BattingAttributeModel(type)
         self.fielding_models_map = {
             "C": CatcherAttributeModel(),
+            "1B": FirstBaseAttributeModel(),
             "2B": SecondBaseAttributeModel(),
             "SS": ShortstopAttributeModel(),
             "3B": ThirdBaseAttributeModel(),
