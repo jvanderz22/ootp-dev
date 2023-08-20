@@ -28,17 +28,23 @@ class ThirdBaseAttributeModel(AttributeModel):
             "Error": "if_error",
         }
 
+    # need to drop these guys off faster
     @property
     def test_data(self):
         return [
-            [10, [50, 40, 50]],  # barely useable
-            [35, [50, 55, 70]],  # solid regular
-            [35, [60, 50, 60]],  # solid regular
-            [70, [70, 70, 70]],  # gold glove
+            [4, [50, 40, 50]],  # barely useable
+            [7, [40, 50, 65]],  # barely useable
+            [16, [45, 55, 65]],  # below average
+            [19, [50, 55, 60]],  # below average
+            [27, [50, 55, 70]],  # solid regular
+            [29, [60, 50, 60]],  # solid regular
+            [40, [55, 70, 75]],  # above average
+            [43, [60, 55, 70]],  # above average
+            [64, [70, 70, 70]],  # gold glove
+            [66, [80, 80, 60]],  # gold glove
             [70, [80, 50, 80]],  # gold glove
-            [70, [80, 80, 60]],  # gold glove
             [5, [35, 45, 55]],
             [0, [70, 70, 25]],  # lower bounds
             [0, [30, 70, 70]],  # lower bounds
-            [15, [80, 20, 80]],  # lower bounds
+            [4, [70, 30, 70]],  # lower bounds
         ]
