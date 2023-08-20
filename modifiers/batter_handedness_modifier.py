@@ -1,10 +1,10 @@
 from modifiers.base_modifier import BaseModifier
 
 
+batter_handedness_modifiers = {"Switch": 1.04, "Right": 1, "Left": 1.015}
+
+
 class BatterHandednessModifier(BaseModifier):
     @classmethod
     def calculate_player_modifier(cls, player):
-        modifier = 1
-        if player.bat_hand == "Switch":
-            modifier *= 1.03
-        return modifier
+        return batter_handedness_modifiers[player.bat_hand]
