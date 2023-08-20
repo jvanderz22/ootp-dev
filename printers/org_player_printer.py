@@ -63,17 +63,19 @@ class OrgPlayerPrinter:
                     continue
 
             printed_players += 1
+            print("---------------------------")
+            print("")
             self.print_player(player, player_score, printed_players)
             print("")
 
     def print_player(self, player, player_score, index):
-        print("---------------------------")
-        print("")
-        print(f"{index}. {player.name} {player.position} {player.age}, {player.id}")
+        print(
+            f"{index}. {player.name} {player.position} {player.age}, {player.org} ({player.level}) {player.id}"
+        )
         print(f"Bat Hand: {player.bat_hand}, Throw Hand: {player.throw_hand}")
 
         print(
-            f'Overall Ranking: {int(player_score["overall_ranking"]) + 1}, Model score: {player_score["model_score"]}, Potential: {player_score["in_game_potential"]}'
+            f'Overall Ranking: {int(player_score["overall_ranking"]) + 1}, Model score: {player_score["model_score"]}, Overall: {player.overall}, Potential: {player.potential}'
         )
         position_player_score = float(player_score["position_player_score"])
         pitcher_score = float(player_score["pitcher_score"])

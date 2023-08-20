@@ -6,6 +6,8 @@ PLAYER_FIELDS = {
     "name": "Name",
     "age": "Age",
     "org": "ORG",
+    "level": "Lev",
+    "overall": "OVR",
     "potential": "POT",
     "demand": "DEM",
     "signability": "Sign",
@@ -135,6 +137,14 @@ class GamePlayer:
     @property
     def org(self):
         return self._org
+
+    @property
+    def level(self):
+        return self._level
+
+    @property
+    def overall(self):
+        return int(self._overall)
 
     @property
     def potential(self):
