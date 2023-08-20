@@ -40,9 +40,11 @@ class ThirdBaseAttributeModel(AttributeModel):
             [29, [60, 50, 60]],  # solid regular
             [40, [55, 70, 75]],  # above average
             [43, [60, 55, 70]],  # above average
-            [64, [70, 70, 70]],  # gold glove
+            [59, [70, 70, 70]],  # gold glove
             [66, [80, 80, 60]],  # gold glove
             [70, [80, 50, 80]],  # gold glove
+            [57, [65, 80, 80]],  # range upper bounds (less than SS)
+            [63, [70, 80, 80]],  # range upper bounds
             [5, [35, 45, 55]],
             [0, [70, 70, 25]],  # lower bounds
             [0, [30, 70, 70]],  # lower bounds

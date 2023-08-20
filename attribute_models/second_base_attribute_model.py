@@ -36,13 +36,16 @@ class SecondBaseAttributeModel(AttributeModel):
             [11, [55, 45, 40, 45]],  # barely useable
             [13, [50, 65, 60, 55]],  # barely useable
             [22, [55, 50, 40, 55]],  # below average
-            [41, [65, 45, 65, 50]],  # solid regular
-            [43, [60, 50, 60, 65]],  # solid regular
-            [66, [70, 65, 70, 65]],  # top 5 at position
+            [34, [65, 45, 65, 50]],  # solid regular
+            [39, [60, 50, 60, 65]],  # solid regular
+            [44, [65, 65, 70, 65]],  # solid regular
+            [59, [70, 65, 70, 65]],  # top 5 at position
             [69, [75, 45, 45, 75]],  # gold glove
             [70, [80, 30, 80, 80]],  # gold glove
             [75, [80, 60, 80, 80]],  # gold glove
             [80, [80, 80, 80, 80]],  # just play SS
+            [53, [65, 80, 80, 80]],  # range upper bounds
+            [63, [70, 80, 80, 80]],  # range upper bounds
             [37, [55, 55, 55, 55]],  # lower bounds baseline
             [1, [40, 55, 55, 55]],  # lower bounds
             [4, [55, 25, 55, 55]],  # lower bounds
