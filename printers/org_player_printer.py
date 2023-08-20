@@ -12,8 +12,10 @@ class OrgPlayerPrinter:
         position = None
         player_name = None
         org = None
+        max_potential = None
+        max_age = None
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "n:p:t:o:")
+            opts, args = getopt.getopt(sys.argv[1:], "n:p:t:o:m:a:")
         except getopt.GetoptError:
             print("Invalid Option!")
             sys.exit(2)
@@ -26,10 +28,16 @@ class OrgPlayerPrinter:
                 print_count = int(arg)
             if opt == "-o":
                 org = arg
+            if opt == "-a":
+                max_age = int(arg)
+            if opt == "-p":
+                max_potential = int(arg)
         return {
             "print_count": print_count,
             "position": position,
             "player_name": player_name,
+            "max_age": max_age,
+            "max_potential": max_potential,
             "org": org,
         }
 
@@ -39,6 +47,8 @@ class OrgPlayerPrinter:
         player_name = opts.get("player_name")
         position = opts.get("position")
         org = opts.get("org")
+        max_potential = opts.get("max_potential")
+        max_age = opts.get("max_age")
         printed_players = 0
         for i, player_score in enumerate(player_scores):
             player = self.game_players.get_player(player_score["id"])
@@ -60,6 +70,13 @@ class OrgPlayerPrinter:
                     continue
             if org is not None:
                 if player.org.lower() != org.lower():
+                    continue
+            if max_age is not None:
+                if player.age > max_age:
+                    continue
+
+            if max_potential is not None:
+                if player.potential > max_potential:
                     continue
 
             printed_players += 1

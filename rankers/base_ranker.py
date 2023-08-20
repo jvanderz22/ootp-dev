@@ -32,10 +32,17 @@ class BaseRanker(ABC):
     def rank_adjusted_modifiers(self) -> list[BaseRankModifier]:
         return []
 
+    def filter_players(self, players):
+        return players
+
     def rank(self, players: list[GamePlayer]):
         player_scores = []
         all_players = {}
-        for player in players:
+        players = self.filter_players(players)
+        log = len(players) > 3000
+        for i, player in enumerate(players):
+            if log and i % 500 == 0 and i > 0:
+                print(f"Evaluated {i} players of {len(players)}")
             all_players[player.id] = player
             [
                 position_player_score,
