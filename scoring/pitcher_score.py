@@ -4,8 +4,8 @@ from attribute_models.starting_pitcher_attribute_model import (
 )
 
 
-PITCHER_EXPONENT = 0.68
-PITCHER_MULTIPLIER = 3.3
+PITCHER_EXPONENT = 0.65
+PITCHER_MULTIPLIER = 3.9
 
 
 rp_groundball_type_modifier_map = {
@@ -17,7 +17,7 @@ rp_groundball_type_modifier_map = {
 }
 
 rp_stamina_modifier_map = {
-    20: 0.87,
+    20: 0.876,
     25: 0.94,
     30: 0.97,
     35: 1,
@@ -327,7 +327,6 @@ class PitcherScorer:
 
     def __calculate_sp_score(self, player):
         base_score = self.sp_model.run(player)
-
         modifiers = calculate_sp_modifiers(player, self.type)
         score = base_score * modifiers["total_modifier"]
         return score
