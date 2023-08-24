@@ -300,10 +300,14 @@ def calculate_sp_modifiers(player, type="potential"):
 
 
 class PitcherScorer:
-    def __init__(self, type="potential"):
+    def __init__(
+        self, type="potential", exponent=PITCHER_EXPONENT, multiplier=PITCHER_MULTIPLIER
+    ):
         self.type = type
         self.sp_model = StartingPitcherAttributeModel(type)
         self.rp_model = ReliefPitcherAttributeModel(type)
+        self.exponent = exponent
+        self.multiplier = multiplier
 
     def score(self, player):
         position = player.position
@@ -319,7 +323,7 @@ class PitcherScorer:
         score = score if score > 0 else 0
 
         # Try to fix the batter/pitcher distribution
-        score = self.apply_adjustment(score, PITCHER_EXPONENT, PITCHER_MULTIPLIER)
+        score = self.apply_adjustment(score, self.exponent, self.multiplier)
         return score
 
     def apply_adjustment(self, score, exponent, multiplier):
