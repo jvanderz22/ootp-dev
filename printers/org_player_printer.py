@@ -62,6 +62,8 @@ class OrgPlayerPrinter:
                     search_pos = ["c", "1b", "2b", "3b", "ss", "rf", "cf", "lf", "dh"]
                 elif position.lower() == "pit":
                     search_pos = ["sp", "rp", "cl"]
+                elif position.lower() == "rp":
+                    search_pos = ["rp", "cl"]
                 elif position.lower() == "of":
                     search_pos = ["rf", "cf", "lf"]
                 else:

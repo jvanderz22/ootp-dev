@@ -503,6 +503,10 @@ class GamePlayer:
                 pitches.append(field)
         return sorted(pitches, key=lambda p: getattr(self, p), reverse=True)
 
+    def get_pitch_ratings(self):
+        pitches = self.get_pitches()
+        return {pitch: getattr(self, pitch) for pitch in pitches}
+
     def get_ovr_pitches(self):
         pitches = []
         for field in self.pitch_ovr_fields:

@@ -9,6 +9,7 @@ from rankers.get_ranker import get_ranker
 def print_top_distribution(rank_count):
     position_player_count = 0
     pitcher_count = 0
+    rp_count = 0
     ranker = get_ranker()
     with open(get_ranked_players_file(ranker), newline="") as csvfile:
         reader = csv.DictReader(csvfile)
@@ -16,12 +17,15 @@ def print_top_distribution(rank_count):
             if i >= rank_count:
                 break
             position = player["position"]
-            if position == "SP" or position == "RP" or position == "CL":
+            if position == "SP":
                 pitcher_count += 1
+            elif position == "RP" or position == "CL":
+                pitcher_count += 1
+                rp_count += 1
             else:
                 position_player_count += 1
     print(f"Top {rank_count} distribution:\n")
-    print(f"Total pitchers: {pitcher_count}")
+    print(f"Total pitchers: {pitcher_count} ({rp_count} relievers)")
     print(f"Total position players: {position_player_count}")
 
 

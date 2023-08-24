@@ -83,7 +83,7 @@ rp_third_pitch_value_modifier_map = {
 
 def calculate_rp_modifier(player, type="potential"):
     # Base rp score is lower
-    modifier = 0.5
+    modifier = 0.62
 
     gb_type = player.groundball_type
     modifier *= rp_groundball_type_modifier_map[gb_type]
@@ -159,9 +159,9 @@ sp_best_pitch_value_modifier_map = {
     30: 0.91,
     35: 0.91,
     40: 0.93,
-    45: 0.95,
-    50: 0.96,
-    55: 0.98,
+    45: 0.96,
+    50: 0.98,
+    55: 0.99,
     60: 1,
     65: 1,
     70: 1.01,
@@ -176,8 +176,8 @@ sp_second_pitch_value_modifier_map = {
     35: 0.85,
     40: 0.9,
     45: 0.93,
-    50: 0.95,
-    55: 0.97,
+    50: 0.98,
+    55: 0.995,
     60: 1,
     65: 1,
     70: 1.02,
@@ -189,15 +189,15 @@ sp_third_pitch_value_modifier_map = {
     20: 0.35,
     25: 0.35,
     30: 0.4,
-    35: 0.6,
-    40: 0.85,
-    45: 0.93,
-    50: 1,
+    35: 0.55,
+    40: 0.7,
+    45: 0.86,
+    50: 0.98,
     55: 1,
-    60: 1.01,
-    65: 1.02,
-    70: 1.03,
-    75: 1.05,
+    60: 1.02,
+    65: 1.03,
+    70: 1.04,
+    75: 1.07,
     80: 1.1,
 }
 
@@ -209,10 +209,10 @@ sp_fourth_pitch_value_modifier_map = {
     35: 0.97,
     40: 0.99,
     45: 1,
-    50: 1,
-    55: 1.005,
-    60: 1.01,
-    65: 1.015,
+    50: 1.007,
+    55: 1.01,
+    60: 1.013,
+    65: 1.018,
     70: 1.03,
     75: 1.1,
     80: 1.2,
@@ -310,7 +310,7 @@ class PitcherScorer:
         score = None
         if position == "RP" or position == "CL":
             relief_score = self.__calculate_rp_score(player)
-            starting_score = self.__calculate_sp_score(player) * 0.6
+            starting_score = self.__calculate_sp_score(player) * 0.8
             score = starting_score if starting_score > relief_score else relief_score
         else:
             starting_score = self.__calculate_sp_score(player)
