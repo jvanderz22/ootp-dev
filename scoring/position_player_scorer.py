@@ -29,8 +29,13 @@ class PositionPlayerScorer:
         [fielding_score, _, _, best_position] = self.__calculate_fielding_score(player)
         batting_score = self.batting_model.run(player)
         running_score = self.running_model.run(player)
+        # this is more than 100% but thats okay. Trying to get a league average player to equal 50 overall
+        # and 100 wrc+ currently equals 50 in the batting score component and 50 in the fielding score
+        # component is more a gold glove type.
+        # Average hitter + average fielder (30ish points) + average runner (35ish points) should equal
+        # average player
         overall_score = (
-            (batting_score * 0.71) + (fielding_score * 0.23) + (running_score * 0.06)
+            (batting_score * 0.77) + (fielding_score * 0.26) + (running_score * 0.08)
         )
         return [overall_score, batting_score, fielding_score]
 
