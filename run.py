@@ -55,26 +55,6 @@ def write_player_scores_to_file(players):
     all_players_by_id = {player.id: player for player in players}
     ranker = get_ranker()
     player_scores = ranker.rank(players)
-
-    position_players_by_100s = {}
-    rps_by_100s = {}
-    for i, player_score in enumerate(player_scores):
-        player = all_players_by_id[player_score.id]
-        is_position_player = (
-            player_score.position_player_score > player_score.pitcher_score
-        )
-        is_rp = player.position == "RP" or player.position == "CL"
-        dict_key = int(i / 100)
-        if is_position_player:
-            if position_players_by_100s.get(dict_key) is None:
-                position_players_by_100s[dict_key] = 0
-
-            position_players_by_100s[dict_key] += 1
-        if is_rp:
-            if rps_by_100s.get(dict_key) is None:
-                rps_by_100s[dict_key] = 0
-            rps_by_100s[dict_key] += 1
-
     with open(get_draft_class_eval_model_file(ranker), "w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=output_field_names)
         writer.writeheader()

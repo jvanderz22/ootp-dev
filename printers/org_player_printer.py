@@ -30,7 +30,7 @@ class OrgPlayerPrinter:
                 org = arg
             if opt == "-a":
                 max_age = int(arg)
-            if opt == "-p":
+            if opt == "-m":
                 max_potential = int(arg)
         return {
             "print_count": print_count,
