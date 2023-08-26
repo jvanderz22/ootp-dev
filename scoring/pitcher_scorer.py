@@ -323,7 +323,7 @@ class PitcherScorer:
 
         # Try to fix the batter/pitcher distribution
         score = self.apply_adjustment(score, self.exponent, self.multiplier)
-        return score
+        return [score, starting_score, relief_score]
 
     def apply_adjustment(self, score, exponent, multiplier):
         return (score**exponent) * multiplier

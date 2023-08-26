@@ -47,6 +47,8 @@ def create_ranking_csv(modifiers=None):
         "fielding_score_component",
         "batting_score_component",
         "pitcher_score",
+        "starter_component",
+        "reliever_component",
         "in_game_potential",
         "demand",
         "raw_overall_score",
@@ -86,6 +88,8 @@ def create_ranking_csv(modifiers=None):
                 "in_game_potential": player["in_game_potential"],
                 "age": player["age"],
                 "pitcher_score": player["pitcher_score"],
+                "starter_component": player["starter_component"],
+                "reliever_component": player["reliever_component"],
                 "position_player_score": player["position_player_score"],
                 "raw_overall_score": player["raw_overall_score"],
             }

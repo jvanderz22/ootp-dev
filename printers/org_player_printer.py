@@ -144,6 +144,9 @@ class OrgPlayerPrinter:
 
         if is_pitcher:
             print("")
+            print(
+                f"Starting component: {player_score['starter_component']}, Reliever component: {player_score['reliever_component']}"
+            )
             print(f"Stuff Ovr: {player.stuff_ovr}, Stuff Pot: {player.stuff}")
             print(
                 f"Movement Ovr: {player.movement_ovr}, Movement Pot: {player.movement}"

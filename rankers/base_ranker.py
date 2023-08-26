@@ -49,7 +49,11 @@ class BaseRanker(ABC):
                 batting_score,
                 fielding_score,
             ] = self.calculate_position_player_score(player)
-            pitcher_score = self.calculate_pitcher_score(player)
+            [
+                pitcher_score,
+                starter_score,
+                reliever_score,
+            ] = self.calculate_pitcher_score(player)
 
             player_score = PlayerScore(
                 id=player.id,
@@ -57,6 +61,8 @@ class BaseRanker(ABC):
                 fielding_score_component=round(fielding_score, 2),
                 position_player_score=round(position_player_score, 2),
                 pitcher_score=round(pitcher_score, 2),
+                starter_component=round(starter_score, 2),
+                reliever_component=round(reliever_score, 2),
                 raw_overall_score=self.aggregate_pitcher_batter_scores(
                     position_player_score, pitcher_score
                 ),
@@ -96,9 +102,12 @@ class BaseRanker(ABC):
 
     def calculate_pitcher_score(self, player: GamePlayer) -> float:
         modifier = self.get_pitcher_modifier(player)
-
-        pitcher_score = self.pitcher_scorer.score(player)
-        return pitcher_score * modifier
+        [
+            pitcher_score,
+            starter_component,
+            reliever_component,
+        ] = self.pitcher_scorer.score(player)
+        return [pitcher_score * modifier, starter_component, reliever_component]
 
     def get_pitcher_modifier(self, player: GamePlayer) -> float:
         modifier_val = 1
