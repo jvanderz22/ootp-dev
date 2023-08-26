@@ -8,7 +8,31 @@ from draft_class_files import (
     get_ranked_players_file,
     get_draft_class_upload_players_file,
 )
+from rankers.draft_class_ranker import DraftClassRanker
 from rankers.get_ranker import get_ranker
+
+
+def write_draft_class_rankings(ranked_players):
+    upload_field_names = ["id", "name", "position", "age", "model_score", "demand"]
+    with open(get_draft_class_upload_players_file(), "w", newline="") as csvfile:
+        drafted_players_set = get_drafted_player_ids()
+        writer = csv.DictWriter(csvfile, fieldnames=upload_field_names)
+        num_ranked_players = 0
+        for player in ranked_players:
+            if player["id"] in drafted_players_set:
+                continue
+            num_ranked_players += 1
+            if num_ranked_players > 500:
+                break
+            row = {
+                "id": player["id"],
+                "name": player["name"],
+                "position": player["position"],
+                "age": player["age"],
+                "model_score": player["overall_score"],
+                "demand": player["demand"],
+            }
+            writer.writerow(row)
 
 
 def read_players():
@@ -25,7 +49,6 @@ def read_players():
 
 def create_ranking_csv(modifiers=None):
     [model_ranked_players, players_by_id] = read_players()
-    drafted_players_set = get_drafted_player_ids()
     ranked_players = []
     ranked_player_ids = set()
 
@@ -96,25 +119,8 @@ def create_ranking_csv(modifiers=None):
 
             writer.writerow(row)
 
-    upload_field_names = ["id", "name", "position", "age", "model_score", "demand"]
-    with open(get_draft_class_upload_players_file(), "w", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=upload_field_names)
-        num_ranked_players = 0
-        for player in ranked_players:
-            if player["id"] in drafted_players_set:
-                continue
-            num_ranked_players += 1
-            if num_ranked_players > 500:
-                break
-            row = {
-                "id": player["id"],
-                "name": player["name"],
-                "position": player["position"],
-                "age": player["age"],
-                "model_score": player["overall_score"],
-                "demand": player["demand"],
-            }
-            writer.writerow(row)
+    if ranker.__class__ == DraftClassRanker:
+        write_draft_class_rankings(ranked_players)
 
 
 if __name__ == "__main__":
