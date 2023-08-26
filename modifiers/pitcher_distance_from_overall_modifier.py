@@ -1,5 +1,5 @@
 from modifiers.base_modifier import BaseModifier
-from scoring.pitcher_score import PitcherScorer
+from scoring.pitcher_scorer import PitcherScorer
 
 
 # .91 ^ 3 = .75

@@ -6,7 +6,7 @@ from modifiers.base_rank_modifier import BaseRankModifier
 from scoring.position_player_scorer import (
     PositionPlayerScorer,
 )
-from scoring.pitcher_score import PitcherScorer
+from scoring.pitcher_scorer import PitcherScorer
 
 
 class BaseRanker(ABC):

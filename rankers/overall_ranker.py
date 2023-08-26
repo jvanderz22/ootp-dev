@@ -1,5 +1,5 @@
 from rankers.base_ranker import BaseRanker
-from scoring.pitcher_score import PitcherScorer
+from scoring.pitcher_scorer import PitcherScorer
 from scoring.position_player_scorer import PositionPlayerScorer
 
 
