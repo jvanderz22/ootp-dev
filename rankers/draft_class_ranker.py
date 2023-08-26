@@ -11,9 +11,18 @@ from modifiers.batter_injury_modifier import BatterInjuryModifier
 from modifiers.batter_handedness_modifier import BatterHandednessModifier
 from modifiers.draft_age_modifier import DraftAgeModifier
 from modifiers.personality_modifier import PersonalityModifier
+from scoring.pitcher_scorer import PITCHER_EXPONENT, RP_OVERALL_MODIFIER, PitcherScorer
 
 
 class DraftClassRanker(BaseRanker):
+    def __init__(self):
+        super().__init__(
+            pitcher_scorer=PitcherScorer(
+                exponent=PITCHER_EXPONENT + 0.02,
+                rp_multiplier=RP_OVERALL_MODIFIER - 0.1,
+            )
+        )
+
     @property
     def position_player_modifiers(self) -> list[BaseModifier]:
         return [

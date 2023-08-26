@@ -4,8 +4,13 @@ from attribute_models.starting_pitcher_attribute_model import (
 )
 
 
+# exponent and multiplier used in combination to adjust both top and bottom
+# ends of pitcher scoring model
 PITCHER_EXPONENT = 0.65
 PITCHER_MULTIPLIER = 3.9
+
+# Lower the all RPs scores using this modifier
+RP_OVERALL_MODIFIER = 0.7
 
 
 rp_groundball_type_modifier_map = {
@@ -300,13 +305,18 @@ def calculate_sp_modifiers(player, type="potential"):
 
 class PitcherScorer:
     def __init__(
-        self, type="potential", exponent=PITCHER_EXPONENT, multiplier=PITCHER_MULTIPLIER
+        self,
+        type="potential",
+        exponent=PITCHER_EXPONENT,
+        adjustment_multiplier=PITCHER_MULTIPLIER,
+        rp_multiplier=RP_OVERALL_MODIFIER,
     ):
         self.type = type
         self.sp_model = StartingPitcherAttributeModel(type)
         self.rp_model = ReliefPitcherAttributeModel(type)
         self.exponent = exponent
-        self.multiplier = multiplier
+        self.adjustment_multiplier = adjustment_multiplier
+        self.rp_modifier = rp_multiplier
 
     def score(self, player):
         position = player.position
@@ -322,7 +332,7 @@ class PitcherScorer:
         score = score if score > 0 else 0
 
         # Try to fix the batter/pitcher distribution
-        score = self.apply_adjustment(score, self.exponent, self.multiplier)
+        score = self.apply_adjustment(score, self.exponent, self.adjustment_multiplier)
         return [score, starting_score, relief_score]
 
     def apply_adjustment(self, score, exponent, multiplier):
@@ -337,5 +347,4 @@ class PitcherScorer:
     def __calculate_rp_score(self, player):
         rp_score = self.rp_model.run(player)
         rp_modifier = calculate_rp_modifier(player, self.type)
-        rp_overall_modifier = 0.7
-        return rp_score * rp_modifier * rp_overall_modifier
+        return rp_score * rp_modifier * self.rp_modifier
