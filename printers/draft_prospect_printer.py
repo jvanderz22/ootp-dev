@@ -1,3 +1,5 @@
+import getopt
+import sys
 from drafted_players import get_drafted_player_ids, get_drafted_players_info
 from get_game_players import get_game_players
 
@@ -8,7 +10,7 @@ class DraftProspectPrinter:
         self.drafted_player_info = get_drafted_players_info()
         self.game_players = get_game_players()
 
-    def get_args():
+    def get_args(self):
         print_count = 10
         position = None
         show_drafted = False
@@ -40,18 +42,16 @@ class DraftProspectPrinter:
             if opt == "-s":
                 sort_by_potential = True
 
-            return (
-                {
-                    "print_count": print_count,
-                    "player_name": player_name,
-                    "show_drafted": show_drafted,
-                    "show_drafted_only": show_drafted_only,
-                    "drafted_round": drafted_round,
-                    "print_minimal": print_minimal,
-                    "position": position,
-                    "sort_by_potential": sort_by_potential,
-                },
-            )
+        return {
+            "print_count": print_count,
+            "player_name": player_name,
+            "show_drafted": show_drafted,
+            "show_drafted_only": show_drafted_only,
+            "drafted_round": drafted_round,
+            "print_minimal": print_minimal,
+            "position": position,
+            "sort_by_potential": sort_by_potential,
+        }
 
     def print(self, players):
         opts = self.get_args()
@@ -61,6 +61,7 @@ class DraftProspectPrinter:
         show_drafted_only = opts.get("show_drafted_only", False)
         drafted_round = opts.get("drafted_round")
         print_minimal = opts.get("print_minimal", False)
+        sort_by_potential = opts.get("sort_by_potential", False)
         position = opts.get("position")
         printed_players = 0
 
@@ -95,6 +96,8 @@ class DraftProspectPrinter:
                     search_pos = ["sp", "rp", "cl"]
                 elif position.lower() == "of":
                     search_pos = ["rf", "cf", "lf"]
+                elif position.lower() == "rp":
+                    search_pos = ["rp", "cl"]
                 else:
                     search_pos = [position.lower()]
                 if player["position"].lower() not in search_pos:
