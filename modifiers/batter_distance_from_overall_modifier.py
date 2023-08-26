@@ -3,11 +3,11 @@ from scoring.position_player_scorer import PositionPlayerScorer
 
 
 # .9^4 = .65
-modifier1 = 0.89
+modifier1 = 0.91
 # .937^4 = .77
-modifier2 = 0.91
+modifier2 = 0.921
 # .931^4 = .75
-modifier3 = 0.925
+modifier3 = 0.931
 # .937^4 = .77
 modifier4 = 0.937
 # .946^4 = .8
@@ -105,4 +105,4 @@ class BatterDistanceFromOverallModifier(BaseModifier):
         modifier *= modifier_for_attr(player.power_ovr, player.power)
         modifier *= modifier_for_attr(player.eye_ovr, player.eye)
         modifier *= modifier_for_attr(player.avoid_k_ovr, player.avoid_k)
-        return 1
+        return modifier
