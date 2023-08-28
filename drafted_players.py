@@ -50,8 +50,9 @@ def get_drafted_players_stats_plus():
                 if player_obj is not None:
                     player = list(player_obj.values())[0]
             # TODO not sure this is working
+
             if player is not None:
-                drafted_players[player["id"]] = {
+                drafted_players[player.id] = {
                     "name": player_name,
                     "team": drafted_player["Team"],
                     "round": drafted_player["Round"],
