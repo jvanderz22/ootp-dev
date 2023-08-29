@@ -55,6 +55,7 @@ class StartingPitcherAttributeModel(AttributeModel):
             [75, [70, 55, 75]],  # ace
             [72, [75, 55, 65]],  # ace
             [71, [65, 75, 70]],  # ace
+            [71, [50, 80, 80]],  # ace
             [67, [75, 50, 60]],  # ace-ish
             [65, [60, 60, 65]],  # solid #2
             [63, [55, 55, 75]],  # solid #2
