@@ -9,7 +9,6 @@ from modifiers.scouting_accuracy_modifier import ScoutingAccuracyModifier
 from rankers.base_ranker import BaseRanker
 from modifiers.batter_injury_modifier import BatterInjuryModifier
 from modifiers.batter_handedness_modifier import BatterHandednessModifier
-from modifiers.draft_age_modifier import DraftAgeModifier
 from modifiers.personality_modifier import PersonalityModifier
 from scoring.pitcher_scorer import PITCHER_EXPONENT, RP_OVERALL_MODIFIER, PitcherScorer
 
@@ -31,7 +30,6 @@ class DraftClassRanker(BaseRanker):
             BatterInjuryModifier,
             ScoutingAccuracyModifier,
             PersonalityModifier,
-            DraftAgeModifier,
         ]
 
     @property
@@ -41,7 +39,6 @@ class DraftClassRanker(BaseRanker):
             PitcherInjuryModifier,
             PersonalityModifier,
             ScoutingAccuracyModifier,
-            DraftAgeModifier,
         ]
 
     @property
