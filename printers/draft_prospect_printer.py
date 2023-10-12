@@ -187,6 +187,7 @@ class DraftProspectPrinter:
             for pitch in game_player.get_pitches():
                 print(f"{pitch.capitalize()}: {getattr(game_player, pitch)}", end=", ")
             print("")
+            print(f"FB Velocity: {game_player.velocity}")
         if not print_minimal:
             print(
                 f"Durability: {game_player.injury_prone}, Work Ethic: {game_player.work_ethic}, Intelligence: {game_player.intelligence}, Leadership: {game_player.leadership}"

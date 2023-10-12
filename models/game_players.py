@@ -50,6 +50,7 @@ PLAYER_FIELDS = {
     "movement_ovr": "MOV",
     "control_ovr": "CONT",
     "stamina": "STM",
+    "velocity": "VELO",
     "groundball_type": "G/F",
     "fastball": "FBP",
     "changeup": "CHP",
@@ -322,6 +323,10 @@ class GamePlayer:
     @property
     def stamina(self):
         return int(self._stamina)
+
+    @property
+    def velocity(self):
+        return self._velocity
 
     @property
     def groundball_type(self):
