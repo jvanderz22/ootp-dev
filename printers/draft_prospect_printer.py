@@ -18,9 +18,10 @@ class DraftProspectPrinter:
         show_drafted_only = False
         drafted_round = None
         print_minimal = False
+        drafted_org = None
         player_name = None
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "n:p:t:r:amsd")
+            opts, args = getopt.getopt(sys.argv[1:], "n:p:t:r:o:amsd")
         except getopt.GetoptError:
             print("Invalid Option!")
             sys.exit(2)
@@ -41,6 +42,8 @@ class DraftProspectPrinter:
                 print_count = int(arg)
             if opt == "-s":
                 sort_by_potential = True
+            if opt == "-o":
+                drafted_org = arg
 
         return {
             "print_count": print_count,
@@ -51,6 +54,7 @@ class DraftProspectPrinter:
             "print_minimal": print_minimal,
             "position": position,
             "sort_by_potential": sort_by_potential,
+            "drafted_org": drafted_org,
         }
 
     def print(self, players):
@@ -60,6 +64,7 @@ class DraftProspectPrinter:
         show_drafted = opts.get("show_drafted", False)
         show_drafted_only = opts.get("show_drafted_only", False)
         drafted_round = opts.get("drafted_round")
+        drafted_org = opts.get("drafted_org")
         print_minimal = opts.get("print_minimal", False)
         sort_by_potential = opts.get("sort_by_potential", False)
         position = opts.get("position")
@@ -69,6 +74,7 @@ class DraftProspectPrinter:
             players = sorted(
                 players, key=lambda player: player["in_game_potential"], reverse=True
             )
+
         for i, player in enumerate(players):
             player_draft_info = self.drafted_player_info.get(player["id"])
             is_drafted = False
@@ -79,7 +85,12 @@ class DraftProspectPrinter:
                     continue
             if player["id"] in self.drafted_players:
                 is_drafted = True
-                if not show_drafted and not show_drafted_only:
+                if (
+                    drafted_org is not None
+                    and drafted_org.lower() != player_draft_info.get("team", "").lower()
+                ):
+                    continue
+                elif not show_drafted and not show_drafted_only and drafted_org is None:
                     continue
                 elif (
                     drafted_round is not None
@@ -87,7 +98,7 @@ class DraftProspectPrinter:
                 ):
                     continue
             else:
-                if show_drafted_only:
+                if show_drafted_only or drafted_org is not None:
                     continue
             if position is not None:
                 if position.lower() == "pos":
