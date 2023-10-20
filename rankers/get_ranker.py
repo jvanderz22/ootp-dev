@@ -17,8 +17,6 @@ def get_ranker():
         return DraftClassRanker()
     elif ranking_method == "potential":
         return OverallPotentialRanker()
-    elif ranking_method == "current_potential":
-        return CurrentPotentialRanker()
     elif ranking_method == "overall":
         return OverallRanker()
     raise ValueError("Invalid Ranker")
