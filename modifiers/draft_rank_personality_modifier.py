@@ -9,11 +9,11 @@ class DraftRankPersonalityModifier(BaseRankModifier):
 
         if rank < 100:
             pass
-        elif rank < 200:
+        elif rank < 150:
             modifier_weight = 0.6
-        elif rank < 300:
+        elif rank < 200:
             modifier_weight = 0.8
-        elif rank < 400:
+        elif rank < 300:
             modifier_weight = 0.9
         else:
             modifier_weight = 1
