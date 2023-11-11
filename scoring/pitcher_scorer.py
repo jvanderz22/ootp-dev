@@ -327,7 +327,7 @@ class PitcherScorer:
             score = starting_score if starting_score > relief_score else relief_score
         else:
             starting_score = self.__calculate_sp_score(player)
-            relief_score = self.__calculate_rp_score(player) * 1.15
+            relief_score = self.__calculate_rp_score(player) * 1.1
             score = starting_score if starting_score > relief_score else relief_score
         score = score if score > 0 else 0
 
