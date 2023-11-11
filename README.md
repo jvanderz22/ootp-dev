@@ -24,3 +24,6 @@ python3 upload_drafted_players.py
 
 Refresh drafted list and upload draft preference list to stats plus:
 python3 upload_drafted_players.py -d
+
+Possible ranking_method: "draft_class", "potential" and "overall"
+Possible print_method: "draft_prospects" and "org_players"

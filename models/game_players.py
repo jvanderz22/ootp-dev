@@ -146,11 +146,11 @@ class GamePlayer:
 
     @property
     def overall(self):
-        return int(self._overall)
+        return int(self._overall) if self._overall != "" else None
 
     @property
     def potential(self):
-        return int(self._potential)
+        return int(self._potential) if self._potential != "" else None
 
     @property
     def demand(self):

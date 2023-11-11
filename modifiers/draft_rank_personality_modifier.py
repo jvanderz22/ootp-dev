@@ -15,8 +15,10 @@ class DraftRankPersonalityModifier(BaseRankModifier):
             modifier_weight = 0.8
         elif rank < 300:
             modifier_weight = 0.9
-        else:
+        elif rank < 400:
             modifier_weight = 1
+        else:
+            modifier_weight = 1.5
 
         bad_personalities = 0
         if player.work_ethic == "L":

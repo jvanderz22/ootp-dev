@@ -44,11 +44,17 @@ def create_dataset(file_path, class_name):
     dataset_config = {
         "ranking_method": "draft_class",
     }
-    with open(f"{data_directory}/config.json", "w") as config_file:
-        config_file.write(json.dumps(dataset_config, indent=4))
-    print(
-        f'Created class at {class_path}. Set "{class_name}" to be the active draft class in constants.py to process it.'
-    )
+    config_file_path = f"{data_directory}/config.json"
+    if not os.path.exists(config_file_path):
+        with open(config_file_path, "w") as config_file:
+            config_file.write(json.dumps(dataset_config, indent=4))
+        print(
+            f'Created class at {class_path}. Set "{class_name}" to be the active draft class in constants.py to process it.'
+        )
+    else:
+        print(
+            f'Updated class at {class_path}. Set "{class_name}" to be the active draft class in constants.py to process it.'
+        )
 
 
 if __name__ == "__main__":
