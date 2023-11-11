@@ -1,4 +1,6 @@
-DRAFT_CLASS_NAME = "moscow-2107"
-# DRAFT_CLASS_NAME = "yfmlb-2031"
+# DRAFT_CLASS_NAME = "yfmlb-2032"
+# DRAFT_CLASS_NAME = "ftd-2037"
+DRAFT_CLASS_NAME = "ftd-2037-draft"
 STATS_PLUS_URL = "https://statsplus.net/yfmlb/"
 # STATS_PLUS_URL = "https://atl-01.statsplus.net/wbf/"
+STATS_PLUS_URL = "https://atl-02.statsplus.net/ftd/"
