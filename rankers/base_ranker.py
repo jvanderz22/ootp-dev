@@ -3,6 +3,7 @@ from models.game_players import GamePlayer
 from models.player_score import PlayerScore
 from modifiers.base_modifier import BaseModifier
 from modifiers.base_rank_modifier import BaseRankModifier
+from modifiers.batter_hit_profile_modifier import BatterHitProfileModifier
 from scoring.position_player_scorer import (
     PositionPlayerScorer,
 )

@@ -31,6 +31,9 @@ PLAYER_FIELDS = {
     "power_ovr": "POW",
     "eye_ovr": "EYE",
     "avoid_k_ovr": "K's",
+    "batted_ball_profile": "BBT",
+    "gb_tendency": "GBT",
+    "fb_tendency": "FBT",
     "speed": "SPE",
     "steal": "STE",
     "running_ability": "RUN",
@@ -247,6 +250,22 @@ class GamePlayer:
     @property
     def avoid_k_ovr(self):
         return int(self._avoid_k_ovr)
+
+    @property
+    def batted_ball_profile(self):
+        return self._batted_ball_profile
+
+    @property
+    def gb_tendency(self):
+        return self._gb_tendency
+
+    @property
+    def fb_tendency(self):
+        return self._fb_tendency
+
+    @property
+    def bb_type(self):
+        return self._bb_type
 
     @property
     def speed(self):

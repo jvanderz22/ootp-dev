@@ -2,6 +2,7 @@ from modifiers.base_modifier import BaseModifier
 from modifiers.batter_distance_from_overall_modifier import (
     BatterDistanceFromOverallModifier,
 )
+from modifiers.batter_hit_profile_modifier import BatterHitProfileModifier
 from modifiers.pitcher_distance_from_overall_modifier import (
     PitcherDistanceFromOverallModifier,
 )
@@ -23,6 +24,7 @@ class OverallPotentialRanker(BaseRanker):
         return [
             BatterHandednessModifier,
             BatterInjuryModifier,
+            BatterHitProfileModifier(),
             BatterDistanceFromOverallModifier,
             ScoutingAccuracyModifier,
             PersonalityModifier,

@@ -1,5 +1,6 @@
 from modifiers.base_modifier import BaseModifier
 from modifiers.base_rank_modifier import BaseRankModifier
+from modifiers.batter_hit_profile_modifier import BatterHitProfileModifier
 from modifiers.draft_age_modifier import DraftAgeModifier
 from modifiers.draft_batter_overall_modifier import DraftBatterOverallModifier
 from modifiers.draft_demand_modifier import DraftDemandModifier
@@ -28,6 +29,7 @@ class DraftClassRanker(BaseRanker):
         return [
             DraftBatterOverallModifier,
             BatterHandednessModifier,
+            BatterHitProfileModifier(),
             BatterInjuryModifier,
             ScoutingAccuracyModifier,
             PersonalityModifier,
