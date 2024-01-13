@@ -19,7 +19,7 @@ class DraftClassRanker(BaseRanker):
     def __init__(self):
         super().__init__(
             pitcher_scorer=PitcherScorer(
-                exponent=PITCHER_EXPONENT + 0.02,
+                exponent=PITCHER_EXPONENT,
                 rp_multiplier=RP_OVERALL_MODIFIER - 0.1,
             )
         )
