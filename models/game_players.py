@@ -125,7 +125,7 @@ class GamePlayer:
             "knucklecurve_ovr",
         ]
         for attr, dict_attr in PLAYER_FIELDS.items():
-            setattr(self, f"_{attr}", player_dict[dict_attr])
+            setattr(self, f"_{attr}", player_dict.get(dict_attr))
 
     @property
     def id(self):
