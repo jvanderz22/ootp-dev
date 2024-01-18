@@ -3,16 +3,16 @@ from modifiers.base_modifier import BaseModifier
 
 def get_overall_attribute_modifier(attribute):
     if attribute >= 45:
-        return 1.14
+        return 1.11
     elif attribute >= 40:
-        return 1.08
+        return 1.06
     elif attribute >= 35:
-        return 1.035
+        return 1.025
     elif attribute >= 30:
         return 1
     elif attribute >= 25:
-        return 0.985
-    return 0.95
+        return 0.988
+    return 0.96
 
 
 class DraftBatterOverallModifier(BaseModifier):
