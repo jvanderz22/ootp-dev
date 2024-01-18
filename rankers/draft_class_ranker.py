@@ -7,6 +7,8 @@ from modifiers.draft_demand_modifier import DraftDemandModifier
 from modifiers.draft_rank_personality_modifier import DraftRankPersonalityModifier
 from modifiers.pitcher_injury_modifier import PitcherInjuryModifier
 from modifiers.draft_pitcher_overall_modifier import DraftPitcherOverallModifier
+from modifiers.draft_pitcher_stuff_modifier import DraftPitcherStuffModifier
+from modifiers.pitcher_velocity_modifier import PitcherVelocityModifier
 from modifiers.scouting_accuracy_modifier import ScoutingAccuracyModifier
 from rankers.base_ranker import BaseRanker
 from modifiers.batter_injury_modifier import BatterInjuryModifier
@@ -39,6 +41,8 @@ class DraftClassRanker(BaseRanker):
     def pitcher_modifiers(self) -> list[BaseModifier]:
         return [
             DraftPitcherOverallModifier,
+            DraftPitcherStuffModifier,
+            PitcherVelocityModifier,
             PitcherInjuryModifier,
             PersonalityModifier,
             ScoutingAccuracyModifier,
