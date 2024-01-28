@@ -44,24 +44,24 @@ lt_30_ranking_demand_model = create_demand_modifier_model(
     [[7000000], [9000000]], [1, 0.82]
 )
 
-lt_60_min = 0.45
-lt_60_ranking_demand_model = create_demand_modifier_model(
+lt_65_min = 0.45
+lt_65_ranking_demand_model = create_demand_modifier_model(
     [[1300000], [2800000], [5500000], [9000000]], [1, 0.9, 0.65, 0.45]
 )
 
-lt_100_ranking_demand_model = create_demand_modifier_model(
+lt_130_ranking_demand_model = create_demand_modifier_model(
     [[700000], [950000], [1250000], [1700000], [2500000]], [1, 0.8, 0.7, 0.6, 0.4]
 )
 
-lt_150_ranking_demand_model = create_demand_modifier_model(
+lt_180_ranking_demand_model = create_demand_modifier_model(
     [[450000], [700000], [850000], [1000000], [2000000]], [1, 0.8, 0.8, 0.7, 0.4]
 )
 
-lt_250_ranking_demand_model = create_demand_modifier_model(
+lt_280_ranking_demand_model = create_demand_modifier_model(
     [[430000], [500000], [700000], [1000000]], [1, 0.7, 0.7, 0.4]
 )
 
-gt_250_ranking_demand_model = create_demand_modifier_model(
+gt_280_ranking_demand_model = create_demand_modifier_model(
     [[250000], [320000], [350000], [550000]], [0.95, 0.7, 0.5, 0.4]
 )
 
@@ -86,22 +86,22 @@ class DraftDemandModifier(BaseRankModifier):
             return run_demand_model(
                 lt_30_ranking_demand_model, lt_30_min, parsed_demand
             )
-        elif rank < 60:
+        elif rank < 65:
             return run_demand_model(
-                lt_60_ranking_demand_model, lt_60_min, parsed_demand
+                lt_65_ranking_demand_model, lt_65_min, parsed_demand
             )
-        elif rank < 100:
+        elif rank < 130:
             return run_demand_model(
-                lt_100_ranking_demand_model, base_modifier_min, parsed_demand
+                lt_130_ranking_demand_model, base_modifier_min, parsed_demand
             )
-        elif rank < 150:
+        elif rank < 180:
             return run_demand_model(
-                lt_150_ranking_demand_model, base_modifier_min, parsed_demand
+                lt_180_ranking_demand_model, base_modifier_min, parsed_demand
             )
-        elif rank < 250:
+        elif rank < 280:
             return run_demand_model(
-                lt_250_ranking_demand_model, base_modifier_min, parsed_demand
+                lt_280_ranking_demand_model, base_modifier_min, parsed_demand
             )
         return run_demand_model(
-            gt_250_ranking_demand_model, base_modifier_min, parsed_demand
+            gt_280_ranking_demand_model, base_modifier_min, parsed_demand
         )
