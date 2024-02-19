@@ -19,7 +19,7 @@ def create_csv(file_path, draft_class_path):
         except:
             continue
 
-    table_rows = table.find_all("tr")[2:]
+    table_rows = table.find_all("tr")[1:]
 
     for table_row in table_rows:
         row_data = []
