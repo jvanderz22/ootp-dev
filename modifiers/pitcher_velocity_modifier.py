@@ -7,7 +7,10 @@ class PitcherVelocityModifier(BaseModifier):
     @classmethod
     def calculate_player_modifier(cls, player):
         modifier = 1
+        if len(player.velocity) == 1:
+            return modifier
         lower_velo = int(re.search(r"\d+", player.velocity)[0])
+
         has_knuckleball = "knuckleball" in player.get_pitches()
         if has_knuckleball:
             return modifier
