@@ -4,7 +4,7 @@ import sys
 
 from constants import RANKED_PLAYERS_FILE_PATH
 from get_game_players import get_game_players
-from drafted_players import get_drafted_player_ids
+from drafted_players import get_drafted_player_ids, get_drafted_players_info
 
 
 def print_player(player):
@@ -17,6 +17,7 @@ if __name__ == "__main__":
     print_count = 50
     position = None
     print_raw = False
+    org = None
     maximum_potential = 80
     try:
         opts, args = getopt.getopt(sys.argv[1:], "m:p:t:")
@@ -30,6 +31,8 @@ if __name__ == "__main__":
             position = arg
         if opt == "-t":
             print_count = int(arg)
+        if opt == "-o":
+            org = arg
 
     drafted_players = get_drafted_player_ids()
     with open(RANKED_PLAYERS_FILE_PATH, newline="") as csvfile:
