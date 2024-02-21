@@ -22,19 +22,19 @@ rp_groundball_type_modifier_map = {
 }
 
 rp_stamina_modifier_map = {
-    20: 0.876,
-    25: 0.94,
-    30: 0.97,
-    35: 1,
+    20: 0.87,
+    25: 0.93,
+    30: 0.96,
+    35: 0.99,
     40: 1,
-    45: 1.05,
-    50: 1.1,
-    55: 1.1,
-    60: 1.1,
-    65: 1.15,
-    70: 1.15,
-    75: 1.15,
-    80: 1.15,
+    45: 1,
+    50: 1,
+    55: 1.02,
+    60: 1.04,
+    65: 1.06,
+    70: 1.06,
+    75: 1.06,
+    80: 1.06,
 }
 
 rp_best_pitch_value_modifier_map = {
@@ -49,8 +49,8 @@ rp_best_pitch_value_modifier_map = {
     60: 1,
     65: 1.03,
     70: 1.06,
-    75: 1.13,
-    80: 1.2,
+    75: 1.1,
+    80: 1.15,
 }
 
 rp_second_pitch_value_modifier_map = {
@@ -65,8 +65,8 @@ rp_second_pitch_value_modifier_map = {
     60: 1,
     65: 1.03,
     70: 1.05,
-    75: 1.12,
-    80: 1.17,
+    75: 1.1,
+    80: 1.13,
 }
 
 rp_third_pitch_value_modifier_map = {
