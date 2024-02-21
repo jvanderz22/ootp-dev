@@ -42,4 +42,6 @@ class OverallPotentialRanker(BaseRanker):
         ]
 
     def filter_players(self, players):
-        return [player for player in players if player.age <= 27]
+        return [
+            player for player in players if player.age <= 27 and player.level != "MLB"
+        ]
