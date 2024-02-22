@@ -51,24 +51,28 @@ class ReliefPitcherAttributeModel(AttributeModel):
     def test_data(self):
         return [
             [100, [80, 80, 80]],  # best reliever pitcher ever
-            [89, [80, 70, 70]],  # best reliever pitcher in league
+            [94, [80, 70, 70]],  # best reliever pitcher in league
             [81, [80, 50, 60]],  # elite backend reliever
             [77, [75, 60, 60]],  # elite backend reliever
             [63, [75, 45, 70]],  # solid backend reliever
             [61, [70, 55, 60]],  # solid backend reliever
+            [53, [60, 55, 60]],  # middle-reliever
             [51, [75, 45, 45]],  # middle-reliever
-            [49, [60, 55, 60]],  # middle-reliever
             [44, [70, 35, 50]],  # middle-reliever
             [43, [50, 55, 75]],  # control-first middle-reliever
+            [41, [55, 55, 55]],  # borderline middle-reliever
             [38, [65, 55, 45]],  # swingman
+            [35, [55, 50, 55]],  # swingman
             [32, [50, 55, 55]],  # swingman
-            [21, [60, 50, 45]],  # fringy reliever
+            [23, [60, 50, 45]],  # fringy reliever
             [19, [50, 45, 50]],  # fringy reliever
             [17, [80, 30, 30]],  # fringy reliever
             [16, [45, 55, 60]],  # fringy reliever
+            [15, [50, 50, 50]],  # fringy reliever
             [11, [55, 55, 40]],  # fringy reliever
-            [95, [75, 75, 75]],  # lower bounds baseline
+            [90, [75, 75, 75]],  # lower bounds baseline
             [15, [75, 25, 75]],  # lower bounds
             [7, [40, 75, 75]],  # lower bounds
+            [4, [45, 45, 45]],  # lower bound
             [11, [75, 75, 25]],  # lower bounds
         ]
