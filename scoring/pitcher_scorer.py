@@ -101,7 +101,7 @@ def calculate_rp_modifier(player, type="potential"):
 
     first_pitch_modifier = rp_best_pitch_value_modifier_map[getattr(player, pitches[0])]
     second_pitch_modifier = 0.8
-    if len(pitches) > 2:
+    if len(pitches) >= 2:
         second_pitch_modifier = rp_second_pitch_value_modifier_map[
             getattr(player, pitches[1])
         ]
