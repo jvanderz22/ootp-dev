@@ -184,8 +184,10 @@ class DraftProspectPrinter:
                 print(
                     f"OF Range: {game_player.of_range}, OF Error: {game_player.of_error}, OF Arm: {game_player.of_arm}"
                 )
-            if game_player.c_ability >= 45:
-                print(f"C Ability: {game_player.c_ability}, C Arm: {game_player.c_arm}")
+            if game_player.c_framing >= 45:
+                print(
+                    f"C Framing: {game_player.c_framing}, C Blocking: {game_player.c_blocking} C Arm: {game_player.c_arm}"
+                )
 
         if is_pitcher and not print_minimal:
             print(

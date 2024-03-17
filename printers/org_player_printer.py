@@ -138,8 +138,10 @@ class OrgPlayerPrinter:
                 print(
                     f"OF Range: {player.of_range}, OF Error: {player.of_error}, OF Arm: {player.of_arm}"
                 )
-            if player.c_ability >= 45:
-                print(f"C Ability: {player.c_ability}, C Arm: {player.c_arm}")
+            if player.c_framing >= 45:
+                print(
+                    f"C Framing: {player.c_framing}, C Blocking: {player.c_blocking} C Arm: {player.c_arm}"
+                )
             print("")
 
         if is_pitcher:

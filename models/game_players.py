@@ -38,7 +38,8 @@ PLAYER_FIELDS = {
     "steal": "STE",
     "running_ability": "RUN",
     "c_arm": "C ARM",
-    "c_ability": "C ABI",
+    "c_blocking": "C ABI",
+    "c_framing": "C FRM",
     "if_range": "IF RNG",
     "if_arm": "IF ARM",
     "if_error": "IF ERR",
@@ -284,8 +285,12 @@ class GamePlayer:
         return int(self._c_arm)
 
     @property
-    def c_ability(self):
-        return int(self._c_ability)
+    def c_blocking(self):
+        return int(self._c_blocking)
+
+    @property
+    def c_framing(self):
+        return int(self._c_framing)
 
     @property
     def if_range(self):
