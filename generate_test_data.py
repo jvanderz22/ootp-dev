@@ -3,8 +3,9 @@ import random
 
 test_file = "test_file.csv"
 # field_names = ["Ovr", "Contact", "Gap", "Power", "Eye", "K"]
-field_names = ["Ovr", "Range", "Error", "Arm"]
-rows = 30
+# field_names = ["Ovr", "Range", "Error", "Arm"]
+field_names = ["Ovr", "C Blocking", "C Framing", "C Arm"]
+rows = 50
 
 
 def generate_test_data():
