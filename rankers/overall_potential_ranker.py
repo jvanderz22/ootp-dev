@@ -13,7 +13,7 @@ from modifiers.batter_injury_modifier import BatterInjuryModifier
 from modifiers.batter_handedness_modifier import BatterHandednessModifier
 from modifiers.personality_modifier import PersonalityModifier
 from modifiers.pitcher_velocity_modifier import PitcherVelocityModifier
-from scoring.pitcher_scorer import PitcherScorer, PITCHER_EXPONENT, PITCHER_MULTIPLIER
+from scoring.pitcher_scorer import PitcherScorer
 
 
 class OverallPotentialRanker(BaseRanker):
