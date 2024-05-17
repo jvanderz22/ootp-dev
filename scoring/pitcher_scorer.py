@@ -327,8 +327,9 @@ class PitcherScorer:
         return [score, starting_score, relief_score]
 
     def apply_adjustment(self, score):
-        diff_from_60 = score - 60
-        diff_exponent = -diff_from_60 / 250
+        diff_from_65 = score - 65
+        diff_exponent = -diff_from_65 / 750
+
         return (score**diff_exponent) * score
 
     def __calculate_sp_score(self, player):
