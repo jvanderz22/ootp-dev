@@ -34,23 +34,29 @@ def run_demand_model(model, minimum_modifier, value):
 
 
 base_modifier_min = 0.4
+
+# used for 10-20
 lt_20_min = 0.85
 lt_20_ranking_demand_model = create_demand_modifier_model(
     [[8000000], [10000000]], [1, 0.85]
 )
 
+# used for 20 - 30
 lt_30_min = 0.82
 lt_30_ranking_demand_model = create_demand_modifier_model(
     [[7000000], [9000000]], [1, 0.82]
 )
 
+# used for 30 - 65
 lt_65_min = 0.45
 lt_65_ranking_demand_model = create_demand_modifier_model(
-    [[1300000], [2800000], [5500000], [9000000]], [1, 0.9, 0.65, 0.45]
+    [[2300000], [4300000], [5500000], [9000000]], [1, 0.9, 0.65, 0.45]
 )
 
+
+# used for 65 - 130
 lt_130_ranking_demand_model = create_demand_modifier_model(
-    [[700000], [950000], [1250000], [1700000], [2500000]], [1, 0.8, 0.7, 0.6, 0.4]
+    [[900000], [1150000], [1650000], [2100000], [2700000]], [1, 0.9, 0.7, 0.6, 0.4]
 )
 
 lt_180_ranking_demand_model = create_demand_modifier_model(
