@@ -329,8 +329,13 @@ class PitcherScorer:
     def apply_adjustment(self, score):
         diff_from_65 = score - 65
         diff_exponent = -diff_from_65 / 750
+        multiplier = score**diff_exponent
 
-        return (score**diff_exponent) * score
+        additive_effect = 0
+        if score > 10:
+            # boost mid-tier pitcher scoring with an addition
+            additive_effect = max(-diff_from_65 / 4, 0)
+        return multiplier * score + additive_effect
 
     def __calculate_sp_score(self, player):
         base_score = self.sp_model.run(player)
