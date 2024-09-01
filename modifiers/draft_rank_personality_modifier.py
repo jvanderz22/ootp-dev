@@ -5,10 +5,10 @@ from utils.rank_graditated_model import RankGradiatedModel
 class DraftRankPersonalityModifier(BaseRankModifier):
     modifier_model = RankGradiatedModel(
         [10, 25, 50, 75, 100, 150, 200, 300, 350, 650],
-        [0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1, 1.5],
+        [0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1, 1.15],
     )
     high_leadership_modifier_model = RankGradiatedModel(
-        [100, 150, 300, 500, 700], [0, 0.2, 0.4, 1, 1.2]
+        [100, 150, 300, 500, 700], [0, 0.2, 0.4, 0.8, 1]
     )
     low_leadership_modifier_model = RankGradiatedModel([250, 350, 600], [0, 0.5, 1])
     bad_personality_modifier_model = RankGradiatedModel([0, 350, 600], [1, 1, 1.5])
