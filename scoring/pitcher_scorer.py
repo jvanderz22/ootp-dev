@@ -205,15 +205,15 @@ sp_third_pitch_value_modifier_map = {
 
 
 sp_fourth_pitch_value_modifier_map = {
-    20: 1,
-    25: 1.02,
-    30: 1.03,
-    35: 1.03,
-    40: 1.03,
-    45: 1.03,
-    50: 1.03,
-    55: 1.05,
-    60: 1.05,
+    20: 0.92,
+    25: 0.93,
+    30: 0.94,
+    35: 0.97,
+    40: 0.99,
+    45: 1,
+    50: 1.01,
+    55: 1.03,
+    60: 1.045,
     65: 1.07,
     70: 1.09,
     75: 1.1,
@@ -262,7 +262,7 @@ def calculate_sp_modifiers(player, type="potential"):
             getattr(player, pitches[2])
         ]
 
-    fourth_pitch_modifier = 0.97
+    fourth_pitch_modifier = 0.92
     if len(pitches) >= 4:
         fourth_pitch_modifier = sp_fourth_pitch_value_modifier_map[
             getattr(player, pitches[3])
