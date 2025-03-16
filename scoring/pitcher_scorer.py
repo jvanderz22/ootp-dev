@@ -324,7 +324,6 @@ class PitcherScorer:
             relief_score = self.__calculate_rp_score(player)
             score = starting_score if starting_score > relief_score else relief_score
         score = score if score > 0 else 0
-
         # Try to fix the batter/pitcher distribution
         score = self.apply_adjustment(score)
         return [score, starting_score, relief_score]

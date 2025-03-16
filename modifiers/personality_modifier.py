@@ -16,7 +16,7 @@ class PersonalityModifier(BaseModifier):
         modifier = 1
 
         if player.intelligence == "H":
-            modifier *= 1.05
+            modifier *= 1.04
         elif player.intelligence == "L":
             modifier *= 0.93
 
