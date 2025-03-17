@@ -70,6 +70,7 @@ class StartingPitcherAttributeModel(AttributeModel):
             [36, [70, 50, 40]],  # spot starter
             [35, [50, 35, 60]],  # spot starter
             [31, [70, 50, 35]],  # maybe some value with TCR
+            [30, [55, 45, 45]],  # maybe some value with TCR
             [29, [45, 50, 50]],  # maybe some value with TCR
             [17, [45, 45, 45]],  # maybe some value with TCR
             [6, [40, 40, 40]],  # maybe some value with TCR
