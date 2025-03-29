@@ -38,6 +38,7 @@ def upload_draft_list():
     driver = webdriver.Chrome()
     driver.get(STATS_PLUS_URL)
     login_to_stats_plus(driver)
+    time.sleep(5)
     driver.get(f"{STATS_PLUS_URL}/draft/#mylist")
     wait = WebDriverWait(driver, 5)
     wait.until(
