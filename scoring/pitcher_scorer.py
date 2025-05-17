@@ -13,7 +13,7 @@ rp_groundball_type_modifier_map = {
     "FB": 1,
     "NEU": 1,
     "GB": 1.02,
-    "EX GB": 1.05,
+    "EX GB": 1.08,
 }
 
 rp_stamina_modifier_map = {
