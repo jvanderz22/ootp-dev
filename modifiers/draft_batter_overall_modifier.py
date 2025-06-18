@@ -3,15 +3,15 @@ from modifiers.base_modifier import BaseModifier
 
 def get_overall_attribute_modifier(attribute):
     if attribute >= 45:
-        return 1.11
+        return 1.055
     elif attribute >= 40:
-        return 1.06
+        return 1.03
     elif attribute >= 35:
-        return 1.025
+        return 1.015
     elif attribute >= 30:
         return 1
     elif attribute >= 25:
-        return 0.988
+        return 0.99
     return 0.96
 
 

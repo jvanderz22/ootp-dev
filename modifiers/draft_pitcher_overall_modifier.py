@@ -33,15 +33,15 @@ def get_overall_attribute_modifier(ovr, potential):
 
 def get_all_over_attribute_modifiers(attributes):
     if all(attr >= 45 for attr in attributes):
-        return 1.1
-    if all(attr >= 40 for attr in attributes):
-        return 1.07
-    if all(attr >= 35 for attr in attributes):
         return 1.04
+    if all(attr >= 40 for attr in attributes):
+        return 1.03
+    if all(attr >= 35 for attr in attributes):
+        return 1.015
     if all(attr >= 30 for attr in attributes):
-        return 1.01
+        return 1.0
     if all(attr >= 25 for attr in attributes):
-        return 0.985
+        return 0.99
     return 0.97
 
 
