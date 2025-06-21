@@ -4,8 +4,8 @@ from utils.rank_graditated_model import RankGradiatedModel
 
 class DraftRankPersonalityModifier(BaseRankModifier):
     modifier_model = RankGradiatedModel(
-        [10, 25, 50, 75, 100, 150, 200, 300, 350, 650],
-        [0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1, 1.15],
+        [10, 25, 50, 75, 100, 150, 200, 350, 450, 850],
+        [0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9],
     )
     high_leadership_modifier_model = RankGradiatedModel(
         [100, 150, 300, 500, 700], [0, 0.2, 0.4, 0.8, 1]

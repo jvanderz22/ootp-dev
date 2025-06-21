@@ -2,9 +2,9 @@ from modifiers.base_modifier import BaseModifier
 
 work_ethic_age_modifier_impact = {
     17: 1.4,
-    18: 1.3,
-    19: 1.22,
-    20: 1.15,
+    18: 1.4,
+    19: 1.3,
+    20: 1.2,
     21: 1.1,
     22: 1.05,
 }
@@ -22,7 +22,7 @@ class PersonalityModifier(BaseModifier):
 
         work_ethic_modifier = 1
         if player.work_ethic == "H":
-            work_ethic_modifier = 1.07
+            work_ethic_modifier = 1.05
         elif player.work_ethic == "L":
             work_ethic_modifier = 0.9
 
