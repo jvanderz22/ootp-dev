@@ -1,4 +1,5 @@
 import getopt
+import json
 import sys
 from drafted_players import get_drafted_player_ids, get_drafted_players_info
 from get_game_players import get_game_players
@@ -20,8 +21,9 @@ class DraftProspectPrinter:
         print_minimal = False
         drafted_org = None
         player_name = None
+        verbose = False
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "n:p:t:r:o:amsd")
+            opts, args = getopt.getopt(sys.argv[1:], "n:p:t:r:o:amsdv")
         except getopt.GetoptError:
             print("Invalid Option!")
             sys.exit(2)
@@ -44,6 +46,8 @@ class DraftProspectPrinter:
                 sort_by_potential = True
             if opt == "-o":
                 drafted_org = arg
+            if opt == "-v":
+                verbose = True
 
         return {
             "print_count": print_count,
@@ -55,6 +59,7 @@ class DraftProspectPrinter:
             "position": position,
             "sort_by_potential": sort_by_potential,
             "drafted_org": drafted_org,
+            "verbose": verbose,
         }
 
     def print(self, players):
@@ -68,6 +73,7 @@ class DraftProspectPrinter:
         print_minimal = opts.get("print_minimal", False)
         sort_by_potential = opts.get("sort_by_potential", False)
         position = opts.get("position")
+        verbose = opts.get("verbose", False)
         printed_players = 0
 
         if sort_by_potential:
@@ -120,12 +126,13 @@ class DraftProspectPrinter:
                 printed_players,
                 player_draft_info,
                 self.game_players.get_player(player["id"]),
-                {"print_minimal": print_minimal},
+                {"print_minimal": print_minimal, "verbose": verbose},
             )
             print("")
 
     def print_player(self, player, index, draft_info, game_player, print_opts={}):
         print_minimal = print_opts.get("print_minimal", False)
+        print_verbose = print_opts.get("verbose", False)
         print("---------------------------")
         print(
             f'{index}. {player["name"]} {player["position"]} {player["age"]}, {player["id"]}'
@@ -206,3 +213,32 @@ class DraftProspectPrinter:
                 f"Durability: {game_player.injury_prone}, Work Ethic: {game_player.work_ethic}, Intelligence: {game_player.intelligence}, Leadership: {game_player.leadership}"
             )
             print(f'Demand: {player["demand"]}')
+
+        if print_verbose and player["components"] is not None:
+            components = json.loads(player["components"].replace("'", '"'))
+            print("\nPlayer Components:", end="")
+
+            def is_pitcher_modifier(k):
+                return "Pitcher" in k
+
+            def is_pos_modifier(k):
+                return "Pos" in k
+
+            keys = components.keys()
+            filtered_keys = []
+            for key in keys:
+                if is_pitcher_modifier(key) and not is_pitcher:
+                    continue
+                if is_pos_modifier(key) and not is_batter:
+                    continue
+                filtered_keys.append(key)
+            key_chunks = [
+                filtered_keys[x : x + 2] for x in range(0, len(filtered_keys), 2)
+            ]
+
+            for keys in key_chunks:
+                print("\n  ", end="")
+                for i, key in enumerate(keys):
+                    val_str = f"{key}: {components[key]}"
+                    extra_spaces = 0 if i > 0 else 60 - len(val_str)
+                    print(f"{val_str}{' ' * extra_spaces}", end=" ")

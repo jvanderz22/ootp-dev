@@ -2,6 +2,7 @@ from attribute_models.relief_pitcher_attribute_model import ReliefPitcherAttribu
 from attribute_models.starting_pitcher_attribute_model import (
     StartingPitcherAttributeModel,
 )
+from scoring.runtime_components import write_runtime_component
 
 
 # Lower the all RPs scores using this modifier
@@ -107,12 +108,12 @@ def calculate_rp_modifier(player, type="potential"):
             getattr(player, pitches[2])
         ]
 
-    total_rp_value_modifier = (
-        stamina_modifier
-        * first_pitch_modifier
-        * second_pitch_modifier
-        * third_pitch_modifier
+    rp_pitch_modifiers = (
+        first_pitch_modifier * second_pitch_modifier * third_pitch_modifier
     )
+    total_rp_value_modifier = stamina_modifier * rp_pitch_modifiers
+
+    write_runtime_component(player.id, "RP Pitcher Pitch Component", rp_pitch_modifiers)
     # Apply potential starter bonus instead
     if int(stamina) >= 35 and len(pitches) >= 3 and getattr(player, pitches[2]) >= 40:
         total_rp_value_modifier = 1.4
@@ -274,14 +275,16 @@ def calculate_sp_modifiers(player, type="potential"):
             getattr(player, pitches[4])
         ]
 
-    total_sp_value_modifier = (
-        stamina_modifier
-        * first_pitch_modifier
+    sp_pitch_modifiers = (
+        first_pitch_modifier
         * second_pitch_modifier
         * third_pitch_modifier
         * fourth_pitch_modifier
         * fifth_pitch_modifier
     )
+    write_runtime_component(player.id, "SP Pitcher Pitch Component", sp_pitch_modifiers)
+
+    total_sp_value_modifier = stamina_modifier * sp_pitch_modifiers
     # Treat SP as an RP instead
     if total_sp_value_modifier < 0.45:
         total_sp_value_modifier = 0.45
@@ -291,6 +294,7 @@ def calculate_sp_modifiers(player, type="potential"):
     home_run_risk_modifier = 1
     if player.movement < 45 and player.groundball_type == "EX FB":
         home_run_risk_modifier = 0.9
+    write_runtime_component(player.id, "Pitcher HR component", home_run_risk_modifier)
 
     modifier *= home_run_risk_modifier
     return {
@@ -325,10 +329,10 @@ class PitcherScorer:
             score = starting_score if starting_score > relief_score else relief_score
         score = score if score > 0 else 0
         # Try to fix the batter/pitcher distribution
-        score = self.apply_adjustment(score)
+        score = self.apply_adjustment(score, player)
         return [score, starting_score, relief_score]
 
-    def apply_adjustment(self, score):
+    def apply_adjustment(self, score, player):
         diff_from_65 = score - 65
         diff_exponent = -diff_from_65 / 750
         multiplier = score**diff_exponent
@@ -337,15 +341,21 @@ class PitcherScorer:
         if score > 10:
             # boost mid-tier pitcher scoring with an addition
             additive_effect = max(-diff_from_65 / 4, 0)
-        return multiplier * score + additive_effect
+
+        adjusted_score = multiplier * score + additive_effect
+        write_runtime_component(player.id, "Pitcher Adj Multiplier", multiplier)
+        write_runtime_component(player.id, "Pitcher Adj Effect", additive_effect)
+        return adjusted_score
 
     def __calculate_sp_score(self, player):
         base_score = self.sp_model.run(player)
+        write_runtime_component(player.id, "Pitcher Total SP Score", base_score)
         modifiers = calculate_sp_modifiers(player, self.type)
         score = base_score * modifiers["total_modifier"]
         return score
 
     def __calculate_rp_score(self, player):
         rp_score = self.rp_model.run(player)
+        write_runtime_component(player.id, "Pitcher Total RP Score", rp_score)
         rp_modifier = calculate_rp_modifier(player, self.type)
         return rp_score * rp_modifier * self.rp_modifier

@@ -52,6 +52,7 @@ def write_player_scores_to_file(players):
         "in_game_potential",
         "demand",
         "raw_overall_score",
+        "components",
     ]
 
     all_players_by_id = {player.id: player for player in players}
@@ -79,6 +80,7 @@ def write_player_scores_to_file(players):
                     "in_game_potential": player.potential,
                     "demand": player.demand,
                     "raw_overall_score": player_score.raw_overall_score,
+                    "components": player_score.components,
                 }
             )
 

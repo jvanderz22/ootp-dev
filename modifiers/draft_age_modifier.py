@@ -10,6 +10,7 @@ age_modifiers = {
     23: 0.93,
     24: 0.86,
 }
+from scoring.runtime_components import write_runtime_component
 from utils.rank_graditated_model import RankGradiatedModel
 
 

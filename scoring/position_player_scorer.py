@@ -8,6 +8,7 @@ from attribute_models.shortstop_attribute_model import ShortstopAttributeModel
 from attribute_models.catcher_attribute_model import CatcherAttributeModel
 from attribute_models.third_base_attribute_model import ThirdBaseAttributeModel
 from attribute_models.first_base_attribute_model import FirstBaseAttributeModel
+from scoring.runtime_components import write_runtime_component
 
 
 class PositionPlayerScorer:
@@ -29,6 +30,8 @@ class PositionPlayerScorer:
         [fielding_score, _, _, best_position] = self.__calculate_fielding_score(player)
         batting_score = self.batting_model.run(player)
         running_score = self.running_model.run(player)
+        write_runtime_component(player.id, f"Pos - Batting Model", batting_score)
+        write_runtime_component(player.id, f"Pos - Running Model", running_score)
         # this is more than 100% but thats okay. Trying to get a league average player to equal 50 overall
         # and 100 wrc+ currently equals 50 in the batting score component and 50 in the fielding score
         # component is more a gold glove type.
@@ -49,6 +52,10 @@ class PositionPlayerScorer:
         )
         utility_bonus = self.__calculate_utility_bonuses(position_scores)
         overall_score = best_score + utility_bonus
+        write_runtime_component(
+            player.id, f"Pos - Best Pos Score ({best_position})", best_score
+        )
+        write_runtime_component(player.id, "Pos - Utility Bonus", utility_bonus)
         return [overall_score, best_score, utility_bonus, best_position]
 
     def __calculate_best_position_score(self, position_scores):

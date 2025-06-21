@@ -1,13 +1,15 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+import inspect
+import json
 from models.game_players import GamePlayer
 from models.player_score import PlayerScore
 from modifiers.base_modifier import BaseModifier
 from modifiers.base_rank_modifier import BaseRankModifier
-from modifiers.batter_hit_profile_modifier import BatterHitProfileModifier
 from scoring.position_player_scorer import (
     PositionPlayerScorer,
 )
 from scoring.pitcher_scorer import PitcherScorer
+from scoring.runtime_components import get_runtime_components, write_runtime_component
 
 
 class BaseRanker(ABC):
@@ -80,6 +82,9 @@ class BaseRanker(ABC):
                 player, score.raw_overall_score, i
             )
             score.overall_score = overall_score
+            score.components = json.loads(
+                json.dumps(str(get_runtime_components(player.id)))
+            )
 
         sorted_player_scores = sorted(
             player_scores, key=lambda score: score.overall_score, reverse=True
@@ -98,7 +103,17 @@ class BaseRanker(ABC):
     def get_position_player_modifier(self, player: GamePlayer) -> float:
         modifier_val = 1
         for modifier in self.position_player_modifiers:
-            modifier_val *= modifier.calculate_player_modifier(player)
+            mod_val = modifier.calculate_player_modifier(player)
+            modifier_name = (
+                modifier.__name__
+                if inspect.isclass(modifier)
+                else modifier.__class__.__name__
+            )
+
+            write_runtime_component(player.id, f"Pos Modifier {modifier_name}", mod_val)
+            modifier_val *= mod_val
+
+        write_runtime_component(player.id, f"Total Pos Modifier", modifier_val)
         return modifier_val
 
     def calculate_pitcher_score(self, player: GamePlayer) -> float:
@@ -113,13 +128,27 @@ class BaseRanker(ABC):
     def get_pitcher_modifier(self, player: GamePlayer) -> float:
         modifier_val = 1
         for modifier in self.pitcher_modifiers:
-            modifier_val *= modifier.calculate_player_modifier(player)
+            mod_val = modifier.calculate_player_modifier(player)
+            write_runtime_component(
+                player.id, f"Pitcher Modifier {modifier.__name__}", mod_val
+            )
+            modifier_val *= mod_val
+        write_runtime_component(player.id, f"Total Pitcher Modifier", modifier_val)
         return modifier_val
 
     def calculate_rank_adjusted_score(self, player, raw_score, rank) -> float:
         score = raw_score
         for modifier in self.rank_adjusted_modifiers:
-            score = modifier.calculate_modified_score(player, rank, score)
+            mod_val = modifier.calculate_modified_score(player, rank)
+            if float(mod_val) != float(1):
+                write_runtime_component(
+                    player.id, f"Rank-adj Modifier {modifier.__name__}", mod_val
+                )
+            score *= mod_val
+
+        if score is not raw_score:
+            write_runtime_component(player.id, f"Pre Rank-adj Rank", rank)
+            write_runtime_component(player.id, f"Pre Rank-adj Score", raw_score)
         return score
 
     def aggregate_pitcher_batter_scores(self, batter_score, pitcher_score) -> float:

@@ -12,3 +12,4 @@ class PlayerScore:
     reliever_component: float
     raw_overall_score: float
     overall_score: float = None
+    components: dict = None
