@@ -79,7 +79,7 @@ class BaseRanker(ABC):
         for i, score in enumerate(sorted_player_scores):
             player = all_players[score.id]
             overall_score = self.calculate_rank_adjusted_score(
-                player, score.raw_overall_score, i
+                player, score.raw_overall_score, i + 1
             )
             score.overall_score = overall_score
             score.components = json.loads(
