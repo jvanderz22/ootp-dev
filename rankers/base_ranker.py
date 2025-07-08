@@ -146,9 +146,8 @@ class BaseRanker(ABC):
                 )
             score *= mod_val
 
-        if score is not raw_score:
-            write_runtime_component(player.id, f"Pre Rank-adj Rank", rank)
-            write_runtime_component(player.id, f"Pre Rank-adj Score", raw_score)
+        write_runtime_component(player.id, f"Pre Rank-adj Rank", rank)
+        write_runtime_component(player.id, f"Pre Rank-adj Score", raw_score)
         return score
 
     def aggregate_pitcher_batter_scores(self, batter_score, pitcher_score) -> float:
