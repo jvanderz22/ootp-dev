@@ -23,12 +23,14 @@ def get_overall_attribute_modifier(ovr, potential):
     elif ovr >= 35:
         if potential_diff <= 10:
             return 1
-        return 1.01
-    elif ovr >= 30:
-        return 1 if potential_diff >= 10 else 0.98
-    elif ovr >= 25:
-        return 0.99 if potential_diff >= 10 else 0.92
-    return 0.965 if potential_diff >= 10 else 0.92
+        elif potential_diff <= 20:
+            return 0.98
+        return 0.97
+    if potential_diff <= 10:
+        return 0.98
+    elif potential_diff <= 20:
+        return 0.965
+    return 0.95
 
 
 def get_all_over_attribute_modifiers(attributes):
