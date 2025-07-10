@@ -71,10 +71,16 @@ class PositionPlayerScorer:
         has_ss_bonus = False
         has_cf_bonus = False
         has_rf_bonus = False
+        has_c_bonus = False
         bonus_score = 0
         [best_position_score, best_position] = self.__calculate_best_position_score(
             position_scores
         )
+
+        if best_position == "C" and position_scores["C"] > 20:
+            # treat C as a special bonus case
+            bonus_score += min(position_scores["C"] * 0.03, 2)
+
         if best_position == "SS":
             has_ss_bonus = True
         elif best_position == "CF":
@@ -114,4 +120,5 @@ class PositionPlayerScorer:
         ):
             has_rf_bonus = True
             bonus_score += position_scores["LF"] * 0.05
+
         return bonus_score
