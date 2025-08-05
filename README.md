@@ -10,6 +10,9 @@ python3 run.py
 Print top available players:
 python3 print_evals.py
 
+Print org summaries:
+python3 print_org_summaries.py
+
 Populate drafted players from statsplus:
 python3 import_drafted_players.py
 
