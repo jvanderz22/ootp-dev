@@ -12,7 +12,7 @@ from load_draft_class import create_csv
 ootp_app = [
     x
     for x in NSWorkspace.sharedWorkspace().runningApplications()
-    if x.bundleIdentifier() == "com.ootpdevelopments.ootp24macsteam"
+    if x.bundleIdentifier() == "com.ootpdevelopments.ootp26macsteam"
 ][0]
 
 chrome = ScriptingBridge.SBApplication.applicationWithBundleIdentifier_(
@@ -35,9 +35,9 @@ class PlayerListOOTPPage:
         player_list_offset = 80 if page_has_option_bar is True else 0
 
         self.button_row_vert_loc = 290 + player_list_offset
-        self.next_button_horz_loc = size.width - 85
+        self.next_button_horz_loc = size.width - 75
         self.first_page_button_horz_loc = size.width - 235
-        self.reports_button_horz_location = 700
+        self.reports_button_horz_location = 800
 
     def get_downloaded_report_path(self):
         click(self.reports_button_horz_location, self.button_row_vert_loc)
