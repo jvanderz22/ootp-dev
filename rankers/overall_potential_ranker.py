@@ -1,11 +1,8 @@
 from modifiers.base_modifier import BaseModifier
-from modifiers.batter_distance_from_overall_modifier import (
-    BatterDistanceFromOverallModifier,
-)
 from modifiers.batter_hit_profile_modifier import BatterHitProfileModifier
-from modifiers.pitcher_distance_from_overall_modifier import (
-    PitcherDistanceFromOverallModifier,
-)
+from modifiers.draft_batter_overall_modifier import DraftBatterOverallModifier
+from modifiers.draft_pitcher_overall_modifier import DraftPitcherOverallModifier
+from modifiers.draft_pitcher_stuff_modifier import DraftPitcherStuffModifier
 from modifiers.pitcher_injury_modifier import PitcherInjuryModifier
 from modifiers.scouting_accuracy_modifier import ScoutingAccuracyModifier
 from rankers.base_ranker import BaseRanker
@@ -23,10 +20,10 @@ class OverallPotentialRanker(BaseRanker):
     @property
     def position_player_modifiers(self) -> list[BaseModifier]:
         return [
+            DraftBatterOverallModifier,
             BatterHandednessModifier,
-            BatterInjuryModifier,
             BatterHitProfileModifier(),
-            BatterDistanceFromOverallModifier,
+            BatterInjuryModifier,
             ScoutingAccuracyModifier,
             PersonalityModifier,
         ]
@@ -34,14 +31,13 @@ class OverallPotentialRanker(BaseRanker):
     @property
     def pitcher_modifiers(self) -> list[BaseModifier]:
         return [
-            PitcherInjuryModifier,
-            PitcherDistanceFromOverallModifier,
+            DraftPitcherOverallModifier,
+            DraftPitcherStuffModifier,
             PitcherVelocityModifier,
-            ScoutingAccuracyModifier,
+            PitcherInjuryModifier,
             PersonalityModifier,
+            ScoutingAccuracyModifier,
         ]
 
     def filter_players(self, players):
-        return [
-            player for player in players if player.age <= 27 and player.level != "MLB"
-        ]
+        return players
