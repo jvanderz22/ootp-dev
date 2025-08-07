@@ -184,7 +184,7 @@ sp_second_pitch_value_modifier_map = {
     65: 1.03,
     70: 1.05,
     75: 1.08,
-    80: 1.11,
+    80: 1.08,
 }
 
 
@@ -197,11 +197,11 @@ sp_third_pitch_value_modifier_map = {
     45: 0.96,
     50: 1,
     55: 1,
-    60: 1.02,
+    60: 1.04,
     65: 1.04,
-    70: 1.06,
-    75: 1.08,
-    80: 1.12,
+    70: 1.04,
+    75: 1.06,
+    80: 1.06,
 }
 
 
@@ -213,28 +213,28 @@ sp_fourth_pitch_value_modifier_map = {
     40: 0.99,
     45: 1,
     50: 1,
-    55: 1.01,
-    60: 1.025,
-    65: 1.045,
-    70: 1.065,
-    75: 1.09,
-    80: 1.15,
+    55: 1.02,
+    60: 1.02,
+    65: 1.035,
+    70: 1.035,
+    75: 1.06,
+    80: 1.06,
 }
 
 sp_fifth_pitch_value_modifier_map = {
-    20: 1.04,
-    25: 1.04,
-    30: 1.04,
-    35: 1.04,
-    40: 1.04,
-    45: 1.04,
-    50: 1.04,
-    55: 1.04,
+    20: 1.01,
+    25: 1.01,
+    30: 1.01,
+    35: 1.02,
+    40: 1.02,
+    45: 1.02,
+    50: 1.03,
+    55: 1.03,
     60: 1.04,
-    65: 1.06,
-    70: 1.1,
-    75: 1.1,
-    80: 1.13,
+    65: 1.04,
+    70: 1.04,
+    75: 1.04,
+    80: 1.04,
 }
 
 
@@ -322,10 +322,26 @@ class PitcherScorer:
         if position == "RP" or position == "CL":
             relief_score = self.__calculate_rp_score(player)
             starting_score = self.__calculate_sp_score(player) * 0.8
+
+            write_runtime_component(
+                player.id, "RP Starter Score w/Modifiers", starting_score
+            )
+            write_runtime_component(
+                player.id, "RP Reliever Score w/Modifiers", relief_score
+            )
+
             score = starting_score if starting_score > relief_score else relief_score
         else:
             starting_score = self.__calculate_sp_score(player)
             relief_score = self.__calculate_rp_score(player)
+
+            write_runtime_component(
+                player.id, "SP Starter Score w/Modifiers ", starting_score
+            )
+            write_runtime_component(
+                player.id, "SP Reliever Score w/Modifiers", relief_score
+            )
+
             score = starting_score if starting_score > relief_score else relief_score
         score = score if score > 0 else 0
         # Try to fix the batter/pitcher distribution
@@ -349,13 +365,13 @@ class PitcherScorer:
 
     def __calculate_sp_score(self, player):
         base_score = self.sp_model.run(player)
-        write_runtime_component(player.id, "Pitcher Total SP Score", base_score)
         modifiers = calculate_sp_modifiers(player, self.type)
+        write_runtime_component(player.id, "SP Model Score", base_score)
         score = base_score * modifiers["total_modifier"]
         return score
 
     def __calculate_rp_score(self, player):
         rp_score = self.rp_model.run(player)
-        write_runtime_component(player.id, "Pitcher Total RP Score", rp_score)
         rp_modifier = calculate_rp_modifier(player, self.type)
+        write_runtime_component(player.id, "RP Model Score", rp_score)
         return rp_score * rp_modifier * self.rp_modifier

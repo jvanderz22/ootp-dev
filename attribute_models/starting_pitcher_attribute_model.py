@@ -68,7 +68,7 @@ class StartingPitcherAttributeModel(AttributeModel):
             [41, [50, 50, 50]],  # spot starter
             [38, [55, 45, 50]],  # spot starter
             [36, [70, 50, 40]],  # spot starter
-            [35, [50, 35, 60]],  # spot starter
+            [32, [50, 35, 60]],  # spot starter
             [31, [70, 50, 35]],  # maybe some value with TCR
             [30, [55, 45, 45]],  # maybe some value with TCR
             [29, [45, 50, 50]],  # maybe some value with TCR
@@ -79,5 +79,11 @@ class StartingPitcherAttributeModel(AttributeModel):
             [13, [65, 25, 65]],  # lower bounds
             [13, [35, 65, 65]],  # lower bounds
             [11, [65, 65, 30]],  # lower bounds
+            [11, [65, 65, 30]],  # lower bounds
+            [73, [80, 55, 55]],  # outlier stuff baseline
+            [45, [80, 45, 45]],  # outlier stuff starter baseline
+            [21, [80, 35, 35]],  # outlier stuff moderate usefulness baseline
+            [13, [80, 25, 55]],  # outlier stuff lower bounds
+            [10, [80, 55, 25]],  # outlier stuff lower bounds
             [0, [40, 40, 40]],  # lower bounds
         ]
