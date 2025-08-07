@@ -56,20 +56,21 @@ class ReliefPitcherAttributeModel(AttributeModel):
             [67, [75, 60, 60]],  # elite backend reliever
             [55, [75, 45, 70]],  # solid backend reliever
             [53, [70, 55, 60]],  # solid backend reliever
-            [46, [60, 55, 60]],  # middle-reliever
+            [52, [60, 55, 60]],  # solid backend middle-reliever
+            [46, [50, 55, 75]],  # control-first middle-reliever
             [44, [75, 45, 45]],  # middle-reliever
+            [42, [55, 55, 55]],  # middle-reliever
             [39, [70, 35, 50]],  # middle-reliever
-            [38, [50, 55, 75]],  # control-first middle-reliever
-            [36, [55, 55, 55]],  # borderline middle-reliever
-            [33, [65, 55, 45]],  # swingman
-            [30, [55, 50, 55]],  # swingman
-            [27, [50, 55, 55]],  # swingman
-            [20, [60, 50, 45]],  # fringy reliever
-            [16, [50, 45, 50]],  # fringy reliever
-            [14, [80, 30, 30]],  # fringy reliever
-            [13, [45, 55, 60]],  # fringy reliever
-            [12, [50, 50, 50]],  # fringy reliever
-            [9, [55, 55, 40]],  # fringy reliever
+            [38, [60, 50, 45]],  # middle-reliever
+            [30, [50, 50, 50]],  # swingman
+            [27, [60, 45, 45]],  # swingman
+            [27, [45, 55, 55]],  # swingman
+            [21, [55, 55, 40]],  # fringy reliever
+            [18, [50, 40, 50]],  # fringy reliever
+            [14, [40, 55, 60]],  # fringy reliever
+            [13, [60, 40, 40]],  # fringy reliever
+            [12, [45, 50, 50]],  # fringy reliever
+            [10, [80, 30, 30]],  # fringy reliever
             [78, [75, 75, 75]],  # lower bounds baseline
             [12, [75, 25, 75]],  # lower bounds
             [6, [40, 75, 75]],  # lower bounds
