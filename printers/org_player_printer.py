@@ -53,6 +53,7 @@ class OrgPlayerPrinter:
         print_minimal = opts.get("print_minimal", False)
         sort_by_potential = opts.get("sort_by_potential", False)
         position = opts.get("position")
+        org = opts.get("org")
         verbose = opts.get("verbose", False)
         printed_players = 0
 
@@ -66,6 +67,12 @@ class OrgPlayerPrinter:
                 break
             if player_name is not None:
                 if player_name.lower() not in player["name"].lower():
+                    continue
+            if org is not None:
+                if (
+                    self.game_players.get_player(player["id"]).org.lower()
+                    != org.lower()
+                ):
                     continue
             if position is not None:
                 if position.lower() == "pos":
