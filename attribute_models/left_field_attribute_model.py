@@ -31,7 +31,7 @@ class LeftFieldAttributeModel(AttributeModel):
         return [
             [5, [40, 55, 50]],  # barely useable
             [8, [45, 45, 45]],  # barely useable
-            [13, [50, 50, 60]],  # below average
+            [14, [50, 50, 60]],  # below average
             [12, [50, 60, 40]],  # below average
             [16, [55, 65, 40]],  # below average
             [21, [55, 65, 55]],  # solid regular
@@ -43,6 +43,8 @@ class LeftFieldAttributeModel(AttributeModel):
             [48, [70, 55, 65]],  # gold glove
             [55, [80, 80, 80]],  # just play CF
             [29, [60, 60, 60]],  # lower bounds constant
+            [39, [65, 45, 65]],  # arm scaling
+            [33, [65, 35, 65]],  # arm scaling
             [4, [35, 60, 60]],  # lower bounds
             [5, [60, 25, 60]],  # lower bounds
             [7, [60, 60, 30]],  # lower bounds

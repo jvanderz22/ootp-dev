@@ -31,9 +31,10 @@ class CenterFieldAttributeModel(AttributeModel):
         return [
             [8, [55, 60, 50]],  # barely useable
             [13, [55, 70, 60]],  # barely useable
-            [21, [60, 65, 60]],  # below average
-            [26, [60, 75, 80]],  # below average
-            [46, [65, 70, 65]],  # solid regular
+            [21, [60, 45, 60]],  # below average
+            [26, [60, 60, 65]],  # below average
+            [36, [60, 75, 80]],  # below average
+            [52, [65, 70, 65]],  # solid regular
             [55, [70, 45, 50]],  # solid regular
             [66, [70, 70, 60]],  # top 5 at position
             [75, [80, 40, 40]],  # gold glove
