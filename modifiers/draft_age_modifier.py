@@ -1,6 +1,7 @@
 from modifiers.base_rank_modifier import BaseRankModifier
 
 age_modifiers = {
+    16: 1.13,
     17: 1.13,
     18: 1.13,
     19: 1.05,
