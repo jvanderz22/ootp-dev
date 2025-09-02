@@ -70,8 +70,12 @@ lt_65_ranking_demand_model = create_demand_modifier_model(
     [2300000, 4300000, 5500000, 9000000], [1, 0.9, 0.65, 0.45], lt_65_min
 )
 
+# used for 65-90
+lt_90_ranking_demand_model = create_demand_modifier_model(
+    [1_400_000, 2_500_000, 3_450_000, 4_400_000, 6_600_000], [1, 0.9, 0.7, 0.6, 0.4]
+)
 
-# used for 65 - 130
+# used for 90 - 130
 lt_130_ranking_demand_model = create_demand_modifier_model(
     [900000, 1150000, 1650000, 2100000, 2700000], [1, 0.9, 0.7, 0.6, 0.4]
 )
@@ -110,6 +114,8 @@ class DraftDemandModifier(BaseRankModifier):
                 lt_65_ranking_demand_model,
                 parsed_demand,
             )
+        elif rank < 90:
+            return run_demand_model(lt_90_ranking_demand_model, parsed_demand)
         elif rank < 130:
             return run_demand_model(lt_130_ranking_demand_model, parsed_demand)
         elif rank < 180:
