@@ -54,7 +54,7 @@ PLAYER_FIELDS = {
     "movement_ovr": "MOV",
     "control_ovr": "CONT",
     "stamina": "STM",
-    "velocity": "VELO",
+    "velocity": "VT",
     "groundball_type": "G/F",
     "fastball": "FBP",
     "changeup": "CHP",
