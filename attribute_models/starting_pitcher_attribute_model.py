@@ -50,36 +50,47 @@ class StartingPitcherAttributeModel(AttributeModel):
     def test_data(self):
         return [
             [100, [80, 80, 80]],  # best pitcher in world
-            [90, [80, 70, 70]],  # best pitcher in league
-            [86, [70, 75, 70]],  # best pitcher in league
-            [75, [70, 55, 75]],  # ace
-            [72, [75, 55, 65]],  # ace
-            [71, [65, 75, 70]],  # ace
-            [71, [50, 80, 80]],  # ace
+            [97, [80, 70, 70]],  # better than any pitcher in the league
+            [96, [70, 80, 75]],  # better than any pitcher in the league
+            [86, [70, 70, 70]],  # best pitcher in the league
+            [85, [80, 60, 60]],  # best pitcher in the league
+            [81, [75, 55, 65]],  # best pitcher in the league
+            [81, [75, 65, 55]],  # best pitcher in the league
+            [79, [80, 70, 50]],  # ace
+            [77, [80, 55, 55]],  # ace
+            [77, [65, 75, 70]],  # ace
+            [76, [75, 55, 65]],  # ace
+            [74, [50, 80, 80]],  # ace
+            [69, [60, 60, 65]],  # ace-ish
+            [69, [55, 75, 55]],  # ace-ish
             [67, [75, 50, 60]],  # ace-ish
-            [65, [60, 60, 65]],  # solid #2
-            [63, [55, 55, 75]],  # solid #2
-            [55, [55, 55, 55]],  # mid rotation
+            [67, [70, 60, 50]],  # ace-ish
+            [65, [55, 55, 65]],  # solid #2
+            [62, [50, 80, 50]],  # solid #2
+            [61, [80, 50, 45]],  # solid #2
+            [60, [55, 55, 55]],  # mid rotation
+            [55, [70, 50, 55]],  # mid rotation
+            [52, [50, 65, 50]],  # mid rotation
             [52, [70, 50, 45]],  # mid rotation
-            [50, [55, 75, 45]],  # mid rotation
+            [50, [55, 60, 45]],  # mid rotation
+            [50, [45, 70, 55]],  # mid rotation
+            [48, [50, 50, 65]],  # mid rotation
             [46, [55, 45, 60]],  # #5 starter
-            [46, [50, 50, 65]],  # #5 starter
-            [45, [70, 45, 45]],  # #5 starter
-            [41, [50, 50, 50]],  # spot starter
+            [45, [65, 45, 45]],  # #5 starter
+            [43, [50, 50, 50]],  # spot starter
             [38, [55, 45, 50]],  # spot starter
             [36, [70, 50, 40]],  # spot starter
-            [32, [50, 35, 60]],  # spot starter
+            [29, [50, 35, 60]],  # spot starter
             [31, [70, 50, 35]],  # maybe some value with TCR
             [30, [55, 45, 45]],  # maybe some value with TCR
             [29, [45, 50, 50]],  # maybe some value with TCR
             [17, [45, 45, 45]],  # maybe some value with TCR
             [6, [40, 40, 40]],  # maybe some value with TCR
             [0, [35, 35, 35]],  # no value
-            [66, [65, 65, 65]],  # lower bounds baseline
+            [72, [65, 65, 65]],  # lower bounds baseline
             [13, [65, 25, 65]],  # lower bounds
             [13, [35, 65, 65]],  # lower bounds
-            [11, [65, 65, 30]],  # lower bounds
-            [11, [65, 65, 30]],  # lower bounds
+            [13, [65, 65, 30]],  # lower bounds
             [73, [80, 55, 55]],  # outlier stuff baseline
             [45, [80, 45, 45]],  # outlier stuff starter baseline
             [21, [80, 35, 35]],  # outlier stuff moderate usefulness baseline
