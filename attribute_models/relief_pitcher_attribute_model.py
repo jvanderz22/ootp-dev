@@ -50,10 +50,10 @@ class ReliefPitcherAttributeModel(AttributeModel):
     @property
     def test_data(self):
         return [
-            [85, [80, 80, 80]],  # best reliever pitcher ever
-            [80, [80, 70, 70]],  # best reliever pitcher in league
-            [71, [80, 50, 60]],  # elite backend reliever
-            [67, [75, 60, 60]],  # elite backend reliever
+            [80, [80, 80, 80]],  # best reliever pitcher ever
+            [72, [80, 70, 70]],  # best reliever pitcher in league
+            [65, [80, 50, 60]],  # elite backend reliever
+            [62, [75, 60, 60]],  # elite backend reliever
             [55, [75, 45, 70]],  # solid backend reliever
             [53, [70, 55, 60]],  # solid backend reliever
             [52, [60, 55, 60]],  # solid backend middle-reliever
