@@ -1,3 +1,4 @@
+from models.game_players import GamePlayer
 from modifiers.base_modifier import BaseModifier
 
 scouting_accuracy_modifiers = {
@@ -11,5 +12,5 @@ scouting_accuracy_modifiers = {
 
 class ScoutingAccuracyModifier(BaseModifier):
     @classmethod
-    def calculate_player_modifier(cls, player):
+    def calculate_player_modifier(cls, player: GamePlayer, _model_score):
         return scouting_accuracy_modifiers[player.scouting_accuracy]

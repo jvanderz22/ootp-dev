@@ -1,3 +1,4 @@
+from models.game_players import GamePlayer
 from modifiers.base_modifier import BaseModifier
 from scoring.position_player_scorer import PositionPlayerScorer
 
@@ -99,7 +100,7 @@ class BatterDistanceFromOverallModifier(BaseModifier):
     potential_scorer = PositionPlayerScorer()
 
     @classmethod
-    def calculate_player_modifier(cls, player):
+    def calculate_player_modifier(cls, player: GamePlayer, model_score: float):
         modifier = 1
         modifier *= modifier_for_attr(player.contact_ovr, player.contact)
         modifier *= modifier_for_attr(player.power_ovr, player.power)

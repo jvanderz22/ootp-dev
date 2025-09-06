@@ -55,7 +55,7 @@ class BatterHitProfileModifier(BaseModifier):
     def __init__(self, is_overall=False):
         self.is_overall = is_overall
 
-    def calculate_player_modifier(self, player: GamePlayer):
+    def calculate_player_modifier(self, player: GamePlayer, _model_score):
         profile = player.batted_ball_profile
         gb_tendency = player.gb_tendency
         fb_tendency = player.fb_tendency

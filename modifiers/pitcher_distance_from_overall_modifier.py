@@ -1,3 +1,4 @@
+from models.game_players import GamePlayer
 from modifiers.base_modifier import BaseModifier
 from scoring.pitcher_scorer import PitcherScorer
 
@@ -81,7 +82,7 @@ class PitcherDistanceFromOverallModifier(BaseModifier):
     potential_scorer = PitcherScorer()
 
     @classmethod
-    def calculate_player_modifier(cls, player):
+    def calculate_player_modifier(cls, player: GamePlayer, _model_score):
         modifier = 1
         modifier *= modifier_for_attr(player.stuff_ovr, player.stuff)
         modifier *= modifier_for_attr(player.movement_ovr, player.movement)

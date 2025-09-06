@@ -92,18 +92,18 @@ class BaseRanker(ABC):
         return sorted_player_scores
 
     def calculate_position_player_score(self, player: GamePlayer) -> float:
-        modifier = self.get_position_player_modifier(player)
         [
             position_player_score,
             batting_score,
             fielding_score,
         ] = self.position_player_scorer.score(player)
+        modifier = self.get_position_player_modifier(player, position_player_score)
         return [position_player_score * modifier, batting_score, fielding_score]
 
-    def get_position_player_modifier(self, player: GamePlayer) -> float:
+    def get_position_player_modifier(self, player: GamePlayer, model_score: float) -> float:
         modifier_val = 1
         for modifier in self.position_player_modifiers:
-            mod_val = modifier.calculate_player_modifier(player)
+            mod_val = modifier.calculate_player_modifier(player, model_score)
             modifier_name = (
                 modifier.__name__
                 if inspect.isclass(modifier)
@@ -117,18 +117,18 @@ class BaseRanker(ABC):
         return modifier_val
 
     def calculate_pitcher_score(self, player: GamePlayer) -> float:
-        modifier = self.get_pitcher_modifier(player)
         [
             pitcher_score,
             starter_component,
             reliever_component,
         ] = self.pitcher_scorer.score(player)
+        modifier = self.get_pitcher_modifier(player, pitcher_score)
         return [pitcher_score * modifier, starter_component, reliever_component]
 
-    def get_pitcher_modifier(self, player: GamePlayer) -> float:
+    def get_pitcher_modifier(self, player: GamePlayer, model_score: float) -> float:
         modifier_val = 1
         for modifier in self.pitcher_modifiers:
-            mod_val = modifier.calculate_player_modifier(player)
+            mod_val = modifier.calculate_player_modifier(player, model_score)
             write_runtime_component(
                 player.id, f"Pitcher Modifier {modifier.__name__}", mod_val
             )

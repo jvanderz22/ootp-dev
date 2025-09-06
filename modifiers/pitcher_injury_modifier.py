@@ -1,9 +1,10 @@
+from models.game_players import GamePlayer
 from modifiers.base_modifier import BaseModifier
 
 
 class PitcherInjuryModifier(BaseModifier):
     @classmethod
-    def calculate_player_modifier(cls, player):
+    def calculate_player_modifier(cls, player: GamePlayer, _model_score):
         modifier = 1
         injury_prone = player.injury_prone
         is_sp = player.position == "SP"

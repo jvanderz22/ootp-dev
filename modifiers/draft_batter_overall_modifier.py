@@ -17,7 +17,7 @@ def get_overall_attribute_modifier(attribute):
 
 class DraftBatterOverallModifier(BaseModifier):
     @classmethod
-    def calculate_player_modifier(cls, player):
+    def calculate_player_modifier(cls, player, _model_score):
         modifier = 1
         modifier *= get_overall_attribute_modifier(player.contact_ovr)
         modifier *= get_overall_attribute_modifier(player.power_ovr)

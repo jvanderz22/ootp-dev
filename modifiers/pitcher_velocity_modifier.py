@@ -1,11 +1,12 @@
 import re
 
+from models.game_players import GamePlayer
 from modifiers.base_modifier import BaseModifier
 
 
 class PitcherVelocityModifier(BaseModifier):
     @classmethod
-    def calculate_player_modifier(cls, player):
+    def calculate_player_modifier(cls, player: GamePlayer, _model_score):
         modifier = 1
         if len(player.velocity) == 1:
             return modifier

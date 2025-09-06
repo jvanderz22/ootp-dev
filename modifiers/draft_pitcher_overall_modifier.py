@@ -49,7 +49,7 @@ def get_all_over_attribute_modifiers(attributes):
 
 class DraftPitcherOverallModifier(BaseModifier):
     @classmethod
-    def calculate_player_modifier(cls, player):
+    def calculate_player_modifier(cls, player, _model_score):
         modifier = 1
         modifier *= get_overall_attribute_modifier(player.stuff_ovr, player.stuff)
         modifier *= get_overall_attribute_modifier(player.movement_ovr, player.movement)
