@@ -1,7 +1,9 @@
+from abc import abstractmethod
 from attribute_models.relief_pitcher_attribute_model import ReliefPitcherAttributeModel
 from attribute_models.starting_pitcher_attribute_model import (
     StartingPitcherAttributeModel,
 )
+from models.game_players import GamePlayer
 from scoring.runtime_components import write_runtime_component
 
 
@@ -84,6 +86,8 @@ rp_third_pitch_value_modifier_map = {
 
 def calculate_rp_modifier(player, type="potential"):
     modifier = 1
+
+    modifier *= KnuckleballModifier.calculate_player_modifier(player)
 
     gb_type = player.groundball_type
     modifier *= rp_groundball_type_modifier_map[gb_type]
@@ -237,9 +241,23 @@ sp_fifth_pitch_value_modifier_map = {
     80: 1.04,
 }
 
+class BasePitcherModifier:
+    @abstractmethod
+    def calculate_player_modifier(cls, player: GamePlayer):
+        pass
+
+class KnuckleballModifier(BasePitcherModifier):
+    @classmethod
+    def calculate_player_modifier(cls, player: GamePlayer):
+        has_knuckleball = "knuckleball" in player.get_pitches()
+        return 1.15 if has_knuckleball else 1
+
+
 
 def calculate_sp_modifiers(player, type="potential"):
     modifier = 1
+
+    modifier *= KnuckleballModifier.calculate_player_modifier(player)
 
     gb_type = player.groundball_type
     gb_type_modifier = sp_groundball_type_modifier_map[gb_type]
