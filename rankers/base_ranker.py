@@ -24,6 +24,10 @@ class BaseRanker(ABC):
     two_way_player_threshold = 1.8
 
     @property
+    def shared_modifiers(self) -> list[BaseModifier]:
+        return []
+
+    @property
     def position_player_modifiers(self) -> list[BaseModifier]:
         return []
 
@@ -102,7 +106,7 @@ class BaseRanker(ABC):
 
     def get_position_player_modifier(self, player: GamePlayer, model_score: float) -> float:
         modifier_val = 1
-        for modifier in self.position_player_modifiers:
+        for modifier in self.shared_modifiers + self.position_player_modifiers:
             mod_val = modifier.calculate_player_modifier(player, model_score)
             modifier_name = (
                 modifier.__name__
@@ -127,7 +131,7 @@ class BaseRanker(ABC):
 
     def get_pitcher_modifier(self, player: GamePlayer, model_score: float) -> float:
         modifier_val = 1
-        for modifier in self.pitcher_modifiers:
+        for modifier in self.shared_modifiers + self.pitcher_modifiers:
             mod_val = modifier.calculate_player_modifier(player, model_score)
             write_runtime_component(
                 player.id, f"Pitcher Modifier {modifier.__name__}", mod_val

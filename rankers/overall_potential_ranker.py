@@ -1,4 +1,5 @@
 from modifiers.base_modifier import BaseModifier
+from modifiers.age_modifier import AgeModifier
 from modifiers.batter_hit_profile_modifier import BatterHitProfileModifier
 from modifiers.draft_batter_overall_modifier import DraftBatterOverallModifier
 from modifiers.draft_pitcher_overall_modifier import DraftPitcherOverallModifier
@@ -18,14 +19,20 @@ class OverallPotentialRanker(BaseRanker):
         super().__init__(pitcher_scorer=pitcher_scorer)
 
     @property
+    def shared_modifiers(self) -> list[BaseModifier]:
+        return [
+            ScoutingAccuracyModifier,
+            PersonalityModifier,
+            AgeModifier
+        ]
+
+    @property
     def position_player_modifiers(self) -> list[BaseModifier]:
         return [
             DraftBatterOverallModifier,
             BatterHandednessModifier,
             BatterHitProfileModifier(),
             BatterInjuryModifier,
-            ScoutingAccuracyModifier,
-            PersonalityModifier,
         ]
 
     @property
@@ -35,8 +42,6 @@ class OverallPotentialRanker(BaseRanker):
             DraftPitcherStuffModifier,
             PitcherVelocityModifier,
             PitcherInjuryModifier,
-            PersonalityModifier,
-            ScoutingAccuracyModifier,
         ]
 
     def filter_players(self, players):
