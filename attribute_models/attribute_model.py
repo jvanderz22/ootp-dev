@@ -1,4 +1,4 @@
-from abc import ABC, abstractproperty
+from abc import ABC, abstractmethod, abstractproperty
 from sklearn.model_selection import train_test_split
 from models.game_players import PLAYER_FIELDS
 import xgboost as xgb
@@ -11,20 +11,25 @@ class AttributeModel(ABC):
 
     debug = False
     right_hand_only = False
+    separate_test_train = False # prefer to separate test and train in new models
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def model_type(self):
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def file_path(self):
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def fields(self):
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def fields_mapping(self):
         pass
 
@@ -68,20 +73,20 @@ class AttributeModel(ABC):
             "monotone_constraints": tuple([1 for i in model_properties]),
         }
         if self.test_data is None:
-            X_train, X_test, y_train, y_test = train_test_split(
+            x_train, x_test, y_train, y_test = train_test_split(
                 independent_variables, y, random_state=1
             )
         else:
-            X_train = independent_variables
+            x_train = independent_variables
             y_train = y
             y_test = [test_item[0] for test_item in self.test_data]
-            X_test = [test_item[1] for test_item in self.test_data]
-        all_x = X_train + X_test
-        all_y = y_train + y_test
+            x_test = [test_item[1] for test_item in self.test_data]
+        all_x = x_train if self.separate_test_train else x_train + x_test
+        all_y = y_train if self.separate_test_train else y_train + y_test
 
         # Create regression matrices
         dtrain_reg = xgb.DMatrix(all_x, all_y)
-        dtest_reg = xgb.DMatrix(X_test, y_test)
+        dtest_reg = xgb.DMatrix(x_test, y_test)
 
         evals = [(dtrain_reg, "train"), (dtest_reg, "validation")]
         n = 40
@@ -97,18 +102,4 @@ class AttributeModel(ABC):
         return model
 
     def __print_test_results(self, model):
-        print("test result", model.predict(xgb.DMatrix([[80, 80, 50, 80, 80]])))
-        print("test result", model.predict(xgb.DMatrix([[80, 50, 50, 50, 50]], [])))
-        print("test result", model.predict(xgb.DMatrix([[80, 30, 30, 40, 75]], [])))
-        print("test result", model.predict(xgb.DMatrix([[80, 80, 80, 45, 45]], [])))
-        print("test result", model.predict(xgb.DMatrix([[75, 75, 50, 35, 35]], [])))
-        print("test result", model.predict(xgb.DMatrix([[60, 50, 60, 35, 35]], [])))
-        print("test result", model.predict(xgb.DMatrix([[40, 55, 70, 70, 45]], [])))
-        print("test result", model.predict(xgb.DMatrix([[60, 40, 55, 60, 60]], [])))
-        print("test result", model.predict(xgb.DMatrix([[50, 55, 65, 70, 80]], [])))
-        print("test result", model.predict(xgb.DMatrix([[40, 45, 40, 50, 50]], [])))
-        print("test result", model.predict(xgb.DMatrix([[65, 75, 65, 80, 80]], [])))
-        print("test result", model.predict(xgb.DMatrix([[65, 55, 65, 55, 55]], [])))
-        import pdb
-
-        pdb.set_trace()
+        pass
