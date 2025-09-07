@@ -3,6 +3,8 @@ from models.game_players import PLAYER_FIELDS
 
 
 class ReliefPitcherAttributeModel(AttributeModel):
+    separate_test_train = True
+
     def __init__(self, type="potential"):
         super().__init__()
         self.type = type
@@ -47,33 +49,76 @@ class ReliefPitcherAttributeModel(AttributeModel):
             "Control": "control_ovr",
         }
 
+    """
+    Rough FIP- prediction to model score guide:
+
+    50: 70
+    70: 62
+    80: 55
+    90: 50 - baseline for solid setup man
+    95: 45
+    100: 40 -- baseline for 50/50/50
+    105: 35
+    110: 27
+    120: 12
+    130: 0
+
+    """
+
     @property
     def test_data(self):
         return [
-            [80, [80, 80, 80]],  # best reliever pitcher ever
-            [72, [80, 70, 70]],  # best reliever pitcher in league
-            [65, [80, 50, 60]],  # elite backend reliever
-            [62, [75, 60, 60]],  # elite backend reliever
-            [55, [75, 45, 70]],  # solid backend reliever
-            [53, [70, 55, 60]],  # solid backend reliever
-            [52, [60, 55, 60]],  # solid backend middle-reliever
-            [46, [50, 55, 75]],  # control-first middle-reliever
-            [44, [75, 45, 45]],  # middle-reliever
-            [42, [55, 55, 55]],  # middle-reliever
-            [39, [70, 35, 50]],  # middle-reliever
-            [38, [60, 50, 45]],  # middle-reliever
-            [30, [50, 50, 50]],  # swingman
-            [27, [60, 45, 45]],  # swingman
-            [27, [45, 55, 55]],  # swingman
-            [21, [55, 55, 40]],  # fringy reliever
-            [18, [50, 40, 50]],  # fringy reliever
-            [14, [40, 55, 60]],  # fringy reliever
-            [13, [60, 40, 40]],  # fringy reliever
-            [12, [45, 50, 50]],  # fringy reliever
-            [10, [80, 30, 30]],  # fringy reliever
-            [78, [75, 75, 75]],  # lower bounds baseline
-            [12, [75, 25, 75]],  # lower bounds
-            [6, [40, 75, 75]],  # lower bounds
-            [3, [45, 45, 45]],  # lower bound
-            [10, [75, 75, 25]],  # lower bounds
+            # baselines
+            [80, [80, 80, 80]],
+            [65, [70, 70, 70]],
+            [53, [60, 60, 60]],
+            [37, [50, 50, 50]],
+            [16, [45, 45, 45]],
+            [0, [40, 40, 40]],
+
+
+            #outlier stuff
+            [68, [80, 55, 55]], # elite closer
+            [33, [80, 40, 40]], # untrustworthy
+            [10, [80, 30, 30]], # little value
+
+            [56, [65, 55, 55]], # solid closer
+
+            #outlier stuff (bad)
+            [63, [55, 80, 80]],
+            [45, [45, 70, 70]],
+            [37, [45, 60, 60]],
+            [26, [45, 55, 55]],
+            [27, [40, 70, 70]],
+            [17, [35, 70, 70]],
+
+            #outlier movement
+            [68, [55, 80, 55]],
+            [33, [40, 80, 40]],
+            [16, [30, 80, 30]],
+
+            #outlier movement (bad)
+            [73, [80, 55, 80]],
+            [66, [70, 45, 70]],
+            [50, [60, 55, 60]],
+            [45, [70, 40, 70]],
+            [39, [55, 45, 55]],
+            [31, [60, 40, 60]],
+            [20, [70, 30, 70]],
+            [5, [70, 25, 70]],
+
+            #outlier control
+            [61, [55, 55, 80]],
+            [16, [40, 40, 80]],
+            [2, [30, 30, 80]],
+
+            #outlier control (bad)
+            [73, [80, 80, 55]],
+            [53, [70, 70, 45]],
+            [50, [60, 60, 55]],
+            [38, [55, 55, 45]],
+            [48, [70, 70, 40]],
+            [18, [70, 70, 30]],
+            [5, [70, 70, 25]],
+
         ]
