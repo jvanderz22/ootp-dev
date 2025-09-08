@@ -3,7 +3,7 @@ from attribute_models.relief_pitcher_attribute_model import ReliefPitcherAttribu
 from attribute_models.starting_pitcher_attribute_model import (
     StartingPitcherAttributeModel,
 )
-from models.game_players import GamePlayer
+from models.game_players import PLAYER_FIELDS, GamePlayer
 from scoring.runtime_components import write_runtime_component
 
 
@@ -346,34 +346,11 @@ class PitcherScorer:
         self.rp_modifier = rp_multiplier
 
     def score(self, player):
-        position = player.position
-        score = None
-        if position == "RP" or position == "CL":
-            relief_score = self.__calculate_rp_score(player)
-            # TODO: instead of this, try to reproject stuff as starter
-            starting_score = self.__calculate_sp_score(player) * 0.8
-
-            write_runtime_component(
-                player.id, "RP Starter Score w/Modifiers", starting_score
-            )
-            write_runtime_component(
-                player.id, "RP Reliever Score w/Modifiers", relief_score
-            )
-
-            score = starting_score if starting_score > relief_score else relief_score
-        else:
-            starting_score = self.__calculate_sp_score(player)
-            # TODO: instead of this, try to reproject stuff as reliever
-            relief_score = self.__calculate_rp_score(player)
-
-            write_runtime_component(
-                player.id, "SP Starter Score w/Modifiers ", starting_score
-            )
-            write_runtime_component(
-                player.id, "SP Reliever Score w/Modifiers", relief_score
-            )
-
-            score = starting_score if starting_score > relief_score else relief_score
+        relief_score = self.__calculate_rp_score(player)
+        starting_score = self.__calculate_sp_score(player)
+        write_runtime_component(player.id, "Starter Score w/Modifiers", starting_score)
+        write_runtime_component(player.id, "Reliever Score w/Modifiers", relief_score)
+        score = starting_score if starting_score > relief_score else relief_score
         score = score if score > 0 else 0
         # Try to fix the batter/pitcher distribution
         score = self.apply_adjustment(score, player)
@@ -395,15 +372,39 @@ class PitcherScorer:
         write_runtime_component(player.id, "Pitcher Adj Effect", additive_effect)
         return adjusted_score
 
-    def __calculate_sp_score(self, player):
-        base_score = self.sp_model.run(player)
-        modifiers = calculate_sp_modifiers(player, self.type)
+    def __calculate_sp_score(self, player: GamePlayer):
+        player_to_estimate = player
+        if player.position != "SP":
+            rp_stuff_attr = player.stuff
+            rp_stuff_ovr_attr = player.stuff_ovr
+            rp_player_attrs = player.attrs()
+            # Could do something more complex here
+            rp_player_attrs[PLAYER_FIELDS["stuff"]] = rp_stuff_attr - 10
+            rp_player_attrs[PLAYER_FIELDS["stuff_ovr"]] = rp_stuff_ovr_attr - 10
+            player_to_estimate = GamePlayer(rp_player_attrs)
+
+        base_score = self.sp_model.run(player_to_estimate)
+        modifiers = calculate_sp_modifiers(player_to_estimate, self.type)
         write_runtime_component(player.id, "SP Model Score", base_score)
+        write_runtime_component(
+            player.id, "SP Base Modifier", modifiers["total_modifier"]
+        )
         score = base_score * modifiers["total_modifier"]
         return score
 
     def __calculate_rp_score(self, player):
-        rp_score = self.rp_model.run(player)
-        rp_modifier = calculate_rp_modifier(player, self.type)
+        player_to_estimate = player
+        if player.position == "SP":
+            sp_stuff_attr = player.stuff
+            sp_stuff_ovr_attr = player.stuff_ovr
+            sp_player_attrs = player.attrs()
+            # Could do something more complex here
+            sp_player_attrs[PLAYER_FIELDS["stuff"]] = sp_stuff_attr + 5
+            sp_player_attrs[PLAYER_FIELDS["stuff_ovr"]] = sp_stuff_ovr_attr + 5
+            player_to_estimate = GamePlayer(sp_player_attrs)
+
+        rp_score = self.rp_model.run(player_to_estimate)
+        rp_modifier = calculate_rp_modifier(player_to_estimate, self.type)
         write_runtime_component(player.id, "RP Model Score", rp_score)
+        write_runtime_component(player.id, "RP Base Modifier", rp_modifier)
         return rp_score * rp_modifier * self.rp_modifier

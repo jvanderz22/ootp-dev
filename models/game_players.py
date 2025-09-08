@@ -1,3 +1,4 @@
+import copy
 import string
 
 PLAYER_FIELDS = {
@@ -127,6 +128,9 @@ class GamePlayer:
         ]
         for attr, dict_attr in PLAYER_FIELDS.items():
             setattr(self, f"_{attr}", player_dict.get(dict_attr))
+
+    def attrs(self):
+        return copy.deepcopy(self._dict)
 
     @property
     def id(self):
