@@ -5,21 +5,9 @@ def get_overall_attribute_modifier(ovr, potential):
     potential_diff = potential - ovr
 
     if ovr >= 45:
-        if potential_diff == 0:
-            return 1.01
-        elif potential_diff <= 5:
-            return 1.02
-        elif potential_diff <= 10:
-            return 1.03
-        return 1.045
+        return 1.015
     elif ovr >= 40:
-        if potential_diff == 0:
-            return 1
-        elif potential_diff <= 5:
-            return 1.007
-        elif potential_diff <= 10:
-            return 1.015
-        return 1.025
+        return 1
     elif ovr >= 35:
         if potential_diff <= 10:
             return 1
@@ -35,16 +23,16 @@ def get_overall_attribute_modifier(ovr, potential):
 
 def get_all_over_attribute_modifiers(attributes):
     if all(attr >= 45 for attr in attributes):
-        return 1.04
+        return 1.02
     if all(attr >= 40 for attr in attributes):
-        return 1.03
-    if all(attr >= 35 for attr in attributes):
         return 1.015
+    if all(attr >= 35 for attr in attributes):
+        return 1.01
     if all(attr >= 30 for attr in attributes):
-        return 1.0
+        return 1
     if all(attr >= 25 for attr in attributes):
-        return 0.99
-    return 0.97
+        return 0.975
+    return 0.95
 
 
 class DraftPitcherOverallModifier(BaseModifier):

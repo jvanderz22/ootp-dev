@@ -8,31 +8,30 @@ from scoring.runtime_components import write_runtime_component
 
 
 # Lower the all RPs scores using this modifier
-RP_OVERALL_MODIFIER = 0.7
-
+RP_OVERALL_MODIFIER = 0.82
 
 rp_groundball_type_modifier_map = {
-    "EX FB": 0.93,
-    "FB": 1,
+    "EX FB": 0.92,
+    "FB": 0.98,
     "NEU": 1,
     "GB": 1.02,
-    "EX GB": 1.08,
+    "EX GB": 1.05,
 }
 
 rp_stamina_modifier_map = {
-    20: 0.87,
-    25: 0.93,
-    30: 0.96,
-    35: 0.99,
+    20: 0.95,
+    25: 0.98,
+    30: 1,
+    35: 1,
     40: 1,
-    45: 1,
-    50: 1,
-    55: 1.02,
-    60: 1.04,
-    65: 1.06,
-    70: 1.06,
-    75: 1.06,
-    80: 1.06,
+    45: 1.005,
+    50: 1.01,
+    55: 1.01,
+    60: 1.01,
+    65: 1.015,
+    70: 1.02,
+    75: 1.025,
+    80: 1.025,
 }
 
 rp_best_pitch_value_modifier_map = {
@@ -41,13 +40,13 @@ rp_best_pitch_value_modifier_map = {
     30: 0.86,
     35: 0.88,
     40: 0.90,
-    45: 0.95,
-    50: 0.98,
-    55: 1,
-    60: 1.01,
-    65: 1.02,
-    70: 1.035,
-    75: 1.05,
+    45: 0.945,
+    50: 0.96,
+    55: 0.97,
+    60: 0.98,
+    65: 1,
+    70: 1.02,
+    75: 1.045,
     80: 1.075,
 }
 
@@ -61,10 +60,10 @@ rp_second_pitch_value_modifier_map = {
     50: 0.975,
     55: 1,
     60: 1.01,
-    65: 1.02,
-    70: 1.03,
-    75: 1.05,
-    80: 1.05,
+    65: 1.015,
+    70: 1.02,
+    75: 1.03,
+    80: 1.035,
 }
 
 rp_third_pitch_value_modifier_map = {
@@ -74,23 +73,26 @@ rp_third_pitch_value_modifier_map = {
     35: 1,
     40: 1,
     45: 1,
-    50: 1.01,
-    55: 1.02,
-    60: 1.025,
-    65: 1.03,
-    70: 1.035,
-    75: 1.04,
-    80: 1.05,
+    50: 1,
+    55: 1.01,
+    60: 1.01,
+    65: 1.015,
+    70: 1.02,
+    75: 1.025,
+    80: 1.035,
 }
 
 
 def calculate_rp_modifier(player, type="potential"):
     modifier = 1
 
-    modifier *= KnuckleballModifier.calculate_player_modifier(player)
+    knuckleball_modifier = KnuckleballModifier.calculate_player_modifier(player)
+
+    modifier *= knuckleball_modifier
 
     gb_type = player.groundball_type
-    modifier *= rp_groundball_type_modifier_map[gb_type]
+    gb_type_modifier = rp_groundball_type_modifier_map[gb_type]
+    modifier *= gb_type_modifier
 
     stamina = player.stamina
     stamina_modifier = rp_stamina_modifier_map[stamina]
@@ -117,19 +119,10 @@ def calculate_rp_modifier(player, type="potential"):
     )
     total_rp_value_modifier = stamina_modifier * rp_pitch_modifiers
 
-    write_runtime_component(player.id, "RP Pitcher Pitch Component", rp_pitch_modifiers)
-    # Apply potential starter bonus instead
-    if int(stamina) >= 35 and len(pitches) >= 3 and getattr(player, pitches[2]) >= 40:
-        total_rp_value_modifier = 1.4
-
     modifier *= total_rp_value_modifier
-
-    home_run_risk_modifier = 1
-    if player.movement < 45 and player.groundball_type == "EX FB":
-        home_run_risk_modifier = 0.92
+    home_run_risk_modifier = HomerunRiskModifier.calculate_player_modifier(player)
 
     modifier *= home_run_risk_modifier
-
     return modifier
 
 
@@ -150,8 +143,8 @@ sp_stamina_modifier_map = {
 }
 
 sp_groundball_type_modifier_map = {
-    "EX FB": 0.96,
-    "FB": 1,
+    "EX FB": 0.94,
+    "FB": 0.98,
     "NEU": 1,
     "GB": 1.02,
     "EX GB": 1.05,
@@ -169,9 +162,9 @@ sp_best_pitch_value_modifier_map = {
     55: 0.99,
     60: 1,
     65: 1.01,
-    70: 1.03,
-    75: 1.07,
-    80: 1.1,
+    70: 1.02,
+    75: 1.03,
+    80: 1.05,
 }
 
 
@@ -184,11 +177,11 @@ sp_second_pitch_value_modifier_map = {
     45: 0.95,
     50: 0.97,
     55: 1,
-    60: 1.015,
-    65: 1.03,
-    70: 1.05,
-    75: 1.08,
-    80: 1.08,
+    60: 1.005,
+    65: 1.015,
+    70: 1.02,
+    75: 1.035,
+    80: 1.05,
 }
 
 
@@ -201,11 +194,11 @@ sp_third_pitch_value_modifier_map = {
     45: 0.96,
     50: 1,
     55: 1,
-    60: 1.04,
-    65: 1.04,
-    70: 1.04,
-    75: 1.06,
-    80: 1.06,
+    60: 1.01,
+    65: 1.01,
+    70: 1.02,
+    75: 1.02,
+    80: 1.03,
 }
 
 
@@ -217,34 +210,36 @@ sp_fourth_pitch_value_modifier_map = {
     40: 0.99,
     45: 1,
     50: 1,
-    55: 1.02,
-    60: 1.02,
-    65: 1.035,
-    70: 1.035,
-    75: 1.06,
-    80: 1.06,
+    55: 1.005,
+    60: 1.01,
+    65: 1.015,
+    70: 1.02,
+    75: 1.02,
+    80: 1.02,
 }
 
 sp_fifth_pitch_value_modifier_map = {
-    20: 1.01,
-    25: 1.01,
-    30: 1.01,
-    35: 1.02,
-    40: 1.02,
-    45: 1.02,
-    50: 1.03,
-    55: 1.03,
-    60: 1.04,
-    65: 1.04,
-    70: 1.04,
-    75: 1.04,
-    80: 1.04,
+    20: 1,
+    25: 1,
+    30: 1,
+    35: 1,
+    40: 1.01,
+    45: 1.01,
+    50: 1.01,
+    55: 1.015,
+    60: 1.015,
+    65: 1.02,
+    70: 1.02,
+    75: 1.02,
+    80: 1.02,
 }
+
 
 class BasePitcherModifier:
     @abstractmethod
     def calculate_player_modifier(cls, player: GamePlayer):
         pass
+
 
 class KnuckleballModifier(BasePitcherModifier):
     @classmethod
@@ -252,6 +247,23 @@ class KnuckleballModifier(BasePitcherModifier):
         has_knuckleball = "knuckleball" in player.get_pitches()
         return 1.15 if has_knuckleball else 1
 
+
+class HomerunRiskModifier(BasePitcherModifier):
+    movement_hr_risk_exponent = {45: 1, 40: 1.3, 35: 1.5, 30: 1.75, 25: 2, 20: 3}
+
+    @classmethod
+    def calculate_player_modifier(cls, player: GamePlayer):
+        home_run_risk_modifier = 1
+        if player.movement <= 45:
+            exponent = cls.movement_hr_risk_exponent[player.movement]
+            if player.groundball_type == "EX FB":
+                home_run_risk_modifier = 0.87**exponent
+            if player.groundball_type == "FB":
+                home_run_risk_modifier = 0.93**exponent
+            if player.groundball_type == "NEU":
+                home_run_risk_modifier = 0.97**exponent
+
+        return home_run_risk_modifier
 
 
 def calculate_sp_modifiers(player, type="potential"):
@@ -309,12 +321,11 @@ def calculate_sp_modifiers(player, type="potential"):
 
     modifier *= total_sp_value_modifier
 
-    home_run_risk_modifier = 1
-    if player.movement < 45 and player.groundball_type == "EX FB":
-        home_run_risk_modifier = 0.9
-    write_runtime_component(player.id, "Pitcher HR component", home_run_risk_modifier)
+    home_run_risk_modifier = HomerunRiskModifier.calculate_player_modifier(player)
 
+    write_runtime_component(player.id, "SP HR component", home_run_risk_modifier)
     modifier *= home_run_risk_modifier
+
     return {
         "total_modifier": modifier,
         "gb_type_modifier": gb_type_modifier,
@@ -339,6 +350,7 @@ class PitcherScorer:
         score = None
         if position == "RP" or position == "CL":
             relief_score = self.__calculate_rp_score(player)
+            # TODO: instead of this, try to reproject stuff as starter
             starting_score = self.__calculate_sp_score(player) * 0.8
 
             write_runtime_component(
@@ -351,6 +363,7 @@ class PitcherScorer:
             score = starting_score if starting_score > relief_score else relief_score
         else:
             starting_score = self.__calculate_sp_score(player)
+            # TODO: instead of this, try to reproject stuff as reliever
             relief_score = self.__calculate_rp_score(player)
 
             write_runtime_component(
@@ -376,6 +389,7 @@ class PitcherScorer:
             # boost mid-tier pitcher scoring with an addition
             additive_effect = max(-diff_from_65 / 4, 0)
 
+        write_runtime_component(player.id, "Pre-Pitcher Adjustment Score", score)
         adjusted_score = multiplier * score + additive_effect
         write_runtime_component(player.id, "Pitcher Adj Multiplier", multiplier)
         write_runtime_component(player.id, "Pitcher Adj Effect", additive_effect)
