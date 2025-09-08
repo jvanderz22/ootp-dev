@@ -104,7 +104,9 @@ class BaseRanker(ABC):
         modifier = self.get_position_player_modifier(player, position_player_score)
         return [position_player_score * modifier, batting_score, fielding_score]
 
-    def get_position_player_modifier(self, player: GamePlayer, model_score: float) -> float:
+    def get_position_player_modifier(
+        self, player: GamePlayer, model_score: float
+    ) -> float:
         modifier_val = 1
         for modifier in self.shared_modifiers + self.position_player_modifiers:
             mod_val = modifier.calculate_player_modifier(player, model_score)

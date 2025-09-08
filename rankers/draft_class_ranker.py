@@ -24,6 +24,7 @@ class DraftClassRanker(BaseRanker):
                 rp_multiplier=RP_OVERALL_MODIFIER - 0.1,
             )
         )
+
     @property
     def shared_modifiers(self) -> list[BaseModifier]:
         return [
@@ -56,7 +57,7 @@ class DraftClassRanker(BaseRanker):
     def rank_adjusted_modifiers(self) -> list[BaseRankModifier]:
         return [
             DraftDemandModifier,
-            DraftRankPersonalityModifier
+            # DraftRankPersonalityModifier
         ]
 
     def aggregate_pitcher_batter_scores(self, batter_score, pitcher_score):

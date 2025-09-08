@@ -1,25 +1,34 @@
 from models.game_players import GamePlayer
 from modifiers.base_modifier import BaseModifier
-
-work_ethic_age_modifier_impact = {
-    17: 1.4,
-    18: 1.4,
-    19: 1.3,
-    20: 1.2,
-    21: 1.1,
-    22: 1.05,
-}
+from utils.rank_graditated_model import RankGradiatedModel
 
 
 class PersonalityModifier(BaseModifier):
+    modifier_weight_model = RankGradiatedModel(
+        [0, 35, 45, 50, 80, 100, 130],
+        [2, 2, 1.2, 1, 0.8, 0.5, 0.3],
+    )
+
+    age_modifier_impact = {
+        16: 1.38,
+        17: 1.34,
+        18: 1.3,
+        19: 1.2,
+        20: 1.1,
+        21: 1,
+        22: 0.8,
+        23: 0.75,
+        24: 0.7,
+    }
+
     @classmethod
-    def calculate_player_modifier(cls, player: GamePlayer, _model_score):
-        modifier = 1
+    def calculate_player_modifier(cls, player: GamePlayer, model_score: float):
+        int_modifier = 1
 
         if player.intelligence == "H":
-            modifier *= 1.04
+            int_modifier = 1.03
         elif player.intelligence == "L":
-            modifier *= 0.93
+            int_modifier = 0.97
 
         work_ethic_modifier = 1
         if player.work_ethic == "H":
@@ -27,9 +36,19 @@ class PersonalityModifier(BaseModifier):
         elif player.work_ethic == "L":
             work_ethic_modifier = 0.9
 
-        if player.age <= 20:
-            work_ethic_age_modifier = work_ethic_age_modifier_impact.get(player.age, 1)
-            work_ethic_modifier = work_ethic_modifier**work_ethic_age_modifier
+        # i.e H INT / H WE: 30 model score + 18 y/o: 1.23
+        # i.e H/H: 30 model score + 22 y/o: 1.14
+        # i.e H/H 70 model score + 18 y/o: 1.09
+        # i.e H/H 70 model score + 22 y/o: 1.06
 
-        modifier *= work_ethic_modifier
-        return modifier
+        # i.e M/L 30 model score + 18 y/o: 0.76
+        # i.e M/L 30 model score + 22 y/o: 0.84
+        # i.e M/L 70 model score + 18 y/o: 0.89
+        # i.e M/L 70 model score + 22 y/o: 0.93
+
+        modifier = work_ethic_modifier * int_modifier
+        age_modifier_weight = cls.age_modifier_impact.get(player.age, 0.6)
+        model_modifier_weight = cls.modifier_weight_model.rank(model_score)
+        total_modifier = (modifier**age_modifier_weight) ** model_modifier_weight
+
+        return total_modifier

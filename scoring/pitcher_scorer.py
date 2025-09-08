@@ -366,10 +366,11 @@ class PitcherScorer:
             # boost mid-tier pitcher scoring with an addition
             additive_effect = max(-diff_from_65 / 4, 0)
 
-        write_runtime_component(player.id, "Pre-Pitcher Adjustment Score", score)
+        write_runtime_component(player.id, "Pre-Pitcher Adj Score", score)
         adjusted_score = multiplier * score + additive_effect
         write_runtime_component(player.id, "Pitcher Adj Multiplier", multiplier)
         write_runtime_component(player.id, "Pitcher Adj Effect", additive_effect)
+        write_runtime_component(player.id, "Pitcher Adj Score", adjusted_score)
         return adjusted_score
 
     def __calculate_sp_score(self, player: GamePlayer):
