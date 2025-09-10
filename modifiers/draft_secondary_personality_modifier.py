@@ -1,22 +1,20 @@
-from modifiers.base_rank_modifier import BaseRankModifier
+from modifiers.base_modifier import BaseModifier
 from utils.rank_graditated_model import RankGradiatedModel
 
 
-class DraftRankPersonalityModifier(BaseRankModifier):
-    modifier_model = RankGradiatedModel(
-        [10, 25, 50, 75, 100, 150, 200, 350, 450, 850],
-        [0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9],
+class DraftSecondaryPersonalityModifier(BaseModifier):
+    bad_personality_modifier_model = RankGradiatedModel(
+        [0, 10, 35, 50, 75, 100],
+        [1, 1, 0.8, 0.4, 0.1, 0.1],
     )
     high_leadership_modifier_model = RankGradiatedModel(
-        [100, 150, 300, 500, 700], [0, 0.2, 0.4, 0.8, 1]
+        [0, 25, 32, 40, 45], [1, 1, 0.8, 0.1, 0]
     )
-    low_leadership_modifier_model = RankGradiatedModel([250, 350, 600], [0, 0.5, 1])
-    bad_personality_modifier_model = RankGradiatedModel([0, 350, 600], [1, 1, 1.5])
+    low_leadership_modifier_model = RankGradiatedModel([0, 30, 38], [1, 1, 0])
 
     @classmethod
-    def calculate_player_modifier(cls, player, rank):
+    def calculate_player_modifier(cls, player, model_weight):
         personality_modifier = 1
-        modifier_weight = cls.modifier_model.rank(rank)
 
         bad_personalities = 0
         if player.work_ethic == "L":
@@ -33,7 +31,7 @@ class DraftRankPersonalityModifier(BaseRankModifier):
             bad_personalities += 1
 
         bad_personalities_modifier_weight = cls.bad_personality_modifier_model.rank(
-            rank
+            model_weight
         )
         if bad_personalities > 5:
             personality_modifier *= 0.5**bad_personalities_modifier_weight
@@ -43,15 +41,15 @@ class DraftRankPersonalityModifier(BaseRankModifier):
             personality_modifier *= 0.92**bad_personalities_modifier_weight
 
         if player.leadership == "H":
-            leadership_modifier = 1.2 ** cls.high_leadership_modifier_model.rank(rank)
+            leadership_modifier = 1.2 ** cls.high_leadership_modifier_model.rank(
+                model_weight
+            )
             personality_modifier *= leadership_modifier
         elif player.leadership == "L":
             low_leadership_modifier = 0.85 ** cls.low_leadership_modifier_model.rank(
-                rank
+                model_weight
             )
             personality_modifier *= low_leadership_modifier
-        if player.work_ethic == "H" and player.intelligence == "H":
-            personality_modifier *= 1.2
 
-        total_modifier = personality_modifier**modifier_weight
+        total_modifier = personality_modifier
         return total_modifier

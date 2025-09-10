@@ -4,7 +4,9 @@ from modifiers.base_rank_modifier import BaseRankModifier
 from modifiers.batter_hit_profile_modifier import BatterHitProfileModifier
 from modifiers.draft_batter_overall_modifier import DraftBatterOverallModifier
 from modifiers.draft_demand_modifier import DraftDemandModifier
-from modifiers.draft_rank_personality_modifier import DraftRankPersonalityModifier
+from modifiers.draft_secondary_personality_modifier import (
+    DraftSecondaryPersonalityModifier,
+)
 from modifiers.pitcher_injury_modifier import PitcherInjuryModifier
 from modifiers.draft_pitcher_overall_modifier import DraftPitcherOverallModifier
 from modifiers.draft_pitcher_stuff_modifier import DraftPitcherStuffModifier
@@ -31,6 +33,7 @@ class DraftClassRanker(BaseRanker):
             AgeModifier,
             ScoutingAccuracyModifier,
             PersonalityModifier,
+            DraftSecondaryPersonalityModifier,
         ]
 
     @property
@@ -57,7 +60,6 @@ class DraftClassRanker(BaseRanker):
     def rank_adjusted_modifiers(self) -> list[BaseRankModifier]:
         return [
             DraftDemandModifier,
-            # DraftRankPersonalityModifier
         ]
 
     def aggregate_pitcher_batter_scores(self, batter_score, pitcher_score):
