@@ -346,7 +346,10 @@ class GamePlayer:
 
     @property
     def control_ovr(self):
-        return int(self._control_ovr)
+        try:
+            return int(self._control_ovr)
+        except:
+            return 0
 
     @property
     def stamina(self):
