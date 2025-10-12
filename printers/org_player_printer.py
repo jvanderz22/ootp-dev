@@ -14,10 +14,11 @@ class OrgPlayerPrinter:
         player_name = None
         org = None
         max_potential = None
+        sort_by_potential = False
         max_age = None
         verbose = False
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "n:p:t:o:m:a:v")
+            opts, args = getopt.getopt(sys.argv[1:], "n:p:t:o:m:a:vs")
         except getopt.GetoptError:
             print("Invalid Option!")
             sys.exit(2)
@@ -30,6 +31,8 @@ class OrgPlayerPrinter:
                 print_count = int(arg)
             if opt == "-o":
                 org = arg
+            if opt == "-s":
+                sort_by_potential = True
             if opt == "-a":
                 max_age = int(arg)
             if opt == "-m":
@@ -40,6 +43,7 @@ class OrgPlayerPrinter:
             "print_count": print_count,
             "position": position,
             "player_name": player_name,
+            "sort_by_potential": sort_by_potential,
             "max_age": max_age,
             "max_potential": max_potential,
             "org": org,
@@ -52,6 +56,7 @@ class OrgPlayerPrinter:
         player_name = opts.get("player_name")
         print_minimal = opts.get("print_minimal", False)
         sort_by_potential = opts.get("sort_by_potential", False)
+        max_potential = opts.get("max_potential")
         position = opts.get("position")
         org = opts.get("org")
         verbose = opts.get("verbose", False)
@@ -86,6 +91,9 @@ class OrgPlayerPrinter:
                 else:
                     search_pos = [position.lower()]
                 if player["position"].lower() not in search_pos:
+                    continue
+            if max_potential is not None:
+                if int(player["in_game_potential"]) > max_potential:
                     continue
 
             printed_players += 1
