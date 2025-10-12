@@ -2,11 +2,18 @@ import csv
 import getopt
 import sys
 from typing import Dict, List
-from draft_class_files import get_draft_class_config_file, get_ranked_players_file
+from draft_class_files import get_ranked_players_file
 from get_game_players import get_game_players
 from models.game_players import GamePlayer
 from printers.org_player_printer import OrgPlayerPrinter
 from rankers.get_ranker import get_ranker
+from utils.rank_graditated_model import RankGradiatedModel
+
+# somewhere between 58 and 60 should be the minimum score for org summary value
+player_ranking_points_model = RankGradiatedModel(
+    [0, 58, 62, 65, 68, 70, 72, 75, 80, 85, 90, 100, 110, 120],
+    [0, 0, 2.2, 6, 9, 11, 14, 19, 32, 45, 61, 81, 92, 100],
+)
 
 
 class PlayerSummary:
@@ -56,6 +63,14 @@ class OrgSummaryPrinter:
         org_summary = self.create_org_summaries()
         rating_counts = {org: {} for org in org_summary.keys()}
         for org in org_summary.keys():
+            org_score = sum(
+                [
+                    player_ranking_points_model.rank(
+                        float(p.player_score["model_score"])
+                    )
+                    for p in org_summary[org]
+                ]
+            )
             top_10_specs = [
                 p
                 for p in org_summary[org]
@@ -82,6 +97,7 @@ class OrgSummaryPrinter:
                 if int(p.player_score["overall_ranking"]) < 500
             ]
             rating_counts[org] = {
+                "org_score": org_score,
                 "top_10": len(top_10_specs),
                 "top_50": len(top_50_specs),
                 "top_100": len(top_100_specs),
@@ -90,7 +106,12 @@ class OrgSummaryPrinter:
             }
 
         if print_summary:
-            for org in sorted(rating_counts.keys()):
+            # for org in sorted(rating_counts.keys()):
+            for org in sorted(
+                rating_counts.keys(),
+                key=lambda item: rating_counts[item]["org_score"],
+                reverse=True,
+            ):
                 print(org)
                 self.print_rating_counts(rating_counts[org])
                 self.print_player_summaries(org_summary[org], per_system_count)
@@ -136,6 +157,7 @@ class OrgSummaryPrinter:
         return players_by_org
 
     def print_rating_counts(self, rating_count):
+        print(f"Overall score: {rating_count['org_score']}")
         print(f"Top 10: {rating_count['top_10']}")
         print(f"Top 50: {rating_count['top_50']}")
         print(f"Top 100: {rating_count['top_100']}")
