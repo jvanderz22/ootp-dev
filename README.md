@@ -1,3 +1,5 @@
+Activate the virtual env: `source activate/bin/activate`
+
 Commands:
 
 Get data from exported game file:

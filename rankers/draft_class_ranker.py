@@ -52,8 +52,6 @@ class DraftClassRanker(BaseRanker):
             DraftPitcherStuffModifier,
             PitcherVelocityModifier,
             PitcherInjuryModifier,
-            PersonalityModifier,
-            ScoutingAccuracyModifier,
         ]
 
     @property
