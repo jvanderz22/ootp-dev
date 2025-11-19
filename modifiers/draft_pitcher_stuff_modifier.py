@@ -8,20 +8,20 @@ class DraftPitcherStuffModifier(BaseModifier):
         modifier = 1
         if player.position == "SP":
             if player.stuff <= 40:
-                modifier *= 0.88
-            elif player.stuff <= 45:
                 modifier *= 0.93
-            elif player.stuff <= 50:
+            elif player.stuff <= 45:
                 modifier *= 0.96
+            elif player.stuff <= 50:
+                modifier *= 0.975
             elif player.stuff <= 55:
-                modifier *= 0.985
+                modifier *= 0.99
         else:
             if player.stuff <= 45:
-                modifier *= 0.88
-            elif player.stuff <= 50:
                 modifier *= 0.93
-            elif player.stuff <= 55:
+            elif player.stuff <= 50:
                 modifier *= 0.96
+            elif player.stuff <= 55:
+                modifier *= 0.98
             elif player.stuff <= 60:
-                modifier *= 0.985
+                modifier *= 0.99
         return modifier
