@@ -36,4 +36,4 @@ Possible print_method: "draft_prospects" and "org_players"
 Build a list from in-game instead of from an exported report. Requires having
 game open to player page list. Takes option -p for the number of pages of players
 on the in-game report
-python3 import_dataset_from_ootp -d dataset_name -p 120
+python3 import_dataset_from_ootp.py -d dataset_name -p 120
