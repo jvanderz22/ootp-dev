@@ -107,6 +107,19 @@ class OrgSummaryPrinter:
 
         if print_summary:
             # for org in sorted(rating_counts.keys()):
+            print("Top Orgs:")
+            for index, org in enumerate(
+                sorted(
+                    rating_counts.keys(),
+                    key=lambda item: rating_counts[item]["org_score"],
+                    reverse=True,
+                )
+            ):
+                print(
+                    f"{index + 1}. {org} ({float(rating_counts[org]['org_score']):.2f})"
+                )
+            print("\n-------")
+
             for org in sorted(
                 rating_counts.keys(),
                 key=lambda item: rating_counts[item]["org_score"],
@@ -157,7 +170,7 @@ class OrgSummaryPrinter:
         return players_by_org
 
     def print_rating_counts(self, rating_count):
-        print(f"Overall score: {rating_count['org_score']}")
+        print(f"Overall score: {float(rating_count['org_score']):.2f}")
         print(f"Top 10: {rating_count['top_10']}")
         print(f"Top 50: {rating_count['top_50']}")
         print(f"Top 100: {rating_count['top_100']}")
