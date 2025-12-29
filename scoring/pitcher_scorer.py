@@ -359,7 +359,7 @@ class PitcherScorer:
     def apply_adjustment(self, score, player):
         diff_from_65 = score - 70
         diff_exponent = -diff_from_65 / 650
-        multiplier = score**diff_exponent
+        multiplier = max(score**diff_exponent, 1)
 
         additive_effect = 0
         if score > 10:
