@@ -43,6 +43,7 @@ def create_dataset(file_path, class_name):
         os.makedirs(data_directory)
     dataset_config = {
         "ranking_method": "draft_class",
+        "print_method": "draft_prospects",
     }
     config_file_path = f"{data_directory}/config.json"
     if not os.path.exists(config_file_path):
@@ -55,6 +56,8 @@ def create_dataset(file_path, class_name):
         print(
             f'Updated class at {class_path}. Set "{class_name}" to be the active draft class in constants.py to process it.'
         )
+
+    print(f"Settings can be updated in processed_classes/{class_name}/config.json.")
 
 
 if __name__ == "__main__":

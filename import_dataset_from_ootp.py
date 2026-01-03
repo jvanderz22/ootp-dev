@@ -121,6 +121,7 @@ def create_dataset(dataset_name, num_pages, page_has_option_bar):
         print(
             f'Updated class at {dataset_path}. Set "{dataset_name}" to be the active dataset in constants.py to process it.'
         )
+    print(f"Settings can be updated in processed_classes/{dataset_name}/config.json.")
 
 
 if __name__ == "__main__":
