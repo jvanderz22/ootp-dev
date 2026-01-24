@@ -25,7 +25,7 @@ class OverallPotentialRanker(BaseRanker):
     @property
     def position_player_modifiers(self) -> list[BaseModifier]:
         return [
-            DraftBatterOverallModifier,
+            # DraftBatterOverallModifier,
             BatterHandednessModifier,
             BatterHitProfileModifier(),
             BatterInjuryModifier,
@@ -34,8 +34,8 @@ class OverallPotentialRanker(BaseRanker):
     @property
     def pitcher_modifiers(self) -> list[BaseModifier]:
         return [
-            DraftPitcherOverallModifier,
-            DraftPitcherStuffModifier,
+            # DraftPitcherOverallModifier,
+            # DraftPitcherStuffModifier,
             PitcherVelocityModifier,
             PitcherInjuryModifier,
         ]
