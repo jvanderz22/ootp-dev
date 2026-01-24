@@ -4,6 +4,7 @@ from attribute_models.starting_pitcher_attribute_model import (
     StartingPitcherAttributeModel,
 )
 from models.game_players import PLAYER_FIELDS, GamePlayer
+from regressed_models.pitching_regression_model import PitchingRegressionModel
 from scoring.runtime_components import write_runtime_component
 
 
@@ -343,6 +344,16 @@ class PitcherScorer:
         self.type = type
         self.sp_model = StartingPitcherAttributeModel(type)
         self.rp_model = ReliefPitcherAttributeModel(type)
+        self.sp_model = (
+            PitchingRegressionModel("SP")
+            if type == "potential"
+            else StartingPitcherAttributeModel(type)
+        )
+        self.rp_model = (
+            PitchingRegressionModel("RP")
+            if type == "potential"
+            else ReliefPitcherAttributeModel(type)
+        )
         self.rp_modifier = rp_multiplier
 
     def score(self, player):
