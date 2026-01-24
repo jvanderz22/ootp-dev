@@ -12,7 +12,7 @@ class BlendScenario(Enum):
 class BattingRegressionModel:
     # Blend percentages for scenario generation (0% to 100% of potential improvement)
     BLEND_PERCENTAGES = [BlendScenario.LOW, BlendScenario.MEDIUM, BlendScenario.FULL]
-    SCENARIO_PROBABILITIES = [0.1, 0.3, 0.6]
+    SCENARIO_PROBABILITIES = [0.15, 0.35, 0.5]
 
     # Batting attributes to blend between overall and potential
     BATTING_ATTRIBUTES = [
@@ -49,15 +49,15 @@ class BattingRegressionModel:
         if blend == BlendScenario.MEDIUM:
             blend_percentage = 0.9
             if gap <= 15:
-                weight = blend_percentage * 0.65
+                weight = blend_percentage * 0.75
             elif gap <= 20:
-                weight = blend_percentage * 0.7
+                weight = blend_percentage * 0.8
             elif gap <= 30:
-                weight = blend_percentage * 0.85
+                weight = blend_percentage * 0.82
             elif gap <= 40:
-                weight = blend_percentage * 0.9
+                weight = blend_percentage * 0.87
             else:
-                weight = blend_percentage * 0.95
+                weight = blend_percentage * 0.9
         else:
             blend_percentage = 0.75
             if gap <= 15:
@@ -65,11 +65,11 @@ class BattingRegressionModel:
             elif gap <= 20:
                 weight = blend_percentage * 0.55
             elif gap <= 30:
-                weight = blend_percentage * 0.7
+                weight = blend_percentage * 0.65
             elif gap <= 40:
-                weight = blend_percentage * 0.8
+                weight = blend_percentage * 0.7
             elif gap <= 50:
-                weight = blend_percentage * 0.85
+                weight = blend_percentage * 0.7
             else:
                 weight = blend_percentage * 0.7
         result = overall_value * (1 - weight) + potential_value * weight
