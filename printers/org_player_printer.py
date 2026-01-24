@@ -166,6 +166,9 @@ class OrgPlayerPrinter:
 
         if is_pitcher and not print_minimal:
             print(
+                f"SP Model: {player['starter_component']}, RP Model: {player['reliever_component']}"
+            )
+            print(
                 f"Stuff: {game_player.stuff} ({game_player.stuff_ovr}), Movement: {game_player.movement} ({game_player.movement_ovr}), Control: {game_player.control} ({game_player.control_ovr}), Stamina: {game_player.stamina}"
             )
             print(f"Pitches: ", end="")
