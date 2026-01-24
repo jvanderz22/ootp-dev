@@ -531,6 +531,9 @@ class GamePlayer:
         except ValueError:
             return None
 
+    def create_copy(self, new_attrs: dict):
+        return GamePlayer({**self._dict, **new_attrs})
+
     def get_pitches(self):
         pitches = []
         for field in self.pitch_fields:

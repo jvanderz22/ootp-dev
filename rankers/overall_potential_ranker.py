@@ -20,11 +20,7 @@ class OverallPotentialRanker(BaseRanker):
 
     @property
     def shared_modifiers(self) -> list[BaseModifier]:
-        return [
-            ScoutingAccuracyModifier,
-            PersonalityModifier,
-            AgeModifier
-        ]
+        return [ScoutingAccuracyModifier, PersonalityModifier, AgeModifier]
 
     @property
     def position_player_modifiers(self) -> list[BaseModifier]:

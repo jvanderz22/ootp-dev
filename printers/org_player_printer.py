@@ -70,6 +70,7 @@ class OrgPlayerPrinter:
         for i, player in enumerate(players):
             if printed_players >= print_count:
                 break
+            game_player = self.game_players.get_player(player["id"])
             if player_name is not None:
                 if player_name.lower() not in player["name"].lower():
                     continue
