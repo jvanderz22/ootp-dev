@@ -8,12 +8,17 @@ from attribute_models.shortstop_attribute_model import ShortstopAttributeModel
 from attribute_models.catcher_attribute_model import CatcherAttributeModel
 from attribute_models.third_base_attribute_model import ThirdBaseAttributeModel
 from attribute_models.first_base_attribute_model import FirstBaseAttributeModel
+from regressed_models.batting_regression_model import BattingRegressionModel
 from scoring.runtime_components import write_runtime_component
 
 
 class PositionPlayerScorer:
     def __init__(self, type="potential"):
-        self.batting_model = BattingAttributeModel(type)
+        self.batting_model = (
+            BattingRegressionModel()
+            if type == "potential"
+            else BattingAttributeModel(type)
+        )
         self.fielding_models_map = {
             "C": CatcherAttributeModel(),
             "1B": FirstBaseAttributeModel(),

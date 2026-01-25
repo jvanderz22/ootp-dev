@@ -20,16 +20,12 @@ class OverallPotentialRanker(BaseRanker):
 
     @property
     def shared_modifiers(self) -> list[BaseModifier]:
-        return [
-            ScoutingAccuracyModifier,
-            PersonalityModifier,
-            AgeModifier
-        ]
+        return [ScoutingAccuracyModifier, PersonalityModifier, AgeModifier]
 
     @property
     def position_player_modifiers(self) -> list[BaseModifier]:
         return [
-            DraftBatterOverallModifier,
+            # DraftBatterOverallModifier,
             BatterHandednessModifier,
             BatterHitProfileModifier(),
             BatterInjuryModifier,
@@ -38,8 +34,8 @@ class OverallPotentialRanker(BaseRanker):
     @property
     def pitcher_modifiers(self) -> list[BaseModifier]:
         return [
-            DraftPitcherOverallModifier,
-            DraftPitcherStuffModifier,
+            # DraftPitcherOverallModifier,
+            # DraftPitcherStuffModifier,
             PitcherVelocityModifier,
             PitcherInjuryModifier,
         ]

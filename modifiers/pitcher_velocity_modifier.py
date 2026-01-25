@@ -29,12 +29,12 @@ class PitcherVelocityModifier(BaseModifier):
         elif lower_velo <= 95:
             modifier *= 1
         elif lower_velo <= 97:
-            modifier *= 1.02
+            modifier *= 1.01
         elif lower_velo <= 99:
-            modifier *= 1.05
+            modifier *= 1.02
         elif lower_velo <= 102:
-            modifier *= 1.07
+            modifier *= 1.035
         elif lower_velo <= 110:
-            modifier *= 1.08
+            modifier *= 1.05
 
         return modifier

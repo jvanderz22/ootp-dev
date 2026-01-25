@@ -70,6 +70,7 @@ class OrgPlayerPrinter:
         for i, player in enumerate(players):
             if printed_players >= print_count:
                 break
+            game_player = self.game_players.get_player(player["id"])
             if player_name is not None:
                 if player_name.lower() not in player["name"].lower():
                     continue
@@ -164,6 +165,9 @@ class OrgPlayerPrinter:
                 )
 
         if is_pitcher and not print_minimal:
+            print(
+                f"SP Model: {player['starter_component']}, RP Model: {player['reliever_component']}"
+            )
             print(
                 f"Stuff: {game_player.stuff} ({game_player.stuff_ovr}), Movement: {game_player.movement} ({game_player.movement_ovr}), Control: {game_player.control} ({game_player.control_ovr}), Stamina: {game_player.stamina}"
             )

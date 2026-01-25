@@ -4,6 +4,7 @@ from attribute_models.starting_pitcher_attribute_model import (
     StartingPitcherAttributeModel,
 )
 from models.game_players import PLAYER_FIELDS, GamePlayer
+from regressed_models.pitching_regression_model import PitchingRegressionModel
 from scoring.runtime_components import write_runtime_component
 
 
@@ -343,6 +344,16 @@ class PitcherScorer:
         self.type = type
         self.sp_model = StartingPitcherAttributeModel(type)
         self.rp_model = ReliefPitcherAttributeModel(type)
+        self.sp_model = (
+            PitchingRegressionModel("SP")
+            if type == "potential"
+            else StartingPitcherAttributeModel(type)
+        )
+        self.rp_model = (
+            PitchingRegressionModel("RP")
+            if type == "potential"
+            else ReliefPitcherAttributeModel(type)
+        )
         self.rp_modifier = rp_multiplier
 
     def score(self, player):
@@ -352,26 +363,7 @@ class PitcherScorer:
         write_runtime_component(player.id, "Reliever Score w/Modifiers", relief_score)
         score = starting_score if starting_score > relief_score else relief_score
         score = score if score > 0 else 0
-        # Try to fix the batter/pitcher distribution
-        score = self.apply_adjustment(score, player)
         return [score, starting_score, relief_score]
-
-    def apply_adjustment(self, score, player):
-        diff_from_65 = score - 70
-        diff_exponent = -diff_from_65 / 650
-        multiplier = max(score**diff_exponent, 1)
-
-        additive_effect = 0
-        if score > 10:
-            # boost mid-tier pitcher scoring with an addition
-            additive_effect = max(-diff_from_65 / 4, 0)
-
-        write_runtime_component(player.id, "Pre-Pitcher Adj Score", score)
-        adjusted_score = multiplier * score + additive_effect
-        write_runtime_component(player.id, "Pitcher Adj Multiplier", multiplier)
-        write_runtime_component(player.id, "Pitcher Adj Effect", additive_effect)
-        write_runtime_component(player.id, "Pitcher Adj Score", adjusted_score)
-        return adjusted_score
 
     def __calculate_sp_score(self, player: GamePlayer):
         player_to_estimate = player
