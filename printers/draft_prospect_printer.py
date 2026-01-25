@@ -198,6 +198,9 @@ class DraftProspectPrinter:
 
         if is_pitcher and not print_minimal:
             print(
+                f"SP Model: {player['starter_component']}, RP Model: {player['reliever_component']}"
+            )
+            print(
                 f"Stuff: {game_player.stuff}, Movement: {game_player.movement}, Control: {game_player.control}, Stamina: {game_player.stamina}"
             )
             print(
