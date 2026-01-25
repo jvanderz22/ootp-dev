@@ -37,13 +37,8 @@ class PositionPlayerScorer:
         running_score = self.running_model.run(player)
         write_runtime_component(player.id, f"Pos - Batting Model", batting_score)
         write_runtime_component(player.id, f"Pos - Running Model", running_score)
-        # this is more than 100% but thats okay. Trying to get a league average player to equal 50 overall
-        # and 100 wrc+ currently equals 50 in the batting score component and 50 in the fielding score
-        # component is more a gold glove type.
-        # Average hitter + average fielder (30ish points) + average runner (35ish points) should equal
-        # average player
         overall_score = (
-            (batting_score * 0.77) + (fielding_score * 0.26) + (running_score * 0.08)
+            (batting_score * 0.73) + (fielding_score * 0.22) + (running_score * 0.05)
         )
         write_runtime_component(player.id, f"Pos - Overall Model Score", batting_score)
         return [overall_score, batting_score, fielding_score]
