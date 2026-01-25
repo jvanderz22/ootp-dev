@@ -35,7 +35,10 @@ class ShortstopAttributeModel(AttributeModel):
         return [
             [17, [55, 65, 65, 65]],  # barely useable
             [22, [60, 60, 60, 55]],  # barely useable
+            [25, [65, 45, 45, 45]],  # barely useable
             [44, [60, 70, 70, 70]],  # passable starter
+            [46, [65, 50, 50, 50]],  # passable starter
+            [52, [65, 60, 60, 60]],  # passable starter
             [55, [70, 50, 50, 55]],  # solid regular
             [61, [65, 65, 65, 65]],  # solid regular
             [63, [65, 65, 65, 70]],  # solid regular
