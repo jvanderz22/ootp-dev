@@ -14,6 +14,9 @@ class PitchingRegressionModel(BaseRegressionModel):
         ("control", "control_ovr"),
     ]
 
+    SCENARIO_PROBABILITIES = [0.4, 0.4, 0.4]
+    is_pitching_model = True
+
     def __init__(self, type: str):
         if type == "SP":
             self.model = StartingPitcherAttributeModel("overall")

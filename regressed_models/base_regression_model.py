@@ -11,7 +11,8 @@ class BlendScenario(Enum):
 class BaseRegressionModel:
     # Blend percentages for scenario generation (0% to 100% of potential improvement)
     BLEND_PERCENTAGES = [BlendScenario.LOW, BlendScenario.MEDIUM, BlendScenario.FULL]
-    SCENARIO_PROBABILITIES = [0.15, 0.35, 0.5]
+    SCENARIO_PROBABILITIES = [0.2, 0.4, 0.4]
+    is_pitching_model = False
 
     def run(self, player: GamePlayer) -> float:
         """
@@ -31,6 +32,28 @@ class BaseRegressionModel:
 
             # Run batting model on this scenario
             scenario_score = self.model.run(scenario_player)
+            # if not self.is_pitching_model and (
+            #     player.id == "72471" or player.id == "72461"
+            # ):
+            #     print(
+            #         scenario_player.contact_ovr,
+            #         scenario_player.gap_ovr,
+            #         scenario_player.power_ovr,
+            #         scenario_player.eye_ovr,
+            #         scenario_player.avoid_k_ovr,
+            #         scenario_score,
+            #     )
+
+            if self.is_pitching_model is True and (
+                player.id == "70564" or player.id == "71406"
+            ):
+
+                print(
+                    scenario_player.stuff_ovr,
+                    scenario_player.movement_ovr,
+                    scenario_player.control_ovr,
+                    scenario_score,
+                )
 
             scenario_probability = self.SCENARIO_PROBABILITIES[i]
 
@@ -47,7 +70,11 @@ class BaseRegressionModel:
         return weighted_scenario_score
 
     def _exponential_interpolation(
-        self, overall_value: float, potential_value: float, blend: BlendScenario
+        self,
+        overall_value: float,
+        potential_value: float,
+        blend: BlendScenario,
+        log=False,
     ) -> float:
         """
         Exponential interpolation between overall and potential, fit to test system.
@@ -78,8 +105,17 @@ class BaseRegressionModel:
                 weight = blend_percentage * 0.87
             else:
                 weight = blend_percentage * 0.9
+
+            if overall_value <= 20:
+                weight *= 0.85
+            if overall_value <= 25:
+                weight *= 0.9
+            if overall_value <= 30:
+                weight *= 0.97
         else:
             blend_percentage = 0.75
+            weight = blend_percentage
+
             if gap <= 15:
                 weight = blend_percentage * 0.35
             elif gap <= 20:
@@ -87,11 +123,32 @@ class BaseRegressionModel:
             elif gap <= 30:
                 weight = blend_percentage * 0.65
             elif gap <= 40:
-                weight = blend_percentage * 0.7
+                weight = blend_percentage * 0.8
             elif gap <= 50:
-                weight = blend_percentage * 0.7
+                weight = blend_percentage * 0.85
             else:
-                weight = blend_percentage * 0.7
+                weight = blend_percentage * 1
+
+            if overall_value <= 20:
+                weight *= 0.70
+            if overall_value <= 25:
+                weight *= 0.77
+            if overall_value <= 30:
+                weight *= 0.85
+            if overall_value <= 35:
+                weight *= 0.96
+            if overall_value <= 45:
+                weight *= 1
+
+        # if log:
+        #     print(
+        #         "weight calculation:",
+        #         overall_value,
+        #         potential_value,
+        #         gap,
+        #         blend,
+        #         weight,
+        #     )
         result = overall_value * (1 - weight) + potential_value * weight
         return result
 
@@ -113,11 +170,31 @@ class BaseRegressionModel:
         for potential_attr, overall_attr in self.ATTRIBUTES:
             potential_value = getattr(player, potential_attr)
             overall_value = getattr(player, overall_attr)
+            # log = (
+            #     not self.is_pitching_model
+            #     and (player.id == "72471" or player.id == "72461")
+            #     and blend_percentage == BlendScenario.LOW
+            # )
+
+            log = (
+                self.is_pitching_model
+                and (player.id == "70564" or player.id == "71406")
+                and blend_percentage == BlendScenario.LOW
+            )
 
             # Use exponential interpolation based on overall OVR level
             blended_value = self._exponential_interpolation(
-                overall_value, potential_value, blend_percentage
+                overall_value, potential_value, blend_percentage, log
             )
+
+            if log:
+                print(
+                    "blended_value:",
+                    potential_attr,
+                    overall_value,
+                    potential_value,
+                    blended_value,
+                )
 
             # Round to nearest 5 to smooth out discontinuities in model
             blended_value = round(blended_value / 5) * 5

@@ -38,7 +38,7 @@ class PositionPlayerScorer:
         write_runtime_component(player.id, f"Pos - Batting Model", batting_score)
         write_runtime_component(player.id, f"Pos - Running Model", running_score)
         overall_score = (
-            (batting_score * 0.73) + (fielding_score * 0.22) + (running_score * 0.05)
+            (batting_score * 0.8) + (fielding_score * 0.20) + (running_score * 0.05)
         )
         write_runtime_component(player.id, f"Pos - Overall Model Score", batting_score)
         return [overall_score, batting_score, fielding_score]

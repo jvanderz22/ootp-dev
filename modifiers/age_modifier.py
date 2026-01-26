@@ -1,5 +1,3 @@
-
-
 from models.game_players import GamePlayer
 from modifiers.base_modifier import BaseModifier
 from modifiers.base_rank_modifier import BaseRankModifier
@@ -20,9 +18,10 @@ age_modifiers = {
     23: 1.01,
 }
 
+
 class AgeModifier(BaseModifier):
     modifier_weight_model = RankGradiatedModel(
-        [0, 35, 55, 100, 130],
+        [0, 30, 40, 65, 130],
         [1, 1, 0.5, 0.2, 0],
     )
 

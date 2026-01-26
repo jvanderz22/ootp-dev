@@ -5,8 +5,8 @@ from utils.rank_graditated_model import RankGradiatedModel
 
 class PersonalityModifier(BaseModifier):
     modifier_weight_model = RankGradiatedModel(
-        [0, 35, 45, 50, 80, 100, 130],
-        [2, 2, 1.2, 1, 0.8, 0.5, 0.3],
+        [0, 25, 35, 40, 50, 60, 80, 120],
+        [2, 2, 1.2, 1, 0.8, 0.5, 0.3, 0],
     )
 
     age_modifier_impact = {

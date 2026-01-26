@@ -5,7 +5,7 @@ from utils.rank_graditated_model import RankGradiatedModel
 
 class PitcherInjuryModifier(BaseModifier):
     modifier_weight_model = RankGradiatedModel(
-        [0, 38, 60, 80, 130],
+        [0, 28, 45, 70, 100],
         [1, 1, 0.4, 0.3, 0.2],
     )
 

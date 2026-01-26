@@ -9,14 +9,14 @@ from scoring.runtime_components import write_runtime_component
 
 
 # Lower the all RPs scores using this modifier
-RP_OVERALL_MODIFIER = 0.82
+RP_OVERALL_MODIFIER = 0.8
 
 rp_groundball_type_modifier_map = {
-    "EX FB": 0.92,
-    "FB": 0.98,
+    "EX FB": 0.91,
+    "FB": 0.975,
     "NEU": 1,
-    "GB": 1.02,
-    "EX GB": 1.05,
+    "GB": 1.015,
+    "EX GB": 1.04,
 }
 
 rp_stamina_modifier_map = {
@@ -136,11 +136,11 @@ sp_stamina_modifier_map = {
     45: 0.97,
     50: 0.99,
     55: 1,
-    60: 1.01,
-    65: 1.01,
-    70: 1.015,
-    75: 1.02,
-    80: 1.03,
+    60: 1.004,
+    65: 1.007,
+    70: 1.01,
+    75: 1.016,
+    80: 1.025,
 }
 
 sp_groundball_type_modifier_map = {
@@ -195,11 +195,11 @@ sp_third_pitch_value_modifier_map = {
     45: 0.96,
     50: 1,
     55: 1,
-    60: 1.01,
+    60: 1,
     65: 1.01,
-    70: 1.02,
-    75: 1.02,
-    80: 1.03,
+    70: 1.012,
+    75: 1.016,
+    80: 1.02,
 }
 
 
@@ -208,14 +208,14 @@ sp_fourth_pitch_value_modifier_map = {
     25: 0.95,
     30: 0.95,
     35: 0.97,
-    40: 0.99,
+    40: 0.987,
     45: 1,
     50: 1,
-    55: 1.005,
-    60: 1.01,
-    65: 1.015,
-    70: 1.02,
-    75: 1.02,
+    55: 1.0045,
+    60: 1.008,
+    65: 1.01,
+    70: 1.015,
+    75: 1.017,
     80: 1.02,
 }
 
