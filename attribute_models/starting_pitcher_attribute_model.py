@@ -77,60 +77,52 @@ class StartingPitcherAttributeModel(AttributeModel):
             [84, [65, 75, 70]],  # best pitcher in the league
             [81, [75, 55, 65]],  # best pitcher in the league
             [81, [75, 65, 55]],  # best pitcher in the league
-
             #  baselines
-            [100, [80, 80, 80]], # best pitcher in the world
-            [86, [70, 70, 70]], # best pitcher in the league
-            [80, [65, 65, 65]], # ace
-            [72, [60, 60, 60]], # ace-ish
-            [61, [55, 55, 55]], # solid #2/3
-            [50, [50, 50, 50]], # average starter
-            [30, [45, 45, 45]], # emergency replacement
-            [9, [40, 40, 40]], # no value
+            [100, [80, 80, 80]],  # best pitcher in the world
+            [86, [70, 70, 70]],  # best pitcher in the league
+            [80, [65, 65, 65]],  # ace
+            [72, [60, 60, 60]],  # ace-ish
+            [61, [55, 55, 55]],  # solid #2/3
+            [50, [50, 50, 50]],  # average starter
+            [30, [45, 45, 45]],  # emergency replacement
+            [9, [40, 40, 40]],  # no value
             [0, [35, 35, 35]],
-
             # outlier stuff
-            [88, [80, 60, 60]], # ace
-            [72, [80, 50, 50]], # ace-ish
-            [43, [80, 40, 40]], # spot-starter with upside
-            [30, [80, 35, 35]], # emergency replacement
-
-
+            [88, [80, 60, 60]],  # ace
+            [72, [80, 50, 50]],  # ace-ish
+            [43, [80, 40, 40]],  # spot-starter with upside
+            [30, [80, 35, 35]],  # emergency replacement
             # outlier stuff (bad)
-            [60, [40, 80, 80]], # #2/3
+            [70, [40, 80, 80]],  # #2/3
             [5, [35, 50, 50]],
             [5, [30, 70, 70]],
             [5, [30, 80, 80]],
             [0, [30, 50, 80]],
             [0, [30, 80, 50]],
-
             # outlier movement
-            [83, [60, 80, 60]], # ace
-            [65, [50, 70, 50]], # ace-ish
-            [31, [40, 80, 40]], # emergency replacement
-            [16, [35, 80, 35]], # little value
-
+            [83, [60, 80, 60]],  # ace
+            [65, [50, 70, 50]],  # ace-ish
+            [31, [40, 80, 40]],  # emergency replacement
+            [16, [35, 80, 35]],  # little value
             # outlier movement (bad)
-            [66, [80, 40, 80]], # ace-ish
+            [66, [80, 40, 80]],  # ace-ish
             [20, [50, 35, 50]],
             [2, [50, 30, 50]],
-            [32, [80, 30, 50]], # emergency replacement
-            [7, [60, 30, 60]], # emergency replacement
-            [12, [80, 25, 50]], # emergency replacement
-
+            [32, [80, 30, 50]],  # emergency replacement
+            [7, [60, 30, 60]],  # emergency replacement
+            [12, [80, 25, 50]],  # emergency replacement
             # outlier control
-            [82, [60, 60, 80]], # ace
-            [57, [50, 50, 70]], # above-average
-            [22, [40, 40, 80]], # little value
-            [10, [35, 35, 80]], # no value
-
+            [82, [60, 60, 80]],  # ace
+            [57, [50, 50, 70]],  # above-average
+            [22, [40, 40, 80]],  # little value
+            [10, [35, 35, 80]],  # no value
             # outlier control (bad)
-            [73, [80, 80, 40]], # ace-ish
+            [73, [80, 80, 40]],  # ace-ish
             [16, [50, 50, 35]],
             [2, [50, 50, 30]],
-            [22, [80, 50, 30]], # emergency replacement
-            [13, [60, 60, 30]], # emergency replacement
-            [7, [80, 50, 25]], # emergency replacement
+            [22, [80, 50, 30]],  # emergency replacement
+            [13, [60, 60, 30]],  # emergency replacement
+            [7, [80, 50, 25]],  # emergency replacement
         ]
 
     def __print_test_results(self, model):
