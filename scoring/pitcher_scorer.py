@@ -353,7 +353,7 @@ class PitcherScorer:
         score = starting_score if starting_score > relief_score else relief_score
         score = score if score > 0 else 0
         # Try to fix the batter/pitcher distribution
-        score = self.apply_adjustment(score, player)
+        # score = self.apply_adjustment(score, player)
         return [score, starting_score, relief_score]
 
     def apply_adjustment(self, score, player):
