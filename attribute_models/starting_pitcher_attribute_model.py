@@ -93,12 +93,11 @@ class StartingPitcherAttributeModel(AttributeModel):
             [43, [80, 40, 40]],  # spot-starter with upside
             [30, [80, 35, 35]],  # emergency replacement
             # outlier stuff (bad)
-            [70, [40, 80, 80]],  # #2/3
-            [5, [35, 50, 50]],
-            [5, [30, 70, 70]],
-            [5, [30, 80, 80]],
-            [0, [30, 50, 80]],
-            [0, [30, 80, 50]],
+            [70, [35, 80, 80]],  # #2/3
+            [10, [25, 80, 80]],
+            [5, [30, 60, 60]],
+            [0, [25, 50, 80]],
+            [0, [25, 80, 50]],
             # outlier movement
             [83, [60, 80, 60]],  # ace
             [65, [50, 70, 50]],  # ace-ish
