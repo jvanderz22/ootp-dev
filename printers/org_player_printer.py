@@ -171,7 +171,7 @@ class OrgPlayerPrinter:
             for pitch in game_player.get_pitches():
                 print(f"{pitch.capitalize()}: {getattr(game_player, pitch)}", end=", ")
             print("")
-            print(f"FB Velocity: {game_player.velocity}")
+            print(f"FB Velocity: {game_player.velocity}, GB/FB: {game_player.groundball_type}")
         if not print_minimal:
             print(
                 f"Durability: {game_player.injury_prone}, Work Ethic: {game_player.work_ethic}, Intelligence: {game_player.intelligence}, Leadership: {game_player.leadership}"
