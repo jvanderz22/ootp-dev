@@ -14,7 +14,7 @@ rp_groundball_type_modifier_map = {
     "EX FB": 0.92,
     "FB": 0.98,
     "NEU": 1,
-    "GB": 1.02,
+    "GB": 1.035,
     "EX GB": 1.1,
 }
 
