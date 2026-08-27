@@ -35,7 +35,7 @@ class PositionPlayerScorer:
         overall_score = (
             (batting_score * 0.73) + (fielding_score * 0.22) + (running_score * 0.05)
         )
-        write_runtime_component(player.id, f"Pos - Overall Model Score", batting_score)
+        write_runtime_component(player.id, f"Pos - Overall Model Score", overall_score)
         return [overall_score, batting_score, fielding_score]
 
     def __calculate_fielding_score(self, player):
