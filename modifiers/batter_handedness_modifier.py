@@ -2,7 +2,7 @@ from models.game_players import GamePlayer
 from modifiers.base_modifier import BaseModifier
 
 
-batter_handedness_modifiers = {"Switch": 1.04, "Right": 1, "Left": 1.015}
+batter_handedness_modifiers = {"Switch": 1.07, "Right": 1, "Left": 1.04}
 
 
 class BatterHandednessModifier(BaseModifier):
