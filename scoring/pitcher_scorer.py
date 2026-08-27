@@ -14,8 +14,8 @@ rp_groundball_type_modifier_map = {
     "EX FB": 0.92,
     "FB": 0.98,
     "NEU": 1,
-    "GB": 1.035,
-    "EX GB": 1.1,
+    "GB": 1.025,
+    "EX GB": 1.08,
 }
 
 rp_stamina_modifier_map = {
@@ -146,8 +146,8 @@ sp_groundball_type_modifier_map = {
     "EX FB": 0.94,
     "FB": 0.98,
     "NEU": 1,
-    "GB": 1.02,
-    "EX GB": 1.05,
+    "GB": 1.035,
+    "EX GB": 1.1,
 }
 
 
