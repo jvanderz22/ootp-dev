@@ -234,7 +234,10 @@ class GamePlayer:
 
     @property
     def contact_ovr(self):
-        return int(self._contact_ovr)
+        try:
+            return int(self._contact_ovr)
+        except:
+            return 0
 
     @property
     def gap_ovr(self):
@@ -306,7 +309,10 @@ class GamePlayer:
 
     @property
     def if_error(self):
-        return int(self._if_error)
+        try:
+            return int(self._if_error)
+        except:
+            return 0
 
     @property
     def turn_dp(self):
@@ -322,7 +328,10 @@ class GamePlayer:
 
     @property
     def of_error(self):
-        return int(self._of_error)
+        try:
+            return int(self._of_error)
+        except:
+            return 0
 
     @property
     def stuff(self):

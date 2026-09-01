@@ -90,7 +90,12 @@ def load_data_into_file(file_path, num_pages, page_has_option_bar):
         ootp_page.go_to_next_page()
         time.sleep(0.01)
         download_path = ootp_page.get_downloaded_report_path()
-        create_csv(download_path, "temp.csv")
+        try:
+            create_csv(download_path, "temp.csv")
+        except:
+            download_path = ootp_page.get_downloaded_report_path()
+            create_csv(download_path, "temp.csv")
+
         with open("temp.csv", "r") as file:
             data = file.readlines()
             with open(file_path, "a") as final_file:
