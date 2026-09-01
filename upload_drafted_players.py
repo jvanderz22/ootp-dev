@@ -80,5 +80,5 @@ if __name__ == "__main__":
         print("Built new preference list. Use -i to ignore next time.")
     else:
         print("Using existing preference list")
-    upload_draft_list()
-    print("Uploaded new list to StatsPlus.")
+    print(f"Upload file at {get_draft_class_upload_players_file()}")
+    # upload_draft_list()
