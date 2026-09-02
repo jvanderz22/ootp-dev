@@ -81,6 +81,29 @@
         />
         <span>Hide drafted @if (draftedCount()) { ({{ draftedCount() }}) }</span>
       </label>
+
+      @if (compareSel().length) {
+        <div class="compare-bar row">
+          <span class="muted">Compare</span>
+          @for (p of compareSel(); track p.id) {
+            <span class="chip">
+              {{ p.name }}
+              <button type="button" class="chip-x" (click)="toggleCompare(p)" title="Remove">×</button>
+            </span>
+          }
+          @if (compareSel().length === 1) {
+            <span class="muted">pick one more</span>
+          }
+          <button
+            class="primary"
+            (click)="openCompare()"
+            [disabled]="compareSel().length !== 2"
+          >
+            Compare
+          </button>
+          <button type="button" (click)="clearCompare()">Clear</button>
+        </div>
+      }
     </div>
 
     <div class="ranked-table">
@@ -100,12 +123,13 @@
       >
         <ng-template #header>
           <tr class="grp-row">
-            <th colspan="5" class="grp">Player</th>
+            <th colspan="6" class="grp">Player</th>
             <th [attr.colspan]="inGameCount" class="grp">In-Game</th>
             <th [attr.colspan]="modelCount" class="grp">Model</th>
             <th colspan="2" class="grp"></th>
           </tr>
           <tr>
+            <th class="cmp-col" title="Pick two to compare">⇄</th>
             <th pSortableColumn="rank">#<p-sort-icon field="rank" /></th>
             <th pSortableColumn="name">Name<p-sort-icon field="name" /></th>
             <th pSortableColumn="type">Type<p-sort-icon field="type" /></th>
@@ -128,6 +152,16 @@
             [class.is-expanded]="expanded"
             (click)="toggleRow(dt, p, $event)"
           >
+            <td class="cmp-col">
+              <input
+                type="checkbox"
+                [checked]="isSelected(p)"
+                [disabled]="compareSel().length === 2 && !isSelected(p)"
+                (change)="toggleCompare(p)"
+                (click)="$event.stopPropagation()"
+                title="Add to compare"
+              />
+            </td>
             <td class="num">{{ p.rank }}</td>
             <td class="name-cell">{{ p.name }}</td>
             <td><p-tag [value]="p.type" [severity]="typeSeverity(p.type)" /></td>
@@ -143,7 +177,7 @@
 
         <ng-template #expandedrow let-p>
           <tr class="detail-row">
-            <td [attr.colspan]="modelColumns.length + 7">
+            <td [attr.colspan]="modelColumns.length + 8">
               <div class="detail-card">
                 <div class="detail-head">
                   <span class="dh-name">{{ p.name }}</span>
@@ -356,7 +390,7 @@
 
         <ng-template #emptymessage>
           <tr>
-            <td [attr.colspan]="modelColumns.length + 7" class="muted">No players match.</td>
+            <td [attr.colspan]="modelColumns.length + 8" class="muted">No players match.</td>
           </tr>
         </ng-template>
       </p-table>
@@ -389,6 +423,13 @@
       }
     </div>
   }
+
+  <app-player-compare
+    [a]="compareSel()[0] ?? null"
+    [b]="compareSel()[1] ?? null"
+    [visible]="compareOpen()"
+    (closed)="compareOpen.set(false)"
+  />
 } @else {
   <p class="muted">Class not found.</p>
 }

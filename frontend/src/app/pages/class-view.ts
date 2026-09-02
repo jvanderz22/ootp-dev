@@ -20,11 +20,29 @@ import { ApiService } from '../core/api';
 import { ClassStore } from '../core/class-store';
 import {
   DraftClass,
-  PlayerType,
-  RANKING_METHODS,
   RankedPlayer,
   RankedPlayerRow,
+  RANKING_METHODS,
 } from '../core/api.types';
+import {
+  battingComponents,
+  battingSkillRows,
+  classify,
+  fieldingRows,
+  hasModifiers,
+  makeupRows,
+  modifierGroup,
+  otherComponents,
+  pitchArsenal,
+  pitchingComponents,
+  pitchingMiscRows,
+  pitchingSkillRows,
+  showBatting,
+  showPitching,
+  speedRows,
+  typeSeverity,
+} from '../core/player-stats';
+import { PlayerCompareComponent } from './player-compare';
 
 /** Pitchers first, then scorekeeping order for position players. */
 const POSITION_ORDER = [
@@ -51,30 +69,6 @@ const MODEL_COLUMNS: ModelColumn[] = [
   { field: 'relieverComponent', header: 'RP', group: 'Model' },
 ];
 
-/** Nicer labels for the noisier `components` keys shown in the detail view. */
-const KEY_LABELS: Record<string, string> = {
-  'Pos - Batting Model': 'Batting model (raw)',
-  'Pos - Running Model': 'Running model (raw)',
-  'Pos - Overall Model Score': 'Position model (raw)',
-  'Pos - Utility Bonus': 'Utility bonus',
-  'SP Model Score': 'SP model (raw)',
-  'RP Model Score': 'RP model (raw)',
-  'SP Base Modifier': 'SP modifiers ×',
-  'RP Base Modifier': 'RP modifiers ×',
-  'SP Pitcher Pitch Component': 'SP pitch-mix ×',
-  'SP HR component': 'SP HR-risk ×',
-  'Starter Score w/Modifiers': 'SP score w/ mods',
-  'Reliever Score w/Modifiers': 'RP score w/ mods',
-  'Pre Rank-adj Rank': 'Pre rank-adjust rank',
-  'Pre Rank-adj Score': 'Pre rank-adjust score',
-};
-
-interface RatingRow {
-  label: string;
-  potential: number | null;
-  current: number | null;
-}
-
 @Component({
   selector: 'app-class-view',
   imports: [
@@ -87,6 +81,7 @@ interface RatingRow {
     SelectModule,
     MultiSelectModule,
     PanelModule,
+    PlayerCompareComponent,
   ],
   templateUrl: './class-view.html',
   styleUrl: './class-view.scss',
@@ -101,6 +96,23 @@ export class ClassViewPage {
   protected readonly modelColumns = MODEL_COLUMNS;
   protected readonly inGameCount = MODEL_COLUMNS.filter((c) => c.group === 'In-Game').length;
   protected readonly modelCount = MODEL_COLUMNS.filter((c) => c.group === 'Model').length;
+
+  // Scouting-row builders shared with the compare view (see core/player-stats).
+  protected readonly showBatting = showBatting;
+  protected readonly showPitching = showPitching;
+  protected readonly typeSeverity = typeSeverity;
+  protected readonly makeupRows = makeupRows;
+  protected readonly battingSkillRows = battingSkillRows;
+  protected readonly speedRows = speedRows;
+  protected readonly fieldingRows = fieldingRows;
+  protected readonly pitchingSkillRows = pitchingSkillRows;
+  protected readonly pitchingMiscRows = pitchingMiscRows;
+  protected readonly pitchArsenal = pitchArsenal;
+  protected readonly battingComponents = battingComponents;
+  protected readonly pitchingComponents = pitchingComponents;
+  protected readonly hasModifiers = hasModifiers;
+  protected readonly modifierGroup = modifierGroup;
+  protected readonly otherComponents = otherComponents;
 
   protected readonly name = toSignal(
     this.route.paramMap.pipe(map((p) => p.get('name') ?? '')),
@@ -120,6 +132,10 @@ export class ClassViewPage {
   protected readonly search = signal('');
   protected readonly positionFilter = signal<string[]>([]);
   protected readonly hideDrafted = signal(false);
+
+  /** Up to two players picked for the side-by-side compare dialog. */
+  protected readonly compareSel = signal<RankedPlayerRow[]>([]);
+  protected readonly compareOpen = signal(false);
 
   protected readonly positions = computed(() => {
     const uniq = [...new Set(this.players().map((p) => p.position))];
@@ -162,6 +178,7 @@ export class ClassViewPage {
     this.loading.set(true);
     this.error.set(null);
     this.mode.set('table');
+    this.clearCompare();
     try {
       const d = await this.api.classDetail(name);
       this.detail.set(d.draftClass);
@@ -176,29 +193,8 @@ export class ClassViewPage {
   }
 
   // ---------------------------------------------------------- player typing
-  protected classify(p: RankedPlayer): PlayerType {
-    const pp = p.positionPlayerScore ?? 0;
-    const pit = p.pitcherScore ?? 0;
-    const hi = Math.max(pp, pit);
-    const lo = Math.min(pp, pit);
-    if (hi > 0 && lo * 2 > hi) return 'Two-way';
-    return pit >= pp ? 'Pitcher' : 'Hitter';
-  }
-
   private decorate(rows: RankedPlayer[]): RankedPlayerRow[] {
-    return rows.map((p) => ({ ...p, type: this.classify(p) }));
-  }
-
-  protected typeSeverity(t: PlayerType): 'info' | 'warn' | 'success' {
-    return t === 'Two-way' ? 'warn' : t === 'Pitcher' ? 'info' : 'success';
-  }
-
-  protected showBatting(t: PlayerType): boolean {
-    return t === 'Hitter' || t === 'Two-way';
-  }
-
-  protected showPitching(t: PlayerType): boolean {
-    return t === 'Pitcher' || t === 'Two-way';
+    return rows.map((p) => ({ ...p, type: classify(p) }));
   }
 
   /**
@@ -216,7 +212,7 @@ export class ClassViewPage {
 
   protected toggleRow(dt: Table, row: RankedPlayerRow, event: Event): void {
     // Ignore clicks that originate on interactive controls inside the row.
-    if ((event.target as HTMLElement).closest('a, button, input')) return;
+    if ((event.target as HTMLElement).closest('a, button, input, label')) return;
     dt.toggleRow(row, event);
   }
 
@@ -231,152 +227,27 @@ export class ClassViewPage {
     return n.toFixed(2);
   }
 
-  // --------------------------------------------------- scouting attributes
-  protected makeupRows(p: RankedPlayer): [string, string][] {
-    const r = p.ratings;
-    if (!r) return [];
-    const rows: [string, string | null][] = [
-      ['Bats / Throws', [r.batHand, r.throwHand].filter(Boolean).join(' / ') || null],
-      ['Durability', r.injuryProne],
-      ['Work ethic', r.workEthic],
-      ['Intelligence', r.intelligence],
-      ['Leadership', r.leadership],
-    ];
-    return rows.filter(([, v]) => !!v) as [string, string][];
+  // ------------------------------------------------------------- compare
+  protected isSelected(p: RankedPlayerRow): boolean {
+    return this.compareSel().some((x) => x.id === p.id);
   }
 
-  protected battingSkillRows(p: RankedPlayer): RatingRow[] {
-    const b = p.ratings?.batting;
-    if (!b) return [];
-    return [
-      { label: 'Contact', potential: b['contact'], current: b['contactCur'] },
-      { label: 'Gap', potential: b['gap'], current: b['gapCur'] },
-      { label: 'Power', potential: b['power'], current: b['powerCur'] },
-      { label: 'Eye', potential: b['eye'], current: b['eyeCur'] },
-      { label: 'Avoid K', potential: b['avoidK'], current: b['avoidKCur'] },
-    ];
+  protected toggleCompare(p: RankedPlayerRow): void {
+    const cur = this.compareSel();
+    if (cur.some((x) => x.id === p.id)) {
+      this.compareSel.set(cur.filter((x) => x.id !== p.id));
+    } else {
+      this.compareSel.set([...cur, p].slice(-2));
+    }
   }
 
-  protected speedRows(p: RankedPlayer): [string, number | null][] {
-    const b = p.ratings?.batting;
-    if (!b) return [];
-    return [
-      ['Speed', b['speed']],
-      ['Steal', b['steal']],
-      ['Baserunning', b['running']],
-    ];
+  protected openCompare(): void {
+    if (this.compareSel().length === 2) this.compareOpen.set(true);
   }
 
-  protected fieldingRows(p: RankedPlayer): [string, number][] {
-    const f = p.ratings?.fielding;
-    if (!f) return [];
-    const spec: [string, string][] = [
-      ['IF range', 'ifRange'], ['IF arm', 'ifArm'], ['IF error', 'ifError'], ['Turn DP', 'turnDp'],
-      ['OF range', 'ofRange'], ['OF arm', 'ofArm'], ['OF error', 'ofError'],
-      ['C framing', 'cFraming'], ['C blocking', 'cBlocking'], ['C arm', 'cArm'],
-    ];
-    return spec
-      .map(([label, key]) => [label, f[key] ?? 0] as [string, number])
-      .filter(([, v]) => v > 0);
-  }
-
-  protected pitchingSkillRows(p: RankedPlayer): RatingRow[] {
-    const pt = p.ratings?.pitching;
-    if (!pt) return [];
-    return [
-      { label: 'Stuff', potential: pt.stuff, current: pt.stuffCur },
-      { label: 'Movement', potential: pt.movement, current: pt.movementCur },
-      { label: 'Control', potential: pt.control, current: pt.controlCur },
-    ];
-  }
-
-  protected pitchingMiscRows(p: RankedPlayer): [string, string][] {
-    const pt = p.ratings?.pitching;
-    if (!pt) return [];
-    const rows: [string, string | number | null][] = [
-      ['Stamina', pt.stamina],
-      ['Velocity', pt.velocity],
-      ['GB type', pt.groundballType],
-    ];
-    return rows.filter(([, v]) => v != null && v !== 0).map(([k, v]) => [k, String(v)]);
-  }
-
-  protected pitchArsenal(p: RankedPlayer) {
-    return p.ratings?.pitching.pitches ?? [];
-  }
-
-  // ------------------------------------------------------ component grouping
-  private pick(p: RankedPlayer, prefixes: string[]): [string, number][] {
-    const c = p.components;
-    if (!c) return [];
-    return Object.entries(c)
-      .filter(([k]) => prefixes.some((pre) => k.startsWith(pre)))
-      .map(([k, v]) => [k, Number(v)] as [string, number]);
-  }
-
-  protected label(key: string): string {
-    const mapped = KEY_LABELS[key];
-    if (mapped) return mapped;
-    const best = key.match(/^Pos - Best Pos Score \((\w+)\)$/);
-    if (best) return `Best position (${best[1]})`;
-    const rankAdj = key.match(/^Rank-adj Modifier (.+)$/);
-    if (rankAdj) return `${this.prettyModifier(rankAdj[1])} (rank-adj)`;
-    return key;
-  }
-
-  /** "DraftSecondaryPersonalityModifier" -> "Draft secondary personality" */
-  private prettyModifier(raw: string): string {
-    const s = raw
-      .replace(/Modifier$/, '')
-      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
-      .trim();
-    return s ? s.charAt(0).toUpperCase() + s.slice(1) : raw;
-  }
-
-  protected battingComponents(p: RankedPlayer): [string, number][] {
-    return this.pick(p, ['Pos - ']).map(([k, v]) => [this.label(k), v]);
-  }
-
-  protected pitchingComponents(p: RankedPlayer): [string, number][] {
-    return this.pick(p, ['SP ', 'RP ', 'Starter Score', 'Reliever Score']).map(
-      ([k, v]) => [this.label(k), v],
-    );
-  }
-
-  protected modifierGroup(
-    p: RankedPlayer,
-    kind: 'pos' | 'pitcher',
-  ): { rows: { label: string; value: number }[]; total: number | null } | null {
-    const c = p.components;
-    if (!c) return null;
-    const prefix = kind === 'pos' ? 'Pos Modifier ' : 'Pitcher Modifier ';
-    const totalKey = kind === 'pos' ? 'Total Pos Modifier' : 'Total Pitcher Modifier';
-    const rows = Object.entries(c)
-      .filter(([k]) => k.startsWith(prefix))
-      .map(([k, v]) => ({ label: this.prettyModifier(k.slice(prefix.length)), value: Number(v) }));
-    if (!rows.length) return null;
-    return { rows, total: c[totalKey] != null ? Number(c[totalKey]) : null };
-  }
-
-  /** Whether the player has a relevant modifier group to show (type-scoped). */
-  protected hasModifiers(p: RankedPlayerRow): boolean {
-    return (
-      (this.showBatting(p.type) && !!this.modifierGroup(p, 'pos')) ||
-      (this.showPitching(p.type) && !!this.modifierGroup(p, 'pitcher'))
-    );
-  }
-
-  protected otherComponents(p: RankedPlayer): [string, unknown][] {
-    const c = p.components;
-    if (!c) return [];
-    const skip = [
-      'Pos - ', 'SP ', 'RP ', 'Starter Score', 'Reliever Score',
-      'Pos Modifier ', 'Pitcher Modifier ', 'Total Pos Modifier', 'Total Pitcher Modifier',
-    ];
-    return Object.entries(c)
-      .filter(([k]) => !skip.some((pre) => k.startsWith(pre)))
-      .map(([k, v]) => [this.label(k), v] as [string, unknown]);
+  protected clearCompare(): void {
+    this.compareSel.set([]);
+    this.compareOpen.set(false);
   }
 
   // -------------------------------------------------------------- mutations
@@ -440,6 +311,7 @@ export class ClassViewPage {
     const d = await this.api.classDetail(this.name());
     this.detail.set(d.draftClass);
     this.players.set(this.decorate(d.rankedPlayers));
+    this.clearCompare();
   }
 
   // ---------------------------------------------------------- custom order

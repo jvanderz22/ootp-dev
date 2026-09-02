@@ -93,7 +93,45 @@ h1 { margin: 0 0 4px; }
     width: 32px;
     text-align: center;
   }
+
+  ::ng-deep td.cmp-col,
+  ::ng-deep th.cmp-col {
+    width: 28px;
+    text-align: center;
+    color: var(--text-dim);
+  }
+  ::ng-deep td.cmp-col input { cursor: pointer; }
 }
+
+/* --------------------------------------------------------------- compare bar */
+.compare-bar {
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elev);
+}
+.compare-bar .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 2px 4px 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+}
+.compare-bar .chip-x {
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 14px;
+  line-height: 1;
+}
+.compare-bar .chip-x:hover { color: var(--drafted); }
 
 /* ------------------------------------------------------------- detail view */
 .detail-row td { background: var(--bg-elev); white-space: normal; }

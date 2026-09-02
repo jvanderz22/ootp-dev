@@ -1,0 +1,91 @@
+:host { display: contents; }
+
+.cmp-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Shared 3-column track: player A | label | player B, so the name banner
+   and every stat row line up under each other. */
+.cmp-cols {
+  display: grid;
+  grid-template-columns: 1fr minmax(6rem, 1.2fr) 1fr;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.cmp-names {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.cmp-names .who {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: center;
+  min-width: 0;
+}
+.cmp-names .pname {
+  font-size: 17px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.cmp-names .sub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+}
+.cmp-names .vs {
+  align-self: center;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.cmp-legend {
+  margin: -6px 0 0;
+  font-size: 11px;
+}
+
+.cmp-section h4 {
+  margin: 0 0 4px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.cmp-grid {
+  display: flex;
+  flex-direction: column;
+}
+.cmp-row {
+  padding: 3px 0;
+  border-bottom: 1px dotted var(--border);
+  font-size: 12px;
+}
+.cmp-row .lbl {
+  text-align: center;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+.cmp-row .val {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cmp-row .val.win {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+::ng-deep .compare-dialog .p-dialog-content {
+  padding-top: 12px;
+  max-height: 78vh;
+  overflow-y: auto;
+}

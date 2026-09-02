@@ -1,0 +1,51 @@
+<p-dialog
+  header="Compare players"
+  [visible]="visible()"
+  (visibleChange)="onVisibleChange($event)"
+  [modal]="true"
+  [dismissableMask]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(880px, 94vw)' }"
+  styleClass="compare-dialog"
+>
+  @if (a(); as a) {
+    @if (b(); as b) {
+      <div class="cmp-body">
+        <div class="cmp-names cmp-cols">
+          <div class="who">
+            <b class="pname">{{ a.name }}</b>
+            <span class="sub">
+              <p-tag [value]="a.type" [severity]="typeSeverity(a.type)" />
+              <span class="muted">{{ a.position }} · Age {{ a.age ?? '—' }} · #{{ a.rank }}</span>
+            </span>
+          </div>
+          <span class="vs">vs</span>
+          <div class="who">
+            <b class="pname">{{ b.name }}</b>
+            <span class="sub">
+              <p-tag [value]="b.type" [severity]="typeSeverity(b.type)" />
+              <span class="muted">{{ b.position }} · Age {{ b.age ?? '—' }} · #{{ b.rank }}</span>
+            </span>
+          </div>
+        </div>
+
+        <p class="cmp-legend muted">Paired ratings show current · potential.</p>
+
+        @for (s of sections(); track s.title) {
+          <section class="cmp-section">
+            <h4>{{ s.title }}</h4>
+            <div class="cmp-grid">
+              @for (r of s.rows; track r.label) {
+                <div class="cmp-row cmp-cols">
+                  <b class="val" [class.win]="r.win === 'a'">{{ r.a }}</b>
+                  <span class="lbl">{{ r.label }}</span>
+                  <b class="val" [class.win]="r.win === 'b'">{{ r.b }}</b>
+                </div>
+              }
+            </div>
+          </section>
+        }
+      </div>
+    }
+  }
+</p-dialog>
