@@ -11,5 +11,6 @@ class PlayerScore:
     starter_component: float
     reliever_component: float
     raw_overall_score: float
+    running_score_component: float = None
     overall_score: float = None
     components: dict = None

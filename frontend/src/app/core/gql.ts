@@ -8,6 +8,7 @@ const PLAYER_FIELDS = gql`
     position
     age
     modelScore
+    inGameOverall
     inGamePotential
     demand
     drafted
@@ -17,8 +18,10 @@ const PLAYER_FIELDS = gql`
     fieldingScoreComponent
     starterComponent
     relieverComponent
+    runningScoreComponent
     rawOverallScore
     components
+    ratings
   }
 `;
 

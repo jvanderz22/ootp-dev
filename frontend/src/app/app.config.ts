@@ -5,6 +5,8 @@ import {
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { providePrimeNG } from 'primeng/config';
+import Aura from '@primeuix/themes/aura';
 import { provideApollo } from 'apollo-angular';
 import { HttpLink } from 'apollo-angular/http';
 import { ApolloLink, InMemoryCache } from '@apollo/client';
@@ -14,11 +16,22 @@ import isExtractableFile from 'extract-files/isExtractableFile.mjs';
 
 import { routes } from './app.routes';
 import { authInterceptor, AuthService } from './core/auth';
+import { PRIMENG_LICENSE_KEY } from './core/primeng-license';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
+    providePrimeNG({
+      license: PRIMENG_LICENSE_KEY,
+      theme: {
+        preset: Aura,
+        options: {
+          darkModeSelector: 'system',
+          cssLayer: { name: 'primeng', order: 'theme, base, primeng' },
+        },
+      },
+    }),
     provideHttpClient(withInterceptors([authInterceptor])),
     provideApollo(() => {
       const httpLink = inject(HttpLink);

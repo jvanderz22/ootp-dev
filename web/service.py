@@ -16,6 +16,7 @@ from context import DraftClassContext, default_base_dir
 from custom_ranking import clear_order, has_custom_order, load_order, resolve_order, save_order
 from draft_class_files import get_ranked_players_file
 from drafted_players import get_drafted_player_ids
+from models.game_players import GamePlayers
 from load_draft_class import (
     DatasetFormatError,
     VALID_RANKING_METHODS,
@@ -31,7 +32,7 @@ _pipeline_lock = asyncio.Lock()
 _FLOAT_FIELDS = (
     "model_score", "position_player_score", "fielding_score_component",
     "batting_score_component", "pitcher_score", "starter_component",
-    "reliever_component", "raw_overall_score",
+    "reliever_component", "running_score_component", "raw_overall_score",
 )
 
 
@@ -98,17 +99,98 @@ def _to_int(value):
         return None
 
 
-def _player_payload(rank, row, drafted_ids):
+def _game_players_by_id(ctx):
+    """The raw scouting grid for this class, keyed by OOTP id, for the detail view."""
+    try:
+        with open(ctx.data_file, newline="") as f:
+            return GamePlayers(list(csv.DictReader(f))).game_players_by_id
+    except FileNotFoundError:
+        return {}
+
+
+def _pitch_ratings(gp):
+    out = []
+    for field in gp.pitch_fields:
+        potential = getattr(gp, field)
+        if potential is None:
+            continue
+        out.append(
+            {
+                "name": field.capitalize(),
+                "potential": potential,
+                "current": getattr(gp, f"{field}_ovr"),
+            }
+        )
+    out.sort(key=lambda p: p["potential"], reverse=True)
+    return out
+
+
+def _ratings_payload(gp):
+    """The scouting attributes the CLI printers show, grouped by hitter / pitcher."""
+    if gp is None:
+        return None
+    return {
+        "batHand": gp.bat_hand or None,
+        "throwHand": gp.throw_hand or None,
+        "injuryProne": gp.injury_prone or None,
+        "workEthic": gp.work_ethic or None,
+        "intelligence": gp.intelligence or None,
+        "leadership": gp.leadership or None,
+        "batting": {
+            "contact": gp.contact,
+            "gap": gp.gap,
+            "power": gp.power,
+            "eye": gp.eye,
+            "avoidK": gp.avoid_k,
+            "contactCur": gp.contact_ovr,
+            "gapCur": gp.gap_ovr,
+            "powerCur": gp.power_ovr,
+            "eyeCur": gp.eye_ovr,
+            "avoidKCur": gp.avoid_k_ovr,
+            "speed": gp.speed,
+            "steal": gp.steal,
+            "running": gp.running_ability,
+        },
+        "fielding": {
+            "ifRange": gp.if_range,
+            "ifArm": gp.if_arm,
+            "ifError": gp.if_error,
+            "turnDp": gp.turn_dp,
+            "ofRange": gp.of_range,
+            "ofArm": gp.of_arm,
+            "ofError": gp.of_error,
+            "cFraming": gp.c_framing,
+            "cBlocking": gp.c_blocking,
+            "cArm": gp.c_arm,
+        },
+        "pitching": {
+            "stuff": gp.stuff,
+            "movement": gp.movement,
+            "control": gp.control,
+            "stuffCur": gp.stuff_ovr,
+            "movementCur": gp.movement_ovr,
+            "controlCur": gp.control_ovr,
+            "stamina": gp.stamina,
+            "velocity": gp.velocity or None,
+            "groundballType": gp.groundball_type or None,
+            "pitches": _pitch_ratings(gp),
+        },
+    }
+
+
+def _player_payload(rank, row, drafted_ids, game_player=None):
     payload = {
         "rank": rank,
         "id": row["id"],
         "name": row["name"],
         "position": row["position"],
         "age": _to_int(row.get("age")),
+        "in_game_overall": _to_int(row.get("in_game_overall")),
         "in_game_potential": _to_int(row.get("in_game_potential")),
         "demand": row.get("demand") or None,
         "drafted": row["id"] in drafted_ids,
         "components": _parse_components(row.get("components")),
+        "ratings": _ratings_payload(game_player),
     }
     for field in _FLOAT_FIELDS:
         payload[field] = _to_number(row.get(field))
@@ -160,7 +242,11 @@ def ranked_players(name: str):
         return []  # not processed yet - the UI still needs to render (Reprocess/Delete)
     ordered = resolve_order(ctx, rows)
     drafted_ids = get_drafted_player_ids(ctx)
-    return [_player_payload(i + 1, row, drafted_ids) for i, row in enumerate(ordered)]
+    game_players = _game_players_by_id(ctx)
+    return [
+        _player_payload(i + 1, row, drafted_ids, game_players.get(row["id"]))
+        for i, row in enumerate(ordered)
+    ]
 
 
 def upload_csv_bytes(name: str) -> bytes:

@@ -17,6 +17,7 @@ type RankedPlayer {
   position: String!
   age: Int
   modelScore: Float
+  inGameOverall: Int
   inGamePotential: Int
   demand: String
   drafted: Boolean!
@@ -26,8 +27,10 @@ type RankedPlayer {
   fieldingScoreComponent: Float
   starterComponent: Float
   relieverComponent: Float
+  runningScoreComponent: Float
   rawOverallScore: Float
   components: JSON
+  ratings: JSON
 }
 
 type StatsPlusSettings {

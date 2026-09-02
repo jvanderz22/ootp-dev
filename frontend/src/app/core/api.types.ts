@@ -14,6 +14,7 @@ export interface RankedPlayer {
   position: string;
   age: number | null;
   modelScore: number | null;
+  inGameOverall: number | null;
   inGamePotential: number | null;
   demand: string | null;
   drafted: boolean;
@@ -23,8 +24,45 @@ export interface RankedPlayer {
   fieldingScoreComponent: number | null;
   starterComponent: number | null;
   relieverComponent: number | null;
+  runningScoreComponent: number | null;
   rawOverallScore: number | null;
   components: Record<string, unknown> | null;
+  ratings: PlayerRatings | null;
+}
+
+export interface PitchRating {
+  name: string;
+  potential: number | null;
+  current: number | null;
+}
+
+export interface PlayerRatings {
+  batHand: string | null;
+  throwHand: string | null;
+  injuryProne: string | null;
+  workEthic: string | null;
+  intelligence: string | null;
+  leadership: string | null;
+  batting: Record<string, number | null>;
+  fielding: Record<string, number | null>;
+  pitching: {
+    stuff: number | null;
+    movement: number | null;
+    control: number | null;
+    stuffCur: number | null;
+    movementCur: number | null;
+    controlCur: number | null;
+    stamina: number | null;
+    velocity: string | null;
+    groundballType: string | null;
+    pitches: PitchRating[];
+  };
+}
+
+export type PlayerType = 'Hitter' | 'Pitcher' | 'Two-way';
+
+export interface RankedPlayerRow extends RankedPlayer {
+  type: PlayerType;
 }
 
 export interface StatsPlusSettings {

@@ -33,56 +33,209 @@ h1 { margin: 0 0 4px; }
 
 .filters {
   margin: 12px 0;
+  flex-wrap: wrap;
+}
+.filters .chk {
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.filters .chk input { cursor: pointer; }
+
+/* ------------------------------------------------------------- ranked table */
+.ranked-table {
+  font-size: 13px;
+
+  ::ng-deep .p-datatable-thead > tr > th {
+    white-space: nowrap;
+  }
+
+  ::ng-deep th.sortable {
+    cursor: pointer;
+    user-select: none;
+  }
+  ::ng-deep th.sortable:hover {
+    color: var(--accent);
+  }
+
+  ::ng-deep th.grp {
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 11px;
+  }
+
+  ::ng-deep td.num,
+  ::ng-deep th.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::ng-deep tr.body-row {
+    cursor: pointer;
+  }
+  ::ng-deep tr.body-row.is-expanded > td {
+    background: var(--bg-elev);
+  }
+  ::ng-deep tr.drafted > td:not(.expander-col) {
+    color: var(--drafted);
+    text-decoration: line-through;
+  }
+  ::ng-deep tr.detail-row > td {
+    color: var(--text);
+    text-decoration: none;
+  }
+  ::ng-deep td.expander-col,
+  ::ng-deep th.expander-col {
+    width: 32px;
+    text-align: center;
+  }
 }
 
-.table-scroll {
-  overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: 10px;
+/* ------------------------------------------------------------- detail view */
+.detail-row td { background: var(--bg-elev); white-space: normal; }
+
+.detail-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 2px 8px;
 }
 
-table {
-  border-collapse: collapse;
-  width: 100%;
+.detail-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
   font-size: 13px;
 }
-th, td {
-  text-align: left;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--border);
-  white-space: nowrap;
-}
-th {
-  position: sticky;
-  top: 0;
-  background: var(--bg-elev);
-  z-index: 1;
-}
-th.sortable { cursor: pointer; user-select: none; }
-th.sortable:hover { color: var(--accent); }
-.num { text-align: right; font-variant-numeric: tabular-nums; }
+.dh-name { font-weight: 700; font-size: 15px; }
 
-tbody tr:not(.detail-row) { cursor: pointer; }
-tbody tr:not(.detail-row):hover { background: var(--bg-elev); }
-tr.drafted td:not([colspan]) { color: var(--drafted); text-decoration: line-through; }
-
-.detail-row td { background: var(--bg-elev); white-space: normal; }
-.scores {
+/* In-game rating groups fill the left; the model column pins to the right. */
+.detail-sections {
   display: flex;
-  gap: 16px;
   flex-wrap: wrap;
-  font-variant-numeric: tabular-nums;
+  gap: 16px 24px;
+  align-items: start;
 }
-.components {
-  margin-top: 8px;
+.ingame-grid {
+  flex: 1 1 460px;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px 24px;
+  align-items: start;
+}
+.model-col {
+  flex: 1 1 240px;
+  min-width: 0;
+  max-width: 340px;
+}
+
+.detail-section {
+  min-width: 0;
   display: flex;
-  gap: 4px 16px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 8px;
+}
+.detail-section h4 {
+  margin: 0;
   font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--text-dim);
 }
 
-/* reorder mode */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 4px 16px;
+}
+.stat-grid.tight { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+.stat-grid.subtle .stat { color: var(--text-dim); }
+.stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  border-bottom: 1px dotted var(--border);
+  padding-bottom: 2px;
+  font-size: 12px;
+}
+.stat span { color: var(--text-dim); overflow-wrap: anywhere; }
+.stat b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* current / potential rating triples */
+.rating-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 2px 16px;
+}
+.rating {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 12px;
+  border-bottom: 1px dotted var(--border);
+  padding-bottom: 2px;
+}
+.rating span { color: var(--text-dim); overflow-wrap: anywhere; }
+.rating b { font-variant-numeric: tabular-nums; }
+.rating i { color: var(--text-dim); font-style: normal; font-variant-numeric: tabular-nums; }
+.rating-head { color: var(--text-dim); }
+.rating-head b, .rating-head i { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* modifier sub-groups: prefix stripped, indented, no overflow */
+.modifier-group {
+  border-left: 2px solid var(--border);
+  padding-left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.modifier-group h5 {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.mod {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  font-size: 12px;
+}
+.mod span { color: var(--text-dim); overflow-wrap: anywhere; }
+.mod b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mod.total {
+  margin-top: 2px;
+  border-top: 1px solid var(--border);
+  padding-top: 2px;
+}
+.mod.total span, .mod.total b { color: var(--text); font-weight: 600; }
+
+/* always-visible modifier totals; the per-modifier breakdown lives in the panel */
+.modifier-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+.modifier-summary .mod.total {
+  margin-top: 0;
+  border-top: none;
+  padding-top: 0;
+}
+
+::ng-deep .p-panel { margin-top: 4px; }
+::ng-deep .p-panel .modifier-group + .modifier-group { margin-top: 8px; }
+
+/* --------------------------------------------------------------- reorder mode */
 .reorder-bar {
   margin: 12px 0;
   gap: 8px;
@@ -105,6 +258,7 @@ tr.drafted td:not([colspan]) { color: var(--drafted); text-decoration: line-thro
 .handle { cursor: grab; color: var(--text-dim); }
 .idx { width: 40px; text-align: right; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .pname { font-weight: 600; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
 .draft-badge {
   font-size: 11px;
   color: var(--drafted);

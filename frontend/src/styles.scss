@@ -69,6 +69,53 @@ input, select {
 
 a { color: var(--accent); }
 
+/* ---------------------------------------------------------------------------
+   PrimeNG (Aura preset) — remap the design tokens onto the app palette so the
+   components sit on the same surfaces and flip light/dark with the rest of the
+   app (our --bg/--border/etc. already switch via the media query above).
+   --------------------------------------------------------------------------- */
+:root {
+  --p-primary-color: var(--accent);
+  --p-primary-contrast-color: var(--accent-contrast);
+  --p-primary-hover-color: var(--accent);
+  --p-primary-active-color: var(--accent);
+  --p-content-border-radius: 8px;
+
+  --p-content-background: var(--bg);
+  --p-content-hover-background: var(--bg-elev);
+  --p-content-border-color: var(--border);
+  --p-content-color: var(--text);
+  --p-text-color: var(--text);
+  --p-text-muted-color: var(--text-dim);
+  --p-text-hover-color: var(--text);
+
+  --p-overlay-popover-background: var(--bg-elev);
+  --p-overlay-modal-background: var(--bg-elev);
+  --p-overlay-popover-border-color: var(--border);
+  --p-overlay-modal-border-color: var(--border);
+
+  --p-form-field-background: var(--bg);
+  --p-form-field-border-color: var(--border);
+  --p-form-field-hover-border-color: var(--text-dim);
+  --p-form-field-color: var(--text);
+  --p-form-field-placeholder-color: var(--text-dim);
+
+  --p-datatable-header-background: var(--bg-elev);
+  --p-datatable-header-cell-background: var(--bg-elev);
+  --p-datatable-header-cell-color: var(--text);
+  --p-datatable-header-cell-border-color: var(--border);
+  --p-datatable-body-cell-border-color: var(--border);
+  --p-datatable-row-background: var(--bg);
+  --p-datatable-row-color: var(--text);
+  --p-datatable-row-hover-background: var(--bg-elev);
+  --p-datatable-body-cell-padding: 0.4rem 0.6rem;
+  --p-datatable-header-cell-padding: 0.45rem 0.6rem;
+  --p-datatable-paginator-bottom-background: var(--bg);
+
+  --p-paginator-background: var(--bg);
+  --p-paginator-color: var(--text-dim);
+}
+
 .card {
   background: var(--bg-elev);
   border: 1px solid var(--border);
