@@ -43,6 +43,26 @@ export function typeSeverity(t: PlayerType): 'info' | 'warn' | 'success' {
   return t === 'Two-way' ? 'warn' : t === 'Pitcher' ? 'info' : 'success';
 }
 
+/**
+ * Numeric sort key for the contract-demand column so the table orders it by
+ * dollar value rather than lexically. Mirrors `parse_demand` in the pipeline:
+ * a trailing `k`/`m` scales the digits (× 1_000 / × 100_000), "Slot" is 0, and
+ * "Impossible" sorts past every real figure. Missing/unparseable demands sort
+ * below "Slot".
+ */
+export function demandSortKey(demand: string | null | undefined): number {
+  if (!demand) return -1;
+  const s = demand.trim().toLowerCase();
+  if (s === 'slot') return 0;
+  if (s === 'impossible') return Number.POSITIVE_INFINITY;
+  const digits = s.replace(/[^0-9]/g, '');
+  if (!digits) return -1;
+  const n = Number(digits);
+  if (s.endsWith('k')) return n * 1_000;
+  if (s.endsWith('m')) return n * 100_000;
+  return n;
+}
+
 export function showBatting(t: PlayerType): boolean {
   return t === 'Hitter' || t === 'Two-way';
 }

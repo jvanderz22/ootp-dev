@@ -63,6 +63,8 @@ export type PlayerType = 'Hitter' | 'Pitcher' | 'Two-way';
 
 export interface RankedPlayerRow extends RankedPlayer {
   type: PlayerType;
+  /** Numeric key for sorting the demand column ("Slot" = 0). */
+  demandKey: number;
 }
 
 export interface StatsPlusSettings {

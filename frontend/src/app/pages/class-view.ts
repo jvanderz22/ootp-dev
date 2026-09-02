@@ -28,6 +28,7 @@ import {
   battingComponents,
   battingSkillRows,
   classify,
+  demandSortKey,
   fieldingRows,
   hasModifiers,
   makeupRows,
@@ -194,7 +195,7 @@ export class ClassViewPage {
 
   // ---------------------------------------------------------- player typing
   private decorate(rows: RankedPlayer[]): RankedPlayerRow[] {
-    return rows.map((p) => ({ ...p, type: classify(p) }));
+    return rows.map((p) => ({ ...p, type: classify(p), demandKey: demandSortKey(p.demand) }));
   }
 
   /**
