@@ -10,7 +10,7 @@ class ShortstopAttributeModel(AttributeModel):
 
     @property
     def file_path(self):
-        return "./training_data/OOTP Models - SS data.csv"
+        return "./training_data/OOTP Models - SS Data.csv"
 
     @property
     def fields(self):

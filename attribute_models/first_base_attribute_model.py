@@ -8,7 +8,7 @@ class FirstBaseAttributeModel(AttributeModel):
 
     @property
     def file_path(self):
-        return "./training_data/OOTP Models - 1B data.csv"
+        return "./training_data/OOTP Models - 1B Data.csv"
 
     @property
     def fields(self):

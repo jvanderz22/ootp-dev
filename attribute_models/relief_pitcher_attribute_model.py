@@ -15,7 +15,7 @@ class ReliefPitcherAttributeModel(AttributeModel):
 
     @property
     def file_path(self):
-        return "./training_data/OOTP Models - RP data.csv"
+        return "./training_data/OOTP Models - RP Data.csv"
 
     @property
     def fields(self):

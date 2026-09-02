@@ -14,7 +14,7 @@ class StartingPitcherAttributeModel(AttributeModel):
 
     @property
     def file_path(self):
-        return "./training_data/OOTP Models - SP data.csv"
+        return "./training_data/OOTP Models - SP Data.csv"
 
     @property
     def fields(self):

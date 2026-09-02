@@ -8,7 +8,7 @@ class RightFieldAttributeModel(AttributeModel):
 
     @property
     def file_path(self):
-        return "./training_data/OOTP Models - RF data.csv"
+        return "./training_data/OOTP Models - RF Data.csv"
 
     @property
     def fields(self):

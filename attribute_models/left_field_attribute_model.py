@@ -8,7 +8,7 @@ class LeftFieldAttributeModel(AttributeModel):
 
     @property
     def file_path(self):
-        return "./training_data/OOTP Models - LF data.csv"
+        return "./training_data/OOTP Models - LF Data.csv"
 
     @property
     def fields(self):

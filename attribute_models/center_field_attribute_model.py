@@ -8,7 +8,7 @@ class CenterFieldAttributeModel(AttributeModel):
 
     @property
     def file_path(self):
-        return "./training_data/OOTP Models - CF data.csv"
+        return "./training_data/OOTP Models - CF Data.csv"
 
     @property
     def fields(self):

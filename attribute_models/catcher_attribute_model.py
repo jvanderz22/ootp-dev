@@ -10,7 +10,7 @@ class CatcherAttributeModel(AttributeModel):
 
     @property
     def file_path(self):
-        return "./training_data/OOTP Models - C data.csv"
+        return "./training_data/OOTP Models - C Data.csv"
 
     @property
     def fields(self):

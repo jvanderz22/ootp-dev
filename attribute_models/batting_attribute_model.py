@@ -12,7 +12,7 @@ class BattingAttributeModel(AttributeModel):
 
     @property
     def file_path(self):
-        return "./training_data/OOTP Models - Batter data.csv"
+        return "./training_data/OOTP Models - Batter Data.csv"
 
     @property
     def fields(self):
