@@ -1,96 +1,90 @@
+"""Which players in the current class have already been drafted.
+
+Two on-disk formats are supported for processed_classes/<class>/drafted_players.csv:
+
+* API format (statsplus_api.write_drafted_players_file): has an ``id`` column -
+  the OOTP player id, matched exactly against the dataset.
+* Legacy scrape format: has a ``Selection`` column like "SS Bryce Rainer" that
+  has to be matched by name + position.
+"""
 import csv
 import os
 
-from draft_class_files import (
-    get_draft_class_drafted_players_file,
-)
+from draft_class_files import get_draft_class_drafted_players_file
 from get_game_players import get_game_players
 
 
-def get_drafted_player_ids():
-    # return get_drafted_player_ids_in_game()
-    return get_drafted_players_stats_plus().keys()
+def get_drafted_player_ids(ctx=None):
+    return set(get_drafted_players_info(ctx).keys())
 
 
-def get_drafted_players_info():
-    return get_drafted_players_stats_plus()
+def get_drafted_players_info(ctx=None):
+    path = get_draft_class_drafted_players_file(ctx)
+    if not os.path.exists(path):
+        return {}
+
+    with open(path, newline="") as csvfile:
+        reader = csv.DictReader(csvfile)
+        fieldnames = [(f or "").strip().lower() for f in (reader.fieldnames or [])]
+        rows = list(reader)
+
+    if "id" in fieldnames:
+        return _info_from_api_rows(rows)
+    return _info_from_legacy_rows(ctx, rows)
 
 
-def get_drafted_players_stats_plus():
+def _info_from_api_rows(rows):
+    drafted = {}
+    for row in rows:
+        norm = {(k or "").strip().lower(): (v or "").strip() for k, v in row.items()}
+        pid = norm.get("id")
+        if not pid:
+            continue
+        drafted[pid] = {
+            "name": norm.get("name", ""),
+            "team": norm.get("team", ""),
+            "round": norm.get("round", ""),
+            "round_selection": norm.get("pick", ""),
+            "overall_selection": norm.get("overall", ""),
+        }
+    return drafted
+
+
+def _players_by_name(ctx):
     players_by_name = {}
-    game_players = get_game_players().game_players
-    for player in game_players:
+    for player in get_game_players(ctx).game_players:
         name = player.name.lower()
         position = player.position.lower()
-        if position == "sp" or position == "rp" or position == "cl":
+        if position in ("sp", "rp", "cl"):
             position = "p"
-        if players_by_name.get(name) is None:
-            players_by_name[name] = {position: player}
-        else:
-            players_by_name[name][position] = player
-
-    drafted_players = {}
-    if not os.path.exists(get_draft_class_drafted_players_file()):
-        return drafted_players
-
-    with open(get_draft_class_drafted_players_file(), newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
-        for i, drafted_player in enumerate(reader):
-            player_data = drafted_player["Selection"].split(" ")
-            player_name_arr = player_data[1:]
-            if len(player_name_arr) < 1:
-                continue
-            if len(player_name_arr[-1]) == 1:
-                player_name_arr = player_name_arr[0:-1]
-            player_name = " ".join(player_name_arr).lower()
-            player_position = player_data[0].lower()
-            player = players_by_name.get(player_name, {}).get(player_position)
-            if player is None:
-                player_obj = players_by_name.get(player_name)
-                if player_obj is not None:
-                    player = list(player_obj.values())[0]
-            # TODO not sure this is working
-
-            if player is not None:
-                drafted_players[player.id] = {
-                    "name": player_name,
-                    "team": drafted_player["Team"],
-                    "round": drafted_player["Round"],
-                    "round_selection": drafted_player["Pick"],
-                    "overall_selection": drafted_player["Overall"],
-                }
-    return drafted_players
+        players_by_name.setdefault(name, {})[position] = player
+    return players_by_name
 
 
-def get_drafted_player_ids_in_game():
-    players_by_name = {}
-    game_players = get_game_players().game_players
-    for player in game_players:
-        name = player.name.lower()
-        position = player.position.lower()
-        if position == "sp" or position == "rp" or position == "cl":
-            position = "p"
-        if players_by_name.get(name) is None:
-            players_by_name[name] = {position: player}
-        else:
-            players_by_name[name][position] = player
+def _info_from_legacy_rows(ctx, rows):
+    players_by_name = _players_by_name(ctx)
+    drafted = {}
+    for drafted_player in rows:
+        selection = (drafted_player.get("Selection") or "").split(" ")
+        player_name_arr = selection[1:]
+        if len(player_name_arr) < 1:
+            continue
+        if len(player_name_arr[-1]) == 1:
+            player_name_arr = player_name_arr[:-1]
+        player_name = " ".join(player_name_arr).lower()
+        player_position = selection[0].lower()
 
-    drafted_player_id_set = set()
-    with open(get_draft_class_drafted_players_file(), newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
-        for i, drafted_player in enumerate(reader):
-            player_data = drafted_player["Selection"].split(" ")
-            player_name_arr = player_data[0:]
-            if len(player_name_arr[-1]) == 1:
-                player_name_arr = player_name_arr[0:-1]
-            player_name = " ".join(player_name_arr).lower()
-            player_position = drafted_player["Position"].lower()
-            if (
-                player_position == "sp"
-                or player_position == "rp"
-                or player_position == "cl"
-            ):
-                player_position = "p"
-            player = players_by_name[player_name][player_position]
-            drafted_player_id_set.add(player["id"])
-    return drafted_player_id_set
+        player = players_by_name.get(player_name, {}).get(player_position)
+        if player is None:
+            candidates = players_by_name.get(player_name)
+            if candidates:
+                player = next(iter(candidates.values()))
+        if player is not None:
+            drafted[player.id] = {
+                "name": player_name,
+                "team": drafted_player.get("Team", ""),
+                "round": drafted_player.get("Round", ""),
+                "round_selection": drafted_player.get("Pick", ""),
+                "overall_selection": drafted_player.get("Overall", ""),
+            }
+    return drafted

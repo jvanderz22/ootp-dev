@@ -2,16 +2,15 @@ from modifiers.base_modifier import BaseModifier
 from modifiers.batter_handedness_modifier import BatterHandednessModifier
 from modifiers.batter_hit_profile_modifier import BatterHitProfileModifier
 from rankers.base_ranker import BaseRanker
-from scoring.pitcher_scorer import PitcherScorer
-from scoring.position_player_scorer import PositionPlayerScorer
+from scoring.model_cache import get_pitcher_scorer, get_position_player_scorer
 from modifiers.pitcher_velocity_modifier import PitcherVelocityModifier
 
 
 class OverallRanker(BaseRanker):
     def __init__(self):
         super().__init__(
-            position_player_scorer=PositionPlayerScorer("overall"),
-            pitcher_scorer=PitcherScorer("overall"),
+            position_player_scorer=get_position_player_scorer("overall"),
+            pitcher_scorer=get_pitcher_scorer("overall"),
         )
 
     @property

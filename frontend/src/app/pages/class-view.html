@@ -1,0 +1,149 @@
+@if (loading()) {
+  <p class="muted">Loading…</p>
+} @else if (error() && !detail()) {
+  <p class="error">{{ error() }}</p>
+} @else if (detail(); as d) {
+  <div class="head">
+    <div>
+      <h1>{{ d.name }}</h1>
+      <p class="muted sub">
+        {{ d.playerCount }} players ·
+        {{ view().length }} shown ·
+        {{ d.draftedCount }} drafted
+        @if (d.hasCustomOrder) { · <span class="tag">custom order</span> }
+      </p>
+    </div>
+
+    <div class="actions">
+      <label class="row">
+        <span class="muted">Method</span>
+        <select
+          [ngModel]="d.rankingMethod"
+          (ngModelChange)="onMethodChange($event)"
+          [disabled]="!!busy()"
+        >
+          @for (m of methods; track m) { <option [value]="m">{{ m }}</option> }
+        </select>
+      </label>
+      <button (click)="reprocess()" [disabled]="!!busy()">Reprocess</button>
+      @if (!notProcessed()) {
+        <button (click)="refreshDrafted()" [disabled]="!!busy()">Refresh drafted</button>
+        <button (click)="download()" [disabled]="!!busy()">Download C+ CSV</button>
+        @if (mode() === 'table') {
+          <button class="primary" (click)="startReorder()" [disabled]="!!busy()">
+            Edit custom order
+          </button>
+        }
+      }
+      <button class="danger" (click)="deleteClass()" [disabled]="!!busy()">Delete</button>
+    </div>
+  </div>
+
+  @if (busy()) { <p class="muted">{{ busy() }}</p> }
+  @if (notice()) { <p class="notice">{{ notice() }}</p> }
+  @if (error()) { <p class="error">{{ error() }}</p> }
+
+  @if (notProcessed()) {
+    <div class="card notproc">
+      <p><b>This class hasn’t been ranked yet.</b></p>
+      <p class="muted">
+        The upload saved the data but processing didn’t finish — usually the export
+        is missing rating columns the model needs. Fix the export and re-upload with
+        the same name, hit <b>Reprocess</b>, or <b>Delete</b> it.
+      </p>
+      <button class="primary" (click)="reprocess()" [disabled]="!!busy()">Reprocess now</button>
+    </div>
+  }
+
+  <!-- ================================ TABLE MODE ================================ -->
+  @if (mode() === 'table' && !notProcessed()) {
+    <div class="filters row">
+      <input placeholder="Search name…" [(ngModel)]="search" />
+      <select [(ngModel)]="positionFilter">
+        <option value="">All positions</option>
+        @for (p of positions(); track p) { <option [value]="p">{{ p }}</option> }
+      </select>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th class="sortable" (click)="sortBy('rank')">#</th>
+            <th class="sortable" (click)="sortBy('name')">Name</th>
+            <th class="sortable" (click)="sortBy('position')">Pos</th>
+            <th class="sortable num" (click)="sortBy('age')">Age</th>
+            <th class="sortable num" (click)="sortBy('modelScore')">Model</th>
+            <th class="sortable num" (click)="sortBy('inGamePotential')">Pot</th>
+            <th>Demand</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of view(); track p.id) {
+            <tr [class.drafted]="p.drafted" (click)="toggleRow(p.id)">
+              <td class="num">{{ p.rank }}</td>
+              <td>{{ p.name }}</td>
+              <td>{{ p.position }}</td>
+              <td class="num">{{ p.age }}</td>
+              <td class="num">{{ p.modelScore | number: '1.2-2' }}</td>
+              <td class="num">{{ p.inGamePotential }}</td>
+              <td>{{ p.demand }}</td>
+              <td class="num muted">{{ expanded().has(p.id) ? '▾' : '▸' }}</td>
+            </tr>
+            @if (expanded().has(p.id)) {
+              <tr class="detail-row">
+                <td colspan="8">
+                  <div class="scores">
+                    <span>Pos player: {{ p.positionPlayerScore | number: '1.2-2' }}</span>
+                    <span>Pitcher: {{ p.pitcherScore | number: '1.2-2' }}</span>
+                    <span>Bat: {{ p.battingScoreComponent | number: '1.2-2' }}</span>
+                    <span>Field: {{ p.fieldingScoreComponent | number: '1.2-2' }}</span>
+                    <span>SP: {{ p.starterComponent | number: '1.2-2' }}</span>
+                    <span>RP: {{ p.relieverComponent | number: '1.2-2' }}</span>
+                  </div>
+                  @if (componentEntries(p).length) {
+                    <div class="components">
+                      @for (e of componentEntries(p); track e[0]) {
+                        <span><b>{{ e[0] }}:</b> {{ e[1] }}</span>
+                      }
+                    </div>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- ============================== REORDER MODE ============================== -->
+  @if (mode() === 'reorder') {
+    <div class="reorder-bar row">
+      <b>Drag players to set the custom order.</b>
+      <span class="spacer"></span>
+      <button (click)="cancelReorder()" [disabled]="!!busy()">Cancel</button>
+      <button class="danger" (click)="revertOrder()" [disabled]="!!busy()">
+        Revert to model order
+      </button>
+      <button class="primary" (click)="saveOrder()" [disabled]="!!busy()">Save order</button>
+    </div>
+
+    <div class="reorder-list" cdkDropList (cdkDropListDropped)="drop($event)">
+      @for (p of draft(); track p.id) {
+        <div class="reorder-item" cdkDrag [class.drafted]="p.drafted">
+          <span class="handle" cdkDragHandle>⠿</span>
+          <span class="idx">{{ $index + 1 }}</span>
+          <span class="pname">{{ p.name }}</span>
+          <span class="muted">{{ p.position }} · {{ p.age }}</span>
+          <span class="spacer"></span>
+          <span class="num">{{ p.modelScore | number: '1.2-2' }}</span>
+          @if (p.drafted) { <span class="draft-badge">drafted</span> }
+        </div>
+      }
+    </div>
+  }
+} @else {
+  <p class="muted">Class not found.</p>
+}

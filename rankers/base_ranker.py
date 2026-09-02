@@ -9,17 +9,25 @@ from scoring.position_player_scorer import (
     PositionPlayerScorer,
 )
 from scoring.pitcher_scorer import PitcherScorer
-from scoring.runtime_components import get_runtime_components, write_runtime_component
+from scoring.runtime_components import (
+    get_runtime_components,
+    runtime_components_scope,
+    write_runtime_component,
+)
 
 
 class BaseRanker(ABC):
     def __init__(
         self,
-        position_player_scorer=PositionPlayerScorer(),
-        pitcher_scorer=PitcherScorer(),
+        position_player_scorer=None,
+        pitcher_scorer=None,
     ):
-        self.position_player_scorer = position_player_scorer
-        self.pitcher_scorer = pitcher_scorer
+        from scoring.model_cache import get_pitcher_scorer, get_position_player_scorer
+
+        self.position_player_scorer = (
+            position_player_scorer or get_position_player_scorer()
+        )
+        self.pitcher_scorer = pitcher_scorer or get_pitcher_scorer()
 
     two_way_player_threshold = 1.8
 
@@ -43,6 +51,10 @@ class BaseRanker(ABC):
         return players
 
     def rank(self, players: list[GamePlayer]):
+        with runtime_components_scope():
+            return self._rank_impl(players)
+
+    def _rank_impl(self, players: list[GamePlayer]):
         player_scores = []
         all_players = {}
         players = self.filter_players(players)

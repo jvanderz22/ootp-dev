@@ -1,176 +1,133 @@
-import csv
-import getopt
-import sys
+"""Turn the raw eval_model.csv into the ranked_players.csv view and the
+upload_ranked_players.csv file used for the StatsPlus / C+ preference list.
 
+The upload file always reflects the saved custom order (custom_ranking.py) and
+excludes players already drafted (drafted_players.py).
+"""
+import csv
+
+from custom_ranking import resolve_order
+from draft_class_files import get_draft_class_eval_model_file, get_ranked_players_file
 from drafted_players import get_drafted_player_ids
-from draft_class_files import (
-    get_draft_class_eval_model_file,
-    get_ranked_players_file,
-    get_draft_class_upload_players_file,
-)
-from rankers.draft_class_ranker import DraftClassRanker
 from rankers.get_ranker import get_ranker
 
+RANKED_PLAYER_FIELDNAMES = [
+    "overall_ranking",
+    "model_ranking",
+    "ranking_difference",
+    "id",
+    "name",
+    "position",
+    "age",
+    "model_score",
+    "position_player_score",
+    "fielding_score_component",
+    "batting_score_component",
+    "pitcher_score",
+    "starter_component",
+    "reliever_component",
+    "in_game_potential",
+    "demand",
+    "raw_overall_score",
+    "components",
+]
 
-def write_draft_class_rankings(ranked_players):
-    upload_field_names = ["id", "name", "position", "age", "model_score", "demand"]
-    with open(get_draft_class_upload_players_file(), "w", newline="") as csvfile:
-        drafted_players_set = get_drafted_player_ids()
-        writer = csv.DictWriter(csvfile, fieldnames=upload_field_names)
-        num_ranked_players = 0
-        for player in ranked_players:
-            if player["id"] in drafted_players_set:
-                continue
-            num_ranked_players += 1
-            if num_ranked_players > 500:
-                break
-            row = {
-                "id": player["id"],
-                "name": player["name"],
-                "position": player["position"],
-                "age": player["age"],
-                "model_score": player["overall_score"],
-                "demand": player["demand"],
-            }
-            writer.writerow(row)
-
-
-def read_players():
-    ranker = get_ranker()
-    players_by_id = {}
-    ranked_players = []
-    with open(get_draft_class_eval_model_file(ranker), newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
-        for player in reader:
-            ranked_players.append(player)
-            players_by_id[player["id"]] = player
-    return [ranked_players, players_by_id]
+UPLOAD_FIELDNAMES = ["id", "name", "position", "age", "model_score", "demand"]
+UPLOAD_LIMIT = 500
 
 
-def create_ranking_csv(modifiers=None):
-    [model_ranked_players, players_by_id] = read_players()
-    ranked_players = []
-    ranked_player_ids = set()
+def _read_eval_model(ctx, ranker):
+    with open(get_draft_class_eval_model_file(ranker, ctx), newline="") as csvfile:
+        rows = list(csv.DictReader(csvfile))
+    seen = set()
+    deduped = []
+    for row in rows:
+        if row["id"] not in seen:
+            seen.add(row["id"])
+            deduped.append(row)
+    return deduped
 
-    for player in model_ranked_players:
-        if player["id"] not in ranked_player_ids:
-            ranked_player_ids.add(player["id"])
-            ranked_players.append(player)
 
-    ranked_player_field_names = [
-        "overall_ranking",
-        "model_ranking",
-        "ranking_difference",
-        "id",
-        "name",
-        "position",
-        "age",
-        "model_score",
-        "position_player_score",
-        "fielding_score_component",
-        "batting_score_component",
-        "pitcher_score",
-        "starter_component",
-        "reliever_component",
-        "in_game_potential",
-        "demand",
-        "raw_overall_score",
-        "components",
-    ]
-    if modifiers is not None:
-        for player in ranked_players:
-            modifier = modifiers.get(player["position"])
-            if modifier is not None and modifier != 1:
-                player["overall_score"] = float(player["overall_score"]) * modifier
+def _ranked_row(index, player):
+    model_ranking = int(player["ranking"])
+    return {
+        "overall_ranking": index,
+        "model_ranking": model_ranking,
+        "ranking_difference": index - model_ranking,
+        "id": player["id"],
+        "name": player["name"],
+        "position": player["position"],
+        "age": player["age"],
+        "model_score": player["overall_score"],
+        "position_player_score": player["position_player_score"],
+        "fielding_score_component": player["fielding_score_component"],
+        "batting_score_component": player["batting_score_component"],
+        "pitcher_score": player["pitcher_score"],
+        "starter_component": player["starter_component"],
+        "reliever_component": player["reliever_component"],
+        "in_game_potential": player["in_game_potential"],
+        "demand": player["demand"],
+        "raw_overall_score": player["raw_overall_score"],
+        "components": player["components"],
+    }
 
-        players_by_score = sorted(
-            ranked_players,
-            key=lambda player: float(player["overall_score"]),
-            reverse=True,
-        )
 
-        for i, player in enumerate(players_by_score):
-            player["ranking"] = i + 1
-        ranked_players = players_by_score
+def create_ranking_csv(ctx=None):
+    if ctx is None:
+        from constants import DRAFT_CLASS_NAME
+        from context import DraftClassContext
 
-    ranker = get_ranker()
-    with open(get_ranked_players_file(ranker), "w", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=ranked_player_field_names)
+        ctx = DraftClassContext(DRAFT_CLASS_NAME)
+
+    ranker = get_ranker(ctx)
+    model_ranked_players = _read_eval_model(ctx, ranker)
+
+    with open(get_ranked_players_file(ranker, ctx), "w", newline="") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=RANKED_PLAYER_FIELDNAMES)
         writer.writeheader()
-        for i, player in enumerate(ranked_players):
-            row = {
-                "overall_ranking": i,
-                "model_ranking": player["ranking"],
-                "ranking_difference": i - int(player["ranking"]),
+        for i, player in enumerate(model_ranked_players):
+            writer.writerow(_ranked_row(i, player))
+
+    write_upload_file(ctx)
+
+
+def build_upload_rows(ctx):
+    """Rows for the C+ upload CSV: resolved (custom) order, drafted excluded,
+    capped at UPLOAD_LIMIT. Reads ranked_players.csv so it stays in sync with the
+    latest custom order even if the class has not been reprocessed."""
+    ranker = get_ranker(ctx)
+    with open(get_ranked_players_file(ranker, ctx), newline="") as csvfile:
+        ranked = list(csv.DictReader(csvfile))
+
+    ordered = resolve_order(ctx, ranked)
+    drafted = get_drafted_player_ids(ctx)
+
+    rows = []
+    for player in ordered:
+        if player["id"] in drafted:
+            continue
+        rows.append(
+            {
                 "id": player["id"],
                 "name": player["name"],
                 "position": player["position"],
-                "batting_score_component": player["batting_score_component"],
-                "fielding_score_component": player["fielding_score_component"],
-                "model_score": player["overall_score"],
-                "demand": player["demand"],
-                "in_game_potential": player["in_game_potential"],
                 "age": player["age"],
-                "pitcher_score": player["pitcher_score"],
-                "starter_component": player["starter_component"],
-                "reliever_component": player["reliever_component"],
-                "position_player_score": player["position_player_score"],
-                "raw_overall_score": player["raw_overall_score"],
-                "components": player["components"],
+                "model_score": player["model_score"],
+                "demand": player["demand"],
             }
+        )
+        if len(rows) >= UPLOAD_LIMIT:
+            break
+    return rows
 
+
+def write_upload_file(ctx) -> None:
+    ctx.processed_dir.mkdir(parents=True, exist_ok=True)
+    with open(ctx.upload_players_file, "w", newline="") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=UPLOAD_FIELDNAMES)
+        for row in build_upload_rows(ctx):
             writer.writerow(row)
-
-    if ranker.__class__ == DraftClassRanker:
-        write_draft_class_rankings(ranked_players)
 
 
 if __name__ == "__main__":
-    try:
-        opts, args = getopt.getopt(
-            sys.argv[1:],
-            "c:",
-            ["C=", "1B=", "2B=", "SS=", "3B=", "OF=", "SP=", "RP="],
-        )
-    except getopt.GetoptError:
-        print("Invalid Option!")
-        sys.exit(2)
-
-    catcher = 1
-    first_base = 1
-    second_base = 1
-    third_base = 1
-    shortstop = 1
-    outfielder = 1
-    starting_pitcher = 1
-    relief_pitcher = 1
-    for opt, arg in opts:
-        if opt == "--C":
-            catcher = float(arg)
-        if opt == "--1B":
-            first_base = float(arg)
-        if opt == "--2B":
-            second_base = float(arg)
-        if opt == "--3B":
-            third_base = float(arg)
-        if opt == "--SS":
-            shortstop = float(arg)
-        if opt == "--OF":
-            outfielder = float(arg)
-        if opt == "--SP":
-            starting_pitcher = float(arg)
-        if opt == "--RP":
-            relief_pitcher = float(arg)
-
-    create_ranking_csv(
-        {
-            "C": catcher,
-            "1B": first_base,
-            "2B": second_base,
-            "3B": third_base,
-            "SS": shortstop,
-            "OF": outfielder,
-            "SP": starting_pitcher,
-            "RP": relief_pitcher,
-        }
-    )
+    create_ranking_csv()

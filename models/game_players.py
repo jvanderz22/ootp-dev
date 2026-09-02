@@ -1,6 +1,14 @@
 import copy
 import string
 
+
+def _int(value, default=0):
+    """Coerce a scouting-grid cell to int; missing / "-" / blank -> default."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
 PLAYER_FIELDS = {
     "position": "POS",
     "id": "ID",
@@ -154,11 +162,11 @@ class GamePlayer:
 
     @property
     def overall(self):
-        return int(self._overall) if self._overall != "" else None
+        return _int(self._overall, None) if self._overall not in (None, "", "-") else None
 
     @property
     def potential(self):
-        return int(self._potential) if self._potential != "" else None
+        return _int(self._potential, None) if self._potential not in (None, "", "-") else None
 
     @property
     def demand(self):
@@ -170,7 +178,7 @@ class GamePlayer:
 
     @property
     def age(self):
-        return int(self._age)
+        return _int(self._age)
 
     @property
     def throw_hand(self):
@@ -214,23 +222,23 @@ class GamePlayer:
 
     @property
     def contact(self):
-        return int(self._contact)
+        return _int(self._contact)
 
     @property
     def gap(self):
-        return int(self._gap)
+        return _int(self._gap)
 
     @property
     def power(self):
-        return int(self._power)
+        return _int(self._power)
 
     @property
     def eye(self):
-        return int(self._eye)
+        return _int(self._eye)
 
     @property
     def avoid_k(self):
-        return int(self._avoid_k)
+        return _int(self._avoid_k)
 
     @property
     def contact_ovr(self):
@@ -241,23 +249,23 @@ class GamePlayer:
 
     @property
     def gap_ovr(self):
-        return int(self._gap_ovr)
+        return _int(self._gap_ovr)
 
     @property
     def power_ovr(self):
-        return int(self._power_ovr)
+        return _int(self._power_ovr)
 
     @property
     def eye_ovr(self):
-        return int(self._eye_ovr)
+        return _int(self._eye_ovr)
 
     @property
     def avoid_k(self):
-        return int(self._avoid_k)
+        return _int(self._avoid_k)
 
     @property
     def avoid_k_ovr(self):
-        return int(self._avoid_k_ovr)
+        return _int(self._avoid_k_ovr)
 
     @property
     def batted_ball_profile(self):
@@ -277,35 +285,35 @@ class GamePlayer:
 
     @property
     def speed(self):
-        return int(self._speed)
+        return _int(self._speed)
 
     @property
     def steal(self):
-        return int(self._steal)
+        return _int(self._steal)
 
     @property
     def running_ability(self):
-        return int(self._running_ability)
+        return _int(self._running_ability)
 
     @property
     def c_arm(self):
-        return int(self._c_arm)
+        return _int(self._c_arm)
 
     @property
     def c_blocking(self):
-        return int(self._c_blocking)
+        return _int(self._c_blocking)
 
     @property
     def c_framing(self):
-        return int(self._c_framing)
+        return _int(self._c_framing)
 
     @property
     def if_range(self):
-        return int(self._if_range)
+        return _int(self._if_range)
 
     @property
     def if_arm(self):
-        return int(self._if_arm)
+        return _int(self._if_arm)
 
     @property
     def if_error(self):
@@ -316,15 +324,15 @@ class GamePlayer:
 
     @property
     def turn_dp(self):
-        return int(self._turn_dp)
+        return _int(self._turn_dp)
 
     @property
     def of_range(self):
-        return int(self._of_range)
+        return _int(self._of_range)
 
     @property
     def of_arm(self):
-        return int(self._of_arm)
+        return _int(self._of_arm)
 
     @property
     def of_error(self):
@@ -335,23 +343,23 @@ class GamePlayer:
 
     @property
     def stuff(self):
-        return int(self._stuff)
+        return _int(self._stuff)
 
     @property
     def movement(self):
-        return int(self._movement)
+        return _int(self._movement)
 
     @property
     def control(self):
-        return int(self._control)
+        return _int(self._control)
 
     @property
     def stuff_ovr(self):
-        return int(self._stuff_ovr)
+        return _int(self._stuff_ovr)
 
     @property
     def movement_ovr(self):
-        return int(self._movement_ovr)
+        return _int(self._movement_ovr)
 
     @property
     def control_ovr(self):
@@ -362,7 +370,7 @@ class GamePlayer:
 
     @property
     def stamina(self):
-        return int(self._stamina)
+        return _int(self._stamina)
 
     @property
     def velocity(self):
@@ -376,168 +384,168 @@ class GamePlayer:
     def fastball(self):
         try:
             return int(self._fastball)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def changeup(self):
         try:
             return int(self._changeup)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def curveball(self):
         try:
             return int(self._curveball)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def slider(self):
         try:
             return int(self._slider)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def sinker(self):
         try:
             return int(self._sinker)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def splitter(self):
         try:
             return int(self._splitter)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def cutter(self):
         try:
             return int(self._cutter)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def forkball(self):
         try:
             return int(self._forkball)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def circlechange(self):
         try:
             return int(self._circlechange)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def screwball(self):
         try:
             return int(self._screwball)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def knuckleball(self):
         try:
             return int(self._knuckleball)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def knucklecurve(self):
         try:
             return int(self._knucklecurve)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def fastball_ovr(self):
         try:
             return int(self._fastball_ovr)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def changeup_ovr(self):
         try:
             return int(self._changeup_ovr)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def curveball_ovr(self):
         try:
             return int(self._curveball_ovr)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def slider_ovr(self):
         try:
             return int(self._slider_ovr)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def sinker_ovr(self):
         try:
             return int(self._sinker_ovr)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def splitter_ovr(self):
         try:
             return int(self._splitter_ovr)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def cutter_ovr(self):
         try:
             return int(self._cutter_ovr)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def forkball_ovr(self):
         try:
             return int(self._forkball_ovr)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def circlechange_ovr(self):
         try:
             return int(self._circlechange_ovr)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def screwball_ovr(self):
         try:
             return int(self._screwball_ovr)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def knuckleball_ovr(self):
         try:
             return int(self._knuckleball_ovr)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def knucklecurve_ovr(self):
         try:
             return int(self._knucklecurve_ovr)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     def get_pitches(self):

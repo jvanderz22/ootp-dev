@@ -1,12 +1,27 @@
+import csv
 import getopt
 import os
 import sys
+
 import pandas as pd
 from bs4 import BeautifulSoup
-import json
+
+from context import DraftClassContext
+from io_utils import atomic_write_json
+
+DEFAULT_CONFIG = {"ranking_method": "draft_class", "print_method": "draft_prospects"}
+VALID_RANKING_METHODS = ("draft_class", "potential", "overall")
+
+# Columns without which the ranking pipeline can't produce anything meaningful.
+REQUIRED_HEADERS = ("ID", "POS", "Name")
+
+
+class DatasetFormatError(ValueError):
+    """The uploaded file isn't a usable OOTP scouting export."""
 
 
 def create_csv(file_path, draft_class_path):
+    """Parse an OOTP HTML scouting report into the dataset CSV shape."""
     header = []
     data = []
     soup = BeautifulSoup(open(file_path), "html.parser")
@@ -16,48 +31,94 @@ def create_csv(file_path, draft_class_path):
     for th in header_row.find_all("th"):
         try:
             header.append(th.get_text())
-        except:
+        except Exception:
             continue
 
-    table_rows = table.find_all("tr")[1:]
-
-    for table_row in table_rows:
+    for table_row in table.find_all("tr")[1:]:
         row_data = []
         for td in table_row.find_all("td"):
             try:
                 row_data.append(td.get_text())
-            except:
+            except Exception:
                 continue
-        rows = [row.strip() for row in row_data]
-        data.append(rows)
+        data.append([cell.strip() for cell in row_data])
 
-    data_frame = pd.DataFrame(data=data, columns=header)
-    data_frame.to_csv(draft_class_path)
+    pd.DataFrame(data=data, columns=header).to_csv(draft_class_path)
+
+
+def _looks_like_html(path) -> bool:
+    with open(path, "rb") as f:
+        head = f.read(4096).lstrip().lower()
+    return head.startswith(b"<") or b"<table" in head or b"<html" in head
+
+
+def _validate_headers(data_file) -> None:
+    with open(data_file, newline="") as f:
+        header = next(csv.reader(f), [])
+    present = {h.strip() for h in header}
+    missing = [h for h in REQUIRED_HEADERS if h not in present]
+    if missing:
+        raise DatasetFormatError(
+            "The upload is missing required column(s): "
+            + ", ".join(missing)
+            + ". Use an OOTP player/scouting export that includes the ratings grid."
+        )
+
+
+def create_dataset_from_upload(name, upload_path, ranking_method="draft_class", base_dir=None):
+    """Build datasets/<name>.csv + processed_classes/<name>/config.json from an
+    uploaded file - either an OOTP HTML report or an already-converted CSV."""
+    if ranking_method not in VALID_RANKING_METHODS:
+        raise ValueError(f"Unknown ranking_method: {ranking_method!r}")
+
+    ctx = DraftClassContext(name, base_dir=base_dir) if base_dir else DraftClassContext(name)
+    ctx.ensure_dirs()
+
+    # write to a staging file first so a bad upload never leaves a half-made class
+    staged = ctx.data_file.with_suffix(".csv.incoming")
+    try:
+        if _looks_like_html(upload_path):
+            try:
+                create_csv(upload_path, str(staged))
+            except (IndexError, AttributeError, ValueError) as exc:
+                raise DatasetFormatError(
+                    "Could not parse this HTML file as an OOTP scouting report. "
+                    "Export the draft class as an HTML report (or upload the "
+                    "converted CSV)."
+                ) from exc
+        else:
+            with open(upload_path, "rb") as src, open(staged, "wb") as dst:
+                dst.write(src.read())
+
+        _validate_headers(staged)
+        os.replace(staged, ctx.data_file)
+    finally:
+        if staged.exists():
+            staged.unlink()
+
+    config = dict(DEFAULT_CONFIG)
+    if ctx.config_file.exists():
+        try:
+            config.update(ctx.load_config())
+        except Exception:
+            pass
+    config["ranking_method"] = ranking_method
+    atomic_write_json(ctx.config_file, config)
+    return ctx
 
 
 def create_dataset(file_path, class_name):
-    class_path = f"datasets/{class_name}.csv"
-    create_csv(file_path, class_path)
-    data_directory = f"processed_classes/{class_name}"
-    if not os.path.exists(data_directory):
-        os.makedirs(data_directory)
-    dataset_config = {
-        "ranking_method": "draft_class",
-        "print_method": "draft_prospects",
-    }
-    config_file_path = f"{data_directory}/config.json"
-    if not os.path.exists(config_file_path):
-        with open(config_file_path, "w") as config_file:
-            config_file.write(json.dumps(dataset_config, indent=4))
-        print(
-            f'Created class at {class_path}. Set "{class_name}" to be the active draft class in constants.py to process it.'
-        )
+    """Legacy CLI helper: HTML file -> dataset + default config."""
+    ctx = DraftClassContext(class_name)
+    ctx.ensure_dirs()
+    create_csv(file_path, str(ctx.data_file))
+    if not ctx.config_file.exists():
+        atomic_write_json(ctx.config_file, dict(DEFAULT_CONFIG))
+        print(f'Created class at {ctx.data_file}.')
     else:
-        print(
-            f'Updated class at {class_path}. Set "{class_name}" to be the active draft class in constants.py to process it.'
-        )
-
-    print(f"Settings can be updated in processed_classes/{class_name}/config.json.")
+        print(f'Updated class at {ctx.data_file}.')
+    print(f"Set DRAFT_CLASS_NAME = {class_name!r} in constants.py to process it.")
+    print(f"Settings can be updated in {ctx.config_file}.")
 
 
 if __name__ == "__main__":

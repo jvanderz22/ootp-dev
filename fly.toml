@@ -1,0 +1,28 @@
+# fly.toml - run: fly launch --no-deploy  (to create the app + volume), then:
+#   fly volumes create draft_data --size 1
+#   fly secrets set APP_PASSWORD=... [STATSPLUS_LEAGUE_URL=... STATSPLUS_COOKIE=...]
+#   fly deploy
+app = "ootp-draft"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  DATA_DIR = "/data"
+  PORT = "8080"
+
+[[mounts]]
+  source = "draft_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

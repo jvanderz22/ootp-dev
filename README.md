@@ -1,39 +1,125 @@
+# OOTP draft ranking
+
+Scores and ranks OOTP draft classes with an XGBoost-based model, and produces a
+StatsPlus / C+ preference-list CSV. Usable two ways:
+
+- **Web app** (`web/` + `frontend/`) — upload a class, view the ranked table,
+  switch classes, hand-reorder the ranking, download the C+ CSV, pull drafted
+  players from the StatsPlus API.
+- **CLI** (original scripts) — still works, driven by `constants.py`.
+
+## Web app
+
+### Architecture
+
+```
+Angular 22 SPA  --POST /graphql/-->  Ariadne GraphQL (Python, ASGI)  -->  ranking pipeline
+                                     serves the built SPA + /download/<class>/upload.csv
+```
+
+- Data lives on the filesystem: `datasets/<class>.csv` + `processed_classes/<class>/…`
+  under `$DATA_DIR` (defaults to the repo root; set to a volume in production).
+- `web_config.json` under `$DATA_DIR` holds the StatsPlus league URL + session
+  cookie (set via the Settings page; the cookie is never returned to the client).
+- Whole app is behind HTTP Basic auth when `APP_PASSWORD` is set.
+
+### StatsPlus configuration
+
+"Refresh drafted" calls `<league URL>/api/draftv2/` to pull the picks made so
+far and mark those players drafted. StatsPlus has **no API key** — the endpoint
+authenticates with your browser **session cookie**, and its login page is behind a
+CAPTCHA, so the cookie has to be copied by hand. Configure both fields on the
+**Settings** page (or seed them with env vars for a first deploy):
+
+| Setting            | Env var                | Notes                                                                                                                                                                                                   |
+| ------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **League URL**     | `STATSPLUS_LEAGUE_URL` | Your league's StatsPlus home. Full URL (`https://statsplus.net/yfmlb/`, `https://atl-01.statsplus.net/wbf/`) or a bare slug (`yfmlb`) — both are normalised. Only `*.statsplus.net` hosts are accepted. |
+| **Session cookie** | `STATSPLUS_COOKIE`     | `sessionid=VALUE; csrftoken=VALUE`                                                                                                                                                                      |
+| **Default `lid`**  | —                      | Optional; only for associations that run multiple drafts.                                                                                                                                               |
+
+To get the cookie: log into your league at statsplus.net in a browser →
+DevTools → Application → Cookies → `https://statsplus.net` → copy the
+`sessionid` and `csrftoken` values → paste them into the Settings field as
+`sessionid=…; csrftoken=…`. It expires after a while; when "Refresh drafted"
+reports an auth error, re-paste a fresh one. Everything else in the app works
+without it — it's only needed to auto-populate the drafted list.
+
+### Run locally
+
+Backend (port 8000):
+
+```bash
+source activate/bin/activate           # or: pip install -r requirements.txt
+DEV=1 DATA_DIR=./ uvicorn web.app:app --reload --port 8000
+```
+
+Frontend dev server (port 4200, proxies `/graphql` + `/download` to :8000):
+
+```bash
+cd frontend
+npm install
+npm start          # http://localhost:4200
+```
+
+Or run the whole thing from one process (build the SPA first):
+
+```bash
+cd frontend && npm run build && cd ..
+APP_PASSWORD=secret uvicorn web.app:app --port 8080     # http://localhost:8080
+```
+
+### Deploy (Fly.io, free tier)
+
+```bash
+fly launch --no-deploy            # creates the app from fly.toml
+fly volumes create draft_data --size 1
+fly secrets set APP_PASSWORD=... [STATSPLUS_LEAGUE_URL=... STATSPLUS_COOKIE=...]
+fly deploy
+```
+
+The image bundles `training_data/`; `datasets/` and `processed_classes/` live on
+the `draft_data` volume so uploads survive redeploys. 512 MB RAM is enough for the
+XGBoost/scikit-learn models (they train once at startup).
+
+### GraphQL
+
+Schema: `web/schema.graphql`. Key operations:
+
+| Operation                                           | Purpose                                                   |
+| --------------------------------------------------- | --------------------------------------------------------- |
+| `draftClasses` / `rankedPlayers(name)`              | list classes / ranked players in resolved order           |
+| `uploadDraftClass(name, rankingMethod, file)`       | upload an OOTP HTML export or converted CSV, then process |
+| `setRankingMethod` / `reprocessDraftClass`          | re-run the pipeline                                       |
+| `saveCustomOrder(name, order)` / `clearCustomOrder` | manual drag-and-drop ordering                             |
+| `refreshDraftedFromStatsPlus(name)`                 | pull drafted picks from `…/api/draftv2/`                  |
+| `statsPlusSettings` / `updateStatsPlusSettings`     | league URL + session cookie                               |
+
+C+ CSV download is a plain route: `GET /download/<class>/upload.csv`.
+
+### Tests
+
+```bash
+pytest            # 18 tests; the "slow" ones train the models (~1 min total)
+```
+
+## CLI (original workflow)
+
 Activate the virtual env: `source activate/bin/activate`
 
-Commands:
-
-Get data from exported game file:
-
+```bash
+# Import a class from an exported game file
 python3 load_draft_class.py -c draft-class-name -f /path/to/file.html
 
-Run evals on draft class:
-python3 run.py
+# Set DRAFT_CLASS_NAME in constants.py, then run evals
+python3 run.py                        # -> processed_classes/<class>/DraftClassRanker/ranked_players.csv
+                                      #    + upload_ranked_players.csv
 
-Print top available players:
-python3 print_evals.py
+python3 print_evals.py                # top available players
+python3 print_org_summaries.py        # org summaries
+```
 
-Print org summaries:
-python3 print_org_summaries.py
+`ranking_method` (in `processed_classes/<class>/config.json`): `draft_class`,
+`potential`, `overall`.
 
-Populate drafted players from statsplus:
-python3 import_drafted_players.py
-
-Create a new file of rankings:
-python3 rankings_csv.py
-
-Optionally add a custom modifier to change value of position:
-python3 rankings_csv.py --C 0.9
-
-Upload draft preference list to stats plus:
-python3 upload_drafted_players.py
-
-Refresh drafted list and upload draft preference list to stats plus:
-python3 upload_drafted_players.py -d
-
-Possible ranking_method: "draft_class", "potential" and "overall"
-Possible print_method: "draft_prospects" and "org_players"
-
-Build a list from in-game instead of from an exported report. Requires having
-game open to player page list. Takes option -p for the number of pages of players
-on the in-game report
-python3 import_dataset_from_ootp.py -d dataset_name -p 120
+The Selenium-based `import_drafted_players.py` / `upload_drafted_players.py` are
+superseded by the StatsPlus API path in the web app but still present.

@@ -1,0 +1,41 @@
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elev);
+  flex-wrap: wrap;
+}
+
+.brand {
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.class-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+nav.row a {
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+nav.row a:hover {
+  background: var(--bg-elev-2);
+}
+
+.content {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}

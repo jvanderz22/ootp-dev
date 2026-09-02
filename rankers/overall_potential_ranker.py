@@ -11,11 +11,10 @@ from modifiers.batter_injury_modifier import BatterInjuryModifier
 from modifiers.batter_handedness_modifier import BatterHandednessModifier
 from modifiers.personality_modifier import PersonalityModifier
 from modifiers.pitcher_velocity_modifier import PitcherVelocityModifier
-from scoring.pitcher_scorer import PitcherScorer
 
 
 class OverallPotentialRanker(BaseRanker):
-    def __init__(self, pitcher_scorer=PitcherScorer()):
+    def __init__(self, pitcher_scorer=None):
         super().__init__(pitcher_scorer=pitcher_scorer)
 
     @property

@@ -1,36 +1,43 @@
-import os
-from constants import DRAFT_CLASS_NAME
+"""Backwards-compatible path helpers.
+
+These now delegate to a DraftClassContext. Passing `ctx` explicitly is the
+supported path for the web app; omitting it falls back to a context built from
+constants.DRAFT_CLASS_NAME so the CLI entry points keep working untouched.
+"""
+from context import DraftClassContext
 
 
-def get_draft_class_data_file():
-    return f"datasets/{DRAFT_CLASS_NAME}.csv"
+def _ctx(ctx=None) -> DraftClassContext:
+    if ctx is not None:
+        return ctx
+    from constants import DRAFT_CLASS_NAME
+
+    return DraftClassContext(DRAFT_CLASS_NAME)
 
 
-def get_ranker_folder(ranker):
-    ranker_name = ranker.__class__.__name__
-    folder_name = f"./processed_classes/{DRAFT_CLASS_NAME}/{ranker_name}"
-    if not os.path.exists(folder_name):
-        os.makedirs(folder_name)
-    return folder_name
+def get_draft_class_data_file(ctx=None) -> str:
+    return str(_ctx(ctx).data_file)
 
 
-def get_draft_class_eval_model_file(ranker):
-    folder_name = get_ranker_folder(ranker)
-    return f"{folder_name}/eval_model.csv"
+def get_ranker_folder(ranker, ctx=None) -> str:
+    return str(_ctx(ctx).ranker_dir(ranker))
 
 
-def get_draft_class_config_file():
-    return f"./processed_classes/{DRAFT_CLASS_NAME}/config.json"
+def get_draft_class_eval_model_file(ranker, ctx=None) -> str:
+    return str(_ctx(ctx).eval_model_file(ranker))
 
 
-def get_ranked_players_file(ranker):
-    folder_name = get_ranker_folder(ranker)
-    return f"{folder_name}/ranked_players.csv"
+def get_draft_class_config_file(ctx=None) -> str:
+    return str(_ctx(ctx).config_file)
 
 
-def get_draft_class_upload_players_file():
-    return f"./processed_classes/{DRAFT_CLASS_NAME}/upload_ranked_players.csv"
+def get_ranked_players_file(ranker, ctx=None) -> str:
+    return str(_ctx(ctx).ranked_players_file(ranker))
 
 
-def get_draft_class_drafted_players_file():
-    return f"./processed_classes/{DRAFT_CLASS_NAME}/drafted_players.csv"
+def get_draft_class_upload_players_file(ctx=None) -> str:
+    return str(_ctx(ctx).upload_players_file)
+
+
+def get_draft_class_drafted_players_file(ctx=None) -> str:
+    return str(_ctx(ctx).drafted_players_file)

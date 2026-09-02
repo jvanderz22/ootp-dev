@@ -1,0 +1,36 @@
+@if (showChrome()) {
+  <header class="topbar">
+    <a routerLink="/" class="brand">OOTP Draft</a>
+
+    <label class="class-picker">
+      <span class="muted">Class</span>
+      <select
+        [value]="currentClass()"
+        (change)="onPickClass($any($event.target).value)"
+      >
+        <option value="" disabled>Select a class…</option>
+        @for (c of store.classes(); track c.name) {
+          <option [value]="c.name">
+            {{ c.name }} ({{ c.playerCount }})
+          </option>
+        }
+      </select>
+    </label>
+
+    <nav class="row">
+      <a routerLink="/upload">Upload</a>
+      <a routerLink="/settings">Settings</a>
+    </nav>
+
+    <span class="spacer"></span>
+    @if (store.loading()) { <span class="muted">syncing…</span> }
+    <button (click)="logout()">Log out</button>
+  </header>
+}
+
+<main class="content">
+  @if (store.error()) {
+    <p class="error">{{ store.error() }}</p>
+  }
+  <router-outlet />
+</main>

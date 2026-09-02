@@ -16,15 +16,14 @@ from rankers.base_ranker import BaseRanker
 from modifiers.batter_injury_modifier import BatterInjuryModifier
 from modifiers.batter_handedness_modifier import BatterHandednessModifier
 from modifiers.personality_modifier import PersonalityModifier
-from scoring.pitcher_scorer import RP_OVERALL_MODIFIER, PitcherScorer
+from scoring.model_cache import get_pitcher_scorer
+from scoring.pitcher_scorer import RP_OVERALL_MODIFIER
 
 
 class DraftClassRanker(BaseRanker):
     def __init__(self):
         super().__init__(
-            pitcher_scorer=PitcherScorer(
-                rp_multiplier=RP_OVERALL_MODIFIER - 0.1,
-            )
+            pitcher_scorer=get_pitcher_scorer(rp_multiplier=RP_OVERALL_MODIFIER - 0.1)
         )
 
     @property

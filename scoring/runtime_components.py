@@ -1,14 +1,40 @@
-runtime_components = {}
+"""Per-run collection of debug "components" for each player.
+
+Backed by a ContextVar so concurrent ranking runs (web requests) don't clobber
+each other and memory doesn't leak across runs. `runtime_components_scope()`
+wraps a single ranking pass; outside a scope the calls degrade to a shared dict
+so the CLI and ad-hoc scripts keep working.
+"""
+import contextvars
+from contextlib import contextmanager
+
+_components: contextvars.ContextVar = contextvars.ContextVar("runtime_components")
+_fallback: dict = {}
 
 
-def write_runtime_component(
-    player_id: int, component_name: str, component_value: float
-):
-    if (runtime_components.get(player_id, None)) == None:
-        runtime_components[player_id] = {}
-    if component_value > 0:
-        runtime_components[player_id][component_name] = round(component_value, 2)
+def _current() -> dict:
+    try:
+        return _components.get()
+    except LookupError:
+        return _fallback
+
+
+@contextmanager
+def runtime_components_scope():
+    token = _components.set({})
+    try:
+        yield _components.get()
+    finally:
+        _components.reset(token)
+
+
+def write_runtime_component(player_id, component_name: str, component_value: float):
+    store = _current()
+    if store.get(player_id) is None:
+        store[player_id] = {}
+    if component_value is not None and component_value > 0:
+        store[player_id][component_name] = round(component_value, 2)
 
 
 def get_runtime_components(player_id):
-    return runtime_components.get(player_id, None)
+    return _current().get(player_id, None)

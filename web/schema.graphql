@@ -1,0 +1,68 @@
+scalar JSON
+scalar Upload
+
+type DraftClass {
+  name: String!
+  rankingMethod: String!
+  playerCount: Int!
+  hasCustomOrder: Boolean!
+  lastProcessed: String
+  draftedCount: Int!
+}
+
+type RankedPlayer {
+  rank: Int!
+  id: ID!
+  name: String!
+  position: String!
+  age: Int
+  modelScore: Float
+  inGamePotential: Int
+  demand: String
+  drafted: Boolean!
+  positionPlayerScore: Float
+  pitcherScore: Float
+  battingScoreComponent: Float
+  fieldingScoreComponent: Float
+  starterComponent: Float
+  relieverComponent: Float
+  rawOverallScore: Float
+  components: JSON
+}
+
+type StatsPlusSettings {
+  leagueUrl: String
+  defaultLid: Int
+  hasSessionid: Boolean!
+  hasCsrftoken: Boolean!
+}
+
+type DraftedRefreshResult {
+  draftedCount: Int!
+  matchedById: Int!
+  matchedByName: Int!
+  unmatched: Int!
+}
+
+type Query {
+  draftClasses: [DraftClass!]!
+  draftClass(name: String!): DraftClass
+  rankedPlayers(name: String!): [RankedPlayer!]!
+  statsPlusSettings: StatsPlusSettings!
+}
+
+type Mutation {
+  uploadDraftClass(name: String!, rankingMethod: String!, file: Upload!): DraftClass!
+  setRankingMethod(name: String!, rankingMethod: String!): DraftClass!
+  reprocessDraftClass(name: String!): DraftClass!
+  deleteDraftClass(name: String!): String!
+  saveCustomOrder(name: String!, order: [ID!]!): [RankedPlayer!]!
+  clearCustomOrder(name: String!): [RankedPlayer!]!
+  refreshDraftedFromStatsPlus(name: String!): DraftedRefreshResult!
+  updateStatsPlusSettings(
+    leagueUrl: String
+    sessionid: String
+    csrftoken: String
+    defaultLid: Int
+  ): StatsPlusSettings!
+}

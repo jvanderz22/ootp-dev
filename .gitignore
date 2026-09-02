@@ -3,7 +3,21 @@
 *.vscode
 env
 .env
+
+# user data (filesystem-as-DB)
 datasets/**/*.csv
 processed_data/*.csv
 processed_classes/**/*.csv
 processed_classes/**/*
+web_config.json
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/

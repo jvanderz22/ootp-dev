@@ -1,0 +1,5 @@
+{
+  "/graphql": { "target": "http://localhost:8000", "secure": false },
+  "/download": { "target": "http://localhost:8000", "secure": false },
+  "/healthz": { "target": "http://localhost:8000", "secure": false }
+}
