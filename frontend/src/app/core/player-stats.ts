@@ -44,6 +44,17 @@ export function typeSeverity(t: PlayerType): 'info' | 'warn' | 'success' {
 }
 
 /**
+ * Colour cue for the descriptive scouting grades (personality, injury
+ * proneness, scout accuracy): red for the weakest tiers, amber for "average".
+ */
+export function gradeTone(v: unknown): '' | 'danger' | 'warn' {
+  const s = String(v ?? '').trim().toLowerCase();
+  if (s === 'fragile' || s === 'low' || s === 'very low') return 'danger';
+  if (s === 'average') return 'warn';
+  return '';
+}
+
+/**
  * Numeric sort key for the contract-demand column so the table orders it by
  * dollar value rather than lexically. Mirrors `parse_demand` in the pipeline:
  * a trailing `k`/`m` scales the digits (× 1_000 / × 100_000), "Slot" is 0, and

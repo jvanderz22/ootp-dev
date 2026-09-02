@@ -53,28 +53,37 @@ def test_upload_then_query_then_reorder(client):
     assert "errors" not in body, body["errors"]
     assert body["data"]["uploadDraftClass"]["playerCount"] > 100
 
-    players = gql(client, '{ rankedPlayers(name: "g") { rank id modelScore drafted } }')[
-        "rankedPlayers"
-    ]
+    def ranked_ids(**vars):
+        q = (
+            "query($all: Boolean) { rankedPlayers(name: \"g\", allRows: $all) "
+            "{ totalRecords rows { rank id modelScore drafted } } }"
+        )
+        return gql(client, q, **vars)["rankedPlayers"]
+
+    page = ranked_ids(all=True)
+    players = page["rows"]
+    assert page["totalRecords"] == len(players)
     assert players[0]["rank"] == 1
     ids = [p["id"] for p in players]
 
     reordered = [ids[2]] + ids[:2] + ids[3:]
     saved = gql(
         client,
-        "mutation($o: [ID!]!) { saveCustomOrder(name: \"g\", order: $o) { id } }",
+        "mutation($o: [ID!]!) { saveCustomOrder(name: \"g\", order: $o) { hasCustomOrder } }",
         o=reordered,
     )["saveCustomOrder"]
-    assert [r["id"] for r in saved[:3]] == [ids[2], ids[0], ids[1]]
+    assert saved["hasCustomOrder"] is True
+    assert [r["id"] for r in ranked_ids(all=True)["rows"][:3]] == [ids[2], ids[0], ids[1]]
 
     dl = client.get("/download/g/upload.csv")
     assert dl.status_code == 200
     assert dl.text.splitlines()[0].split(",")[0] == ids[2]
 
-    reverted = gql(client, 'mutation { clearCustomOrder(name: "g") { id } }')[
+    reverted = gql(client, 'mutation { clearCustomOrder(name: "g") { hasCustomOrder } }')[
         "clearCustomOrder"
     ]
-    assert [r["id"] for r in reverted[:3]] == ids[:3]
+    assert reverted["hasCustomOrder"] is False
+    assert [r["id"] for r in ranked_ids(all=True)["rows"][:3]] == ids[:3]
 
 
 def test_settings_update(client):

@@ -15,7 +15,10 @@ type RankedPlayer {
   id: ID!
   name: String!
   position: String!
+  type: String!
   age: Int
+  batHand: String
+  throwHand: String
   modelScore: Float
   inGameOverall: Int
   inGamePotential: Int
@@ -31,6 +34,22 @@ type RankedPlayer {
   rawOverallScore: Float
   components: JSON
   ratings: JSON
+}
+
+input RankedPlayerFilter {
+  search: String
+  positions: [String!]
+  hideDrafted: Boolean
+}
+
+input RankedPlayerSort {
+  field: String!
+  order: Int!
+}
+
+type RankedPlayerPage {
+  rows: [RankedPlayer!]!
+  totalRecords: Int!
 }
 
 type StatsPlusSettings {
@@ -50,7 +69,15 @@ type DraftedRefreshResult {
 type Query {
   draftClasses: [DraftClass!]!
   draftClass(name: String!): DraftClass
-  rankedPlayers(name: String!): [RankedPlayer!]!
+  rankedPlayers(
+    name: String!
+    filter: RankedPlayerFilter
+    sort: RankedPlayerSort
+    page: Int = 0
+    pageSize: Int = 50
+    allRows: Boolean = false
+  ): RankedPlayerPage!
+  classPositions(name: String!): [String!]!
   statsPlusSettings: StatsPlusSettings!
 }
 
@@ -59,8 +86,8 @@ type Mutation {
   setRankingMethod(name: String!, rankingMethod: String!): DraftClass!
   reprocessDraftClass(name: String!): DraftClass!
   deleteDraftClass(name: String!): String!
-  saveCustomOrder(name: String!, order: [ID!]!): [RankedPlayer!]!
-  clearCustomOrder(name: String!): [RankedPlayer!]!
+  saveCustomOrder(name: String!, order: [ID!]!): DraftClass!
+  clearCustomOrder(name: String!): DraftClass!
   refreshDraftedFromStatsPlus(name: String!): DraftedRefreshResult!
   updateStatsPlusSettings(
     leagueUrl: String

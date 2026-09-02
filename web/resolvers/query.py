@@ -17,8 +17,22 @@ def resolve_draft_class(_, __, name):
 
 
 @query.field("rankedPlayers")
-def resolve_ranked_players(_, __, name):
-    return service.ranked_players(name)
+def resolve_ranked_players(
+    _, __, name, filter=None, sort=None, page=0, page_size=50, all_rows=False
+):
+    return service.ranked_players_page(
+        name,
+        filter=filter,
+        sort=sort,
+        page=page,
+        page_size=page_size,
+        all_rows=all_rows,
+    )
+
+
+@query.field("classPositions")
+def resolve_class_positions(_, __, name):
+    return service.class_positions(name)
 
 
 @query.field("statsPlusSettings")

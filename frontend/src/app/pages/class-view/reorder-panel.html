@@ -1,0 +1,21 @@
+<div class="reorder-bar row">
+  <b>Drag players to set the custom order.</b>
+  <span class="spacer"></span>
+  <button (click)="cancel.emit()" [disabled]="busy()">Cancel</button>
+  <button class="danger" (click)="revert.emit()" [disabled]="busy()">Revert to model order</button>
+  <button class="primary" (click)="onSave()" [disabled]="busy()">Save order</button>
+</div>
+
+<div class="reorder-list" cdkDropList (cdkDropListDropped)="drop($event)">
+  @for (p of list(); track p.id) {
+    <div class="reorder-item" cdkDrag [class.drafted]="p.drafted">
+      <span class="handle" cdkDragHandle>⠿</span>
+      <span class="idx">{{ $index + 1 }}</span>
+      <span class="pname">{{ p.name }}</span>
+      <span class="muted">{{ p.position }} · {{ p.age }}</span>
+      <span class="spacer"></span>
+      <span class="num">{{ p.modelScore | number: '1.2-2' }}</span>
+      @if (p.drafted) { <span class="draft-badge">drafted</span> }
+    </div>
+  }
+</div>

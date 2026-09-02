@@ -1,0 +1,58 @@
+@if (loading() && !detail()) {
+  <p class="muted">Loading…</p>
+} @else if (error() && !detail()) {
+  <p class="error">{{ error() }}</p>
+} @else if (detail(); as d) {
+  <app-class-toolbar
+    [detail]="d"
+    [busy]="!!busy()"
+    [notProcessed]="notProcessed()"
+    [mode]="mode()"
+    [shownCount]="totalRecords()"
+    (methodChange)="onMethodChange($event)"
+    (reprocess)="reprocess()"
+    (refreshDrafted)="refreshDrafted()"
+    (download)="download()"
+    (startReorder)="startReorder()"
+    (deleteClass)="deleteClass()"
+  />
+
+  @if (busy()) { <p class="muted">{{ busy() }}</p> }
+  @if (notice()) { <p class="notice">{{ notice() }}</p> }
+  @if (error()) { <p class="error">{{ error() }}</p> }
+
+  @if (notProcessed()) {
+    <div class="card notproc">
+      <p><b>This class hasn’t been ranked yet.</b></p>
+      <p class="muted">
+        The upload saved the data but processing didn’t finish — usually the export
+        is missing rating columns the model needs. Fix the export and re-upload with
+        the same name, hit <b>Reprocess</b>, or <b>Delete</b> it.
+      </p>
+      <button class="primary" (click)="reprocess()" [disabled]="!!busy()">Reprocess now</button>
+    </div>
+  }
+
+  @if (mode() === 'table' && !notProcessed()) {
+    <app-ranked-table
+      [rows]="rows()"
+      [totalRecords]="totalRecords()"
+      [positions]="positions()"
+      [loading]="loading()"
+      [classKey]="name()"
+      (queryChange)="onQueryChange($event)"
+    />
+  }
+
+  @if (mode() === 'reorder') {
+    <app-reorder-panel
+      [players]="reorderRows()"
+      [busy]="!!busy()"
+      (save)="saveOrder($event)"
+      (cancel)="cancelReorder()"
+      (revert)="revertOrder()"
+    />
+  }
+} @else {
+  <p class="muted">Class not found.</p>
+}

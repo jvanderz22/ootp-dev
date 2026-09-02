@@ -41,7 +41,13 @@ export const appConfig: ApplicationConfig = {
         return token ? { headers: { Authorization: token } } : {};
       });
       return {
-        cache: new InMemoryCache(),
+        cache: new InMemoryCache({
+          typePolicies: {
+            // One paginated slice at a time per class; network-only refetches
+            // always overwrite, so collapse the per-args cache entries.
+            Query: { fields: { rankedPlayers: { keyArgs: ['name'], merge: true } } },
+          },
+        }),
         link: ApolloLink.from([
           authLink,
           httpLink.create({

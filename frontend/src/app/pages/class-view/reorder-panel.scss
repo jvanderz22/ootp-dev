@@ -1,0 +1,44 @@
+:host { display: block; }
+
+.row { display: flex; align-items: center; gap: 8px; }
+.spacer { flex: 1; }
+.muted { color: var(--text-dim); }
+
+.reorder-bar { margin: 12px 0; gap: 8px; flex-wrap: wrap; }
+
+.reorder-list {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.reorder-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.reorder-item:last-child { border-bottom: none; }
+.reorder-item.drafted .pname { color: var(--drafted); text-decoration: line-through; }
+.handle { cursor: grab; color: var(--text-dim); }
+.idx { width: 40px; text-align: right; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.pname { font-weight: 600; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.draft-badge {
+  font-size: 11px;
+  color: var(--drafted);
+  border: 1px solid var(--drafted);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+
+.cdk-drag-preview {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  background: var(--bg-elev);
+  border-radius: 6px;
+}
+.cdk-drag-placeholder { opacity: 0.3; }
+.cdk-drop-list-dragging .reorder-item:not(.cdk-drag-placeholder) {
+  transition: transform 150ms ease;
+}

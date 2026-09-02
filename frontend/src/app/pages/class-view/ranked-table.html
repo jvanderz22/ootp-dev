@@ -1,0 +1,172 @@
+<div class="filters row">
+  <p-selectbutton
+    class="view-toggle"
+    [options]="viewOptions"
+    optionLabel="label"
+    optionValue="value"
+    [allowEmpty]="false"
+    [ngModel]="view()"
+    (ngModelChange)="onView($event)"
+  />
+
+  <input
+    placeholder="Search name…"
+    [ngModel]="search()"
+    (ngModelChange)="onSearch($event)"
+  />
+
+  <app-position-filter
+    [positions]="positions()"
+    [value]="positionSel()"
+    (valueChange)="onPositions($event)"
+  />
+
+  <label class="row chk">
+    <input
+      type="checkbox"
+      [ngModel]="hideDrafted()"
+      (ngModelChange)="onHideDrafted($event)"
+    />
+    <span>Hide drafted</span>
+  </label>
+
+  <button
+    type="button"
+    class="expand-all"
+    [class.active]="expandAll()"
+    (click)="toggleAllExpansion()"
+  >
+    {{ expandAll() ? 'Collapse all' : 'Expand all' }}
+  </button>
+
+  @if (compareSel().length) {
+    <div class="compare-bar row">
+      <span class="muted">Compare</span>
+      @for (p of compareSel(); track p.id) {
+        <span class="chip">
+          {{ p.name }}
+          <button type="button" class="chip-x" (click)="toggleCompare(p)" title="Remove">×</button>
+        </span>
+      }
+      @if (compareSel().length === 1) { <span class="muted">pick one more</span> }
+      <button class="primary" (click)="openCompare()" [disabled]="compareSel().length !== 2">
+        Compare
+      </button>
+      <button type="button" (click)="clearCompare()">Clear</button>
+    </div>
+  }
+</div>
+
+<div class="ranked-table">
+  <p-table
+    #dt
+    [value]="rows()"
+    dataKey="id"
+    [lazy]="true"
+    [customSort]="true"
+    [loading]="loading()"
+    [totalRecords]="totalRecords()"
+    [paginator]="true"
+    [rows]="pageSize()"
+    [first]="first()"
+    [rowsPerPageOptions]="[25, 50, 100, 200]"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="{first}–{last} of {totalRecords}"
+    [scrollable]="true"
+    scrollHeight="70vh"
+    [expandedRowKeys]="expandedKeys()"
+    size="small"
+    (onLazyLoad)="onLazyLoad($event)"
+  >
+    <ng-template #header>
+      <tr class="grp-row">
+        <th class="cmp-col"></th>
+        @for (g of headerGroups(); track $index) {
+          <th class="grp" [attr.colspan]="g.span">{{ g.label }}</th>
+        }
+        <th class="expander-col"></th>
+      </tr>
+      <tr>
+        <th class="cmp-col" title="Pick two to compare">⇄</th>
+        @for (c of columns(); track c.field) {
+          <th
+            class="sortable"
+            [class.num]="c.numeric"
+            [class.sticky-rank]="c.sticky === 'rank'"
+            [class.sticky-name]="c.sticky === 'name'"
+            [class.sticky-pos]="c.sticky === 'pos'"
+            [class.col-wide]="c.wide"
+            [attr.title]="c.title ?? null"
+            (click)="onSort(c)"
+          >
+            {{ c.header }}
+            @if (sortCaret(c); as caret) {
+              <span class="sort-caret">{{ caret }}</span>
+            }
+          </th>
+        }
+        <th class="expander-col"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-p>
+      <tr
+        class="body-row"
+        [class.drafted]="p.drafted"
+        [class.is-expanded]="isExpanded(p)"
+        (click)="toggleRow(p, $event)"
+      >
+        <td class="cmp-col">
+          <input
+            type="checkbox"
+            [checked]="isSelected(p)"
+            [disabled]="compareSel().length === 2 && !isSelected(p)"
+            (change)="toggleCompare(p)"
+            (click)="$event.stopPropagation()"
+            title="Add to compare"
+          />
+        </td>
+        @for (c of columns(); track c.field) {
+          @if (c.tag) {
+            <td><p-tag [value]="p.type" [severity]="typeSeverity(p.type)" /></td>
+          } @else {
+            @let cv = c.value(p);
+            <td
+              [class.num]="c.numeric"
+              [class.sticky-rank]="c.sticky === 'rank'"
+              [class.sticky-name]="c.sticky === 'name'"
+              [class.sticky-pos]="c.sticky === 'pos'"
+              [class.col-wide]="c.wide"
+              [class.tone-danger]="c.tone?.(cv) === 'danger'"
+              [class.tone-warn]="c.tone?.(cv) === 'warn'"
+            >{{ c.fmt(cv) }}</td>
+          }
+        }
+        <td class="num muted expander-col">{{ isExpanded(p) ? '▾' : '▸' }}</td>
+      </tr>
+    </ng-template>
+
+    <ng-template #expandedrow let-p>
+      <tr class="detail-row">
+        <td [attr.colspan]="columns().length + 2">
+          <div class="detail-viewport" [style.width.px]="viewportWidth()">
+            <app-player-detail-card [player]="p" />
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td [attr.colspan]="columns().length + 2" class="muted">No players match.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<app-player-compare
+  [a]="compareSel()[0] ?? null"
+  [b]="compareSel()[1] ?? null"
+  [visible]="compareOpen()"
+  (closed)="compareOpen.set(false)"
+/>

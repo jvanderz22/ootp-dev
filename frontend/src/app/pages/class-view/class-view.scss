@@ -1,0 +1,14 @@
+:host { display: block; }
+
+.muted { color: var(--text-dim); }
+.error { color: var(--drafted); }
+.notice { color: var(--ok); }
+
+.notproc {
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+.notproc p { margin: 0; }

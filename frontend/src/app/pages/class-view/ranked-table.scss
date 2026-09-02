@@ -1,0 +1,207 @@
+:host { display: block; }
+
+.row { display: flex; align-items: center; gap: 8px; }
+.muted { color: var(--text-dim); }
+
+.filters {
+  margin: 12px 0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.filters .chk {
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.filters .chk input { cursor: pointer; }
+
+.expand-all {
+  font-size: 12px;
+  cursor: pointer;
+}
+.expand-all.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* --------------------------------------------------------------- compare bar */
+.compare-bar {
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elev);
+}
+.compare-bar .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 2px 4px 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+}
+.compare-bar .chip-x {
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 14px;
+  line-height: 1;
+}
+.compare-bar .chip-x:hover { color: var(--drafted); }
+
+/* ------------------------------------------------------------- ranked table */
+.ranked-table {
+  font-size: 13px;
+
+  ::ng-deep .p-datatable-thead > tr > th {
+    white-space: nowrap;
+  }
+
+  /* keep every data cell on one line (GB / velocity / demand never wrap); the
+     Name column is the one exception and may wrap inside its fixed width */
+  ::ng-deep tr.body-row > td {
+    white-space: nowrap;
+  }
+  ::ng-deep tr.body-row > td.sticky-name {
+    white-space: normal;
+  }
+
+  ::ng-deep th.sortable {
+    cursor: pointer;
+    user-select: none;
+  }
+  ::ng-deep th.sortable:hover {
+    color: var(--accent);
+  }
+  ::ng-deep .sort-caret {
+    font-size: 10px;
+    margin-left: 4px;
+    color: var(--accent);
+  }
+
+  ::ng-deep th.grp {
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 11px;
+  }
+
+  ::ng-deep td.num,
+  ::ng-deep th.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::ng-deep tr.body-row {
+    cursor: pointer;
+  }
+  ::ng-deep tr.body-row.is-expanded > td {
+    background: var(--bg-elev);
+  }
+  ::ng-deep tr.drafted > td:not(.expander-col):not(.cmp-col) {
+    color: var(--drafted);
+    text-decoration: line-through;
+  }
+  ::ng-deep tr.detail-row > td {
+    color: var(--text);
+    text-decoration: none;
+    background: var(--bg-elev);
+    white-space: normal;
+    padding: 0;
+  }
+  /* pin the expanded card to the visible viewport (width set inline from JS)
+     so it doesn't stretch / scroll with an overflowing table */
+  ::ng-deep .detail-viewport {
+    position: sticky;
+    left: 0;
+    box-sizing: border-box;
+    padding: 4px 10px 8px;
+    background: var(--bg-elev);
+  }
+  ::ng-deep td.expander-col,
+  ::ng-deep th.expander-col {
+    width: 32px;
+    text-align: center;
+  }
+  ::ng-deep td.cmp-col,
+  ::ng-deep th.cmp-col {
+    width: 28px;
+    text-align: center;
+    color: var(--text-dim);
+  }
+  ::ng-deep td.cmp-col input { cursor: pointer; }
+
+  /* ---- leading columns frozen against the left edge on horizontal scroll --- */
+  ::ng-deep th.cmp-col,
+  ::ng-deep td.cmp-col,
+  ::ng-deep th.sticky-rank,
+  ::ng-deep td.sticky-rank,
+  ::ng-deep th.sticky-name,
+  ::ng-deep td.sticky-name,
+  ::ng-deep th.sticky-pos,
+  ::ng-deep td.sticky-pos {
+    position: sticky;
+    z-index: 2;
+  }
+  ::ng-deep th.cmp-col,
+  ::ng-deep th.sticky-rank,
+  ::ng-deep th.sticky-name,
+  ::ng-deep th.sticky-pos {
+    z-index: 4;
+    background: var(--bg-elev);
+  }
+  ::ng-deep td.cmp-col,
+  ::ng-deep td.sticky-rank,
+  ::ng-deep td.sticky-name,
+  ::ng-deep td.sticky-pos {
+    background: var(--bg);
+  }
+  ::ng-deep th.cmp-col,
+  ::ng-deep td.cmp-col { left: 0; }
+  ::ng-deep th.sticky-rank,
+  ::ng-deep td.sticky-rank {
+    left: 28px;
+    width: 44px;
+    min-width: 44px;
+  }
+  ::ng-deep th.sticky-name,
+  ::ng-deep td.sticky-name {
+    left: 72px;
+    width: 160px;
+    min-width: 160px;
+  }
+  ::ng-deep th.sticky-pos,
+  ::ng-deep td.sticky-pos {
+    left: 232px;
+    width: 44px;
+    min-width: 44px;
+    box-shadow: inset -1px 0 0 var(--border);
+  }
+  /* keep the elevated tint on frozen cells of an expanded / detail row */
+  ::ng-deep tr.body-row.is-expanded > td.cmp-col,
+  ::ng-deep tr.body-row.is-expanded > td.sticky-rank,
+  ::ng-deep tr.body-row.is-expanded > td.sticky-name,
+  ::ng-deep tr.body-row.is-expanded > td.sticky-pos {
+    background: var(--bg-elev);
+  }
+
+  /* wide, non-wrapping cell (e.g. velocity range) */
+  ::ng-deep th.col-wide,
+  ::ng-deep td.col-wide {
+    white-space: nowrap;
+    min-width: 5.5rem;
+  }
+
+  /* colour cues for descriptive grade cells: orange for the weak tiers,
+     gold amber for the middling one — both kept clear of the drafted red */
+  ::ng-deep td.tone-danger { color: var(--tone-weak); font-weight: 700; }
+  ::ng-deep td.tone-warn { color: var(--tone-mid); font-weight: 600; }
+}

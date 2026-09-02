@@ -11,6 +11,10 @@
   --danger: #c0392b;
   --ok: #1c8a4d;
   --drafted: #b23b3b;
+  /* grade cues — a saturated orange + a gold amber, both well clear of the
+     drafted red so no two of the three ever read as the same thing */
+  --tone-weak: #ea580c;
+  --tone-mid: #a16207;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -26,6 +30,8 @@
     --danger: #e2604f;
     --ok: #46c07f;
     --drafted: #e08383;
+    --tone-weak: #fb923c;
+    --tone-mid: #facc15;
   }
 }
 

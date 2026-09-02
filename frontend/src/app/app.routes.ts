@@ -25,7 +25,7 @@ export const routes: Routes = [
       },
       {
         path: 'class/:name',
-        loadComponent: () => import('./pages/class-view').then((m) => m.ClassViewPage),
+        loadComponent: () => import('./pages/class-view/class-view').then((m) => m.ClassViewPage),
       },
     ],
   },

@@ -5,6 +5,7 @@ import asyncio
 import csv
 import json
 import os
+import re
 import shutil
 import tempfile
 from datetime import datetime, timezone
@@ -13,6 +14,7 @@ import anyio
 
 import pipeline
 from context import DraftClassContext, default_base_dir
+from web import class_index
 from custom_ranking import clear_order, has_custom_order, load_order, resolve_order, save_order
 from draft_class_files import get_ranked_players_file
 from drafted_players import get_drafted_player_ids
@@ -136,6 +138,7 @@ def _ratings_payload(gp):
         "workEthic": gp.work_ethic or None,
         "intelligence": gp.intelligence or None,
         "leadership": gp.leadership or None,
+        "scoutingAccuracy": gp.scouting_accuracy or None,
         "batting": {
             "contact": gp.contact,
             "gap": gp.gap,
@@ -178,6 +181,16 @@ def _ratings_payload(gp):
     }
 
 
+def _classify(position_player_score, pitcher_score):
+    """Hitter / Pitcher / Two-way, mirroring printers/draft_prospect_printer.py."""
+    pp = position_player_score or 0
+    pit = pitcher_score or 0
+    hi, lo = max(pp, pit), min(pp, pit)
+    if hi > 0 and lo * 2 > hi:
+        return "Two-way"
+    return "Pitcher" if pit >= pp else "Hitter"
+
+
 def _player_payload(rank, row, drafted_ids, game_player=None):
     payload = {
         "rank": rank,
@@ -185,6 +198,8 @@ def _player_payload(rank, row, drafted_ids, game_player=None):
         "name": row["name"],
         "position": row["position"],
         "age": _to_int(row.get("age")),
+        "bat_hand": (getattr(game_player, "bat_hand", None) or None) if game_player else None,
+        "throw_hand": (getattr(game_player, "throw_hand", None) or None) if game_player else None,
         "in_game_overall": _to_int(row.get("in_game_overall")),
         "in_game_potential": _to_int(row.get("in_game_potential")),
         "demand": row.get("demand") or None,
@@ -194,7 +209,77 @@ def _player_payload(rank, row, drafted_ids, game_player=None):
     }
     for field in _FLOAT_FIELDS:
         payload[field] = _to_number(row.get(field))
+    payload["type"] = _classify(
+        payload["position_player_score"], payload["pitcher_score"]
+    )
     return payload
+
+
+_CAMEL_RE = re.compile(r"(?<!^)(?=[A-Z])")
+
+
+def _camel_to_snake(name: str) -> str:
+    return _CAMEL_RE.sub("_", name).lower()
+
+
+def _demand_key(demand):
+    """Numeric sort key for the contract-demand column. Mirrors demandSortKey in
+    frontend/src/app/core/player-stats.ts ("Slot" = 0, "Impossible" sorts last)."""
+    if not demand:
+        return None
+    s = demand.strip().lower()
+    if s == "slot":
+        return 0.0
+    if s == "impossible":
+        return 9.99e11
+    digits = re.sub(r"[^0-9]", "", s)
+    if not digits:
+        return None
+    n = float(digits)
+    if s.endswith("k"):
+        return n * 1_000
+    if s.endswith("m"):
+        return n * 100_000
+    return n
+
+
+# Descriptive scouting grades (personality, injury proneness, scout accuracy)
+# ordered low -> high so the table can sort them meaningfully. Only relative
+# order within a single column matters, so overlapping vocabularies are fine.
+_GRADE_ORDINALS = {
+    "l": 0, "n": 1, "h": 2,
+    "fragile": 0, "normal": 1, "durable": 2,
+    "very low": 0, "low": 1, "average": 2, "high": 3, "very high": 4,
+}
+_RATING_META_KEYS = {
+    "injuryProne", "workEthic", "intelligence", "leadership", "scoutingAccuracy",
+}
+
+
+def _grade_ordinal(value):
+    if value is None:
+        return None
+    return _GRADE_ORDINALS.get(str(value).strip().lower())
+
+
+def _sort_value(row, field):
+    """Resolve a column's sort value: a flat payload key (camelCase from the
+    client), a top-level `ratings` grade, a dotted rating path (`batting.power`,
+    `pitching.stuff`), or `pitch.<Name>` for an individual pitch potential."""
+    if field == "demandKey":
+        return _demand_key(row.get("demand"))
+    if field in _RATING_META_KEYS:
+        return _grade_ordinal((row.get("ratings") or {}).get(field))
+    if "." not in field:
+        return row.get(_camel_to_snake(field))
+    head, _, tail = field.partition(".")
+    ratings = row.get("ratings") or {}
+    if head == "pitch":
+        for p in (ratings.get("pitching") or {}).get("pitches") or []:
+            if p.get("name", "").lower() == tail.lower():
+                return p.get("potential")
+        return None
+    return (ratings.get(head) or {}).get(tail)
 
 
 # ----------------------------------------------------------------- read models
@@ -235,18 +320,52 @@ def list_draft_classes():
     ]
 
 
+def ranked_players_page(
+    name: str, *, filter=None, sort=None, page=0, page_size=50, all_rows=False
+):
+    """One filtered/sorted/paginated slice of a class, served from the in-memory
+    index (see web/class_index.py). `filter` = {search, positions, hide_drafted};
+    `sort` = {field, order} with order 1 asc / -1 desc."""
+    idx = class_index.get_index(_ctx(name))
+    rows = idx.rows
+
+    f = filter or {}
+    search = (f.get("search") or "").strip().lower()
+    pos_set = set(f.get("positions") or [])
+    hide_drafted = bool(f.get("hide_drafted"))
+    if search or pos_set or hide_drafted:
+        rows = [
+            r
+            for r in rows
+            if (not search or search in r["name"].lower())
+            and (not pos_set or r["position"] in pos_set)
+            and (not hide_drafted or not r["drafted"])
+        ]
+
+    total = len(rows)
+
+    if sort and sort.get("field"):
+        reverse = (sort.get("order") or 1) < 0
+        keyed = [(r, _sort_value(r, sort["field"])) for r in rows]
+        present = [(r, v) for r, v in keyed if v is not None]
+        missing = [r for r, v in keyed if v is None]
+        present.sort(key=lambda t: t[1], reverse=reverse)  # stable: ties keep rank order
+        rows = [r for r, _ in present] + missing
+
+    if not all_rows:
+        start = max(page, 0) * page_size
+        rows = rows[start : start + page_size]
+
+    return {"rows": rows, "total_records": total}
+
+
 def ranked_players(name: str):
-    ctx = _ctx(name)
-    rows = _read_ranked_rows(ctx)
-    if rows is None:
-        return []  # not processed yet - the UI still needs to render (Reprocess/Delete)
-    ordered = resolve_order(ctx, rows)
-    drafted_ids = get_drafted_player_ids(ctx)
-    game_players = _game_players_by_id(ctx)
-    return [
-        _player_payload(i + 1, row, drafted_ids, game_players.get(row["id"]))
-        for i, row in enumerate(ordered)
-    ]
+    """Full ordered list, no filter/sort/paging - custom-order internals and tests."""
+    return ranked_players_page(name, all_rows=True)["rows"]
+
+
+def class_positions(name: str):
+    return class_index.get_index(_ctx(name)).positions
 
 
 def upload_csv_bytes(name: str) -> bytes:
@@ -282,6 +401,7 @@ def delete_draft_class(name: str) -> str:
             shutil.rmtree(path, ignore_errors=True)
         elif path.exists():
             path.unlink()
+    class_index.evict(name)
     return name
 
 
@@ -310,6 +430,7 @@ async def upload_draft_class(name: str, ranking_method: str, upload):
             pass
 
     await _run_pipeline(ctx)
+    class_index.evict(name)
     return draft_class_payload(name)
 
 
@@ -321,12 +442,14 @@ async def set_ranking_method(name: str, ranking_method: str):
     config["ranking_method"] = ranking_method
     ctx.save_config(config)
     await _run_pipeline(ctx)
+    class_index.evict(name)
     return draft_class_payload(name)
 
 
 async def reprocess(name: str):
     ctx = _ctx(name)
     await _run_pipeline(ctx)
+    class_index.evict(name)
     return draft_class_payload(name)
 
 
@@ -338,7 +461,8 @@ def save_custom_order(name: str, order):
     known = [r["id"] for r in rows]
     save_order(ctx, [str(pid) for pid in order], known_ids=known)
     write_upload_file(ctx)
-    return ranked_players(name)
+    class_index.evict(name)
+    return draft_class_payload(name)
 
 
 def clear_custom_order(name: str):
@@ -346,7 +470,8 @@ def clear_custom_order(name: str):
     clear_order(ctx)
     if _read_ranked_rows(ctx) is not None:
         write_upload_file(ctx)
-    return ranked_players(name)
+    class_index.evict(name)
+    return draft_class_payload(name)
 
 
 async def refresh_drafted(name: str):
@@ -364,6 +489,7 @@ def _refresh_drafted_sync(name: str):
     write_drafted_players_file(ctx, picks)
     if _read_ranked_rows(ctx) is not None:
         write_upload_file(ctx)
+    class_index.evict(name)
 
     dataset_ids = _dataset_ids(ctx)
     matched = sum(1 for p in picks if p.id in dataset_ids)

@@ -6,7 +6,10 @@ const PLAYER_FIELDS = gql`
     id
     name
     position
+    type
     age
+    batHand
+    throwHand
     modelScore
     inGameOverall
     inGamePotential
@@ -45,17 +48,75 @@ export const DRAFT_CLASSES = gql`
   }
 `;
 
-export const RANKED_PLAYERS = gql`
+/** Initial class load: metadata + position facet + first page of players. */
+export const CLASS_DETAIL = gql`
+  ${CLASS_FIELDS}
   ${PLAYER_FIELDS}
-  query RankedPlayers($name: String!) {
+  query ClassDetail(
+    $name: String!
+    $filter: RankedPlayerFilter
+    $sort: RankedPlayerSort
+    $page: Int
+    $pageSize: Int
+  ) {
     draftClass(name: $name) {
       ...ClassFields
     }
-    rankedPlayers(name: $name) {
-      ...PlayerFields
+    classPositions(name: $name)
+    rankedPlayers(
+      name: $name
+      filter: $filter
+      sort: $sort
+      page: $page
+      pageSize: $pageSize
+    ) {
+      totalRecords
+      rows {
+        ...PlayerFields
+      }
     }
   }
-  ${CLASS_FIELDS}
+`;
+
+/** Subsequent filter/sort/page fetches — just the player slice. */
+export const RANKED_PAGE = gql`
+  ${PLAYER_FIELDS}
+  query RankedPage(
+    $name: String!
+    $filter: RankedPlayerFilter
+    $sort: RankedPlayerSort
+    $page: Int
+    $pageSize: Int
+  ) {
+    rankedPlayers(
+      name: $name
+      filter: $filter
+      sort: $sort
+      page: $page
+      pageSize: $pageSize
+    ) {
+      totalRecords
+      rows {
+        ...PlayerFields
+      }
+    }
+  }
+`;
+
+/** Full ordered list, slim fields — backs reorder mode. */
+export const REORDER_PLAYERS = gql`
+  query ReorderPlayers($name: String!) {
+    rankedPlayers(name: $name, allRows: true) {
+      rows {
+        id
+        name
+        position
+        age
+        modelScore
+        drafted
+      }
+    }
+  }
 `;
 
 export const STATSPLUS_SETTINGS = gql`
@@ -103,19 +164,19 @@ export const DELETE_DRAFT_CLASS = gql`
 `;
 
 export const SAVE_CUSTOM_ORDER = gql`
-  ${PLAYER_FIELDS}
+  ${CLASS_FIELDS}
   mutation SaveCustomOrder($name: String!, $order: [ID!]!) {
     saveCustomOrder(name: $name, order: $order) {
-      ...PlayerFields
+      ...ClassFields
     }
   }
 `;
 
 export const CLEAR_CUSTOM_ORDER = gql`
-  ${PLAYER_FIELDS}
+  ${CLASS_FIELDS}
   mutation ClearCustomOrder($name: String!) {
     clearCustomOrder(name: $name) {
-      ...PlayerFields
+      ...ClassFields
     }
   }
 `;

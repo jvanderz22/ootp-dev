@@ -3,11 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Apollo } from 'apollo-angular';
 import { firstValueFrom } from 'rxjs';
 import {
+  CLASS_DETAIL,
   CLEAR_CUSTOM_ORDER,
   DELETE_DRAFT_CLASS,
   DRAFT_CLASSES,
-  RANKED_PLAYERS,
+  RANKED_PAGE,
   REFRESH_DRAFTED,
+  REORDER_PLAYERS,
   REPROCESS_DRAFT_CLASS,
   SAVE_CUSTOM_ORDER,
   SET_RANKING_METHOD,
@@ -19,8 +21,30 @@ import {
   DraftClass,
   DraftedRefreshResult,
   RankedPlayer,
+  RankedPlayerPage,
+  RankedQuery,
   StatsPlusSettings,
 } from './api.types';
+
+type ReorderPlayer = Pick<
+  RankedPlayer,
+  'id' | 'name' | 'position' | 'age' | 'modelScore' | 'drafted'
+>;
+
+/** Map the flat UI query onto the GraphQL `filter` / `sort` input objects. */
+function queryVars(name: string, q: RankedQuery) {
+  return {
+    name,
+    filter: {
+      search: q.search.trim() || null,
+      positions: q.positions.length ? q.positions : null,
+      hideDrafted: q.hideDrafted,
+    },
+    sort: q.sortField ? { field: q.sortField, order: q.sortOrder } : null,
+    page: q.page,
+    pageSize: q.pageSize,
+  };
+}
 
 function unwrap(err: unknown): never {
   const e = err as { graphQLErrors?: { message: string }[]; message?: string };
@@ -48,16 +72,59 @@ export class ApiService {
 
   async classDetail(
     name: string,
-  ): Promise<{ draftClass: DraftClass | null; rankedPlayers: RankedPlayer[] }> {
+    q: RankedQuery,
+  ): Promise<{
+    draftClass: DraftClass | null;
+    positions: string[];
+    page: RankedPlayerPage;
+  }> {
     try {
       const res = await firstValueFrom(
-        this.apollo.query<{ draftClass: DraftClass | null; rankedPlayers: RankedPlayer[] }>({
-          query: RANKED_PLAYERS,
+        this.apollo.query<{
+          draftClass: DraftClass | null;
+          classPositions: string[];
+          rankedPlayers: RankedPlayerPage;
+        }>({
+          query: CLASS_DETAIL,
+          variables: queryVars(name, q),
+          fetchPolicy: 'network-only',
+        }),
+      );
+      return {
+        draftClass: res.data!.draftClass,
+        positions: res.data!.classPositions,
+        page: res.data!.rankedPlayers,
+      };
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  async rankedPlayersPage(name: string, q: RankedQuery): Promise<RankedPlayerPage> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.query<{ rankedPlayers: RankedPlayerPage }>({
+          query: RANKED_PAGE,
+          variables: queryVars(name, q),
+          fetchPolicy: 'network-only',
+        }),
+      );
+      return res.data!.rankedPlayers;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  async reorderPlayers(name: string): Promise<ReorderPlayer[]> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.query<{ rankedPlayers: { rows: ReorderPlayer[] } }>({
+          query: REORDER_PLAYERS,
           variables: { name },
           fetchPolicy: 'network-only',
         }),
       );
-      return res.data!;
+      return res.data!.rankedPlayers.rows;
     } catch (e) {
       unwrap(e);
     }
@@ -120,10 +187,10 @@ export class ApiService {
     }
   }
 
-  async saveCustomOrder(name: string, order: string[]): Promise<RankedPlayer[]> {
+  async saveCustomOrder(name: string, order: string[]): Promise<DraftClass> {
     try {
       const res = await firstValueFrom(
-        this.apollo.mutate<{ saveCustomOrder: RankedPlayer[] }>({
+        this.apollo.mutate<{ saveCustomOrder: DraftClass }>({
           mutation: SAVE_CUSTOM_ORDER,
           variables: { name, order },
         }),
@@ -134,10 +201,10 @@ export class ApiService {
     }
   }
 
-  async clearCustomOrder(name: string): Promise<RankedPlayer[]> {
+  async clearCustomOrder(name: string): Promise<DraftClass> {
     try {
       const res = await firstValueFrom(
-        this.apollo.mutate<{ clearCustomOrder: RankedPlayer[] }>({
+        this.apollo.mutate<{ clearCustomOrder: DraftClass }>({
           mutation: CLEAR_CUSTOM_ORDER,
           variables: { name },
         }),

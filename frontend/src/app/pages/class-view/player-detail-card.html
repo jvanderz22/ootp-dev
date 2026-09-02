@@ -1,0 +1,242 @@
+@let p = player();
+<div class="detail-card">
+  <div class="detail-head">
+    <span class="dh-name">{{ p.name }}</span>
+    <p-tag [value]="p.type" [severity]="typeSeverity(p.type)" />
+    @if (p.drafted) {
+      <p-tag value="Drafted" severity="danger" />
+    }
+    <span class="muted">{{ p.position }} · Age {{ p.age ?? '—' }} · #{{ p.rank }}</span>
+    @if (p.demand) {
+      <span class="muted">Demand {{ p.demand }}</span>
+    }
+    @if (p.ratings?.scoutingAccuracy; as sct) {
+      <p-tag [value]="sct" [severity]="scoutSeverity(sct)" />
+    }
+  </div>
+
+  <div class="detail-sections">
+    <div class="ingame-grid">
+      <section class="detail-section">
+        <h4>Overview</h4>
+        <div class="stat-grid">
+          <div class="stat">
+            <span>OVR</span><b>{{ p.inGameOverall ?? '—' }}</b>
+          </div>
+          <div class="stat">
+            <span>POT</span><b>{{ p.inGamePotential ?? '—' }}</b>
+          </div>
+          @for (m of makeupRows(p); track m[0]) {
+            <div class="stat">
+              <span>{{ m[0] }}</span
+              ><b>{{ m[1] }}</b>
+            </div>
+          }
+        </div>
+      </section>
+
+      @if (showBatting(p.type) && battingSkillRows(p).length) {
+        <section class="detail-section">
+          <h4>Batting</h4>
+          <div class="rating-grid">
+            <div class="rating rating-head"><span></span><i>cur</i><b>pot</b></div>
+            @for (r of battingSkillRows(p); track r.label) {
+              <div class="rating">
+                <span>{{ r.label }}</span>
+                <i>{{ r.current ?? '—' }}</i>
+                <b>{{ r.potential ?? '—' }}</b>
+              </div>
+            }
+          </div>
+          <div class="stat-grid tight">
+            @for (s of speedRows(p); track s[0]) {
+              <div class="stat">
+                <span>{{ s[0] }}</span
+                ><b>{{ s[1] ?? '—' }}</b>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      @if (showBatting(p.type) && fieldingRows(p).length) {
+        <section class="detail-section">
+          <h4>Fielding</h4>
+          <div class="stat-grid tight">
+            @for (fr of fieldingRows(p); track fr[0]) {
+              <div class="stat">
+                <span>{{ fr[0] }}</span
+                ><b>{{ fr[1] }}</b>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      @if (showPitching(p.type) && pitchingSkillRows(p).length) {
+        <section class="detail-section">
+          <h4>Pitching</h4>
+          <div class="rating-grid">
+            <div class="rating rating-head"><span></span><i>cur</i><b>pot</b></div>
+            @for (r of pitchingSkillRows(p); track r.label) {
+              <div class="rating">
+                <span>{{ r.label }}</span>
+                <i>{{ r.current ?? '—' }}</i>
+                <b>{{ r.potential ?? '—' }}</b>
+              </div>
+            }
+          </div>
+          <div class="stat-grid tight">
+            @for (m of pitchingMiscRows(p); track m[0]) {
+              <div class="stat">
+                <span>{{ m[0] }}</span
+                ><b>{{ m[1] }}</b>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      @if (showPitching(p.type) && pitchArsenal(p).length) {
+        <section class="detail-section">
+          <h4>Arsenal</h4>
+          <div class="rating-grid">
+            <div class="rating rating-head arsenal"><span>Pitch</span><b>pot</b></div>
+            @for (pi of pitchArsenal(p); track pi.name) {
+              <div class="rating arsenal">
+                <span>{{ pi.name }}</span>
+                <b>{{ pi.potential ?? '—' }}</b>
+              </div>
+            }
+          </div>
+        </section>
+      }
+    </div>
+
+    <section class="detail-section model-col">
+      <h4>Model</h4>
+      <div class="stat-grid">
+        <div class="stat">
+          <span>Overall</span><b>{{ p.modelScore | number: '1.2-2' }}</b>
+        </div>
+        <div class="stat">
+          <span>Raw overall</span><b>{{ p.rawOverallScore | number: '1.2-2' }}</b>
+        </div>
+        <div class="stat">
+          <span>Batter score</span><b>{{ p.positionPlayerScore | number: '1.2-2' }}</b>
+        </div>
+        <div class="stat">
+          <span>Pitcher score</span><b>{{ p.pitcherScore | number: '1.2-2' }}</b>
+        </div>
+        @if (showBatting(p.type)) {
+          <div class="stat">
+            <span>Batting model</span><b>{{ p.battingScoreComponent | number: '1.2-2' }}</b>
+          </div>
+          <div class="stat">
+            <span>Fielding model</span><b>{{ p.fieldingScoreComponent | number: '1.2-2' }}</b>
+          </div>
+          <div class="stat">
+            <span>Running model</span><b>{{ p.runningScoreComponent | number: '1.2-2' }}</b>
+          </div>
+        }
+        @if (showPitching(p.type)) {
+          <div class="stat">
+            <span>SP model</span><b>{{ p.starterComponent | number: '1.2-2' }}</b>
+          </div>
+          <div class="stat">
+            <span>RP model</span><b>{{ p.relieverComponent | number: '1.2-2' }}</b>
+          </div>
+        }
+      </div>
+
+      @if (showBatting(p.type) && battingComponents(p).length) {
+        <div class="stat-grid tight subtle">
+          @for (e of battingComponents(p); track e[0]) {
+            <div class="stat">
+              <span>{{ e[0] }}</span
+              ><b>{{ e[1] | number: '1.2-2' }}</b>
+            </div>
+          }
+        </div>
+      }
+
+      @if (showPitching(p.type) && pitchingComponents(p).length) {
+        <div class="stat-grid tight subtle">
+          @for (e of pitchingComponents(p); track e[0]) {
+            <div class="stat">
+              <span>{{ e[0] }}</span
+              ><b>{{ e[1] | number: '1.2-2' }}</b>
+            </div>
+          }
+        </div>
+      }
+
+      @if (hasModifiers(p)) {
+        <div class="modifier-summary">
+          @if (showBatting(p.type) && modifierGroup(p, 'pos'); as g) {
+            @if (g.total != null) {
+              <div class="mod total">
+                <span>Position modifiers ×</span><b>{{ g.total | number: '1.2-2' }}</b>
+              </div>
+            }
+          }
+          @if (showPitching(p.type) && modifierGroup(p, 'pitcher'); as g) {
+            @if (g.total != null) {
+              <div class="mod total">
+                <span>Pitcher modifiers ×</span><b>{{ g.total | number: '1.2-2' }}</b>
+              </div>
+            }
+          }
+        </div>
+
+        <p-panel header="Modifier breakdown" [toggleable]="true" [collapsed]="true">
+          @if (showBatting(p.type) && modifierGroup(p, 'pos'); as g) {
+            <div class="modifier-group">
+              <h5>Position modifiers</h5>
+              @for (m of g.rows; track m.label) {
+                <div class="mod">
+                  <span>{{ m.label }}</span
+                  ><b>{{ m.value | number: '1.2-2' }}</b>
+                </div>
+              }
+              @if (g.total != null) {
+                <div class="mod total">
+                  <span>Total</span><b>{{ g.total | number: '1.2-2' }}</b>
+                </div>
+              }
+            </div>
+          }
+          @if (showPitching(p.type) && modifierGroup(p, 'pitcher'); as g) {
+            <div class="modifier-group">
+              <h5>Pitcher modifiers</h5>
+              @for (m of g.rows; track m.label) {
+                <div class="mod">
+                  <span>{{ m.label }}</span
+                  ><b>{{ m.value | number: '1.2-2' }}</b>
+                </div>
+              }
+              @if (g.total != null) {
+                <div class="mod total">
+                  <span>Total</span><b>{{ g.total | number: '1.2-2' }}</b>
+                </div>
+              }
+            </div>
+          }
+        </p-panel>
+      }
+    </section>
+  </div>
+
+  @if (otherComponents(p).length) {
+    <p-panel header="Diagnostics" [toggleable]="true" [collapsed]="true">
+      <div class="stat-grid tight subtle">
+        @for (e of otherComponents(p); track e[0]) {
+          <div class="stat">
+            <span>{{ e[0] }}</span
+            ><b>{{ e[1] }}</b>
+          </div>
+        }
+      </div>
+    </p-panel>
+  }
+</div>
