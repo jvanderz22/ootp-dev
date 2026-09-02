@@ -49,7 +49,7 @@ without it — it's only needed to auto-populate the drafted list.
 Backend (port 8000):
 
 ```bash
-source activate/bin/activate           # or: pip install -r requirements.txt
+source activate/bin/activate
 DEV=1 DATA_DIR=./ uvicorn web.app:app --reload --port 8000
 ```
 
