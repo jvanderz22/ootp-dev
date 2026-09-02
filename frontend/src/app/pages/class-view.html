@@ -206,12 +206,12 @@
                       <section class="detail-section">
                         <h4>Batting</h4>
                         <div class="rating-grid">
-                          <div class="rating rating-head"><span></span><b>pot</b><i>cur</i></div>
+                          <div class="rating rating-head"><span></span><i>cur</i><b>pot</b></div>
                           @for (r of battingSkillRows(p); track r.label) {
                             <div class="rating">
                               <span>{{ r.label }}</span>
-                              <b>{{ r.potential ?? '—' }}</b>
                               <i>{{ r.current ?? '—' }}</i>
+                              <b>{{ r.potential ?? '—' }}</b>
                             </div>
                           }
                         </div>
@@ -238,12 +238,12 @@
                       <section class="detail-section">
                         <h4>Pitching</h4>
                         <div class="rating-grid">
-                          <div class="rating rating-head"><span></span><b>pot</b><i>cur</i></div>
+                          <div class="rating rating-head"><span></span><i>cur</i><b>pot</b></div>
                           @for (r of pitchingSkillRows(p); track r.label) {
                             <div class="rating">
                               <span>{{ r.label }}</span>
-                              <b>{{ r.potential ?? '—' }}</b>
                               <i>{{ r.current ?? '—' }}</i>
+                              <b>{{ r.potential ?? '—' }}</b>
                             </div>
                           }
                         </div>
@@ -259,12 +259,11 @@
                       <section class="detail-section">
                         <h4>Arsenal</h4>
                         <div class="rating-grid">
-                          <div class="rating rating-head"><span>Pitch</span><b>pot</b><i>cur</i></div>
+                          <div class="rating rating-head arsenal"><span>Pitch</span><b>pot</b></div>
                           @for (pi of pitchArsenal(p); track pi.name) {
-                            <div class="rating">
+                            <div class="rating arsenal">
                               <span>{{ pi.name }}</span>
                               <b>{{ pi.potential ?? '—' }}</b>
-                              <i>{{ pi.current ?? '—' }}</i>
                             </div>
                           }
                         </div>

@@ -184,14 +184,14 @@ export class PlayerCompareComponent {
       const rows = dropEmpty([...skills, ...misc]);
       if (rows.length) out.push({ title: 'Pitching', rows });
 
-      const asRating = (p: { name: string; potential: number | null; current: number | null }) =>
-        [p.name, { label: p.name, potential: p.potential, current: p.current }] as [string, RatingRow];
+      // Pitches only carry a potential rating, so compare on that alone.
       const arsenal = dropEmpty(
-        align(pitchArsenal(A).map(asRating), pitchArsenal(B).map(asRating)).map((r) =>
-          ratingRow(r.label, r.a, r.b),
-        ),
+        align(
+          pitchArsenal(A).map((p) => [p.name, p.potential] as [string, number | null]),
+          pitchArsenal(B).map((p) => [p.name, p.potential] as [string, number | null]),
+        ).map((r) => numericRow(r.label, r.a, r.b, 0)),
       );
-      if (arsenal.length) out.push({ title: 'Arsenal', rows: arsenal });
+      if (arsenal.length) out.push({ title: 'Arsenal (pot)', rows: arsenal });
     }
 
     out.push({
