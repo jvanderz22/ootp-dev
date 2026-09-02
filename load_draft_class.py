@@ -15,6 +15,15 @@ VALID_RANKING_METHODS = ("draft_class", "potential", "overall")
 # Columns without which the ranking pipeline can't produce anything meaningful.
 REQUIRED_HEADERS = ("ID", "POS", "Name")
 
+# Some OOTP exports label the pitcher-control columns so they collide with the
+# batter "CON" column (and duplicate "CONT P"); the CSV writer then de-dupes
+# them by suffixing "_1". Map those back to the names the ranking pipeline and
+# models/game_players.py expect.
+HEADER_ALIASES = {
+    "CON_1": "CONT",
+    "CONT P_1": "CONT P",
+}
+
 
 class DatasetFormatError(ValueError):
     """The uploaded file isn't a usable OOTP scouting export."""
@@ -50,6 +59,31 @@ def _looks_like_html(path) -> bool:
     with open(path, "rb") as f:
         head = f.read(4096).lstrip().lower()
     return head.startswith(b"<") or b"<table" in head or b"<html" in head
+
+
+def _normalize_headers(data_file) -> None:
+    """Rewrite known aliased column names (see HEADER_ALIASES) to their canonical
+    form, in place. Only renames when the canonical column isn't already present,
+    so a well-formed export is left untouched."""
+    with open(data_file, newline="") as f:
+        rows = list(csv.reader(f))
+    if not rows:
+        return
+    header = rows[0]
+    present = {h.strip() for h in header}
+    changed = False
+    for i, col in enumerate(header):
+        target = HEADER_ALIASES.get(col.strip())
+        if target and target not in present:
+            header[i] = target
+            present.add(target)
+            changed = True
+    if not changed:
+        return
+    tmp = f"{data_file}.norm"
+    with open(tmp, "w", newline="") as f:
+        csv.writer(f).writerows(rows)
+    os.replace(tmp, data_file)
 
 
 def _validate_headers(data_file) -> None:
@@ -90,6 +124,7 @@ def create_dataset_from_upload(name, upload_path, ranking_method="draft_class", 
             with open(upload_path, "rb") as src, open(staged, "wb") as dst:
                 dst.write(src.read())
 
+        _normalize_headers(staged)
         _validate_headers(staged)
         os.replace(staged, ctx.data_file)
     finally:

@@ -36,22 +36,52 @@ EVAL_MODEL_FIELDNAMES = [
 ]
 
 
+# The pitching-control columns collide with the batting "CON" / "CON P" headers
+# in an OOTP export. Older exports reuse those headers verbatim; newer ones
+# duplicate them and the CSV writer de-dupes the second copy to "CON_1" /
+# "CONT P_1". Either way we want them as "CONT" (current) and "CONT P" (potential).
+_CONTROL_ALIASES = {
+    "CON_1": "CONT",
+    "CON P_1": "CONT P",
+    "CONT P_1": "CONT P",
+}
+
+
 def normalise_dataset(ctx) -> None:
-    """OOTP exports the pitching control column with the same header as batting
-    contact ("CON P" / "CON"); rename so both are readable."""
+    """Rewrite the header row so the pitching-control columns read as
+    "CONT" / "CONT P", regardless of which collision form the export used."""
     path = get_draft_class_data_file(ctx)
     with open(path, newline="") as f:
-        filedata = f.read()
+        rows = list(csv.reader(f))
+    if not rows:
+        return
+    header = rows[0]
+    original = list(header)
 
-    fixed = filedata
-    if "MOV P,CON P" in fixed:
-        fixed = fixed.replace("MOV P,CON P", "MOV P,CONT P")
-    if "MOV,CON," in fixed:
-        fixed = fixed.replace("MOV,CON,", "MOV,CONT,")
+    def present():
+        return {h.strip() for h in header}
 
-    if fixed != filedata:
+    # Explicit de-duped aliases: "CON_1" -> "CONT", "CONT P_1" -> "CONT P", ...
+    for i, col in enumerate(header):
+        target = _CONTROL_ALIASES.get(col.strip())
+        if target and target not in present():
+            header[i] = target
+
+    # Older form: the pitching block is STU, MOV, CON, STU P, MOV P, CON P - the
+    # control columns sit right after MOV / MOV P and are still literally "CON".
+    for anchor, target in (("MOV", "CONT"), ("MOV P", "CONT P")):
+        if target in present():
+            continue
+        try:
+            j = header.index(anchor) + 1
+        except ValueError:
+            continue
+        if j < len(header) and header[j].strip() in ("CON", "CON P"):
+            header[j] = target
+
+    if header != original:
         with open(path, "w", newline="") as f:
-            f.write(fixed)
+            csv.writer(f).writerows(rows)
 
 
 def load_player_data(ctx) -> list:
