@@ -101,10 +101,10 @@ export function battingSkillRows(p: RankedPlayer): RatingRow[] {
   if (!b) return [];
   return [
     { label: 'Contact', potential: b['contact'], current: b['contactCur'] },
+    { label: 'Avoid K', potential: b['avoidK'], current: b['avoidKCur'] },
     { label: 'Gap', potential: b['gap'], current: b['gapCur'] },
     { label: 'Power', potential: b['power'], current: b['powerCur'] },
     { label: 'Eye', potential: b['eye'], current: b['eyeCur'] },
-    { label: 'Avoid K', potential: b['avoidK'], current: b['avoidKCur'] },
   ];
 }
 
