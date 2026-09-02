@@ -145,6 +145,22 @@ export class ClassViewPage {
     });
   }
 
+  protected async replaceFile(file: File): Promise<void> {
+    if (
+      !confirm(
+        `Replace the data for "${this.name()}" with "${file.name}"? ` +
+          `The custom order and drafted list are kept; rankings are recomputed.`,
+      )
+    )
+      return;
+    const method = this.detail()?.rankingMethod ?? 'draft_class';
+    await this.run('Uploading new file… (recomputes rankings, ~10s)', async () => {
+      this.detail.set(await this.api.uploadDraftClass(this.name(), method, file));
+      await this.reloadAfterMutation();
+      await this.store.reload();
+    });
+  }
+
   protected async refreshDrafted(): Promise<void> {
     await this.run('Contacting StatsPlus…', async () => {
       const r = await this.api.refreshDrafted(this.name());

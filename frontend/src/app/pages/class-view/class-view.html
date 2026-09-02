@@ -11,6 +11,7 @@
     [shownCount]="totalRecords()"
     (methodChange)="onMethodChange($event)"
     (reprocess)="reprocess()"
+    (replaceFile)="replaceFile($event)"
     (refreshDrafted)="refreshDrafted()"
     (download)="download()"
     (startReorder)="startReorder()"
@@ -26,8 +27,8 @@
       <p><b>This class hasn’t been ranked yet.</b></p>
       <p class="muted">
         The upload saved the data but processing didn’t finish — usually the export
-        is missing rating columns the model needs. Fix the export and re-upload with
-        the same name, hit <b>Reprocess</b>, or <b>Delete</b> it.
+        is missing rating columns the model needs. Fix the export and hit
+        <b>Replace file</b>, try <b>Reprocess</b>, or <b>Delete</b> it.
       </p>
       <button class="primary" (click)="reprocess()" [disabled]="!!busy()">Reprocess now</button>
     </div>
