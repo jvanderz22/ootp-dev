@@ -118,11 +118,15 @@ if [[ ! -f "Dockerfile" ]]; then
   exit 1
 fi
 
-echo "==> Creating Fly app config from fly.toml"
-"$FLY_CMD" launch --no-deploy --name "$APP_NAME" --region "$REGION" --copy-config --yes || true
+if "$FLY_CMD" status --app "$APP_NAME" >/dev/null 2>&1; then
+  echo "==> App '$APP_NAME' already exists; skipping 'fly launch' (it would create a new, renamed app)"
+else
+  echo "==> Creating Fly app config from fly.toml"
+  "$FLY_CMD" launch --no-deploy --name "$APP_NAME" --region "$REGION" --copy-config --yes
+fi
 
 echo "==> Creating the persistent volume: $VOLUME_NAME"
-"$FLY_CMD" volumes create "$VOLUME_NAME" --size "$VOLUME_SIZE" --region "$REGION" --yes || true
+"$FLY_CMD" volumes create "$VOLUME_NAME" --app "$APP_NAME" --size "$VOLUME_SIZE" --region "$REGION" --yes || true
 
 echo "==> Setting deployment secrets"
 SECRETS=("APP_PASSWORD=$APP_PASSWORD")
@@ -132,7 +136,7 @@ fi
 if [[ -n "$STATSPLUS_COOKIE" ]]; then
   SECRETS+=("STATSPLUS_COOKIE=$STATSPLUS_COOKIE")
 fi
-"$FLY_CMD" secrets set "${SECRETS[@]}"
+"$FLY_CMD" secrets set --app "$APP_NAME" "${SECRETS[@]}"
 
 echo "==> Pinning the machine count to 1 (budget guard)"
 # With a single machine and auto_stop_machines/min_machines_running=0 in fly.toml,
@@ -141,7 +145,7 @@ echo "==> Pinning the machine count to 1 (budget guard)"
   "$FLY_CMD" scale count 1 --app "$APP_NAME" --yes || true
 
 echo "==> Deploying application"
-"$FLY_CMD" deploy
+"$FLY_CMD" deploy --app "$APP_NAME"
 
 echo ""
 echo "Deployment complete."
