@@ -86,8 +86,10 @@ export interface NumericFilter {
   max: number | null;
 }
 
-/** Everything the table UI feeds back to the container to fetch a page. */
+/** Everything the table UI feeds back to the container to fetch a page — and
+ *  round-trips through the URL so a filtered view is reloadable / shareable. */
 export interface RankedQuery {
+  view: ClassView;
   search: string;
   positions: string[];
   hideDrafted: boolean;

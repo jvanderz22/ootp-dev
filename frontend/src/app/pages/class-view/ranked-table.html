@@ -101,13 +101,17 @@
             [class.sticky-name]="c.sticky === 'name'"
             [class.sticky-pos]="c.sticky === 'pos'"
             [class.col-wide]="c.wide"
+            [class.col-filtered]="colFilter(c)"
             [attr.title]="c.title ?? null"
             (click)="onSort(c)"
+            (mouseenter)="onColEnter(c, $event)"
+            (mouseleave)="onColLeave()"
           >
             {{ c.header }}
             @if (sortCaret(c); as caret) {
               <span class="sort-caret">{{ caret }}</span>
             }
+            @if (colFilter(c)) { <span class="col-filter-dot" title="Filtered">●</span> }
           </th>
         }
         <th class="expander-col"></th>
@@ -179,3 +183,44 @@
   [visible]="compareOpen()"
   (closed)="compareOpen.set(false)"
 />
+
+<!-- column-header quick filter: one fixed panel, re-anchored per header on hover,
+     preferring the space above the header and flipping below only when cramped -->
+@if (hoverCol(); as c) {
+  <div
+    class="col-quick-filter"
+    [class.below]="colPopPlacement() === 'below'"
+    [style.top]="colPopStyle().top"
+    [style.left]="colPopStyle().left"
+    [style.visibility]="colPopReady() ? 'visible' : 'hidden'"
+    (mouseenter)="keepColPop()"
+    (mouseleave)="onColLeave()"
+  >
+    <div class="cqf-title">Filter · {{ c.title ?? c.header }}</div>
+    <div class="cqf-row">
+      <input
+        type="number"
+        placeholder="min"
+        [ngModel]="hoverMin()"
+        (ngModelChange)="hoverMin.set(numOrNull($event))"
+        (keydown.enter)="applyColFilter()"
+        (keydown.escape)="closeColPop()"
+      />
+      <span class="dash">–</span>
+      <input
+        type="number"
+        placeholder="max"
+        [ngModel]="hoverMax()"
+        (ngModelChange)="hoverMax.set(numOrNull($event))"
+        (keydown.enter)="applyColFilter()"
+        (keydown.escape)="closeColPop()"
+      />
+    </div>
+    <div class="cqf-foot">
+      <button type="button" class="primary sm" (click)="applyColFilter()">Apply</button>
+      @if (colFilter(c)) {
+        <button type="button" class="sm" (click)="clearColFilter()">Clear</button>
+      }
+    </div>
+  </div>
+}

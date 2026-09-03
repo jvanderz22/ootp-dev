@@ -33,7 +33,10 @@ def write_runtime_component(player_id, component_name: str, component_value: flo
     if store.get(player_id) is None:
         store[player_id] = {}
     if component_value is not None and component_value > 0:
-        store[player_id][component_name] = round(component_value, 2)
+        # Coerce to a plain float: NumPy scalars survive `round()` and then
+        # serialise as `np.float64(...)` under NumPy >= 2, which is not a
+        # literal the reader can parse back. See web.service._parse_components.
+        store[player_id][component_name] = round(float(component_value), 2)
 
 
 def get_runtime_components(player_id):

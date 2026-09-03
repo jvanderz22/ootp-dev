@@ -7,6 +7,7 @@ import { ApiService } from '../../core/api';
 import { ClassStore } from '../../core/class-store';
 import { DraftClass, RankedPlayerPage, RankedQuery } from '../../core/api.types';
 import { DEFAULT_SORT } from '../../core/ranked-columns';
+import { paramsToQuery, queryToParams } from '../../core/table-url';
 import { ClassToolbarComponent } from './class-toolbar';
 import { RankedTableComponent } from './ranked-table';
 import { ReorderPanelComponent, ReorderRow } from './reorder-panel';
@@ -15,6 +16,7 @@ const EMPTY_PAGE: RankedPlayerPage = { rows: [], totalRecords: 0 };
 
 function defaultQuery(): RankedQuery {
   return {
+    view: 'modeled',
     search: '',
     positions: [],
     hideDrafted: false,
@@ -54,8 +56,9 @@ export class ClassViewPage {
   protected readonly mode = signal<'table' | 'reorder'>('table');
   protected readonly reorderRows = signal<ReorderRow[]>([]);
 
-  /** Plain field (no signal): only the table drives it, via `queryChange`. */
-  private query: RankedQuery = defaultQuery();
+  /** Active table query. Seeded from the URL on load, then driven by the table
+   *  via `queryChange` (which also writes it back to the URL). */
+  protected readonly queryState = signal<RankedQuery>(defaultQuery());
 
   protected readonly rows = computed(() => this.page().rows);
   protected readonly totalRecords = computed(() => this.page().totalRecords);
@@ -75,9 +78,9 @@ export class ClassViewPage {
     this.error.set(null);
     this.notice.set(null);
     this.mode.set('table');
-    this.query = defaultQuery();
+    this.queryState.set(paramsToQuery(this.route.snapshot.queryParamMap));
     try {
-      const d = await this.api.classDetail(name, this.query);
+      const d = await this.api.classDetail(name, this.queryState());
       this.detail.set(d.draftClass);
       this.positions.set(d.positions);
       this.page.set(d.page);
@@ -92,7 +95,13 @@ export class ClassViewPage {
   }
 
   protected async onQueryChange(q: RankedQuery): Promise<void> {
-    this.query = q;
+    this.queryState.set(q);
+    // replaceUrl: a filter tweak shouldn't stack a history entry per keystroke.
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: queryToParams(q),
+      replaceUrl: true,
+    });
     await this.refetch();
   }
 
@@ -108,7 +117,7 @@ export class ClassViewPage {
     this.loading.set(true);
     this.error.set(null);
     try {
-      this.page.set(await this.api.rankedPlayersPage(this.name(), this.query));
+      this.page.set(await this.api.rankedPlayersPage(this.name(), this.queryState()));
     } catch (e) {
       this.error.set((e as Error).message);
     } finally {
@@ -118,7 +127,7 @@ export class ClassViewPage {
 
   /** Refresh metadata + current page after a mutation, keeping active filters. */
   private async reloadAfterMutation(): Promise<void> {
-    const d = await this.api.classDetail(this.name(), this.query);
+    const d = await this.api.classDetail(this.name(), this.queryState());
     this.detail.set(d.draftClass);
     this.positions.set(d.positions);
     this.page.set(d.page);

@@ -20,6 +20,7 @@ import { ClassView, NumericFilter, RankedPlayerRow, RankedQuery } from '../../co
 import {
   ColumnDef,
   DEFAULT_SORT,
+  FILTERABLE_FIELDS,
   VIEW_COLUMNS,
   VIEW_OPTIONS,
   groupSpans,
@@ -31,6 +32,14 @@ import { NumericFiltersComponent } from './numeric-filters';
 import { PlayerCompareComponent } from '../player-compare';
 
 const SEARCH_DEBOUNCE_MS = 300;
+
+/** Hover-intent before the column-header quick filter opens. */
+const COL_POP_DELAY_MS = 400;
+/** Grace period after the pointer leaves the header / panel. */
+const COL_POP_CLOSE_MS = 220;
+/** Gap between the header edge and the panel, and min viewport margin. */
+const COL_POP_GAP = 8;
+const COL_POP_MARGIN = 8;
 
 @Component({
   selector: 'app-ranked-table',
@@ -53,8 +62,11 @@ export class RankedTableComponent {
   readonly totalRecords = input.required<number>();
   readonly positions = input.required<string[]>();
   readonly loading = input(false);
-  /** Class name — changing it resets all table state. */
+  /** Class name — changing it re-seeds all table state from `initialQuery`. */
   readonly classKey = input.required<string>();
+  /** Seed state (parsed from the URL by the container). Applied on first render
+   *  and whenever `classKey` changes; `null` falls back to plain defaults. */
+  readonly initialQuery = input<RankedQuery | null>(null);
 
   readonly queryChange = output<RankedQuery>();
   readonly setRankChange = output<{ id: string; rank: number }>();
@@ -79,6 +91,22 @@ export class RankedTableComponent {
   protected readonly compareSel = signal<RankedPlayerRow[]>([]);
   protected readonly compareOpen = signal(false);
 
+  // -------------------------------------------------- column-header quick filter
+  private readonly filterableFields = new Set(FILTERABLE_FIELDS.map((f) => f.field));
+  protected readonly hoverCol = signal<ColumnDef | null>(null);
+  protected readonly hoverMin = signal<number | null>(null);
+  protected readonly hoverMax = signal<number | null>(null);
+  /** Fixed-position coords for the quick-filter panel + which side of the
+   *  header it sits on (prefers above, flips below when there's no room). */
+  protected readonly colPopStyle = signal<{ top: string; left: string }>({ top: '0', left: '0' });
+  protected readonly colPopPlacement = signal<'above' | 'below'>('above');
+  /** Held hidden until measured so it never flashes at the corner. */
+  protected readonly colPopReady = signal(false);
+  private colPopTargetEl: HTMLElement | null = null;
+  private colShowTimer: ReturnType<typeof setTimeout> | undefined;
+  private colHideTimer: ReturnType<typeof setTimeout> | undefined;
+  private readonly dismissColPop = () => this.closeColPop();
+
   protected readonly columns = computed<ColumnDef[]>(() => VIEW_COLUMNS[this.view()]);
   protected readonly headerGroups = computed(() => groupSpans(this.columns()));
 
@@ -98,11 +126,11 @@ export class RankedTableComponent {
       untracked(() => this.applyExpansion());
     });
 
-    // Class switched — drop back to defaults (the container already fetched
-    // a fresh default page, so no emit).
+    // Class switched — re-seed from the URL-derived `initialQuery` (the
+    // container already fetched that page, so no emit).
     effect(() => {
       this.classKey();
-      untracked(() => this.resetState());
+      untracked(() => this.hydrate());
     });
 
     // Track the scroll viewport width for the pinned detail row.
@@ -117,7 +145,12 @@ export class RankedTableComponent {
     };
     const ro = new ResizeObserver(measure);
     ro.observe(this.host.nativeElement);
-    inject(DestroyRef).onDestroy(() => ro.disconnect());
+    inject(DestroyRef).onDestroy(() => {
+      ro.disconnect();
+      clearTimeout(this.colShowTimer);
+      clearTimeout(this.colHideTimer);
+      this.unbindColPopDismiss();
+    });
   }
 
   // ----------------------------------------------------------------- columns
@@ -250,9 +283,125 @@ export class RankedTableComponent {
     this.compareOpen.set(false);
   }
 
+  // ---------------------------------------------------- column-header quick filter
+  protected isColFilterable(c: ColumnDef): boolean {
+    return this.filterableFields.has(c.field);
+  }
+
+  /** Existing bound (if any) on a column, for the caret / hover affordance. */
+  protected colFilter(c: ColumnDef): NumericFilter | undefined {
+    return this.numericFilters().find((f) => f.field === c.field);
+  }
+
+  protected onColEnter(c: ColumnDef, ev: MouseEvent): void {
+    if (!this.isColFilterable(c)) return;
+    const el = ev.currentTarget as HTMLElement;
+    clearTimeout(this.colHideTimer);
+    if (el === this.colPopTargetEl) return; // already open / pending on this header
+    clearTimeout(this.colShowTimer);
+    this.colShowTimer = setTimeout(() => this.openColPop(c, el), COL_POP_DELAY_MS);
+  }
+
+  protected onColLeave(): void {
+    clearTimeout(this.colShowTimer);
+    this.colHideTimer = setTimeout(() => this.closeColPop(), COL_POP_CLOSE_MS);
+  }
+
+  protected keepColPop(): void {
+    clearTimeout(this.colHideTimer);
+  }
+
+  private openColPop(c: ColumnDef, el: HTMLElement): void {
+    this.colPopTargetEl = el;
+    this.colPopReady.set(false);
+    const existing = this.colFilter(c);
+    this.hoverMin.set(existing?.min ?? null);
+    this.hoverMax.set(existing?.max ?? null);
+    this.hoverCol.set(c); // renders the panel (hidden until measured)
+    // measure once it's in the DOM, then anchor it to this header
+    requestAnimationFrame(() => this.positionColPop(el));
+    this.bindColPopDismiss();
+  }
+
+  private positionColPop(el: HTMLElement): void {
+    const panel = this.host.nativeElement.querySelector<HTMLElement>('.col-quick-filter');
+    if (!panel || this.colPopTargetEl !== el) return;
+    const r = el.getBoundingClientRect();
+    const pw = panel.offsetWidth;
+    const ph = panel.offsetHeight;
+    const above = r.top >= ph + COL_POP_GAP + COL_POP_MARGIN;
+    const top = above ? r.top - ph - COL_POP_GAP : r.bottom + COL_POP_GAP;
+    const left = Math.max(
+      COL_POP_MARGIN,
+      Math.min(r.left, window.innerWidth - pw - COL_POP_MARGIN),
+    );
+    this.zone.run(() => {
+      this.colPopPlacement.set(above ? 'above' : 'below');
+      this.colPopStyle.set({ top: `${Math.round(top)}px`, left: `${Math.round(left)}px` });
+      this.colPopReady.set(true);
+    });
+  }
+
+  protected closeColPop(): void {
+    clearTimeout(this.colShowTimer);
+    clearTimeout(this.colHideTimer);
+    this.colPopTargetEl = null;
+    this.colPopReady.set(false);
+    this.hoverCol.set(null);
+    this.unbindColPopDismiss();
+  }
+
+  private bindColPopDismiss(): void {
+    // any scroll (page or the table's own body) or resize drops the panel
+    // rather than letting it drift away from its header
+    window.addEventListener('scroll', this.dismissColPop, true);
+    window.addEventListener('resize', this.dismissColPop);
+  }
+
+  private unbindColPopDismiss(): void {
+    window.removeEventListener('scroll', this.dismissColPop, true);
+    window.removeEventListener('resize', this.dismissColPop);
+  }
+
+  protected numOrNull(v: unknown): number | null {
+    const n = Number(v);
+    return v === '' || v == null || !Number.isFinite(n) ? null : n;
+  }
+
+  protected applyColFilter(): void {
+    const c = this.hoverCol();
+    if (!c) {
+      this.closeColPop();
+      return;
+    }
+    const min = this.hoverMin();
+    const max = this.hoverMax();
+    const meta = FILTERABLE_FIELDS.find((f) => f.field === c.field);
+    const rest = this.numericFilters().filter((f) => f.field !== c.field);
+    this.numericFilters.set(
+      min == null && max == null
+        ? rest
+        : [...rest, { field: c.field, label: meta?.label ?? c.field, min, max }],
+    );
+    this.first.set(0);
+    this.emitQuery();
+    this.closeColPop();
+  }
+
+  protected clearColFilter(): void {
+    const c = this.hoverCol();
+    if (c && this.colFilter(c)) {
+      this.numericFilters.set(this.numericFilters().filter((f) => f.field !== c.field));
+      this.first.set(0);
+      this.emitQuery();
+    }
+    this.closeColPop();
+  }
+
   // -------------------------------------------------------------------- emit
   private emitQuery(): void {
     this.queryChange.emit({
+      view: this.view(),
       search: this.search(),
       positions: this.positionSel(),
       hideDrafted: this.hideDrafted(),
@@ -262,6 +411,29 @@ export class RankedTableComponent {
       page: Math.floor(this.first() / this.pageSize()),
       pageSize: this.pageSize(),
     });
+  }
+
+  /** Seed every filter/sort/page signal from `initialQuery` (URL state) on a
+   *  class switch; fall back to plain defaults when none was supplied. */
+  private hydrate(): void {
+    clearTimeout(this.searchTimer);
+    const q = this.initialQuery();
+    if (!q) {
+      this.resetState();
+      return;
+    }
+    this.view.set(q.view);
+    this.search.set(q.search);
+    this.positionSel.set(q.positions);
+    this.hideDrafted.set(q.hideDrafted);
+    this.numericFilters.set(q.numericFilters);
+    this.sortField.set(q.sortField ?? DEFAULT_SORT[q.view].field);
+    this.sortOrder.set(q.sortOrder);
+    this.pageSize.set(q.pageSize);
+    this.first.set(q.page * q.pageSize);
+    this.expandAll.set(false);
+    this.expandedKeys.set({});
+    this.clearCompare();
   }
 
   private resetState(): void {

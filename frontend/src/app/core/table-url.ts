@@ -1,0 +1,95 @@
+/**
+ * Round-trips the ranked-table's `RankedQuery` through the `/class/:name` URL
+ * query string so a filtered / sorted / paged view survives a reload and can be
+ * shared. Only non-default state is written; everything else is omitted to keep
+ * the URL short.
+ *
+ * Params:
+ *   view      modeled | batting | pitching   (omitted when modeled)
+ *   q         search text
+ *   pos       comma-separated positions
+ *   undrafted 1  — "hide drafted" is on
+ *   sort      field, `-` prefix for descending (omitted at the view default)
+ *   page      1-based page number
+ *   size      rows per page
+ *   f         numeric filters: `field~min~max`, comma-separated, blank side = open
+ */
+import { Params } from '@angular/router';
+
+import { ClassView, NumericFilter, RankedQuery } from './api.types';
+import { DEFAULT_SORT, FILTERABLE_FIELDS } from './ranked-columns';
+
+const VIEWS: ClassView[] = ['modeled', 'batting', 'pitching'];
+const PAGE_SIZES = [25, 50, 100, 200];
+const DEFAULT_PAGE_SIZE = 50;
+
+export function queryToParams(q: RankedQuery): Params {
+  const p: Params = {};
+  if (q.view !== 'modeled') p['view'] = q.view;
+  if (q.search.trim()) p['q'] = q.search.trim();
+  if (q.positions.length) p['pos'] = q.positions.join(',');
+  if (q.hideDrafted) p['undrafted'] = '1';
+
+  const dflt = DEFAULT_SORT[q.view];
+  if (q.sortField && !(q.sortField === dflt.field && q.sortOrder === dflt.order)) {
+    p['sort'] = (q.sortOrder === -1 ? '-' : '') + q.sortField;
+  }
+
+  if (q.page > 0) p['page'] = String(q.page + 1);
+  if (q.pageSize !== DEFAULT_PAGE_SIZE) p['size'] = String(q.pageSize);
+
+  const f = q.numericFilters.filter((x) => x.field && (x.min != null || x.max != null));
+  if (f.length) {
+    p['f'] = f.map((x) => `${x.field}~${x.min ?? ''}~${x.max ?? ''}`).join(',');
+  }
+  return p;
+}
+
+/** ParamMap-like: just the `get` we need, so callers can pass a snapshot map. */
+interface Readable {
+  get(key: string): string | null;
+}
+
+export function paramsToQuery(pm: Readable): RankedQuery {
+  const raw = pm.get('view') as ClassView | null;
+  const view: ClassView = raw && VIEWS.includes(raw) ? raw : 'modeled';
+  const dflt = DEFAULT_SORT[view];
+
+  let sortField: string | null = dflt.field;
+  let sortOrder: 1 | -1 = dflt.order;
+  const s = pm.get('sort');
+  if (s) {
+    sortOrder = s.startsWith('-') ? -1 : 1;
+    sortField = s.replace(/^-/, '');
+  }
+
+  const numericFilters = (pm.get('f') ?? '')
+    .split(',')
+    .filter(Boolean)
+    .map((tok): NumericFilter => {
+      const [field, min, max] = tok.split('~');
+      const meta = FILTERABLE_FIELDS.find((x) => x.field === field);
+      return {
+        field,
+        label: meta?.label ?? field,
+        min: min ? Number(min) : null,
+        max: max ? Number(max) : null,
+      };
+    })
+    .filter((x) => x.field && (x.min != null || x.max != null));
+
+  const size = Number(pm.get('size'));
+  const page = Math.max(1, Math.floor(Number(pm.get('page')) || 1)) - 1;
+
+  return {
+    view,
+    search: pm.get('q') ?? '',
+    positions: (pm.get('pos') ?? '').split(',').filter(Boolean),
+    hideDrafted: pm.get('undrafted') === '1',
+    numericFilters,
+    sortField,
+    sortOrder,
+    page,
+    pageSize: PAGE_SIZES.includes(size) ? size : DEFAULT_PAGE_SIZE,
+  };
+}

@@ -79,6 +79,15 @@
   ::ng-deep th.sortable:hover {
     color: var(--accent);
   }
+  ::ng-deep th.col-filtered {
+    color: var(--accent);
+  }
+  ::ng-deep .col-filter-dot {
+    font-size: 8px;
+    margin-left: 3px;
+    vertical-align: middle;
+    color: var(--accent);
+  }
   ::ng-deep .sort-caret {
     font-size: 10px;
     margin-left: 4px;
@@ -214,4 +223,64 @@
      gold amber for the middling one — both kept clear of the drafted red */
   ::ng-deep td.tone-danger { color: var(--tone-weak); font-weight: 700; }
   ::ng-deep td.tone-warn { color: var(--tone-mid); font-weight: 600; }
+}
+
+/* column-header quick-filter panel — fixed-positioned from JS (prefers the
+   space above the header, flips below when cramped) */
+.col-quick-filter {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 14rem;
+  padding: 10px 12px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+}
+/* little pointer toward the header */
+.col-quick-filter::after {
+  content: '';
+  position: absolute;
+  left: 16px;
+  width: 10px;
+  height: 10px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  transform: rotate(45deg);
+}
+.col-quick-filter:not(.below)::after {
+  bottom: -6px;
+  border-top: none;
+  border-left: none;
+}
+.col-quick-filter.below::after {
+  top: -6px;
+  border-bottom: none;
+  border-right: none;
+}
+.cqf-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.cqf-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cqf-row input {
+  width: 5rem;
+  padding: 4px 6px;
+}
+.cqf-row .dash { color: var(--text-dim); }
+.cqf-foot {
+  display: flex;
+  gap: 8px;
+}
+.cqf-foot button.sm {
+  padding: 3px 10px;
+  font-size: 12px;
 }
