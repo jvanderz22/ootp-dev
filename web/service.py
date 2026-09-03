@@ -68,14 +68,22 @@ def _dataset_count(ctx) -> int:
         return sum(1 for _ in csv.DictReader(f))
 
 
+# NumPy >= 2 renders scalars as `np.float64(1.02)` in a dict's repr, which is a
+# call expression, not a literal — `ast.literal_eval` chokes on it. Older CSVs
+# written under such a build have those wrappers baked into the `components`
+# column; strip them so the data stays readable without a re-process.
+_NP_SCALAR_RE = re.compile(r"np\.\w+\(([^()]*)\)")
+
+
 def _parse_components(raw):
     if not raw:
         return None
-    for parser in (json.loads, ast.literal_eval):
-        try:
-            return parser(raw)
-        except (ValueError, SyntaxError):
-            continue
+    for candidate in (raw, _NP_SCALAR_RE.sub(r"\1", raw)):
+        for parser in (json.loads, ast.literal_eval):
+            try:
+                return parser(candidate)
+            except (ValueError, SyntaxError):
+                continue
     return None
 
 
