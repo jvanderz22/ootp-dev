@@ -125,8 +125,16 @@ else
   "$FLY_CMD" launch --no-deploy --name "$APP_NAME" --region "$REGION" --copy-config --yes
 fi
 
-echo "==> Creating the persistent volume: $VOLUME_NAME"
-"$FLY_CMD" volumes create "$VOLUME_NAME" --app "$APP_NAME" --size "$VOLUME_SIZE" --region "$REGION" --yes || true
+echo "==> Ensuring the persistent volume exists: $VOLUME_NAME"
+# Fly volume names are labels, not unique keys: `fly volumes create` makes a brand
+# new volume every time it runs. Only create one if none with this name exists,
+# otherwise every deploy leaks another unattached (but billable) volume.
+EXISTING_VOLUMES="$("$FLY_CMD" volumes list --app "$APP_NAME" 2>/dev/null | grep -cw -- "$VOLUME_NAME" || true)"
+if [[ "${EXISTING_VOLUMES:-0}" -eq 0 ]]; then
+  "$FLY_CMD" volumes create "$VOLUME_NAME" --app "$APP_NAME" --size "$VOLUME_SIZE" --region "$REGION" --yes
+else
+  echo "    volume '$VOLUME_NAME' already exists ($EXISTING_VOLUMES); skipping create"
+fi
 
 echo "==> Setting deployment secrets"
 SECRETS=("APP_PASSWORD=$APP_PASSWORD")
