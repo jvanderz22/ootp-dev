@@ -23,6 +23,12 @@
 .reorder-item.drafted .pname { color: var(--drafted); text-decoration: line-through; }
 .handle { cursor: grab; color: var(--text-dim); }
 .idx { width: 40px; text-align: right; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.idx-input {
+  width: 52px;
+  padding: 3px 6px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
 .pname { font-weight: 600; }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 .draft-badge {

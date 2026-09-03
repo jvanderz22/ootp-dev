@@ -62,7 +62,14 @@ button.primary {
   border-color: var(--accent);
   color: var(--accent-contrast);
 }
+/* keep the accent fill on hover — the generic button:hover rule above is more
+   specific than `button.primary`, so without this a primary button turns grey */
+button.primary:hover:not(:disabled) {
+  background: var(--accent);
+  filter: brightness(1.08);
+}
 button.danger { color: var(--danger); }
+button.danger:hover:not(:disabled) { background: var(--bg-elev-2); color: var(--danger); }
 
 input, select {
   font: inherit;

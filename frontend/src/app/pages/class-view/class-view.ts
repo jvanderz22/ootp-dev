@@ -18,6 +18,7 @@ function defaultQuery(): RankedQuery {
     search: '',
     positions: [],
     hideDrafted: false,
+    numericFilters: [],
     sortField: DEFAULT_SORT.modeled.field,
     sortOrder: DEFAULT_SORT.modeled.order,
     page: 0,
@@ -93,6 +94,14 @@ export class ClassViewPage {
   protected async onQueryChange(q: RankedQuery): Promise<void> {
     this.query = q;
     await this.refetch();
+  }
+
+  protected async onSetRank(e: { id: string; rank: number }): Promise<void> {
+    await this.run('Updating rank…', async () => {
+      this.detail.set(await this.api.setPlayerRank(this.name(), e.id, e.rank));
+      await this.refetch();
+      await this.store.reload();
+    });
   }
 
   private async refetch(): Promise<void> {

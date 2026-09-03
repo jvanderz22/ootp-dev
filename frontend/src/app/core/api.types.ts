@@ -77,11 +77,21 @@ export interface RankedPlayerPage {
 /** The three column presets the class table can show. */
 export type ClassView = 'modeled' | 'batting' | 'pitching';
 
+/** One greater-than / less-than bound on a sortable column. `label` is for the
+ *  UI only; `field` + `min` + `max` are what the backend filter consumes. */
+export interface NumericFilter {
+  field: string;
+  label: string;
+  min: number | null;
+  max: number | null;
+}
+
 /** Everything the table UI feeds back to the container to fetch a page. */
 export interface RankedQuery {
   search: string;
   positions: string[];
   hideDrafted: boolean;
+  numericFilters: NumericFilter[];
   sortField: string | null;
   sortOrder: 1 | -1;
   page: number;

@@ -172,6 +172,15 @@ export const SAVE_CUSTOM_ORDER = gql`
   }
 `;
 
+export const SET_PLAYER_RANK = gql`
+  ${CLASS_FIELDS}
+  mutation SetPlayerRank($name: String!, $id: ID!, $rank: Int!) {
+    setPlayerRank(name: $name, id: $id, rank: $rank) {
+      ...ClassFields
+    }
+  }
+`;
+
 export const CLEAR_CUSTOM_ORDER = gql`
   ${CLASS_FIELDS}
   mutation ClearCustomOrder($name: String!) {

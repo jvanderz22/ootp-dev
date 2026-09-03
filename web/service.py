@@ -320,6 +320,31 @@ def list_draft_classes():
     ]
 
 
+def _apply_numeric_filter(rows, nf):
+    """Keep rows whose `nf['field']` value sits within the inclusive
+    [min, max] bounds. Reuses `_sort_value` so any sortable column (flat key,
+    dotted rating path, `pitch.<Name>`, `demandKey`, grade meta key) is
+    filterable; graded columns compare on their tier ordinal. Rows with a
+    missing or non-numeric value for the field are dropped."""
+    field = (nf or {}).get("field")
+    lo = (nf or {}).get("min")
+    hi = (nf or {}).get("max")
+    if not field or (lo is None and hi is None):
+        return rows
+
+    def keep(row):
+        value = _sort_value(row, field)
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            return False
+        if lo is not None and value < lo:
+            return False
+        if hi is not None and value > hi:
+            return False
+        return True
+
+    return [r for r in rows if keep(r)]
+
+
 def ranked_players_page(
     name: str, *, filter=None, sort=None, page=0, page_size=50, all_rows=False
 ):
@@ -341,6 +366,9 @@ def ranked_players_page(
             and (not pos_set or r["position"] in pos_set)
             and (not hide_drafted or not r["drafted"])
         ]
+
+    for nf in f.get("numeric") or []:
+        rows = _apply_numeric_filter(rows, nf)
 
     total = len(rows)
 
@@ -460,6 +488,29 @@ def save_custom_order(name: str, order):
         raise InvalidInput(f"Draft class {name!r} has not been processed yet.")
     known = [r["id"] for r in rows]
     save_order(ctx, [str(pid) for pid in order], known_ids=known)
+    write_upload_file(ctx)
+    class_index.evict(name)
+    return draft_class_payload(name)
+
+
+def set_player_rank(name: str, player_id, rank):
+    """Move one player to 1-based `rank` in the current order, shifting everyone
+    else, and persist the result as the class's custom order."""
+    ctx = _ctx(name)
+    if _read_ranked_rows(ctx) is None:
+        raise InvalidInput(f"Draft class {name!r} has not been processed yet.")
+    order = [str(r["id"]) for r in class_index.get_index(ctx).rows]
+    pid = str(player_id)
+    if pid not in order:
+        raise InvalidInput(f"Player {player_id!r} is not in draft class {name!r}.")
+    try:
+        target = int(rank)
+    except (TypeError, ValueError):
+        raise InvalidInput("Rank must be a whole number.")
+    order.remove(pid)
+    target = max(1, min(target, len(order) + 1)) - 1
+    order.insert(target, pid)
+    save_order(ctx, order, known_ids=order)
     write_upload_file(ctx)
     class_index.evict(name)
     return draft_class_payload(name)

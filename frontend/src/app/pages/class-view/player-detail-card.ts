@@ -1,5 +1,6 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { TagModule } from 'primeng/tag';
 import { PanelModule } from 'primeng/panel';
 
@@ -26,12 +27,40 @@ import {
 /** The expanded-row content: grouped, type-gated scouting + model breakdown. */
 @Component({
   selector: 'app-player-detail-card',
-  imports: [DecimalPipe, TagModule, PanelModule],
+  imports: [DecimalPipe, FormsModule, TagModule, PanelModule],
   templateUrl: './player-detail-card.html',
   styleUrl: './player-detail-card.scss',
 })
 export class PlayerDetailCardComponent {
   readonly player = input.required<RankedPlayerRow>();
+  /** Total ranked players — upper bound for the rank input. */
+  readonly totalRanked = input(0);
+  /** New 1-based rank the user committed for this player. */
+  readonly setRank = output<number>();
+
+  protected readonly editing = signal(false);
+  protected readonly draftRank = signal<number | null>(null);
+
+  protected readonly rankMax = computed(() => this.totalRanked() || null);
+
+  protected startEdit(): void {
+    this.draftRank.set(this.player().rank);
+    this.editing.set(true);
+  }
+
+  protected cancelEdit(): void {
+    this.editing.set(false);
+  }
+
+  protected commitRank(): void {
+    const next = Math.round(Number(this.draftRank()));
+    if (!Number.isFinite(next) || next < 1 || next === this.player().rank) {
+      this.editing.set(false);
+      return;
+    }
+    this.setRank.emit(next);
+    this.editing.set(false);
+  }
 
   protected readonly showBatting = showBatting;
   protected readonly showPitching = showPitching;

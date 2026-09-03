@@ -139,6 +139,16 @@
   }
   ::ng-deep td.cmp-col input { cursor: pointer; }
 
+  /* Keep the whole header above the sticky (z-index: 2) body cells while the
+     table body scrolls — otherwise the frozen leading columns of scrolled-past
+     rows paint over the pinned header. PrimeNG only gives the thead z-index: 2,
+     which ties with those cells and loses on source order. */
+  ::ng-deep .p-datatable-thead {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+  }
+
   /* ---- leading columns frozen against the left edge on horizontal scroll --- */
   ::ng-deep th.cmp-col,
   ::ng-deep td.cmp-col,

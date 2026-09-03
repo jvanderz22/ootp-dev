@@ -16,7 +16,7 @@ import { TagModule } from 'primeng/tag';
 import { TableModule } from 'primeng/table';
 import { SelectButtonModule } from 'primeng/selectbutton';
 
-import { ClassView, RankedPlayerRow, RankedQuery } from '../../core/api.types';
+import { ClassView, NumericFilter, RankedPlayerRow, RankedQuery } from '../../core/api.types';
 import {
   ColumnDef,
   DEFAULT_SORT,
@@ -27,6 +27,7 @@ import {
 import { typeSeverity } from '../../core/player-stats';
 import { PlayerDetailCardComponent } from './player-detail-card';
 import { PositionFilterComponent } from './position-filter';
+import { NumericFiltersComponent } from './numeric-filters';
 import { PlayerCompareComponent } from '../player-compare';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -40,6 +41,7 @@ const SEARCH_DEBOUNCE_MS = 300;
     SelectButtonModule,
     PlayerDetailCardComponent,
     PositionFilterComponent,
+    NumericFiltersComponent,
     PlayerCompareComponent,
   ],
   templateUrl: './ranked-table.html',
@@ -55,6 +57,7 @@ export class RankedTableComponent {
   readonly classKey = input.required<string>();
 
   readonly queryChange = output<RankedQuery>();
+  readonly setRankChange = output<{ id: string; rank: number }>();
 
   protected readonly typeSeverity = typeSeverity;
   protected readonly viewOptions = VIEW_OPTIONS;
@@ -64,6 +67,7 @@ export class RankedTableComponent {
   protected readonly search = signal('');
   protected readonly positionSel = signal<string[]>([]);
   protected readonly hideDrafted = signal(false);
+  protected readonly numericFilters = signal<NumericFilter[]>([]);
   protected readonly sortField = signal<string>(DEFAULT_SORT.modeled.field);
   protected readonly sortOrder = signal<1 | -1>(DEFAULT_SORT.modeled.order);
   protected readonly first = signal(0);
@@ -163,6 +167,16 @@ export class RankedTableComponent {
     this.emitQuery();
   }
 
+  protected onNumericFilters(value: NumericFilter[]): void {
+    this.numericFilters.set(value);
+    this.first.set(0);
+    this.emitQuery();
+  }
+
+  protected onSetRank(p: RankedPlayerRow, rank: number): void {
+    this.setRankChange.emit({ id: p.id, rank });
+  }
+
   protected onView(value: ClassView): void {
     this.view.set(value);
     const d = DEFAULT_SORT[value];
@@ -242,6 +256,7 @@ export class RankedTableComponent {
       search: this.search(),
       positions: this.positionSel(),
       hideDrafted: this.hideDrafted(),
+      numericFilters: this.numericFilters(),
       sortField: this.sortField(),
       sortOrder: this.sortOrder(),
       page: Math.floor(this.first() / this.pageSize()),
@@ -255,6 +270,7 @@ export class RankedTableComponent {
     this.search.set('');
     this.positionSel.set([]);
     this.hideDrafted.set(false);
+    this.numericFilters.set([]);
     this.sortField.set(DEFAULT_SORT.modeled.field);
     this.sortOrder.set(DEFAULT_SORT.modeled.order);
     this.first.set(0);

@@ -6,13 +6,35 @@
     @if (p.drafted) {
       <p-tag value="Drafted" severity="danger" />
     }
-    <span class="muted">{{ p.position }} · Age {{ p.age ?? '—' }} · #{{ p.rank }}</span>
+    <span class="muted">{{ p.position }} · Age {{ p.age ?? '—' }}</span>
     @if (p.demand) {
       <span class="muted">Demand {{ p.demand }}</span>
     }
     @if (p.ratings?.scoutingAccuracy; as sct) {
       <p-tag [value]="sct" [severity]="scoutSeverity(sct)" />
     }
+
+    <span class="rank-edit">
+      @if (editing()) {
+        <span class="muted">Rank</span>
+        <input
+          type="number"
+          class="rank-input"
+          min="1"
+          [max]="rankMax()"
+          [ngModel]="draftRank()"
+          (ngModelChange)="draftRank.set($event)"
+          (keydown.enter)="commitRank()"
+          (keydown.escape)="cancelEdit()"
+          (click)="$event.stopPropagation()"
+        />
+        <button type="button" class="primary sm" (click)="commitRank()">Save</button>
+        <button type="button" class="sm" (click)="cancelEdit()">Cancel</button>
+      } @else {
+        <span class="muted">#{{ p.rank }}</span>
+        <button type="button" class="sm" (click)="startEdit()">Edit rank</button>
+      }
+    </span>
   </div>
 
   <div class="detail-sections">

@@ -235,6 +235,41 @@ export const VIEW_OPTIONS: { label: string; value: ClassView }[] = [
   { label: 'Pitching', value: 'pitching' },
 ];
 
+/** Descriptive-grade columns whose text maps to a tier ordinal the backend can
+ *  still compare with >/< (Very Low = 0 … Very High = 4; Fragile/Normal/Durable
+ *  = 0/1/2). */
+const GRADED_TEXT_FIELDS = new Set([
+  'injuryProne', 'workEthic', 'intelligence', 'leadership', 'scoutingAccuracy',
+]);
+
+export interface FilterableField {
+  field: string;
+  /** "Batting · Power" — group-prefixed so the flat picker stays legible */
+  label: string;
+  group: ColGroup;
+  /** true when the column shows tier text, not a number (hint in the UI) */
+  graded: boolean;
+}
+
+/** Every column across all three views that supports a numeric >/< bound —
+ *  numeric ratings/scores plus the graded-text and demand columns — deduped by
+ *  field so one master list backs the filter dropdown regardless of the view. */
+export const FILTERABLE_FIELDS: FilterableField[] = (() => {
+  const seen = new Set<string>();
+  const out: FilterableField[] = [];
+  for (const cols of Object.values(VIEW_COLUMNS)) {
+    for (const c of cols) {
+      const graded = GRADED_TEXT_FIELDS.has(c.field);
+      const usable = (c.numeric || graded || c.field === 'demandKey') && c.field !== 'rank';
+      if (!usable || seen.has(c.field)) continue;
+      seen.add(c.field);
+      const name = c.field === 'demandKey' ? 'Demand ($ value)' : (c.title ?? c.header);
+      out.push({ field: c.field, label: `${c.group} · ${name}`, group: c.group, graded });
+    }
+  }
+  return out;
+})();
+
 /** Contiguous group runs across a column list, for the first header row. */
 export function groupSpans(cols: ColumnDef[]): { label: ColGroup; span: number }[] {
   const out: { label: ColGroup; span: number }[] = [];

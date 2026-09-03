@@ -40,6 +40,19 @@ input RankedPlayerFilter {
   search: String
   positions: [String!]
   hideDrafted: Boolean
+  numeric: [NumericFilter!]
+}
+
+"""
+A greater-than / less-than bound on any sortable column. `field` uses the same
+keys as RankedPlayerSort (a flat payload key, a dotted rating path like
+`batting.power`, `pitch.<Name>`, `demandKey`, or a descriptive-grade meta key).
+`min` / `max` are inclusive; graded text columns compare on their tier ordinal.
+"""
+input NumericFilter {
+  field: String!
+  min: Float
+  max: Float
 }
 
 input RankedPlayerSort {
@@ -87,6 +100,7 @@ type Mutation {
   reprocessDraftClass(name: String!): DraftClass!
   deleteDraftClass(name: String!): String!
   saveCustomOrder(name: String!, order: [ID!]!): DraftClass!
+  setPlayerRank(name: String!, id: ID!, rank: Int!): DraftClass!
   clearCustomOrder(name: String!): DraftClass!
   refreshDraftedFromStatsPlus(name: String!): DraftedRefreshResult!
   updateStatsPlusSettings(

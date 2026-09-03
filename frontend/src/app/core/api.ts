@@ -12,6 +12,7 @@ import {
   REORDER_PLAYERS,
   REPROCESS_DRAFT_CLASS,
   SAVE_CUSTOM_ORDER,
+  SET_PLAYER_RANK,
   SET_RANKING_METHOD,
   STATSPLUS_SETTINGS,
   UPDATE_SETTINGS,
@@ -33,12 +34,16 @@ type ReorderPlayer = Pick<
 
 /** Map the flat UI query onto the GraphQL `filter` / `sort` input objects. */
 function queryVars(name: string, q: RankedQuery) {
+  const numeric = q.numericFilters
+    .filter((f) => f.field && (f.min != null || f.max != null))
+    .map((f) => ({ field: f.field, min: f.min, max: f.max }));
   return {
     name,
     filter: {
       search: q.search.trim() || null,
       positions: q.positions.length ? q.positions : null,
       hideDrafted: q.hideDrafted,
+      numeric: numeric.length ? numeric : null,
     },
     sort: q.sortField ? { field: q.sortField, order: q.sortOrder } : null,
     page: q.page,
@@ -196,6 +201,20 @@ export class ApiService {
         }),
       );
       return res.data!.saveCustomOrder;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  async setPlayerRank(name: string, id: string, rank: number): Promise<DraftClass> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.mutate<{ setPlayerRank: DraftClass }>({
+          mutation: SET_PLAYER_RANK,
+          variables: { name, id, rank },
+        }),
+      );
+      return res.data!.setPlayerRank;
     } catch (e) {
       unwrap(e);
     }

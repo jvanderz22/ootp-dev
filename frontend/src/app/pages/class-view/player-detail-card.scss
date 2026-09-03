@@ -18,6 +18,21 @@
 .dh-name { font-weight: 700; font-size: 15px; }
 .muted { color: var(--text-dim); }
 
+.rank-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rank-input {
+  width: 4.5rem;
+  padding: 3px 6px;
+  font: inherit;
+}
+.rank-edit button.sm {
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
 /* In-game rating groups fill the left; the model column pins to the right. */
 .detail-sections {
   display: flex;

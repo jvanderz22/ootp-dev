@@ -21,6 +21,11 @@
     (valueChange)="onPositions($event)"
   />
 
+  <app-numeric-filters
+    [value]="numericFilters()"
+    (valueChange)="onNumericFilters($event)"
+  />
+
   <label class="row chk">
     <input
       type="checkbox"
@@ -150,7 +155,11 @@
       <tr class="detail-row">
         <td [attr.colspan]="columns().length + 2">
           <div class="detail-viewport" [style.width.px]="viewportWidth()">
-            <app-player-detail-card [player]="p" />
+            <app-player-detail-card
+              [player]="p"
+              [totalRanked]="totalRecords()"
+              (setRank)="onSetRank(p, $event)"
+            />
           </div>
         </td>
       </tr>

@@ -1,5 +1,5 @@
 <div class="reorder-bar row">
-  <b>Drag players to set the custom order.</b>
+  <b>Drag a player, or type a position on its row, to set the custom order.</b>
   <span class="spacer"></span>
   <button (click)="cancel.emit()" [disabled]="busy()">Cancel</button>
   <button class="danger" (click)="revert.emit()" [disabled]="busy()">Revert to model order</button>
@@ -10,7 +10,16 @@
   @for (p of list(); track p.id) {
     <div class="reorder-item" cdkDrag [class.drafted]="p.drafted">
       <span class="handle" cdkDragHandle>⠿</span>
-      <span class="idx">{{ $index + 1 }}</span>
+      <input
+        class="idx-input"
+        type="number"
+        min="1"
+        [max]="list().length"
+        [ngModel]="$index + 1"
+        (change)="moveTo($index, $any($event.target).value)"
+        (keydown.enter)="moveTo($index, $any($event.target).value)"
+        title="Position"
+      />
       <span class="pname">{{ p.name }}</span>
       <span class="muted">{{ p.position }} · {{ p.age }}</span>
       <span class="spacer"></span>

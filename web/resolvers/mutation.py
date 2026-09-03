@@ -31,6 +31,11 @@ def resolve_save_custom_order(_, __, name, order):
     return service.save_custom_order(name, order)
 
 
+@mutation.field("setPlayerRank")
+def resolve_set_player_rank(_, __, name, id, rank):
+    return service.set_player_rank(name, id, rank)
+
+
 @mutation.field("clearCustomOrder")
 def resolve_clear_custom_order(_, __, name):
     return service.clear_custom_order(name)
