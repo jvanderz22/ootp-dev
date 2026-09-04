@@ -19,23 +19,29 @@ Angular 22 SPA  --POST /graphql/-->  Ariadne GraphQL (Python, ASGI)  -->  rankin
 
 - Data lives on the filesystem: `datasets/<class>.csv` + `processed_classes/<class>/…`
   under `$DATA_DIR` (defaults to the repo root; set to a volume in production).
-- `web_config.json` under `$DATA_DIR` holds the StatsPlus league URL + session
+- `leagues.json` under `$DATA_DIR` holds the leagues (name + StatsPlus URL +
+  optional `lid`); each draft class is assigned to one (its `league_id` lives in
+  the class's `config.json`). `web_config.json` holds only the app-wide session
   cookie (set via the Settings page; the cookie is never returned to the client).
 - Whole app is behind HTTP Basic auth when `APP_PASSWORD` is set.
 
 ### StatsPlus configuration
 
-"Refresh drafted" calls `<league URL>/api/draftv2/` to pull the picks made so
-far and mark those players drafted. StatsPlus has **no API key** — the endpoint
-authenticates with your browser **session cookie**, and its login page is behind a
-CAPTCHA, so the cookie has to be copied by hand. Configure both fields on the
-**Settings** page (or seed them with env vars for a first deploy):
+"Refresh drafted" calls `<the class's league URL>/api/draftv2/` to pull the picks
+made so far and mark those players drafted. StatsPlus has **no API key** — the
+endpoint authenticates with your browser **session cookie**, and its login page is
+behind a CAPTCHA, so the cookie has to be copied by hand. On the **Settings**
+page: create one **League** per StatsPlus association (name + URL + optional
+`lid`) and assign classes to it, then paste the app-wide session cookie.
 
-| Setting            | Env var                | Notes                                                                                                                                                                                                   |
-| ------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **League URL**     | `STATSPLUS_LEAGUE_URL` | Your league's StatsPlus home. Full URL (`https://statsplus.net/yfmlb/`, `https://atl-01.statsplus.net/wbf/`) or a bare slug (`yfmlb`) — both are normalised. Only `*.statsplus.net` hosts are accepted. |
-| **Session cookie** | `STATSPLUS_COOKIE`     | `sessionid=VALUE; csrftoken=VALUE`                                                                                                                                                                      |
-| **Default `lid`**  | —                      | Optional; only for associations that run multiple drafts.                                                                                                                                               |
+| Setting            | Env var            | Notes                                                                                                                                                                            |
+| ------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **League URL**     | —                  | Per league. Full URL (`https://statsplus.net/yfmlb/`, `https://atl-01.statsplus.net/wbf/`) or a bare slug (`yfmlb`) — both are normalised. Only `*.statsplus.net` hosts are accepted. |
+| **Session cookie** | `STATSPLUS_COOKIE` | App-wide. `sessionid=VALUE; csrftoken=VALUE`                                                                                                                                     |
+| **`lid`**          | —                  | Per league; optional, only for associations that run multiple drafts.                                                                                                            |
+
+On upgrade, an existing app-wide `STATSPLUS_LEAGUE_URL` / `web_config.json`
+`league_url` is folded into one league automatically.
 
 To get the cookie: log into your league at statsplus.net in a browser →
 DevTools → Application → Cookies → `https://statsplus.net` → copy the
@@ -73,7 +79,7 @@ APP_PASSWORD=secret uvicorn web.app:app --port 8080     # http://localhost:8080
 ```bash
 fly launch --no-deploy            # creates the app from fly.toml
 fly volumes create draft_data --size 1
-fly secrets set APP_PASSWORD=... [STATSPLUS_LEAGUE_URL=... STATSPLUS_COOKIE=...]
+fly secrets set APP_PASSWORD=... [STATSPLUS_COOKIE=...]   # leagues are added in-app
 fly deploy
 ```
 
@@ -91,8 +97,9 @@ Schema: `web/schema.graphql`. Key operations:
 | `uploadDraftClass(name, rankingMethod, file)`       | upload an OOTP HTML export or converted CSV, then process |
 | `setRankingMethod` / `reprocessDraftClass`          | re-run the pipeline                                       |
 | `saveCustomOrder(name, order)` / `clearCustomOrder` | manual drag-and-drop ordering                             |
-| `refreshDraftedFromStatsPlus(name)`                 | pull drafted picks from `…/api/draftv2/`                  |
-| `statsPlusSettings` / `updateStatsPlusSettings`     | league URL + session cookie                               |
+| `refreshDraftedFromStatsPlus(name)`                 | pull drafted picks from the class's league `…/api/draftv2/` |
+| `leagues` / `createLeague` / `updateLeague` / `deleteLeague` / `setClassLeague` | manage leagues + class assignment            |
+| `statsPlusSettings` / `updateStatsPlusSettings`     | app-wide session cookie                                   |
 
 C+ CSV download is a plain route: `GET /download/<class>/upload.csv`.
 

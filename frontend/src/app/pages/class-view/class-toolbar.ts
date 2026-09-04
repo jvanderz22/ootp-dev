@@ -1,15 +1,13 @@
 import { Component, ElementRef, computed, input, output, viewChild } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
-import { SelectModule } from 'primeng/select';
 
-import { DraftClass, RANKING_METHODS } from '../../core/api.types';
+import { DraftClass, League, RANKING_METHODS } from '../../core/api.types';
 
 /** Class heading + summary counts + the class-level action buttons. */
 @Component({
   selector: 'app-class-toolbar',
-  imports: [FormsModule, SelectModule, MenuModule],
+  imports: [MenuModule],
   template: `
     @let d = detail();
     @if (d) {
@@ -19,23 +17,14 @@ import { DraftClass, RANKING_METHODS } from '../../core/api.types';
           <p class="muted sub">
             {{ d.playerCount }} players ·
             {{ shownCount() }} shown ·
-            {{ d.draftedCount }} drafted
+            {{ d.draftedCount }} drafted ·
+            {{ d.rankingMethod }} ·
+            {{ d.leagueName || 'no league' }}
             @if (d.hasCustomOrder) { · <span class="tag">custom order</span> }
           </p>
         </div>
 
         <div class="actions">
-          <label class="row">
-            <span class="muted">Method</span>
-            <p-select
-              [ngModel]="d.rankingMethod"
-              (onChange)="methodChange.emit($event.value)"
-              [options]="methodOptions"
-              [disabled]="busy()"
-              appendTo="body"
-            />
-          </label>
-          <button (click)="reprocess.emit()" [disabled]="busy()">Reprocess</button>
           @if (!notProcessed()) {
             <button (click)="refreshDrafted.emit()" [disabled]="busy()">Refresh drafted</button>
             <button (click)="download.emit()" [disabled]="busy()">Download C+ CSV</button>
@@ -45,7 +34,6 @@ import { DraftClass, RANKING_METHODS } from '../../core/api.types';
               </button>
             }
           }
-          <button class="danger" (click)="deleteClass.emit()" [disabled]="busy()">Delete</button>
 
           <button
             class="icon-btn"
@@ -83,7 +71,6 @@ import { DraftClass, RANKING_METHODS } from '../../core/api.types';
       .muted { color: var(--text-dim); }
       .tag { color: var(--accent); }
       .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-      .row { display: flex; align-items: center; gap: 8px; }
       .icon-btn { display: inline-flex; align-items: center; justify-content: center; }
       .icon-btn i { font-size: 1rem; }
     `,
@@ -95,6 +82,7 @@ export class ClassToolbarComponent {
   readonly notProcessed = input(false);
   readonly mode = input<'table' | 'reorder'>('table');
   readonly shownCount = input(0);
+  readonly leagues = input<League[]>([]);
 
   readonly methodChange = output<string>();
   readonly reprocess = output<void>();
@@ -103,19 +91,63 @@ export class ClassToolbarComponent {
   readonly download = output<void>();
   readonly startReorder = output<void>();
   readonly deleteClass = output<void>();
-
-  protected readonly methodOptions = [...RANKING_METHODS];
+  readonly setLeague = output<string | null>();
 
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
-  protected readonly settingsItems = computed<MenuItem[]>(() => [
-    {
-      label: 'Replace file…',
-      icon: 'pi pi-upload',
-      disabled: this.busy(),
-      command: () => this.fileInput()?.nativeElement.click(),
-    },
-  ]);
+  protected readonly settingsItems = computed<MenuItem[]>(() => {
+    const d = this.detail();
+    const busy = this.busy();
+    const check = (on: boolean) => (on ? 'pi pi-check' : 'pi pi-fw');
+
+    const methodItems: MenuItem[] = RANKING_METHODS.map((m) => ({
+      label: m,
+      icon: check(d?.rankingMethod === m),
+      disabled: busy || d?.rankingMethod === m,
+      command: () => this.methodChange.emit(m),
+    }));
+
+    const leagueItems: MenuItem[] = [
+      {
+        label: 'None',
+        icon: check(!d?.leagueId),
+        disabled: busy || !d?.leagueId,
+        command: () => this.setLeague.emit(null),
+      },
+      ...this.leagues().map((l) => ({
+        label: l.name,
+        icon: check(d?.leagueId === l.id),
+        disabled: busy || d?.leagueId === l.id,
+        command: () => this.setLeague.emit(l.id),
+      })),
+    ];
+
+    return [
+      { label: 'Ranking method', items: methodItems },
+      { label: 'Move to league', items: leagueItems },
+      { separator: true },
+      {
+        label: 'Reprocess',
+        icon: 'pi pi-refresh',
+        disabled: busy,
+        command: () => this.reprocess.emit(),
+      },
+      {
+        label: 'Replace file…',
+        icon: 'pi pi-upload',
+        disabled: busy,
+        command: () => this.fileInput()?.nativeElement.click(),
+      },
+      { separator: true },
+      {
+        label: 'Delete',
+        icon: 'pi pi-trash',
+        styleClass: 'danger',
+        disabled: busy,
+        command: () => this.deleteClass.emit(),
+      },
+    ];
+  });
 
   protected onPick(input: HTMLInputElement): void {
     const file = input.files?.[0];

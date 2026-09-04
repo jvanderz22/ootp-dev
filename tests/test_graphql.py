@@ -89,20 +89,49 @@ def test_upload_then_query_then_reorder(client):
 def test_settings_update(client):
     out = gql(
         client,
-        'mutation { updateStatsPlusSettings(leagueUrl: "https://statsplus.net/yfmlb/", '
-        'sessionid: "abc", csrftoken: "def") '
-        "{ leagueUrl hasSessionid hasCsrftoken } }",
+        'mutation { updateStatsPlusSettings(sessionid: "abc", csrftoken: "def") '
+        "{ hasSessionid hasCsrftoken } }",
     )["updateStatsPlusSettings"]
-    assert out == {
-        "leagueUrl": "https://statsplus.net/yfmlb/",
-        "hasSessionid": True,
-        "hasCsrftoken": True,
-    }
+    assert out == {"hasSessionid": True, "hasCsrftoken": True}
     # the values themselves are never exposed
     again = gql(
-        client, "{ statsPlusSettings { leagueUrl hasSessionid hasCsrftoken } }"
+        client, "{ statsPlusSettings { hasSessionid hasCsrftoken } }"
     )["statsPlusSettings"]
     assert again["hasSessionid"] and again["hasCsrftoken"]
+
+
+def test_league_crud_and_class_assignment(client):
+    made = gql(
+        client,
+        'mutation { createLeague(name: "YF MLB", leagueUrl: "yfmlb", defaultLid: 12) '
+        "{ id name leagueUrl defaultLid classNames } }",
+    )["createLeague"]
+    assert made["name"] == "YF MLB"
+    assert made["leagueUrl"] == "https://statsplus.net/yfmlb/"
+    assert made["defaultLid"] == 12
+    assert made["classNames"] == []
+    league_id = made["id"]
+
+    listed = gql(client, "{ leagues { id name } }")["leagues"]
+    assert [lg["id"] for lg in listed] == [league_id]
+
+    gone = gql(
+        client, f'mutation {{ deleteLeague(id: "{league_id}") }}'
+    )["deleteLeague"]
+    assert gone == league_id
+    assert gql(client, "{ leagues { id } }")["leagues"] == []
+
+
+def test_create_league_rejects_foreign_host(client):
+    resp = client.post(
+        "/graphql",
+        json={
+            "query": 'mutation { createLeague(name: "x", leagueUrl: "https://evil.example/x") { id } }'
+        },
+    )
+    body = resp.json()
+    assert "errors" in body
+    assert "statsplus.net" in body["errors"][0]["message"]
 
 
 def test_settings_accepts_name_prefixed_paste(client):
@@ -119,27 +148,15 @@ def test_settings_accepts_name_prefixed_paste(client):
     assert cookie_header(load_settings()) == "sessionid=xyz; csrftoken=qrs"
 
 
-def test_settings_accepts_bare_slug_and_alt_host(client):
+def test_league_accepts_bare_slug_and_alt_host(client):
     out = gql(
         client,
-        'mutation { updateStatsPlusSettings(leagueUrl: "yfmlb") { leagueUrl } }',
-    )["updateStatsPlusSettings"]
+        'mutation { createLeague(name: "a", leagueUrl: "yfmlb") { leagueUrl } }',
+    )["createLeague"]
     assert out["leagueUrl"] == "https://statsplus.net/yfmlb/"
 
     out = gql(
         client,
-        'mutation { updateStatsPlusSettings(leagueUrl: "atl-01.statsplus.net/wbf") { leagueUrl } }',
-    )["updateStatsPlusSettings"]
+        'mutation { createLeague(name: "b", leagueUrl: "atl-01.statsplus.net/wbf") { leagueUrl } }',
+    )["createLeague"]
     assert out["leagueUrl"] == "https://atl-01.statsplus.net/wbf/"
-
-
-def test_settings_rejects_foreign_host(client):
-    resp = client.post(
-        "/graphql",
-        json={
-            "query": 'mutation { updateStatsPlusSettings(leagueUrl: "https://evil.example/x") { leagueUrl } }'
-        },
-    )
-    body = resp.json()
-    assert "errors" in body
-    assert "statsplus.net" in body["errors"][0]["message"]

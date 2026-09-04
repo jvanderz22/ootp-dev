@@ -10,6 +10,7 @@ processed_data/*.csv
 processed_classes/**/*.csv
 processed_classes/**/*
 web_config.json
+leagues.json
 
 # python
 __pycache__/

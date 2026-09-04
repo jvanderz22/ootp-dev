@@ -9,6 +9,7 @@
     [notProcessed]="notProcessed()"
     [mode]="mode()"
     [shownCount]="totalRecords()"
+    [leagues]="leagueStore.leagues()"
     (methodChange)="onMethodChange($event)"
     (reprocess)="reprocess()"
     (replaceFile)="replaceFile($event)"
@@ -16,6 +17,7 @@
     (download)="download()"
     (startReorder)="startReorder()"
     (deleteClass)="deleteClass()"
+    (setLeague)="onSetLeague($event)"
   />
 
   @if (busy()) { <p class="muted">{{ busy() }}</p> }

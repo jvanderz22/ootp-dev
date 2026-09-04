@@ -14,7 +14,7 @@ import anyio
 
 import pipeline
 from context import DraftClassContext, default_base_dir
-from web import class_index
+from web import class_index, leagues
 from custom_ranking import clear_order, has_custom_order, load_order, resolve_order, save_order
 from draft_class_files import get_ranked_players_file
 from drafted_players import get_drafted_player_ids
@@ -310,6 +310,8 @@ def draft_class_payload(name: str):
     drafted_ids = get_drafted_player_ids(ctx)
     drafted_count = len(drafted_ids & _dataset_ids(ctx)) if drafted_ids else 0
 
+    league = leagues.league_for_class(name)
+
     return {
         "name": name,
         "ranking_method": ranking_method,
@@ -317,7 +319,56 @@ def draft_class_payload(name: str):
         "has_custom_order": has_custom_order(ctx),
         "last_processed": last_processed,
         "drafted_count": drafted_count,
+        "league_id": league["id"] if league else None,
+        "league_name": league["name"] if league else None,
     }
+
+
+# --------------------------------------------------------------------- leagues
+def _league_payload(league: dict) -> dict:
+    return {**league, "class_names": leagues.class_names_for_league(league["id"])}
+
+
+def list_leagues():
+    all_leagues = leagues.load_leagues()
+    buckets = {lg["id"]: [] for lg in all_leagues}
+    for cname in DraftClassContext.list_classes():
+        lg = leagues.league_for_class(cname)
+        if lg and lg["id"] in buckets:
+            buckets[lg["id"]].append(cname)
+    return [{**lg, "class_names": sorted(buckets[lg["id"]])} for lg in all_leagues]
+
+
+def create_league(name, league_url=None, default_lid=None, class_names=None):
+    try:
+        league = leagues.create_league(name, league_url, default_lid, class_names)
+    except ValueError as exc:
+        raise InvalidInput(str(exc)) from exc
+    return _league_payload(league)
+
+
+def update_league(id, name=None, league_url=None, default_lid=None, class_names=None):
+    try:
+        league = leagues.update_league(id, name, league_url, default_lid, class_names)
+    except ValueError as exc:
+        raise InvalidInput(str(exc)) from exc
+    return _league_payload(league)
+
+
+def delete_league(id):
+    try:
+        return leagues.delete_league(id)
+    except ValueError as exc:
+        raise InvalidInput(str(exc)) from exc
+
+
+def set_class_league(name, league_id):
+    _ctx(name)
+    try:
+        leagues.set_class_league(name, league_id)
+    except ValueError as exc:
+        raise InvalidInput(str(exc)) from exc
+    return draft_class_payload(name)
 
 
 def list_draft_classes():
@@ -539,11 +590,21 @@ async def refresh_drafted(name: str):
 
 def _refresh_drafted_sync(name: str):
     ctx = _ctx(name)
+    league = leagues.league_for_class(name)
+    if not league:
+        raise InvalidInput(
+            f"Draft class {name!r} isn't assigned to a league yet. Assign one from "
+            f"the class menu (Move to league…) or the Settings page, then retry."
+        )
+    if not league.get("league_url"):
+        raise InvalidInput(
+            f"League {league['name']!r} has no StatsPlus URL. Add one on the Settings page."
+        )
     settings = load_settings()
     picks = fetch_draft_picks(
-        settings.get("league_url"),
+        league["league_url"],
         cookie_header(settings),
-        settings.get("default_lid"),
+        league.get("default_lid"),
     )
     write_drafted_players_file(ctx, picks)
     if _read_ranked_rows(ctx) is not None:

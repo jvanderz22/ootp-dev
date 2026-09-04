@@ -5,6 +5,7 @@ import { map } from 'rxjs';
 
 import { ApiService } from '../../core/api';
 import { ClassStore } from '../../core/class-store';
+import { LeagueStore } from '../../core/league-store';
 import { DraftClass, RankedPlayerPage, RankedQuery } from '../../core/api.types';
 import { DEFAULT_SORT } from '../../core/ranked-columns';
 import { paramsToQuery, queryToParams } from '../../core/table-url';
@@ -37,6 +38,7 @@ function defaultQuery(): RankedQuery {
 export class ClassViewPage {
   private readonly api = inject(ApiService);
   private readonly store = inject(ClassStore);
+  protected readonly leagueStore = inject(LeagueStore);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -160,6 +162,14 @@ export class ClassViewPage {
       this.detail.set(await this.api.reprocess(this.name()));
       await this.reloadAfterMutation();
       await this.store.reload();
+    });
+  }
+
+  protected async onSetLeague(leagueId: string | null): Promise<void> {
+    await this.run('Updating league…', async () => {
+      this.detail.set(await this.api.setClassLeague(this.name(), leagueId));
+      await this.store.reload();
+      await this.leagueStore.reload();
     });
   }
 

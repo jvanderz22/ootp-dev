@@ -47,13 +47,28 @@ async def resolve_refresh_drafted(_, __, name):
 
 
 @mutation.field("updateStatsPlusSettings")
-def resolve_update_settings(
-    _, __, league_url=None, sessionid=None, csrftoken=None, default_lid=None
-):
-    update_settings(
-        league_url=league_url,
-        sessionid=sessionid,
-        csrftoken=csrftoken,
-        default_lid=default_lid,
-    )
+def resolve_update_settings(_, __, sessionid=None, csrftoken=None):
+    update_settings(sessionid=sessionid, csrftoken=csrftoken)
     return public_settings()
+
+
+@mutation.field("createLeague")
+def resolve_create_league(_, __, name, league_url=None, default_lid=None, class_names=None):
+    return service.create_league(name, league_url, default_lid, class_names)
+
+
+@mutation.field("updateLeague")
+def resolve_update_league(
+    _, __, id, name=None, league_url=None, default_lid=None, class_names=None
+):
+    return service.update_league(id, name, league_url, default_lid, class_names)
+
+
+@mutation.field("deleteLeague")
+def resolve_delete_league(_, __, id):
+    return service.delete_league(id)
+
+
+@mutation.field("setClassLeague")
+def resolve_set_class_league(_, __, name, league_id=None):
+    return service.set_class_league(name, league_id)

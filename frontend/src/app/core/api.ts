@@ -5,22 +5,28 @@ import { firstValueFrom } from 'rxjs';
 import {
   CLASS_DETAIL,
   CLEAR_CUSTOM_ORDER,
+  CREATE_LEAGUE,
   DELETE_DRAFT_CLASS,
+  DELETE_LEAGUE,
   DRAFT_CLASSES,
+  LEAGUES,
   RANKED_PAGE,
   REFRESH_DRAFTED,
   REORDER_PLAYERS,
   REPROCESS_DRAFT_CLASS,
   SAVE_CUSTOM_ORDER,
+  SET_CLASS_LEAGUE,
   SET_PLAYER_RANK,
   SET_RANKING_METHOD,
   STATSPLUS_SETTINGS,
+  UPDATE_LEAGUE,
   UPDATE_SETTINGS,
   UPLOAD_DRAFT_CLASS,
 } from './gql';
 import {
   DraftClass,
   DraftedRefreshResult,
+  League,
   RankedPlayer,
   RankedPlayerPage,
   RankedQuery,
@@ -263,10 +269,8 @@ export class ApiService {
   }
 
   async updateSettings(input: {
-    leagueUrl?: string;
     sessionid?: string;
     csrftoken?: string;
-    defaultLid?: number | null;
   }): Promise<StatsPlusSettings> {
     try {
       const res = await firstValueFrom(
@@ -276,6 +280,83 @@ export class ApiService {
         }),
       );
       return res.data!.updateStatsPlusSettings;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  async leagues(): Promise<League[]> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.query<{ leagues: League[] }>({
+          query: LEAGUES,
+          fetchPolicy: 'network-only',
+        }),
+      );
+      return res.data!.leagues;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  async createLeague(input: {
+    name: string;
+    leagueUrl?: string | null;
+    defaultLid?: number | null;
+    classNames?: string[];
+  }): Promise<League> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.mutate<{ createLeague: League }>({
+          mutation: CREATE_LEAGUE,
+          variables: input,
+        }),
+      );
+      return res.data!.createLeague;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  async updateLeague(input: {
+    id: string;
+    name?: string;
+    leagueUrl?: string | null;
+    defaultLid?: number | null;
+    classNames?: string[];
+  }): Promise<League> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.mutate<{ updateLeague: League }>({
+          mutation: UPDATE_LEAGUE,
+          variables: input,
+        }),
+      );
+      return res.data!.updateLeague;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  async deleteLeague(id: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.apollo.mutate({ mutation: DELETE_LEAGUE, variables: { id } }),
+      );
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  async setClassLeague(name: string, leagueId: string | null): Promise<DraftClass> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.mutate<{ setClassLeague: DraftClass }>({
+          mutation: SET_CLASS_LEAGUE,
+          variables: { name, leagueId },
+        }),
+      );
+      return res.data!.setClassLeague;
     } catch (e) {
       unwrap(e);
     }

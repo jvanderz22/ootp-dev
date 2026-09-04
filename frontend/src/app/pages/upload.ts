@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 
 import { ApiService } from '../core/api';
 import { ClassStore } from '../core/class-store';
+import { LeagueStore } from '../core/league-store';
 import { RANKING_METHODS } from '../core/api.types';
 
 @Component({
@@ -22,6 +23,20 @@ import { RANKING_METHODS } from '../core/api.types';
         <select name="method" [(ngModel)]="method">
           @for (m of methods; track m) { <option [value]="m">{{ m }}</option> }
         </select>
+      </label>
+
+      <label>
+        League
+        <select name="league" [(ngModel)]="leagueId">
+          <option [ngValue]="null">— none —</option>
+          @for (l of leagueStore.leagues(); track l.id) {
+            <option [ngValue]="l.id">{{ l.name }}</option>
+          }
+        </select>
+        <small class="muted">
+          Needed for “Refresh drafted”. You can also set this later from the class menu
+          or the Settings page.
+        </small>
       </label>
 
       <label>
@@ -48,11 +63,13 @@ import { RANKING_METHODS } from '../core/api.types';
 export class UploadPage {
   private readonly api = inject(ApiService);
   private readonly store = inject(ClassStore);
+  protected readonly leagueStore = inject(LeagueStore);
   private readonly router = inject(Router);
 
   protected readonly methods = RANKING_METHODS;
   protected name = '';
   protected method = 'draft_class';
+  protected leagueId: string | null = null;
   protected readonly file = signal<File | null>(null);
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -72,6 +89,9 @@ export class UploadPage {
     this.error.set(null);
     try {
       const cls = await this.api.uploadDraftClass(this.name.trim(), this.method, f);
+      if (this.leagueId) {
+        await this.api.setClassLeague(cls.name, this.leagueId);
+      }
       await this.store.reload();
       await this.router.navigate(['/class', cls.name]);
     } catch (e) {

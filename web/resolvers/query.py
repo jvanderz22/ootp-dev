@@ -38,3 +38,8 @@ def resolve_class_positions(_, __, name):
 @query.field("statsPlusSettings")
 def resolve_settings(*_):
     return public_settings()
+
+
+@query.field("leagues")
+def resolve_leagues(*_):
+    return service.list_leagues()

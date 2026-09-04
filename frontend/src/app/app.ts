@@ -5,6 +5,7 @@ import { filter, map } from 'rxjs';
 
 import { AuthService } from './core/auth';
 import { ClassStore } from './core/class-store';
+import { LeagueStore } from './core/league-store';
 
 @Component({
   selector: 'app-root',
@@ -16,6 +17,7 @@ export class App {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   protected readonly store = inject(ClassStore);
+  private readonly leagueStore = inject(LeagueStore);
 
   protected readonly authorized = this.auth.authorized;
 
@@ -36,7 +38,10 @@ export class App {
 
   constructor() {
     effect(() => {
-      if (this.authorized()) this.store.reload();
+      if (this.authorized()) {
+        this.store.reload();
+        this.leagueStore.reload();
+      }
     });
   }
 

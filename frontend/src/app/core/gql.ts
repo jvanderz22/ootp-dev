@@ -36,6 +36,18 @@ const CLASS_FIELDS = gql`
     hasCustomOrder
     lastProcessed
     draftedCount
+    leagueId
+    leagueName
+  }
+`;
+
+const LEAGUE_FIELDS = gql`
+  fragment LeagueFields on League {
+    id
+    name
+    leagueUrl
+    defaultLid
+    classNames
   }
 `;
 
@@ -122,10 +134,72 @@ export const REORDER_PLAYERS = gql`
 export const STATSPLUS_SETTINGS = gql`
   query StatsPlusSettings {
     statsPlusSettings {
-      leagueUrl
-      defaultLid
       hasSessionid
       hasCsrftoken
+    }
+  }
+`;
+
+export const LEAGUES = gql`
+  ${LEAGUE_FIELDS}
+  query Leagues {
+    leagues {
+      ...LeagueFields
+    }
+  }
+`;
+
+export const CREATE_LEAGUE = gql`
+  ${LEAGUE_FIELDS}
+  mutation CreateLeague(
+    $name: String!
+    $leagueUrl: String
+    $defaultLid: Int
+    $classNames: [String!]
+  ) {
+    createLeague(
+      name: $name
+      leagueUrl: $leagueUrl
+      defaultLid: $defaultLid
+      classNames: $classNames
+    ) {
+      ...LeagueFields
+    }
+  }
+`;
+
+export const UPDATE_LEAGUE = gql`
+  ${LEAGUE_FIELDS}
+  mutation UpdateLeague(
+    $id: ID!
+    $name: String
+    $leagueUrl: String
+    $defaultLid: Int
+    $classNames: [String!]
+  ) {
+    updateLeague(
+      id: $id
+      name: $name
+      leagueUrl: $leagueUrl
+      defaultLid: $defaultLid
+      classNames: $classNames
+    ) {
+      ...LeagueFields
+    }
+  }
+`;
+
+export const DELETE_LEAGUE = gql`
+  mutation DeleteLeague($id: ID!) {
+    deleteLeague(id: $id)
+  }
+`;
+
+export const SET_CLASS_LEAGUE = gql`
+  ${CLASS_FIELDS}
+  mutation SetClassLeague($name: String!, $leagueId: String) {
+    setClassLeague(name: $name, leagueId: $leagueId) {
+      ...ClassFields
     }
   }
 `;
@@ -202,20 +276,8 @@ export const REFRESH_DRAFTED = gql`
 `;
 
 export const UPDATE_SETTINGS = gql`
-  mutation UpdateStatsPlusSettings(
-    $leagueUrl: String
-    $sessionid: String
-    $csrftoken: String
-    $defaultLid: Int
-  ) {
-    updateStatsPlusSettings(
-      leagueUrl: $leagueUrl
-      sessionid: $sessionid
-      csrftoken: $csrftoken
-      defaultLid: $defaultLid
-    ) {
-      leagueUrl
-      defaultLid
+  mutation UpdateStatsPlusSettings($sessionid: String, $csrftoken: String) {
+    updateStatsPlusSettings(sessionid: $sessionid, csrftoken: $csrftoken) {
       hasSessionid
       hasCsrftoken
     }

@@ -26,6 +26,11 @@ import { ClassStore } from '../core/class-store';
             @if (c.hasCustomOrder) { · <span class="tag">custom order</span> }
           </div>
           <div class="meta muted">
+            @if (c.leagueName) { {{ c.leagueName }} } @else {
+              <span class="tag">no league</span>
+            }
+          </div>
+          <div class="meta muted">
             {{ c.draftedCount }} drafted ·
             @if (c.lastProcessed) {
               processed {{ c.lastProcessed | date: 'short' }}

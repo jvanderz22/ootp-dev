@@ -8,6 +8,16 @@ type DraftClass {
   hasCustomOrder: Boolean!
   lastProcessed: String
   draftedCount: Int!
+  leagueId: String
+  leagueName: String
+}
+
+type League {
+  id: ID!
+  name: String!
+  leagueUrl: String
+  defaultLid: Int
+  classNames: [String!]!
 }
 
 type RankedPlayer {
@@ -66,8 +76,6 @@ type RankedPlayerPage {
 }
 
 type StatsPlusSettings {
-  leagueUrl: String
-  defaultLid: Int
   hasSessionid: Boolean!
   hasCsrftoken: Boolean!
 }
@@ -92,6 +100,7 @@ type Query {
   ): RankedPlayerPage!
   classPositions(name: String!): [String!]!
   statsPlusSettings: StatsPlusSettings!
+  leagues: [League!]!
 }
 
 type Mutation {
@@ -103,10 +112,20 @@ type Mutation {
   setPlayerRank(name: String!, id: ID!, rank: Int!): DraftClass!
   clearCustomOrder(name: String!): DraftClass!
   refreshDraftedFromStatsPlus(name: String!): DraftedRefreshResult!
-  updateStatsPlusSettings(
+  updateStatsPlusSettings(sessionid: String, csrftoken: String): StatsPlusSettings!
+  createLeague(
+    name: String!
     leagueUrl: String
-    sessionid: String
-    csrftoken: String
     defaultLid: Int
-  ): StatsPlusSettings!
+    classNames: [String!]
+  ): League!
+  updateLeague(
+    id: ID!
+    name: String
+    leagueUrl: String
+    defaultLid: Int
+    classNames: [String!]
+  ): League!
+  deleteLeague(id: ID!): String!
+  setClassLeague(name: String!, leagueId: String): DraftClass!
 }

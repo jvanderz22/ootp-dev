@@ -5,6 +5,16 @@ export interface DraftClass {
   hasCustomOrder: boolean;
   lastProcessed: string | null;
   draftedCount: number;
+  leagueId: string | null;
+  leagueName: string | null;
+}
+
+export interface League {
+  id: string;
+  name: string;
+  leagueUrl: string | null;
+  defaultLid: number | null;
+  classNames: string[];
 }
 
 export interface RankedPlayer {
@@ -101,8 +111,6 @@ export interface RankedQuery {
 }
 
 export interface StatsPlusSettings {
-  leagueUrl: string | null;
-  defaultLid: number | null;
   hasSessionid: boolean;
   hasCsrftoken: boolean;
 }
