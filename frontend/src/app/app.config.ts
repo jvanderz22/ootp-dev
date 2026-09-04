@@ -2,6 +2,7 @@ import {
   ApplicationConfig,
   inject,
   provideBrowserGlobalErrorListeners,
+  provideEnvironmentInitializer,
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -16,6 +17,7 @@ import isExtractableFile from 'extract-files/isExtractableFile.mjs';
 
 import { routes } from './app.routes';
 import { authInterceptor, AuthService } from './core/auth';
+import { KeepaliveService } from './core/keepalive';
 import { PRIMENG_LICENSE_KEY } from './core/primeng-license';
 
 export const appConfig: ApplicationConfig = {
@@ -33,6 +35,8 @@ export const appConfig: ApplicationConfig = {
       },
     }),
     provideHttpClient(withInterceptors([authInterceptor])),
+    // Eagerly start the backend keep-alive pinger.
+    provideEnvironmentInitializer(() => inject(KeepaliveService)),
     provideApollo(() => {
       const httpLink = inject(HttpLink);
       const auth = inject(AuthService);
