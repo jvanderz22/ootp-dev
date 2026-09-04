@@ -86,6 +86,52 @@ def test_upload_then_query_then_reorder(client):
     assert [r["id"] for r in ranked_ids(all=True)["rows"][:3]] == ids[:3]
 
 
+def test_handedness_filters(client):
+    from tests.conftest import SAMPLE_DATASET
+
+    if not SAMPLE_DATASET.exists():
+        pytest.skip("sample dataset not present")
+
+    q = (
+        "mutation($file: Upload!) { uploadDraftClass("
+        'name: "h", rankingMethod: "draft_class", file: $file) { name } }'
+    )
+    ops = json.dumps({"query": q, "variables": {"file": None}})
+    with open(SAMPLE_DATASET, "rb") as fh:
+        resp = client.post(
+            "/graphql",
+            data={"operations": ops, "map": json.dumps({"0": ["variables.file"]})},
+            files={"0": ("h.csv", fh, "text/csv")},
+        )
+    assert "errors" not in resp.json(), resp.json()
+
+    def rows(**filt):
+        q = (
+            "query($f: RankedPlayerFilter) { rankedPlayers(name: \"h\", filter: $f, "
+            "allRows: true) { totalRecords rows { batHand throwHand } } }"
+        )
+        return gql(client, q, f=filt)["rankedPlayers"]
+
+    everyone = rows()
+    total = everyone["totalRecords"]
+    assert total > 100
+
+    lefty_bats = rows(batHands=["Left"])
+    assert 0 < lefty_bats["totalRecords"] < total
+    assert {r["batHand"] for r in lefty_bats["rows"]} == {"Left"}
+
+    righty_throws = rows(throwHands=["Right"])
+    assert {r["throwHand"] for r in righty_throws["rows"]} == {"Right"}
+
+    # both filters AND together
+    combo = rows(batHands=["Left", "Switch"], throwHands=["Right"])
+    assert all(
+        r["batHand"] in {"Left", "Switch"} and r["throwHand"] == "Right"
+        for r in combo["rows"]
+    )
+    assert combo["totalRecords"] <= righty_throws["totalRecords"]
+
+
 def test_settings_update(client):
     out = gql(
         client,

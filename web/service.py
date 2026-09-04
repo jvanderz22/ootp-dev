@@ -416,13 +416,17 @@ def ranked_players_page(
     f = filter or {}
     search = (f.get("search") or "").strip().lower()
     pos_set = set(f.get("positions") or [])
+    bat_set = set(f.get("bat_hands") or [])
+    throw_set = set(f.get("throw_hands") or [])
     hide_drafted = bool(f.get("hide_drafted"))
-    if search or pos_set or hide_drafted:
+    if search or pos_set or bat_set or throw_set or hide_drafted:
         rows = [
             r
             for r in rows
             if (not search or search in r["name"].lower())
             and (not pos_set or r["position"] in pos_set)
+            and (not bat_set or r["bat_hand"] in bat_set)
+            and (not throw_set or r["throw_hand"] in throw_set)
             and (not hide_drafted or not r["drafted"])
         ]
 

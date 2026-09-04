@@ -23,7 +23,11 @@
 
   <app-numeric-filters
     [value]="numericFilters()"
+    [batHands]="batHandSel()"
+    [throwHands]="throwHandSel()"
     (valueChange)="onNumericFilters($event)"
+    (batHandsChange)="onBatHands($event)"
+    (throwHandsChange)="onThrowHands($event)"
   />
 
   <label class="row chk">
@@ -101,7 +105,7 @@
             [class.sticky-name]="c.sticky === 'name'"
             [class.sticky-pos]="c.sticky === 'pos'"
             [class.col-wide]="c.wide"
-            [class.col-filtered]="colFilter(c)"
+            [class.col-filtered]="isColFiltered(c)"
             [attr.title]="c.title ?? null"
             (click)="onSort(c)"
             (mouseenter)="onColEnter(c, $event)"
@@ -111,7 +115,7 @@
             @if (sortCaret(c); as caret) {
               <span class="sort-caret">{{ caret }}</span>
             }
-            @if (colFilter(c)) { <span class="col-filter-dot" title="Filtered">●</span> }
+            @if (isColFiltered(c)) { <span class="col-filter-dot" title="Filtered">●</span> }
           </th>
         }
         <th class="expander-col"></th>
@@ -197,30 +201,43 @@
     (mouseleave)="onColLeave()"
   >
     <div class="cqf-title">Filter · {{ c.title ?? c.header }}</div>
-    <div class="cqf-row">
-      <input
-        type="number"
-        placeholder="min"
-        [ngModel]="hoverMin()"
-        (ngModelChange)="hoverMin.set(numOrNull($event))"
-        (keydown.enter)="applyColFilter()"
-        (keydown.escape)="closeColPop()"
+    @if (isHandCol(c)) {
+      <app-handedness-filter
+        [switch]="c.field === 'batHand'"
+        [value]="c.field === 'batHand' ? batHandSel() : throwHandSel()"
+        (valueChange)="onHoverHands(c, $event)"
       />
-      <span class="dash">–</span>
-      <input
-        type="number"
-        placeholder="max"
-        [ngModel]="hoverMax()"
-        (ngModelChange)="hoverMax.set(numOrNull($event))"
-        (keydown.enter)="applyColFilter()"
-        (keydown.escape)="closeColPop()"
-      />
-    </div>
-    <div class="cqf-foot">
-      <button type="button" class="primary sm" (click)="applyColFilter()">Apply</button>
-      @if (colFilter(c)) {
-        <button type="button" class="sm" (click)="clearColFilter()">Clear</button>
+      @if (isColFiltered(c)) {
+        <div class="cqf-foot">
+          <button type="button" class="sm" (click)="clearColFilter()">Clear</button>
+        </div>
       }
-    </div>
+    } @else {
+      <div class="cqf-row">
+        <input
+          type="number"
+          placeholder="min"
+          [ngModel]="hoverMin()"
+          (ngModelChange)="hoverMin.set(numOrNull($event))"
+          (keydown.enter)="applyColFilter()"
+          (keydown.escape)="closeColPop()"
+        />
+        <span class="dash">–</span>
+        <input
+          type="number"
+          placeholder="max"
+          [ngModel]="hoverMax()"
+          (ngModelChange)="hoverMax.set(numOrNull($event))"
+          (keydown.enter)="applyColFilter()"
+          (keydown.escape)="closeColPop()"
+        />
+      </div>
+      <div class="cqf-foot">
+        <button type="button" class="primary sm" (click)="applyColFilter()">Apply</button>
+        @if (isColFiltered(c)) {
+          <button type="button" class="sm" (click)="clearColFilter()">Clear</button>
+        }
+      </div>
+    }
   </div>
 }

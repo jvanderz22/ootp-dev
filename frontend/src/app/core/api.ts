@@ -48,6 +48,8 @@ function queryVars(name: string, q: RankedQuery) {
     filter: {
       search: q.search.trim() || null,
       positions: q.positions.length ? q.positions : null,
+      batHands: q.batHands.length ? q.batHands : null,
+      throwHands: q.throwHands.length ? q.throwHands : null,
       hideDrafted: q.hideDrafted,
       numeric: numeric.length ? numeric : null,
     },

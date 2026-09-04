@@ -20,6 +20,8 @@ function defaultQuery(): RankedQuery {
     view: 'modeled',
     search: '',
     positions: [],
+    batHands: [],
+    throwHands: [],
     hideDrafted: false,
     numericFilters: [],
     sortField: DEFAULT_SORT.modeled.field,

@@ -28,6 +28,7 @@ import {
 import { typeSeverity } from '../../core/player-stats';
 import { PlayerDetailCardComponent } from './player-detail-card';
 import { PositionFilterComponent } from './position-filter';
+import { HandednessFilterComponent } from './handedness-filter';
 import { NumericFiltersComponent } from './numeric-filters';
 import { PlayerCompareComponent } from '../player-compare';
 
@@ -50,6 +51,7 @@ const COL_POP_MARGIN = 8;
     SelectButtonModule,
     PlayerDetailCardComponent,
     PositionFilterComponent,
+    HandednessFilterComponent,
     NumericFiltersComponent,
     PlayerCompareComponent,
   ],
@@ -78,6 +80,8 @@ export class RankedTableComponent {
   protected readonly view = signal<ClassView>('modeled');
   protected readonly search = signal('');
   protected readonly positionSel = signal<string[]>([]);
+  protected readonly batHandSel = signal<string[]>([]);
+  protected readonly throwHandSel = signal<string[]>([]);
   protected readonly hideDrafted = signal(false);
   protected readonly numericFilters = signal<NumericFilter[]>([]);
   protected readonly sortField = signal<string>(DEFAULT_SORT.modeled.field);
@@ -194,6 +198,18 @@ export class RankedTableComponent {
     this.emitQuery();
   }
 
+  protected onBatHands(value: string[]): void {
+    this.batHandSel.set(value);
+    this.first.set(0);
+    this.emitQuery();
+  }
+
+  protected onThrowHands(value: string[]): void {
+    this.throwHandSel.set(value);
+    this.first.set(0);
+    this.emitQuery();
+  }
+
   protected onHideDrafted(value: boolean): void {
     this.hideDrafted.set(value);
     this.first.set(0);
@@ -284,13 +300,35 @@ export class RankedTableComponent {
   }
 
   // ---------------------------------------------------- column-header quick filter
-  protected isColFilterable(c: ColumnDef): boolean {
-    return this.filterableFields.has(c.field);
+  /** The two categorical hand columns get a L/R/S quick filter instead of a
+   *  numeric bound. */
+  protected isHandCol(c: ColumnDef): boolean {
+    return c.field === 'batHand' || c.field === 'throwHand';
   }
 
-  /** Existing bound (if any) on a column, for the caret / hover affordance. */
+  protected isColFilterable(c: ColumnDef): boolean {
+    return this.filterableFields.has(c.field) || this.isHandCol(c);
+  }
+
+  /** Existing numeric bound (if any) on a column, for the hover panel prefill. */
   protected colFilter(c: ColumnDef): NumericFilter | undefined {
     return this.numericFilters().find((f) => f.field === c.field);
+  }
+
+  /** Whether a column currently constrains the table — a numeric bound for a
+   *  rating column, a non-empty hand selection for Bats / Throws. Drives the
+   *  header tint + dot and the hover panel's Clear button. */
+  protected isColFiltered(c: ColumnDef): boolean {
+    if (c.field === 'batHand') return this.batHandSel().length > 0;
+    if (c.field === 'throwHand') return this.throwHandSel().length > 0;
+    return !!this.colFilter(c);
+  }
+
+  /** Hand quick-filter toggled from a column header — apply immediately and
+   *  leave the panel open so more toggles land in the same pass. */
+  protected onHoverHands(c: ColumnDef, value: string[]): void {
+    if (c.field === 'batHand') this.onBatHands(value);
+    else this.onThrowHands(value);
   }
 
   protected onColEnter(c: ColumnDef, ev: MouseEvent): void {
@@ -390,7 +428,11 @@ export class RankedTableComponent {
 
   protected clearColFilter(): void {
     const c = this.hoverCol();
-    if (c && this.colFilter(c)) {
+    if (c?.field === 'batHand') {
+      this.onBatHands([]);
+    } else if (c?.field === 'throwHand') {
+      this.onThrowHands([]);
+    } else if (c && this.colFilter(c)) {
       this.numericFilters.set(this.numericFilters().filter((f) => f.field !== c.field));
       this.first.set(0);
       this.emitQuery();
@@ -404,6 +446,8 @@ export class RankedTableComponent {
       view: this.view(),
       search: this.search(),
       positions: this.positionSel(),
+      batHands: this.batHandSel(),
+      throwHands: this.throwHandSel(),
       hideDrafted: this.hideDrafted(),
       numericFilters: this.numericFilters(),
       sortField: this.sortField(),
@@ -425,6 +469,8 @@ export class RankedTableComponent {
     this.view.set(q.view);
     this.search.set(q.search);
     this.positionSel.set(q.positions);
+    this.batHandSel.set(q.batHands);
+    this.throwHandSel.set(q.throwHands);
     this.hideDrafted.set(q.hideDrafted);
     this.numericFilters.set(q.numericFilters);
     this.sortField.set(q.sortField ?? DEFAULT_SORT[q.view].field);
@@ -441,6 +487,8 @@ export class RankedTableComponent {
     this.view.set('modeled');
     this.search.set('');
     this.positionSel.set([]);
+    this.batHandSel.set([]);
+    this.throwHandSel.set([]);
     this.hideDrafted.set(false);
     this.numericFilters.set([]);
     this.sortField.set(DEFAULT_SORT.modeled.field);

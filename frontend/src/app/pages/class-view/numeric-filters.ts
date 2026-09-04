@@ -14,19 +14,21 @@ import { PopoverModule } from 'primeng/popover';
 
 import { NumericFilter } from '../../core/api.types';
 import { FILTERABLE_FIELDS, FilterableField } from '../../core/ranked-columns';
+import { HandednessFilterComponent } from './handedness-filter';
 
 const EMIT_DEBOUNCE_MS = 300;
 
 /**
- * "Filters" dropdown: any number of greater-than / less-than bounds on the
- * table's sortable columns (numeric ratings & scores, plus the graded-text and
- * demand columns, compared on their tier ordinal). Rows are AND-combined; the
- * button shows how many are actually constraining. Emits the full row list so
- * half-typed rows survive a refetch — `api.ts` drops the non-constraining ones.
+ * "Filters" dropdown: batting / throwing handedness plus any number of
+ * greater-than / less-than bounds on the table's sortable columns (numeric
+ * ratings & scores, plus the graded-text and demand columns, compared on their
+ * tier ordinal). Everything is AND-combined; the button shows how many groups
+ * are actually constraining. Emits the full numeric-row list so half-typed rows
+ * survive a refetch — `api.ts` drops the non-constraining ones.
  */
 @Component({
   selector: 'app-numeric-filters',
-  imports: [FormsModule, PopoverModule],
+  imports: [FormsModule, PopoverModule, HandednessFilterComponent],
   template: `
     <button type="button" class="filter-btn" [class.active]="activeCount()" (click)="op.toggle($event)">
       Filters@if (activeCount()) { <span class="badge">{{ activeCount() }}</span> }
@@ -34,8 +36,23 @@ const EMIT_DEBOUNCE_MS = 300;
 
     <p-popover #op appendTo="body">
       <div class="panel">
+        <div class="hands">
+          <app-handedness-filter
+            label="Bats"
+            [value]="batHands()"
+            (valueChange)="batHandsChange.emit($event)"
+          />
+          <app-handedness-filter
+            label="Throws"
+            [switch]="false"
+            [value]="throwHands()"
+            (valueChange)="throwHandsChange.emit($event)"
+          />
+        </div>
+        <div class="divider"></div>
+
         @if (!rows().length) {
-          <p class="muted empty">No filters. Add one to narrow the table by a rating or score.</p>
+          <p class="muted empty">No rating filters. Add one to narrow the table by a rating or score.</p>
         }
         @for (r of rows(); track $index) {
           <div class="frow">
@@ -99,6 +116,8 @@ const EMIT_DEBOUNCE_MS = 300;
         padding: 0 4px;
       }
       .panel { display: flex; flex-direction: column; gap: 8px; min-width: 22rem; }
+      .hands { display: flex; flex-direction: column; gap: 8px; }
+      .divider { height: 1px; background: var(--border); margin: 2px 0; }
       .empty { margin: 0; font-size: 12px; }
       .frow { display: flex; align-items: center; gap: 6px; }
       .field-sel { flex: 1 1 auto; min-width: 0; }
@@ -134,6 +153,11 @@ export class NumericFiltersComponent {
   readonly value = input<NumericFilter[]>([]);
   readonly valueChange = output<NumericFilter[]>();
 
+  readonly batHands = input<string[]>([]);
+  readonly throwHands = input<string[]>([]);
+  readonly batHandsChange = output<string[]>();
+  readonly throwHandsChange = output<string[]>();
+
   protected readonly rows = signal<NumericFilter[]>([]);
 
   protected readonly groups = computed(() => {
@@ -147,7 +171,10 @@ export class NumericFiltersComponent {
   });
 
   protected readonly activeCount = computed(
-    () => this.rows().filter((r) => r.field && (r.min != null || r.max != null)).length,
+    () =>
+      this.rows().filter((r) => r.field && (r.min != null || r.max != null)).length +
+      (this.batHands().length ? 1 : 0) +
+      (this.throwHands().length ? 1 : 0),
   );
 
   private emitTimer: ReturnType<typeof setTimeout> | undefined;

@@ -102,6 +102,8 @@ export interface RankedQuery {
   view: ClassView;
   search: string;
   positions: string[];
+  batHands: string[];
+  throwHands: string[];
   hideDrafted: boolean;
   numericFilters: NumericFilter[];
   sortField: string | null;

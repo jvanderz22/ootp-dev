@@ -49,6 +49,8 @@ type RankedPlayer {
 input RankedPlayerFilter {
   search: String
   positions: [String!]
+  batHands: [String!]
+  throwHands: [String!]
   hideDrafted: Boolean
   numeric: [NumericFilter!]
 }
