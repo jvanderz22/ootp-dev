@@ -132,6 +132,59 @@ def test_handedness_filters(client):
     assert combo["totalRecords"] <= righty_throws["totalRecords"]
 
 
+def test_draft_pick_columns_and_team_filter(client):
+    from context import DraftClassContext
+    from statsplus_api import _parse_draft_csv, write_drafted_players_file
+    from tests.conftest import SAMPLE_DATASET
+    from tests.test_statsplus_api import DRAFTV2_CSV
+
+    if not SAMPLE_DATASET.exists():
+        pytest.skip("sample dataset not present")
+
+    q = (
+        "mutation($file: Upload!) { uploadDraftClass("
+        'name: "d", rankingMethod: "draft_class", file: $file) { name } }'
+    )
+    ops = json.dumps({"query": q, "variables": {"file": None}})
+    with open(SAMPLE_DATASET, "rb") as fh:
+        resp = client.post(
+            "/graphql",
+            data={"operations": ops, "map": json.dumps({"0": ["variables.file"]})},
+            files={"0": ("d.csv", fh, "text/csv")},
+        )
+    assert "errors" not in resp.json(), resp.json()
+
+    # Mark a player that's known to be in the sample dataset as drafted.
+    write_drafted_players_file(DraftClassContext("d"), _parse_draft_csv(DRAFTV2_CSV))
+
+    assert gql(client, 'query { draftTeams(name: "d") }')["draftTeams"] == ["Expos"]
+
+    def rows(**filt):
+        query = (
+            'query($f: RankedPlayerFilter) { rankedPlayers(name: "d", filter: $f, '
+            "allRows: true) { totalRecords rows { id drafted draftedTeam "
+            "draftedPick draftedRound draftedRoundPick } } }"
+        )
+        return gql(client, query, f=filt)["rankedPlayers"]
+
+    drafted = [r for r in rows()["rows"] if r["drafted"]]
+    assert len(drafted) == 1
+    assert drafted[0] == {
+        "id": "76230",
+        "drafted": True,
+        "draftedTeam": "Expos",
+        "draftedPick": 1,
+        "draftedRound": 1,
+        "draftedRoundPick": 1,
+    }
+
+    only = rows(teams=["Expos"])
+    assert only["totalRecords"] == 1 and only["rows"][0]["id"] == "76230"
+
+    # the Pick column is filterable through the generic numeric path
+    assert rows(numeric=[{"field": "draftedPick", "min": 2}])["totalRecords"] == 0
+
+
 def test_settings_update(client):
     out = gql(
         client,

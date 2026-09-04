@@ -17,6 +17,7 @@ export const PITCHER_POSITIONS = ['P', 'SP', 'RP', 'CL'];
 
 export type ColGroup =
   | 'Player'
+  | 'Draft'
   | 'In-Game'
   | 'Model'
   | 'Batting'
@@ -51,6 +52,8 @@ export interface ColumnDef {
   wide?: boolean;
   /** optional colour cue for the cell text, from its formatted-ish value */
   tone?: (v: unknown) => '' | 'danger' | 'warn';
+  /** optional per-cell tooltip (e.g. the full team name behind a short code) */
+  cellTitle?: (v: unknown) => string;
 }
 
 // ---------------------------------------------------------------- formatters
@@ -65,6 +68,12 @@ export const fmtGrade = (v: unknown): string => (isBlank(v) || N(v) <= 0 ? '—'
 /** Right / Left / Switch → R / L / S */
 export const fmtHand = (v: unknown): string =>
   v == null || v === '' ? '—' : String(v).charAt(0).toUpperCase();
+/** Team name → a compact ~3-letter code ("Expos" → "EXP"); full name in a
+ *  cell tooltip. Not the real MLB abbreviations — the source only gives names. */
+export const fmtTeamCode = (v: unknown): string => {
+  const s = (v == null ? '' : String(v)).replace(/[^A-Za-z]/g, '');
+  return s ? s.slice(0, 3).toUpperCase() : '—';
+};
 /** Map full descriptive words to short tags; unknowns pass through unchanged. */
 const abbrev = (map: Record<string, string>) => (v: unknown): string => {
   if (v == null || v === '') return '—';
@@ -143,6 +152,18 @@ const PERSONALITY_COLUMNS: ColumnDef[] = [
 
 const DURABILITY_COLUMN = textCol('injuryProne', 'DUR', 'Durability', 'Makeup', meta('injuryProne'), fmtDurability);
 
+/** Where a drafted player went — blank for players still on the board. Only the
+ *  modeled view carries these, trailing every other column; `Pick` is the
+ *  overall selection number, `Team` a short code with the full name on hover. */
+const DRAFT_COLUMNS: ColumnDef[] = [
+  { field: 'draftedPick', header: 'Pick', title: 'Overall pick', numeric: true, descFirst: false, group: 'Draft', value: model('draftedPick'), fmt: fmtInt },
+  {
+    field: 'draftedTeam', header: 'Team', title: 'Drafting team', numeric: false,
+    descFirst: false, group: 'Draft', value: model('draftedTeam'), fmt: fmtTeamCode,
+    cellTitle: (v) => (v == null || v === '' ? '' : String(v)),
+  },
+];
+
 const MODELED_COLUMNS: ColumnDef[] = [
   { field: 'positionPlayerScore', header: 'Batter', numeric: true, descFirst: true, group: 'Model', value: model('positionPlayerScore'), fmt: fmtNum2 },
   { field: 'pitcherScore', header: 'Pitcher', numeric: true, descFirst: true, group: 'Model', value: model('pitcherScore'), fmt: fmtNum2 },
@@ -152,6 +173,7 @@ const MODELED_COLUMNS: ColumnDef[] = [
   { field: 'starterComponent', header: 'SP', numeric: true, descFirst: true, group: 'Model', value: model('starterComponent'), fmt: fmtNum2 },
   { field: 'relieverComponent', header: 'RP', numeric: true, descFirst: true, group: 'Model', value: model('relieverComponent'), fmt: fmtNum2 },
   DEMAND_COLUMN,
+  ...DRAFT_COLUMNS,
 ];
 
 const BATTING_COLUMNS: ColumnDef[] = [

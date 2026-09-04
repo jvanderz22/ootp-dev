@@ -25,9 +25,13 @@
     [value]="numericFilters()"
     [batHands]="batHandSel()"
     [throwHands]="throwHandSel()"
+    [teams]="teams()"
+    [teamSel]="teamSel()"
+    [showTeams]="view() === 'modeled'"
     (valueChange)="onNumericFilters($event)"
     (batHandsChange)="onBatHands($event)"
     (throwHandsChange)="onThrowHands($event)"
+    (teamsChange)="onTeams($event)"
   />
 
   <label class="row chk">
@@ -152,6 +156,7 @@
               [class.col-wide]="c.wide"
               [class.tone-danger]="c.tone?.(cv) === 'danger'"
               [class.tone-warn]="c.tone?.(cv) === 'warn'"
+              [attr.title]="c.cellTitle?.(cv) || null"
             >{{ c.fmt(cv) }}</td>
           }
         }
@@ -206,6 +211,17 @@
         [switch]="c.field === 'batHand'"
         [value]="c.field === 'batHand' ? batHandSel() : throwHandSel()"
         (valueChange)="onHoverHands(c, $event)"
+      />
+      @if (isColFiltered(c)) {
+        <div class="cqf-foot">
+          <button type="button" class="sm" (click)="clearColFilter()">Clear</button>
+        </div>
+      }
+    } @else if (isTeamCol(c)) {
+      <app-team-filter
+        [teams]="teams()"
+        [value]="teamSel()"
+        (valueChange)="onTeams($event)"
       />
       @if (isColFiltered(c)) {
         <div class="cqf-foot">

@@ -199,7 +199,8 @@ def _classify(position_player_score, pitcher_score):
     return "Pitcher" if pit >= pp else "Hitter"
 
 
-def _player_payload(rank, row, drafted_ids, game_player=None):
+def _player_payload(rank, row, drafted_info, game_player=None):
+    info = (drafted_info or {}).get(row["id"])
     payload = {
         "rank": rank,
         "id": row["id"],
@@ -211,7 +212,11 @@ def _player_payload(rank, row, drafted_ids, game_player=None):
         "in_game_overall": _to_int(row.get("in_game_overall")),
         "in_game_potential": _to_int(row.get("in_game_potential")),
         "demand": row.get("demand") or None,
-        "drafted": row["id"] in drafted_ids,
+        "drafted": info is not None,
+        "drafted_team": (info.get("team") or None) if info else None,
+        "drafted_pick": _to_int(info.get("overall_selection")) if info else None,
+        "drafted_round": _to_int(info.get("round")) if info else None,
+        "drafted_round_pick": _to_int(info.get("round_selection")) if info else None,
         "components": _parse_components(row.get("components")),
         "ratings": _ratings_payload(game_player),
     }
@@ -418,8 +423,9 @@ def ranked_players_page(
     pos_set = set(f.get("positions") or [])
     bat_set = set(f.get("bat_hands") or [])
     throw_set = set(f.get("throw_hands") or [])
+    team_set = set(f.get("teams") or [])
     hide_drafted = bool(f.get("hide_drafted"))
-    if search or pos_set or bat_set or throw_set or hide_drafted:
+    if search or pos_set or bat_set or throw_set or team_set or hide_drafted:
         rows = [
             r
             for r in rows
@@ -427,6 +433,7 @@ def ranked_players_page(
             and (not pos_set or r["position"] in pos_set)
             and (not bat_set or r["bat_hand"] in bat_set)
             and (not throw_set or r["throw_hand"] in throw_set)
+            and (not team_set or r["drafted_team"] in team_set)
             and (not hide_drafted or not r["drafted"])
         ]
 
@@ -457,6 +464,11 @@ def ranked_players(name: str):
 
 def class_positions(name: str):
     return class_index.get_index(_ctx(name)).positions
+
+
+def draft_teams(name: str):
+    """Distinct teams that have made a pick in this class, for the team filter."""
+    return class_index.get_index(_ctx(name)).draft_teams
 
 
 def upload_csv_bytes(name: str) -> bytes:

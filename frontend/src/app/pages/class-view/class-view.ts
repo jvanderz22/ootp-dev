@@ -22,6 +22,7 @@ function defaultQuery(): RankedQuery {
     positions: [],
     batHands: [],
     throwHands: [],
+    teams: [],
     hideDrafted: false,
     numericFilters: [],
     sortField: DEFAULT_SORT.modeled.field,
@@ -51,6 +52,7 @@ export class ClassViewPage {
 
   protected readonly detail = signal<DraftClass | null>(null);
   protected readonly positions = signal<string[]>([]);
+  protected readonly teams = signal<string[]>([]);
   protected readonly page = signal<RankedPlayerPage>(EMPTY_PAGE);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -87,11 +89,13 @@ export class ClassViewPage {
       const d = await this.api.classDetail(name, this.queryState());
       this.detail.set(d.draftClass);
       this.positions.set(d.positions);
+      this.teams.set(d.teams);
       this.page.set(d.page);
     } catch (e) {
       this.error.set((e as Error).message);
       this.detail.set(null);
       this.positions.set([]);
+      this.teams.set([]);
       this.page.set(EMPTY_PAGE);
     } finally {
       this.loading.set(false);
@@ -134,6 +138,7 @@ export class ClassViewPage {
     const d = await this.api.classDetail(this.name(), this.queryState());
     this.detail.set(d.draftClass);
     this.positions.set(d.positions);
+    this.teams.set(d.teams);
     this.page.set(d.page);
   }
 

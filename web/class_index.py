@@ -13,7 +13,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 
 from custom_ranking import resolve_order
-from drafted_players import get_drafted_player_ids
+from drafted_players import get_drafted_players_info
 from draft_class_files import (
     get_draft_class_drafted_players_file,
     get_ranked_players_file,
@@ -41,6 +41,7 @@ class ClassIndex:
     source_mtimes: tuple
     rows: list
     positions: list
+    draft_teams: list
 
     def is_stale(self, ctx) -> bool:
         if time.monotonic() - self.built_at > _TTL_SECONDS:
@@ -82,10 +83,10 @@ def _build_index(ctx) -> ClassIndex:
     payloads = []
     if rows is not None:
         ordered = resolve_order(ctx, rows)
-        drafted_ids = get_drafted_player_ids(ctx)
+        drafted_info = get_drafted_players_info(ctx)
         game_players = service._game_players_by_id(ctx)
         payloads = [
-            service._player_payload(i + 1, row, drafted_ids, game_players.get(row["id"]))
+            service._player_payload(i + 1, row, drafted_info, game_players.get(row["id"]))
             for i, row in enumerate(ordered)
         ]
     return ClassIndex(
@@ -95,6 +96,7 @@ def _build_index(ctx) -> ClassIndex:
         source_mtimes=_source_mtimes(ctx),
         rows=payloads,
         positions=_ordered_positions(p["position"] for p in payloads),
+        draft_teams=sorted({p["drafted_team"] for p in payloads if p["drafted_team"]}),
     )
 
 

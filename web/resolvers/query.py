@@ -35,6 +35,11 @@ def resolve_class_positions(_, __, name):
     return service.class_positions(name)
 
 
+@query.field("draftTeams")
+def resolve_draft_teams(_, __, name):
+    return service.draft_teams(name)
+
+
 @query.field("statsPlusSettings")
 def resolve_settings(*_):
     return public_settings()

@@ -15,20 +15,21 @@ import { PopoverModule } from 'primeng/popover';
 import { NumericFilter } from '../../core/api.types';
 import { FILTERABLE_FIELDS, FilterableField } from '../../core/ranked-columns';
 import { HandednessFilterComponent } from './handedness-filter';
+import { TeamFilterComponent } from './team-filter';
 
 const EMIT_DEBOUNCE_MS = 300;
 
 /**
- * "Filters" dropdown: batting / throwing handedness plus any number of
- * greater-than / less-than bounds on the table's sortable columns (numeric
- * ratings & scores, plus the graded-text and demand columns, compared on their
- * tier ordinal). Everything is AND-combined; the button shows how many groups
- * are actually constraining. Emits the full numeric-row list so half-typed rows
- * survive a refetch — `api.ts` drops the non-constraining ones.
+ * "Filters" dropdown: batting / throwing handedness and drafting team, plus any
+ * number of greater-than / less-than bounds on the table's sortable columns
+ * (numeric ratings & scores, plus the graded-text and demand columns, compared
+ * on their tier ordinal). Everything is AND-combined; the button shows how many
+ * groups are actually constraining. Emits the full numeric-row list so
+ * half-typed rows survive a refetch — `api.ts` drops the non-constraining ones.
  */
 @Component({
   selector: 'app-numeric-filters',
-  imports: [FormsModule, PopoverModule, HandednessFilterComponent],
+  imports: [FormsModule, PopoverModule, HandednessFilterComponent, TeamFilterComponent],
   template: `
     <button type="button" class="filter-btn" [class.active]="activeCount()" (click)="op.toggle($event)">
       Filters@if (activeCount()) { <span class="badge">{{ activeCount() }}</span> }
@@ -36,7 +37,7 @@ const EMIT_DEBOUNCE_MS = 300;
 
     <p-popover #op appendTo="body">
       <div class="panel">
-        <div class="hands">
+        <div class="facets">
           <app-handedness-filter
             label="Bats"
             [value]="batHands()"
@@ -48,6 +49,14 @@ const EMIT_DEBOUNCE_MS = 300;
             [value]="throwHands()"
             (valueChange)="throwHandsChange.emit($event)"
           />
+          @if (showTeams() && teams().length) {
+            <app-team-filter
+              label="Team"
+              [teams]="teams()"
+              [value]="teamSel()"
+              (valueChange)="teamsChange.emit($event)"
+            />
+          }
         </div>
         <div class="divider"></div>
 
@@ -116,7 +125,7 @@ const EMIT_DEBOUNCE_MS = 300;
         padding: 0 4px;
       }
       .panel { display: flex; flex-direction: column; gap: 8px; min-width: 22rem; }
-      .hands { display: flex; flex-direction: column; gap: 8px; }
+      .facets { display: flex; flex-direction: column; gap: 8px; }
       .divider { height: 1px; background: var(--border); margin: 2px 0; }
       .empty { margin: 0; font-size: 12px; }
       .frow { display: flex; align-items: center; gap: 6px; }
@@ -158,6 +167,13 @@ export class NumericFiltersComponent {
   readonly batHandsChange = output<string[]>();
   readonly throwHandsChange = output<string[]>();
 
+  /** Drafting-team facet + selection. `showTeams` gates the row to the view
+   *  that actually has a Team column (modeled). */
+  readonly teams = input<string[]>([]);
+  readonly teamSel = input<string[]>([]);
+  readonly showTeams = input(false);
+  readonly teamsChange = output<string[]>();
+
   protected readonly rows = signal<NumericFilter[]>([]);
 
   protected readonly groups = computed(() => {
@@ -174,7 +190,8 @@ export class NumericFiltersComponent {
     () =>
       this.rows().filter((r) => r.field && (r.min != null || r.max != null)).length +
       (this.batHands().length ? 1 : 0) +
-      (this.throwHands().length ? 1 : 0),
+      (this.throwHands().length ? 1 : 0) +
+      (this.teamSel().length ? 1 : 0),
   );
 
   private emitTimer: ReturnType<typeof setTimeout> | undefined;

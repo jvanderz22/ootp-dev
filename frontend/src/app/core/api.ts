@@ -50,6 +50,7 @@ function queryVars(name: string, q: RankedQuery) {
       positions: q.positions.length ? q.positions : null,
       batHands: q.batHands.length ? q.batHands : null,
       throwHands: q.throwHands.length ? q.throwHands : null,
+      teams: q.teams.length ? q.teams : null,
       hideDrafted: q.hideDrafted,
       numeric: numeric.length ? numeric : null,
     },
@@ -89,6 +90,7 @@ export class ApiService {
   ): Promise<{
     draftClass: DraftClass | null;
     positions: string[];
+    teams: string[];
     page: RankedPlayerPage;
   }> {
     try {
@@ -96,6 +98,7 @@ export class ApiService {
         this.apollo.query<{
           draftClass: DraftClass | null;
           classPositions: string[];
+          draftTeams: string[];
           rankedPlayers: RankedPlayerPage;
         }>({
           query: CLASS_DETAIL,
@@ -106,6 +109,7 @@ export class ApiService {
       return {
         draftClass: res.data!.draftClass,
         positions: res.data!.classPositions,
+        teams: res.data!.draftTeams,
         page: res.data!.rankedPlayers,
       };
     } catch (e) {

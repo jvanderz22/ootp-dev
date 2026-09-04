@@ -15,6 +15,10 @@ const PLAYER_FIELDS = gql`
     inGamePotential
     demand
     drafted
+    draftedTeam
+    draftedPick
+    draftedRound
+    draftedRoundPick
     positionPlayerScore
     pitcherScore
     battingScoreComponent
@@ -75,6 +79,7 @@ export const CLASS_DETAIL = gql`
       ...ClassFields
     }
     classPositions(name: $name)
+    draftTeams(name: $name)
     rankedPlayers(
       name: $name
       filter: $filter

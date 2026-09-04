@@ -34,6 +34,10 @@ type RankedPlayer {
   inGamePotential: Int
   demand: String
   drafted: Boolean!
+  draftedTeam: String
+  draftedPick: Int
+  draftedRound: Int
+  draftedRoundPick: Int
   positionPlayerScore: Float
   pitcherScore: Float
   battingScoreComponent: Float
@@ -51,6 +55,7 @@ input RankedPlayerFilter {
   positions: [String!]
   batHands: [String!]
   throwHands: [String!]
+  teams: [String!]
   hideDrafted: Boolean
   numeric: [NumericFilter!]
 }
@@ -101,6 +106,7 @@ type Query {
     allRows: Boolean = false
   ): RankedPlayerPage!
   classPositions(name: String!): [String!]!
+  draftTeams(name: String!): [String!]!
   statsPlusSettings: StatsPlusSettings!
   leagues: [League!]!
 }

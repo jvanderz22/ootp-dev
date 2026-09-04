@@ -31,6 +31,10 @@ export interface RankedPlayer {
   inGamePotential: number | null;
   demand: string | null;
   drafted: boolean;
+  draftedTeam: string | null;
+  draftedPick: number | null;
+  draftedRound: number | null;
+  draftedRoundPick: number | null;
   positionPlayerScore: number | null;
   pitcherScore: number | null;
   battingScoreComponent: number | null;
@@ -104,6 +108,7 @@ export interface RankedQuery {
   positions: string[];
   batHands: string[];
   throwHands: string[];
+  teams: string[];
   hideDrafted: boolean;
   numericFilters: NumericFilter[];
   sortField: string | null;
