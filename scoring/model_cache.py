@@ -6,10 +6,17 @@ retrain ~13 XGBoost models every time, so hand out memoized instances keyed by
 their constructor arguments. `warm()` is called at server startup to pay the
 training cost once, up front.
 """
+import threading
 from functools import lru_cache
 
 from scoring.pitcher_scorer import RP_OVERALL_MODIFIER, PitcherScorer
 from scoring.position_player_scorer import PositionPlayerScorer
+
+# Serialises the memory- and CPU-heavy full scoring passes (a class reprocess and
+# a league-snapshot ranking each score ~15k players). On the single shared CPU /
+# 512MB the app runs on, two of these at once starve the event loop and risk an
+# OOM kill; holding this lock keeps peak usage to one pass at a time.
+HEAVY_SCORING_LOCK = threading.Lock()
 
 
 @lru_cache(maxsize=None)

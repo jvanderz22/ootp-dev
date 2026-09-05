@@ -388,7 +388,7 @@ def fetch_and_build(league: dict, *, base_dir=None, cookie: str = None) -> Leagu
 # `(snapshot_dir, method)`. The in-memory entry lives until the snapshot file's
 # mtime changes (a refresh) or it's evicted as least-recently-used - no TTL.
 
-_MAX_CACHED_LEAGUES = 5
+_MAX_CACHED_LEAGUES = 2
 _MAX_RANKED_ENTRIES = _MAX_CACHED_LEAGUES * len(LEAGUE_RANKING_METHODS)
 _ranked_cache: "OrderedDict[tuple, dict]" = OrderedDict()
 _ranked_cache_lock = threading.Lock()
@@ -420,6 +420,15 @@ def _ranked_row(index: int, player: GamePlayer, score) -> dict:
 
 
 def _score_and_write(ctx: LeagueSnapshotContext, method: str, out_file: Path) -> list[dict]:
+    from scoring.model_cache import HEAVY_SCORING_LOCK
+
+    with HEAVY_SCORING_LOCK:
+        return _score_and_write_locked(ctx, method, out_file)
+
+
+def _score_and_write_locked(
+    ctx: LeagueSnapshotContext, method: str, out_file: Path
+) -> list[dict]:
     with open(ctx.data_file, newline="") as f:
         players = [GamePlayer(row) for row in csv.DictReader(f)]
     by_id = {p.id: p for p in players}

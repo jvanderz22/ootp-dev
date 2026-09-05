@@ -666,7 +666,7 @@ def _refresh_drafted_sync(name: str):
 # `drafted_info` (the drafted* fields come back null/false) and the built rows
 # are grouped to a roster team / parent org before the shared filter/sort/page.
 
-_LEAGUE_PAYLOAD_MAX = 10  # (league, method) pairs; ~5 leagues x 2 methods
+_LEAGUE_PAYLOAD_MAX = 2  # (league, method) pairs; keep memory tight on a 512MB box
 _league_payload_cache: "OrderedDict[tuple, dict]" = OrderedDict()
 _league_payload_lock = threading.Lock()
 

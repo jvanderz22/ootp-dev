@@ -90,6 +90,13 @@ def load_player_data(ctx) -> list:
 
 
 def write_player_scores(ctx, players) -> None:
+    from scoring.model_cache import HEAVY_SCORING_LOCK
+
+    with HEAVY_SCORING_LOCK:
+        _write_player_scores(ctx, players)
+
+
+def _write_player_scores(ctx, players) -> None:
     players_by_id = {player.id: player for player in players}
     ranker = get_ranker(ctx)
     player_scores = ranker.rank(players)
