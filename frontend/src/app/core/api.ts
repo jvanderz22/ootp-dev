@@ -27,6 +27,7 @@ import {
   DraftClass,
   DraftedRefreshResult,
   League,
+  RANKED_PAGE_SIZE,
   RankedPlayer,
   RankedPlayerPage,
   RankedQuery,
@@ -38,8 +39,9 @@ type ReorderPlayer = Pick<
   'id' | 'name' | 'position' | 'age' | 'modelScore' | 'drafted'
 >;
 
-/** Map the flat UI query onto the GraphQL `filter` / `sort` input objects. */
-function queryVars(name: string, q: RankedQuery) {
+/** Map the flat UI query onto the GraphQL `filter` / `sort` input objects,
+ *  plus the batch window (`page` / `pageSize`) the caller wants fetched. */
+function queryVars(name: string, q: RankedQuery, page: number, pageSize: number) {
   const numeric = q.numericFilters
     .filter((f) => f.field && (f.min != null || f.max != null))
     .map((f) => ({ field: f.field, min: f.min, max: f.max }));
@@ -55,8 +57,8 @@ function queryVars(name: string, q: RankedQuery) {
       numeric: numeric.length ? numeric : null,
     },
     sort: q.sortField ? { field: q.sortField, order: q.sortOrder } : null,
-    page: q.page,
-    pageSize: q.pageSize,
+    page,
+    pageSize,
   };
 }
 
@@ -84,9 +86,11 @@ export class ApiService {
     }
   }
 
+  /** Initial load for a class: metadata + facets + the first batch of rows. */
   async classDetail(
     name: string,
     q: RankedQuery,
+    pageSize: number = RANKED_PAGE_SIZE,
   ): Promise<{
     draftClass: DraftClass | null;
     positions: string[];
@@ -102,7 +106,7 @@ export class ApiService {
           rankedPlayers: RankedPlayerPage;
         }>({
           query: CLASS_DETAIL,
-          variables: queryVars(name, q),
+          variables: queryVars(name, q, 0, pageSize),
           fetchPolicy: 'network-only',
         }),
       );
@@ -117,12 +121,20 @@ export class ApiService {
     }
   }
 
-  async rankedPlayersPage(name: string, q: RankedQuery): Promise<RankedPlayerPage> {
+  /** One batch of rows for `page` (0-based, `pageSize` rows each) — the
+   *  initial batch on a filter/sort reset, or the next one an infinite-scroll
+   *  load-more asks for. */
+  async rankedPlayersPage(
+    name: string,
+    q: RankedQuery,
+    page: number,
+    pageSize: number = RANKED_PAGE_SIZE,
+  ): Promise<RankedPlayerPage> {
     try {
       const res = await firstValueFrom(
         this.apollo.query<{ rankedPlayers: RankedPlayerPage }>({
           query: RANKED_PAGE,
-          variables: queryVars(name, q),
+          variables: queryVars(name, q, page, pageSize),
           fetchPolicy: 'network-only',
         }),
       );

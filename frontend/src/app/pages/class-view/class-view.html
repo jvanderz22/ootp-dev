@@ -43,9 +43,13 @@
       [positions]="positions()"
       [teams]="teams()"
       [loading]="loading()"
+      [loadingMore]="loadingMore()"
+      [hasMore]="hasMore()"
+      [resetToken]="resetToken()"
       [classKey]="name()"
       [initialQuery]="queryState()"
       (queryChange)="onQueryChange($event)"
+      (loadMore)="onLoadMore()"
       (setRankChange)="onSetRank($event)"
     />
   }

@@ -75,21 +75,12 @@
     #dt
     [value]="rows()"
     dataKey="id"
-    [lazy]="true"
     [customSort]="true"
     [loading]="loading()"
-    [totalRecords]="totalRecords()"
-    [paginator]="true"
-    [rows]="pageSize()"
-    [first]="first()"
-    [rowsPerPageOptions]="[25, 50, 100, 200]"
-    [showCurrentPageReport]="true"
-    currentPageReportTemplate="{first}–{last} of {totalRecords}"
     [scrollable]="true"
     scrollHeight="70vh"
     [expandedRowKeys]="expandedKeys()"
     size="small"
-    (onLazyLoad)="onLazyLoad($event)"
   >
     <ng-template #header>
       <tr class="grp-row">
@@ -184,6 +175,18 @@
       </tr>
     </ng-template>
   </p-table>
+
+  @if (rows().length) {
+    <div class="scroll-status muted">
+      @if (loadingMore()) {
+        Loading more…
+      } @else if (hasMore()) {
+        Showing {{ rows().length }} of {{ totalRecords() }} — scroll for more
+      } @else {
+        Showing all {{ totalRecords() }}
+      }
+    </div>
+  }
 </div>
 
 <app-player-compare

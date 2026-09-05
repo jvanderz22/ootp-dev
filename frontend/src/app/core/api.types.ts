@@ -101,8 +101,10 @@ export interface NumericFilter {
   max: number | null;
 }
 
-/** Everything the table UI feeds back to the container to fetch a page — and
- *  round-trips through the URL so a filtered view is reloadable / shareable. */
+/** Everything the table UI feeds back to the container to identify what to
+ *  fetch — and round-trips through the URL so a filtered view is reloadable /
+ *  shareable. Doesn't carry pagination state: the table loads infinitely, in
+ *  fixed-size batches (see `RANKED_PAGE_SIZE`), driven by the container. */
 export interface RankedQuery {
   view: ClassView;
   search: string;
@@ -114,9 +116,10 @@ export interface RankedQuery {
   numericFilters: NumericFilter[];
   sortField: string | null;
   sortOrder: 1 | -1;
-  page: number;
-  pageSize: number;
 }
+
+/** Infinite-scroll batch size: how many rows a single fetch pulls. */
+export const RANKED_PAGE_SIZE = 50;
 
 export interface StatsPlusSettings {
   hasSessionid: boolean;

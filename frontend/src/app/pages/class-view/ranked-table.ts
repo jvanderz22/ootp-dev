@@ -35,6 +35,10 @@ import { PlayerCompareComponent } from '../player-compare';
 
 const SEARCH_DEBOUNCE_MS = 300;
 
+/** How close to the bottom of the loaded rows (in px) triggers the next
+ *  infinite-scroll batch fetch. */
+const SCROLL_LOAD_THRESHOLD_PX = 300;
+
 /** Hover-intent before the column-header quick filter opens. */
 const COL_POP_DELAY_MS = 400;
 /** Grace period after the pointer leaves the header / panel. */
@@ -61,20 +65,30 @@ const COL_POP_MARGIN = 8;
   styleUrl: './ranked-table.scss',
 })
 export class RankedTableComponent {
-  /** Current page of rows (already filtered/sorted/paginated by the backend). */
+  /** Rows loaded so far (already filtered/sorted by the backend) — grows as
+   *  the table scrolls, via `loadMore`. */
   readonly rows = input.required<RankedPlayerRow[]>();
   readonly totalRecords = input.required<number>();
   readonly positions = input.required<string[]>();
   /** Teams that drafted someone in this class — the Team filter's option set. */
   readonly teams = input<string[]>([]);
+  /** A from-scratch fetch (filter/sort/view/class change) is in flight. */
   readonly loading = input(false);
+  /** An infinite-scroll append (the next batch) is in flight. */
+  readonly loadingMore = input(false);
+  /** Whether another batch remains to be fetched. */
+  readonly hasMore = input(true);
   /** Class name — changing it re-seeds all table state from `initialQuery`. */
   readonly classKey = input.required<string>();
   /** Seed state (parsed from the URL by the container). Applied on first render
    *  and whenever `classKey` changes; `null` falls back to plain defaults. */
   readonly initialQuery = input<RankedQuery | null>(null);
+  /** Bumped by the container whenever `rows` was replaced from scratch rather
+   *  than appended to — collapses expanded rows and scrolls back to the top. */
+  readonly resetToken = input(0);
 
   readonly queryChange = output<RankedQuery>();
+  readonly loadMore = output<void>();
   readonly setRankChange = output<{ id: string; rank: number }>();
 
   protected readonly typeSeverity = typeSeverity;
@@ -91,8 +105,6 @@ export class RankedTableComponent {
   protected readonly numericFilters = signal<NumericFilter[]>([]);
   protected readonly sortField = signal<string>(DEFAULT_SORT.modeled.field);
   protected readonly sortOrder = signal<1 | -1>(DEFAULT_SORT.modeled.order);
-  protected readonly first = signal(0);
-  protected readonly pageSize = signal(50);
 
   protected readonly expandAll = signal(false);
   protected readonly expandedKeys = signal<Record<string, boolean>>({});
@@ -126,13 +138,34 @@ export class RankedTableComponent {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly zone = inject(NgZone);
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
+  private scrollEl: HTMLElement | null = null;
 
   constructor() {
-    // A fresh page arrived — collapse rows, or re-expand them if "expand all"
-    // is active. Every sort/filter/page/view change routes through here.
+    // Rows grew — an infinite-scroll append. Under "expand all" the new rows
+    // should join the expanded set too; otherwise leave existing expansion
+    // (and scroll position) alone. A from-scratch replacement is handled by
+    // the `resetToken` effect below, which always wins since it runs after.
     effect(() => {
-      this.rows();
-      untracked(() => this.applyExpansion());
+      const rs = this.rows();
+      untracked(() => {
+        if (!this.expandAll()) return;
+        this.expandedKeys.update((m) => {
+          const next = { ...m };
+          for (const r of rs) next[r.id] = true;
+          return next;
+        });
+      });
+    });
+
+    // The container replaced the row list from scratch (filter/sort/view
+    // change, or a mutation that re-fetched everything) — collapse rows (or
+    // re-expand under "expand all") and scroll back to the top.
+    effect(() => {
+      this.resetToken();
+      untracked(() => {
+        this.applyExpansion();
+        this.scrollToTop();
+      });
     });
 
     // Class switched — re-seed from the URL-derived `initialQuery` (the
@@ -142,7 +175,8 @@ export class RankedTableComponent {
       untracked(() => this.hydrate());
     });
 
-    // Track the scroll viewport width for the pinned detail row.
+    // Track the scroll viewport width for the pinned detail row, and bind the
+    // infinite-scroll listener once the scrollable body exists.
     const measure = () => {
       const el =
         this.host.nativeElement.querySelector<HTMLElement>('.p-datatable-table-container') ??
@@ -151,15 +185,35 @@ export class RankedTableComponent {
       if (w > 0 && w !== this.viewportWidth()) {
         this.zone.run(() => this.viewportWidth.set(w));
       }
+      if (el !== this.host.nativeElement && el !== this.scrollEl) {
+        this.scrollEl?.removeEventListener('scroll', this.onScroll);
+        this.scrollEl = el;
+        el.addEventListener('scroll', this.onScroll, { passive: true });
+      }
     };
     const ro = new ResizeObserver(measure);
     ro.observe(this.host.nativeElement);
     inject(DestroyRef).onDestroy(() => {
       ro.disconnect();
+      this.scrollEl?.removeEventListener('scroll', this.onScroll);
       clearTimeout(this.colShowTimer);
       clearTimeout(this.colHideTimer);
       this.unbindColPopDismiss();
     });
+  }
+
+  /** Fires as the table's scroll body moves — asks the container for the next
+   *  batch once the loaded rows are nearly scrolled through. */
+  private readonly onScroll = (ev: Event): void => {
+    const el = ev.target as HTMLElement;
+    const remaining = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (remaining > SCROLL_LOAD_THRESHOLD_PX) return;
+    if (!this.hasMore() || this.loading() || this.loadingMore()) return;
+    this.zone.run(() => this.loadMore.emit());
+  };
+
+  private scrollToTop(): void {
+    this.scrollEl?.scrollTo({ top: 0 });
   }
 
   // ----------------------------------------------------------------- columns
@@ -183,7 +237,6 @@ export class RankedTableComponent {
       this.sortField.set(d.field);
       this.sortOrder.set(d.order);
     }
-    this.first.set(0);
     this.emitQuery();
   }
 
@@ -191,45 +244,36 @@ export class RankedTableComponent {
   protected onSearch(value: string): void {
     this.search.set(value);
     clearTimeout(this.searchTimer);
-    this.searchTimer = setTimeout(() => {
-      this.first.set(0);
-      this.emitQuery();
-    }, SEARCH_DEBOUNCE_MS);
+    this.searchTimer = setTimeout(() => this.emitQuery(), SEARCH_DEBOUNCE_MS);
   }
 
   protected onPositions(value: string[]): void {
     this.positionSel.set(value);
-    this.first.set(0);
     this.emitQuery();
   }
 
   protected onBatHands(value: string[]): void {
     this.batHandSel.set(value);
-    this.first.set(0);
     this.emitQuery();
   }
 
   protected onThrowHands(value: string[]): void {
     this.throwHandSel.set(value);
-    this.first.set(0);
     this.emitQuery();
   }
 
   protected onTeams(value: string[]): void {
     this.teamSel.set(value);
-    this.first.set(0);
     this.emitQuery();
   }
 
   protected onHideDrafted(value: boolean): void {
     this.hideDrafted.set(value);
-    this.first.set(0);
     this.emitQuery();
   }
 
   protected onNumericFilters(value: NumericFilter[]): void {
     this.numericFilters.set(value);
-    this.first.set(0);
     this.emitQuery();
   }
 
@@ -242,18 +286,6 @@ export class RankedTableComponent {
     const d = DEFAULT_SORT[value];
     this.sortField.set(d.field);
     this.sortOrder.set(d.order);
-    this.first.set(0);
-    this.emitQuery();
-  }
-
-  /** Paginator / rows-per-page changes. p-table also fires this on init and
-   * after we reset `first` ourselves — both are no-ops here (values match). */
-  protected onLazyLoad(e: { first?: number | null; rows?: number | null }): void {
-    const first = e.first ?? 0;
-    const rows = e.rows ?? this.pageSize();
-    if (first === this.first() && rows === this.pageSize()) return;
-    this.first.set(first);
-    this.pageSize.set(rows);
     this.emitQuery();
   }
 
@@ -437,7 +469,6 @@ export class RankedTableComponent {
         ? rest
         : [...rest, { field: c.field, label: meta?.label ?? c.field, min, max }],
     );
-    this.first.set(0);
     this.emitQuery();
     this.closeColPop();
   }
@@ -452,7 +483,6 @@ export class RankedTableComponent {
       this.onTeams([]);
     } else if (c && this.colFilter(c)) {
       this.numericFilters.set(this.numericFilters().filter((f) => f.field !== c.field));
-      this.first.set(0);
       this.emitQuery();
     }
     this.closeColPop();
@@ -471,13 +501,11 @@ export class RankedTableComponent {
       numericFilters: this.numericFilters(),
       sortField: this.sortField(),
       sortOrder: this.sortOrder(),
-      page: Math.floor(this.first() / this.pageSize()),
-      pageSize: this.pageSize(),
     });
   }
 
-  /** Seed every filter/sort/page signal from `initialQuery` (URL state) on a
-   *  class switch; fall back to plain defaults when none was supplied. */
+  /** Seed every filter/sort signal from `initialQuery` (URL state) on a class
+   *  switch; fall back to plain defaults when none was supplied. */
   private hydrate(): void {
     clearTimeout(this.searchTimer);
     const q = this.initialQuery();
@@ -495,8 +523,6 @@ export class RankedTableComponent {
     this.numericFilters.set(q.numericFilters);
     this.sortField.set(q.sortField ?? DEFAULT_SORT[q.view].field);
     this.sortOrder.set(q.sortOrder);
-    this.pageSize.set(q.pageSize);
-    this.first.set(q.page * q.pageSize);
     this.expandAll.set(false);
     this.expandedKeys.set({});
     this.clearCompare();
@@ -514,8 +540,6 @@ export class RankedTableComponent {
     this.numericFilters.set([]);
     this.sortField.set(DEFAULT_SORT.modeled.field);
     this.sortOrder.set(DEFAULT_SORT.modeled.order);
-    this.first.set(0);
-    this.pageSize.set(50);
     this.expandAll.set(false);
     this.expandedKeys.set({});
     this.clearCompare();

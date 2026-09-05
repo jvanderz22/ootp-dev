@@ -59,6 +59,12 @@
 .ranked-table {
   font-size: 13px;
 
+  .scroll-status {
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 12px;
+  }
+
   ::ng-deep .p-datatable-thead > tr > th {
     white-space: nowrap;
   }

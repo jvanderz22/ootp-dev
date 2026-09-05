@@ -6,14 +6,12 @@ import { map } from 'rxjs';
 import { ApiService } from '../../core/api';
 import { ClassStore } from '../../core/class-store';
 import { LeagueStore } from '../../core/league-store';
-import { DraftClass, RankedPlayerPage, RankedQuery } from '../../core/api.types';
+import { DraftClass, RANKED_PAGE_SIZE, RankedPlayer, RankedQuery } from '../../core/api.types';
 import { DEFAULT_SORT } from '../../core/ranked-columns';
 import { paramsToQuery, queryToParams } from '../../core/table-url';
 import { ClassToolbarComponent } from './class-toolbar';
 import { RankedTableComponent } from './ranked-table';
 import { ReorderPanelComponent, ReorderRow } from './reorder-panel';
-
-const EMPTY_PAGE: RankedPlayerPage = { rows: [], totalRecords: 0 };
 
 function defaultQuery(): RankedQuery {
   return {
@@ -27,8 +25,6 @@ function defaultQuery(): RankedQuery {
     numericFilters: [],
     sortField: DEFAULT_SORT.modeled.field,
     sortOrder: DEFAULT_SORT.modeled.order,
-    page: 0,
-    pageSize: 50,
   };
 }
 
@@ -53,8 +49,14 @@ export class ClassViewPage {
   protected readonly detail = signal<DraftClass | null>(null);
   protected readonly positions = signal<string[]>([]);
   protected readonly teams = signal<string[]>([]);
-  protected readonly page = signal<RankedPlayerPage>(EMPTY_PAGE);
+  /** Rows loaded so far — grows in `RANKED_PAGE_SIZE` batches as the table
+   *  scrolls, and is replaced outright on a filter/sort/view reset. */
+  protected readonly rows = signal<RankedPlayer[]>([]);
+  protected readonly totalRecords = signal(0);
+  /** A from-scratch fetch (class switch, filter/sort/view change) is in
+   *  flight — as opposed to `loadingMore`, an infinite-scroll append. */
   protected readonly loading = signal(false);
+  protected readonly loadingMore = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly busy = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
@@ -65,9 +67,11 @@ export class ClassViewPage {
   /** Active table query. Seeded from the URL on load, then driven by the table
    *  via `queryChange` (which also writes it back to the URL). */
   protected readonly queryState = signal<RankedQuery>(defaultQuery());
+  /** Bumped whenever `rows` is replaced from scratch rather than appended to,
+   *  so the table knows to collapse expanded rows and scroll back to the top. */
+  protected readonly resetToken = signal(0);
 
-  protected readonly rows = computed(() => this.page().rows);
-  protected readonly totalRecords = computed(() => this.page().totalRecords);
+  protected readonly hasMore = computed(() => this.rows().length < this.totalRecords());
   protected readonly notProcessed = computed(
     () => !!this.detail() && !this.detail()!.lastProcessed,
   );
@@ -90,18 +94,23 @@ export class ClassViewPage {
       this.detail.set(d.draftClass);
       this.positions.set(d.positions);
       this.teams.set(d.teams);
-      this.page.set(d.page);
+      this.rows.set(d.page.rows);
+      this.totalRecords.set(d.page.totalRecords);
+      this.resetToken.update((v) => v + 1);
     } catch (e) {
       this.error.set((e as Error).message);
       this.detail.set(null);
       this.positions.set([]);
       this.teams.set([]);
-      this.page.set(EMPTY_PAGE);
+      this.rows.set([]);
+      this.totalRecords.set(0);
     } finally {
       this.loading.set(false);
     }
   }
 
+  /** Sort/filter/view changed — reset to the first batch, per the infinite
+   *  scroll contract (URL-shareable state resumes at the top, not mid-scroll). */
   protected async onQueryChange(q: RankedQuery): Promise<void> {
     this.queryState.set(q);
     // replaceUrl: a filter tweak shouldn't stack a history entry per keystroke.
@@ -110,22 +119,43 @@ export class ClassViewPage {
       queryParams: queryToParams(q),
       replaceUrl: true,
     });
-    await this.refetch();
+    await this.resetAndFetch();
+  }
+
+  /** Scrolled to the bottom of the loaded rows — fetch the next batch and
+   *  append it, leaving what's already on screen untouched. */
+  protected async onLoadMore(): Promise<void> {
+    if (this.loading() || this.loadingMore() || !this.hasMore()) return;
+    this.loadingMore.set(true);
+    this.error.set(null);
+    try {
+      const nextPage = Math.floor(this.rows().length / RANKED_PAGE_SIZE);
+      const batch = await this.api.rankedPlayersPage(this.name(), this.queryState(), nextPage);
+      this.rows.update((rs) => [...rs, ...batch.rows]);
+      this.totalRecords.set(batch.totalRecords);
+    } catch (e) {
+      this.error.set((e as Error).message);
+    } finally {
+      this.loadingMore.set(false);
+    }
   }
 
   protected async onSetRank(e: { id: string; rank: number }): Promise<void> {
     await this.run('Updating rank…', async () => {
       this.detail.set(await this.api.setPlayerRank(this.name(), e.id, e.rank));
-      await this.refetch();
+      await this.reloadRowsKeepingDepth();
       await this.store.reload();
     });
   }
 
-  private async refetch(): Promise<void> {
+  private async resetAndFetch(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
     try {
-      this.page.set(await this.api.rankedPlayersPage(this.name(), this.queryState()));
+      const batch = await this.api.rankedPlayersPage(this.name(), this.queryState(), 0);
+      this.rows.set(batch.rows);
+      this.totalRecords.set(batch.totalRecords);
+      this.resetToken.update((v) => v + 1);
     } catch (e) {
       this.error.set((e as Error).message);
     } finally {
@@ -133,13 +163,34 @@ export class ClassViewPage {
     }
   }
 
-  /** Refresh metadata + current page after a mutation, keeping active filters. */
+  /** Re-fetches as many rows as are currently loaded (at least one batch) —
+   *  for a change that can reshuffle the whole ranking without resetting how
+   *  far the user has scrolled. */
+  private async reloadRowsKeepingDepth(): Promise<void> {
+    this.loading.set(true);
+    this.error.set(null);
+    try {
+      const count = Math.max(this.rows().length, RANKED_PAGE_SIZE);
+      const batch = await this.api.rankedPlayersPage(this.name(), this.queryState(), 0, count);
+      this.rows.set(batch.rows);
+      this.totalRecords.set(batch.totalRecords);
+    } catch (e) {
+      this.error.set((e as Error).message);
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  /** Refresh metadata + loaded rows after a mutation, keeping active filters
+   *  and scroll depth (see `reloadRowsKeepingDepth`). */
   private async reloadAfterMutation(): Promise<void> {
-    const d = await this.api.classDetail(this.name(), this.queryState());
+    const count = Math.max(this.rows().length, RANKED_PAGE_SIZE);
+    const d = await this.api.classDetail(this.name(), this.queryState(), count);
     this.detail.set(d.draftClass);
     this.positions.set(d.positions);
     this.teams.set(d.teams);
-    this.page.set(d.page);
+    this.rows.set(d.page.rows);
+    this.totalRecords.set(d.page.totalRecords);
   }
 
   // -------------------------------------------------------------- mutations

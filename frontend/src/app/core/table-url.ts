@@ -1,8 +1,9 @@
 /**
  * Round-trips the ranked-table's `RankedQuery` through the `/class/:name` URL
- * query string so a filtered / sorted / paged view survives a reload and can be
+ * query string so a filtered / sorted view survives a reload and can be
  * shared. Only non-default state is written; everything else is omitted to keep
- * the URL short.
+ * the URL short. The table loads infinitely (see `RANKED_PAGE_SIZE`), so scroll
+ * depth isn't part of this state — a reload always starts from the first batch.
  *
  * Params:
  *   view      modeled | batting | pitching   (omitted when modeled)
@@ -13,8 +14,6 @@
  *   team      comma-separated drafting teams
  *   undrafted 1  — "hide drafted" is on
  *   sort      field, `-` prefix for descending (omitted at the view default)
- *   page      1-based page number
- *   size      rows per page
  *   f         numeric filters: `field~min~max`, comma-separated, blank side = open
  */
 import { Params } from '@angular/router';
@@ -23,8 +22,6 @@ import { ClassView, NumericFilter, RankedQuery } from './api.types';
 import { DEFAULT_SORT, FILTERABLE_FIELDS } from './ranked-columns';
 
 const VIEWS: ClassView[] = ['modeled', 'batting', 'pitching'];
-const PAGE_SIZES = [25, 50, 100, 200];
-const DEFAULT_PAGE_SIZE = 50;
 
 export function queryToParams(q: RankedQuery): Params {
   const p: Params = {};
@@ -40,9 +37,6 @@ export function queryToParams(q: RankedQuery): Params {
   if (q.sortField && !(q.sortField === dflt.field && q.sortOrder === dflt.order)) {
     p['sort'] = (q.sortOrder === -1 ? '-' : '') + q.sortField;
   }
-
-  if (q.page > 0) p['page'] = String(q.page + 1);
-  if (q.pageSize !== DEFAULT_PAGE_SIZE) p['size'] = String(q.pageSize);
 
   const f = q.numericFilters.filter((x) => x.field && (x.min != null || x.max != null));
   if (f.length) {
@@ -84,9 +78,6 @@ export function paramsToQuery(pm: Readable): RankedQuery {
     })
     .filter((x) => x.field && (x.min != null || x.max != null));
 
-  const size = Number(pm.get('size'));
-  const page = Math.max(1, Math.floor(Number(pm.get('page')) || 1)) - 1;
-
   return {
     view,
     search: pm.get('q') ?? '',
@@ -98,7 +89,5 @@ export function paramsToQuery(pm: Readable): RankedQuery {
     numericFilters,
     sortField,
     sortOrder,
-    page,
-    pageSize: PAGE_SIZES.includes(size) ? size : DEFAULT_PAGE_SIZE,
   };
 }
