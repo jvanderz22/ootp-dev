@@ -154,6 +154,113 @@ export const LEAGUES = gql`
   }
 `;
 
+const LEAGUE_SNAPSHOT_FIELDS = gql`
+  fragment LeagueSnapshotFields on LeagueSnapshot {
+    leagueId
+    fetchedAt
+    playerCount
+  }
+`;
+
+const LEAGUE_TEAM_FIELDS = gql`
+  fragment LeagueTeamFields on LeagueTeam {
+    id
+    name
+    parentTeamId
+  }
+`;
+
+export const LEAGUE_SNAPSHOT = gql`
+  ${LEAGUE_SNAPSHOT_FIELDS}
+  query LeagueSnapshot($leagueId: ID!) {
+    leagueSnapshot(leagueId: $leagueId) {
+      ...LeagueSnapshotFields
+    }
+  }
+`;
+
+/** Initial league-view load: snapshot meta + org/team facets + first page. */
+export const LEAGUE_VIEW_DETAIL = gql`
+  ${LEAGUE_SNAPSHOT_FIELDS}
+  ${LEAGUE_TEAM_FIELDS}
+  ${PLAYER_FIELDS}
+  query LeagueViewDetail(
+    $leagueId: ID!
+    $method: String!
+    $groupBy: LeagueGroupBy!
+    $groupId: ID
+    $filter: RankedPlayerFilter
+    $sort: RankedPlayerSort
+    $page: Int
+    $pageSize: Int
+  ) {
+    leagueSnapshot(leagueId: $leagueId) {
+      ...LeagueSnapshotFields
+    }
+    leagueOrgs(leagueId: $leagueId) {
+      ...LeagueTeamFields
+    }
+    leagueTeams(leagueId: $leagueId) {
+      ...LeagueTeamFields
+    }
+    leagueSnapshotPlayers(
+      leagueId: $leagueId
+      method: $method
+      groupBy: $groupBy
+      groupId: $groupId
+      filter: $filter
+      sort: $sort
+      page: $page
+      pageSize: $pageSize
+    ) {
+      totalRecords
+      rows {
+        ...PlayerFields
+      }
+    }
+  }
+`;
+
+/** Subsequent filter/sort/page fetches for the league view — just the slice. */
+export const LEAGUE_SNAPSHOT_PLAYERS = gql`
+  ${PLAYER_FIELDS}
+  query LeagueSnapshotPlayers(
+    $leagueId: ID!
+    $method: String!
+    $groupBy: LeagueGroupBy!
+    $groupId: ID
+    $filter: RankedPlayerFilter
+    $sort: RankedPlayerSort
+    $page: Int
+    $pageSize: Int
+  ) {
+    leagueSnapshotPlayers(
+      leagueId: $leagueId
+      method: $method
+      groupBy: $groupBy
+      groupId: $groupId
+      filter: $filter
+      sort: $sort
+      page: $page
+      pageSize: $pageSize
+    ) {
+      totalRecords
+      rows {
+        ...PlayerFields
+      }
+    }
+  }
+`;
+
+export const REFRESH_LEAGUE_SNAPSHOT = gql`
+  ${LEAGUE_SNAPSHOT_FIELDS}
+  mutation RefreshLeagueSnapshot($leagueId: ID!) {
+    refreshLeagueSnapshot(leagueId: $leagueId) {
+      ...LeagueSnapshotFields
+    }
+  }
+`;
+
 export const CREATE_LEAGUE = gql`
   ${LEAGUE_FIELDS}
   mutation CreateLeague(

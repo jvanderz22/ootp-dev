@@ -1,34 +1,34 @@
-import { Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, computed, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 
 import { ClassStore } from '../core/class-store';
 
 @Component({
-  selector: 'app-home',
+  selector: 'app-league-classes',
   imports: [RouterLink, DatePipe],
   template: `
     <div class="head">
-      <h1>Draft classes</h1>
+      <h2>Draft classes</h2>
       <a routerLink="/upload"><button class="primary">Upload a class</button></a>
     </div>
 
-    @if (store.classes().length === 0 && !store.loading()) {
-      <p class="muted">No classes yet. Upload an OOTP scouting export or a converted CSV to get started.</p>
+    @if (classes().length === 0) {
+      <p class="muted">
+        No draft classes in this league yet. Upload one and assign it to this
+        league from the class menu or the Settings page.
+      </p>
     }
 
     <div class="grid">
-      @for (c of store.classes(); track c.name) {
+      @for (c of classes(); track c.name) {
         <a class="card cls" [routerLink]="['/class', c.name]">
           <div class="name">{{ c.name }}</div>
           <div class="meta muted">
             {{ c.playerCount }} players · {{ c.rankingMethod }}
             @if (c.hasCustomOrder) { · <span class="tag">custom order</span> }
-          </div>
-          <div class="meta muted">
-            @if (c.leagueName) { {{ c.leagueName }} } @else {
-              <span class="tag">no league</span>
-            }
           </div>
           <div class="meta muted">
             {{ c.draftedCount }} drafted ·
@@ -57,6 +57,19 @@ import { ClassStore } from '../core/class-store';
     .tag { color: var(--accent); }
   `,
 })
-export class HomePage {
-  protected readonly store = inject(ClassStore);
+export class LeagueClassesPage {
+  private readonly route = inject(ActivatedRoute);
+  private readonly store = inject(ClassStore);
+
+  private readonly leagueId = toSignal(
+    (this.route.parent ?? this.route).paramMap.pipe(map((p) => p.get('id') ?? '')),
+    { initialValue: (this.route.parent ?? this.route).snapshot.paramMap.get('id') ?? '' },
+  );
+
+  protected readonly classes = computed(() =>
+    this.store
+      .classes()
+      .filter((c) => c.leagueId === this.leagueId())
+      .sort((a, b) => (b.lastProcessed ?? '').localeCompare(a.lastProcessed ?? '')),
+  );
 }

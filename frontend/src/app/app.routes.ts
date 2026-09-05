@@ -13,7 +13,8 @@ export const routes: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        loadComponent: () => import('./pages/home').then((m) => m.HomePage),
+        loadComponent: () =>
+          import('./pages/leagues-home').then((m) => m.LeaguesHomePage),
       },
       {
         path: 'upload',
@@ -24,8 +25,27 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/settings').then((m) => m.SettingsPage),
       },
       {
+        path: 'league/:id',
+        loadComponent: () =>
+          import('./pages/league-shell').then((m) => m.LeagueShellPage),
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            loadComponent: () =>
+              import('./pages/league-view/league-view').then((m) => m.LeagueViewPage),
+          },
+          {
+            path: 'classes',
+            loadComponent: () =>
+              import('./pages/league-classes').then((m) => m.LeagueClassesPage),
+          },
+        ],
+      },
+      {
         path: 'class/:name',
-        loadComponent: () => import('./pages/class-view/class-view').then((m) => m.ClassViewPage),
+        loadComponent: () =>
+          import('./pages/class-view/class-view').then((m) => m.ClassViewPage),
       },
     ],
   },

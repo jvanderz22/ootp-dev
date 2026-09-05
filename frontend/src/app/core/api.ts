@@ -9,9 +9,13 @@ import {
   DELETE_DRAFT_CLASS,
   DELETE_LEAGUE,
   DRAFT_CLASSES,
+  LEAGUE_SNAPSHOT,
+  LEAGUE_SNAPSHOT_PLAYERS,
+  LEAGUE_VIEW_DETAIL,
   LEAGUES,
   RANKED_PAGE,
   REFRESH_DRAFTED,
+  REFRESH_LEAGUE_SNAPSHOT,
   REORDER_PLAYERS,
   REPROCESS_DRAFT_CLASS,
   SAVE_CUSTOM_ORDER,
@@ -27,6 +31,9 @@ import {
   DraftClass,
   DraftedRefreshResult,
   League,
+  LeagueGroupBy,
+  LeagueSnapshot,
+  LeagueTeam,
   RANKED_PAGE_SIZE,
   RankedPlayer,
   RankedPlayerPage,
@@ -59,6 +66,30 @@ function queryVars(name: string, q: RankedQuery, page: number, pageSize: number)
     sort: q.sortField ? { field: q.sortField, order: q.sortOrder } : null,
     page,
     pageSize,
+  };
+}
+
+/** Same as `queryVars` but for the league snapshot: keyed by `leagueId` +
+ *  `method` + the org/team grouping rather than a class `name`. */
+function leagueQueryVars(
+  leagueId: string,
+  method: string,
+  groupBy: LeagueGroupBy,
+  groupId: string | null,
+  q: RankedQuery,
+  page: number,
+  pageSize: number,
+) {
+  const vars = queryVars('', q, page, pageSize);
+  return {
+    leagueId,
+    method,
+    groupBy,
+    groupId: groupId || null,
+    filter: vars.filter,
+    sort: vars.sort,
+    page: vars.page,
+    pageSize: vars.pageSize,
   };
 }
 
@@ -267,6 +298,98 @@ export class ApiService {
         }),
       );
       return res.data!.refreshDraftedFromStatsPlus;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  // --- live league snapshot ------------------------------------------------
+  async leagueSnapshot(leagueId: string): Promise<LeagueSnapshot | null> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.query<{ leagueSnapshot: LeagueSnapshot | null }>({
+          query: LEAGUE_SNAPSHOT,
+          variables: { leagueId },
+          fetchPolicy: 'network-only',
+        }),
+      );
+      return res.data!.leagueSnapshot;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  /** Initial league-view load: snapshot meta + org/team facets + first batch. */
+  async leagueViewDetail(
+    leagueId: string,
+    method: string,
+    groupBy: LeagueGroupBy,
+    groupId: string | null,
+    q: RankedQuery,
+    pageSize: number = RANKED_PAGE_SIZE,
+  ): Promise<{
+    snapshot: LeagueSnapshot | null;
+    orgs: LeagueTeam[];
+    teams: LeagueTeam[];
+    page: RankedPlayerPage;
+  }> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.query<{
+          leagueSnapshot: LeagueSnapshot | null;
+          leagueOrgs: LeagueTeam[];
+          leagueTeams: LeagueTeam[];
+          leagueSnapshotPlayers: RankedPlayerPage;
+        }>({
+          query: LEAGUE_VIEW_DETAIL,
+          variables: leagueQueryVars(leagueId, method, groupBy, groupId, q, 0, pageSize),
+          fetchPolicy: 'network-only',
+        }),
+      );
+      return {
+        snapshot: res.data!.leagueSnapshot,
+        orgs: res.data!.leagueOrgs,
+        teams: res.data!.leagueTeams,
+        page: res.data!.leagueSnapshotPlayers,
+      };
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  /** One infinite-scroll batch for the league view. */
+  async leagueSnapshotPlayersPage(
+    leagueId: string,
+    method: string,
+    groupBy: LeagueGroupBy,
+    groupId: string | null,
+    q: RankedQuery,
+    page: number,
+    pageSize: number = RANKED_PAGE_SIZE,
+  ): Promise<RankedPlayerPage> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.query<{ leagueSnapshotPlayers: RankedPlayerPage }>({
+          query: LEAGUE_SNAPSHOT_PLAYERS,
+          variables: leagueQueryVars(leagueId, method, groupBy, groupId, q, page, pageSize),
+          fetchPolicy: 'network-only',
+        }),
+      );
+      return res.data!.leagueSnapshotPlayers;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  async refreshLeagueSnapshot(leagueId: string): Promise<LeagueSnapshot> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.mutate<{ refreshLeagueSnapshot: LeagueSnapshot }>({
+          mutation: REFRESH_LEAGUE_SNAPSHOT,
+          variables: { leagueId },
+        }),
+      );
+      return res.data!.refreshLeagueSnapshot;
     } catch (e) {
       unwrap(e);
     }

@@ -17,6 +17,25 @@ export interface League {
   classNames: string[];
 }
 
+export interface LeagueSnapshot {
+  leagueId: string;
+  fetchedAt: string | null;
+  playerCount: number;
+}
+
+export interface LeagueTeam {
+  id: string;
+  name: string;
+  parentTeamId: string | null;
+}
+
+/** How `leagueSnapshotPlayers` narrows the pool. `LEAGUE` ignores `groupId`. */
+export type LeagueGroupBy = 'LEAGUE' | 'ORG' | 'TEAM';
+
+/** The two ranking methods the league view offers (no `draft_class`). */
+export const LEAGUE_RANKING_METHODS = ['overall', 'potential'] as const;
+export type LeagueRankingMethod = (typeof LEAGUE_RANKING_METHODS)[number];
+
 export interface RankedPlayer {
   rank: number;
   id: string;
