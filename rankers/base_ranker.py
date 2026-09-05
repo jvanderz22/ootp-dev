@@ -1,8 +1,7 @@
 from abc import ABC
 import inspect
-import json
 from models.game_players import GamePlayer
-from models.player_score import PlayerScore
+from models.scored_player import ScoredPlayer
 from modifiers.base_modifier import BaseModifier
 from modifiers.base_rank_modifier import BaseRankModifier
 from scoring.position_player_scorer import (
@@ -10,10 +9,16 @@ from scoring.position_player_scorer import (
 )
 from scoring.pitcher_scorer import PitcherScorer
 from scoring.runtime_components import (
-    get_runtime_components,
     runtime_components_scope,
     write_runtime_component,
 )
+
+# A draft class fits comfortably in one batch; a whole-league snapshot (~15k
+# players) does not - scoring it all at once holds every GamePlayer, every
+# runtime-component dict and the models in memory simultaneously, which is what
+# was OOM-killing the 512MB box. Batching keeps only this many players resident
+# at a time; the lightweight ScoredPlayer results accumulate for the final sort.
+DEFAULT_BATCH_SIZE = 1500
 
 
 class BaseRanker(ABC):
@@ -50,64 +55,100 @@ class BaseRanker(ABC):
     def filter_players(self, players):
         return players
 
-    def rank(self, players: list[GamePlayer]):
-        with runtime_components_scope():
-            return self._rank_impl(players)
+    def rank(self, players, batch_size: int = DEFAULT_BATCH_SIZE):
+        """Score `players` (a list or any iterable of GamePlayer) and return a
+        list of ScoredPlayer sorted best-first, ranks applied.
 
-    def _rank_impl(self, players: list[GamePlayer]):
-        player_scores = []
-        all_players = {}
-        players = self.filter_players(players)
-        log = len(players) > 3000
-        for i, player in enumerate(players):
-            if log and i % 500 == 0 and i > 0:
-                print(f"Evaluated {i} players of {len(players)}")
-            all_players[player.id] = player
-            [
+        Players are consumed in chunks of `batch_size` so the whole pool is never
+        resident at once; only the lightweight results accumulate. Pass a
+        `batch_size` >= the player count (or a class-sized default) to score in a
+        single pass - behaviour is identical either way for rankers without
+        rank-adjusted modifiers, and rank-adjusted modifiers still see the global
+        rank because they run after every batch is scored.
+        """
+        with runtime_components_scope() as store:
+            return self._rank_impl(players, batch_size, store)
+
+    def _rank_impl(self, players, batch_size, store):
+        results = []
+        batch = []
+        done = 0
+        for player in players:
+            batch.append(player)
+            if len(batch) >= batch_size:
+                done += len(batch)
+                self._score_batch(batch, store, results)
+                print(f"Evaluated {done} players")
+                batch = []
+        if batch:
+            self._score_batch(batch, store, results)
+
+        results.sort(key=lambda r: r.raw_overall_score, reverse=True)
+        for i, result in enumerate(results):
+            result.overall_score = self._apply_rank_adjustment(result, i + 1)
+            result.components = str(result.components)
+        results.sort(key=lambda r: r.overall_score, reverse=True)
+        return results
+
+    def _score_batch(self, batch, store, results):
+        """Score one chunk of GamePlayers, appending a ScoredPlayer for each and
+        draining that player's runtime-component dict out of the shared store so
+        it doesn't pile up across batches."""
+        for player in self.filter_players(batch):
+            (
                 position_player_score,
                 batting_score,
                 fielding_score,
                 running_score,
-            ] = self.calculate_position_player_score(player)
-            [
+            ) = self.calculate_position_player_score(player)
+            (
                 pitcher_score,
                 starter_score,
                 reliever_score,
-            ] = self.calculate_pitcher_score(player)
-
-            player_score = PlayerScore(
-                id=player.id,
-                batting_score_component=round(batting_score, 2),
-                fielding_score_component=round(fielding_score, 2),
-                position_player_score=round(position_player_score, 2),
-                pitcher_score=round(pitcher_score, 2),
-                starter_component=round(starter_score, 2),
-                reliever_component=round(reliever_score, 2),
-                running_score_component=round(running_score, 2),
-                raw_overall_score=self.aggregate_pitcher_batter_scores(
-                    position_player_score, pitcher_score
-                ),
-            )
-            player_scores.append(player_score)
-
-        sorted_player_scores = sorted(
-            player_scores, key=lambda score: score.raw_overall_score, reverse=True
-        )
-
-        for i, score in enumerate(sorted_player_scores):
-            player = all_players[score.id]
-            overall_score = self.calculate_rank_adjusted_score(
-                player, score.raw_overall_score, i + 1
-            )
-            score.overall_score = overall_score
-            score.components = json.loads(
-                json.dumps(str(get_runtime_components(player.id)))
+            ) = self.calculate_pitcher_score(player)
+            results.append(
+                ScoredPlayer(
+                    id=player.id,
+                    name=player.name,
+                    position=player.position,
+                    age=player.age,
+                    in_game_overall=player.overall,
+                    in_game_potential=player.potential,
+                    demand=player.demand,
+                    batting_score_component=round(batting_score, 2),
+                    fielding_score_component=round(fielding_score, 2),
+                    position_player_score=round(position_player_score, 2),
+                    pitcher_score=round(pitcher_score, 2),
+                    starter_component=round(starter_score, 2),
+                    reliever_component=round(reliever_score, 2),
+                    running_score_component=round(running_score, 2),
+                    raw_overall_score=self.aggregate_pitcher_batter_scores(
+                        position_player_score, pitcher_score
+                    ),
+                    components=store.pop(player.id, {}) or {},
+                )
             )
 
-        sorted_player_scores = sorted(
-            player_scores, key=lambda score: score.overall_score, reverse=True
-        )
-        return sorted_player_scores
+    def _apply_rank_adjustment(self, result: ScoredPlayer, rank: int) -> float:
+        """Port of `calculate_rank_adjusted_score` for the batched path: the
+        player's GamePlayer is long gone, so read what the rank modifiers need
+        off the ScoredPlayer and fold the debug values straight into its
+        `components` dict (same keys/rounding `write_runtime_component` would use).
+        """
+        score = result.raw_overall_score
+        for modifier in self.rank_adjusted_modifiers:
+            mod_val = modifier.calculate_modified_score(result, rank)
+            if float(mod_val) != 1.0:
+                result.components[f"Rank-adj Modifier {modifier.__name__}"] = round(
+                    float(mod_val), 2
+                )
+            score *= mod_val
+        result.components["Pre Rank-adj Rank"] = rank
+        if result.raw_overall_score > 0:
+            result.components["Pre Rank-adj Score"] = round(
+                float(result.raw_overall_score), 2
+            )
+        return score
 
     def calculate_position_player_score(self, player: GamePlayer) -> float:
         [

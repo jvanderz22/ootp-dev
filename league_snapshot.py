@@ -38,6 +38,7 @@ from context import default_base_dir
 from io_utils import atomic_write_json
 from models.game_players import PLAYER_FIELDS, GamePlayer
 from ranking_csv import RANKED_PLAYER_FIELDNAMES
+from rankers.base_ranker import DEFAULT_BATCH_SIZE
 from rankers.get_ranker import get_ranker_for_method
 from statsplus_api import (
     StatsPlusError,
@@ -394,28 +395,28 @@ _ranked_cache: "OrderedDict[tuple, dict]" = OrderedDict()
 _ranked_cache_lock = threading.Lock()
 
 
-def _ranked_row(index: int, player: GamePlayer, score) -> dict:
+def _ranked_row(index: int, s) -> dict:
     return {
         "overall_ranking": index,
         "model_ranking": index,
         "ranking_difference": 0,
-        "id": player.id,
-        "name": player.name,
-        "position": player.position,
-        "age": player.age,
-        "model_score": round(score.overall_score, 2),
-        "position_player_score": score.position_player_score,
-        "fielding_score_component": score.fielding_score_component,
-        "batting_score_component": score.batting_score_component,
-        "pitcher_score": score.pitcher_score,
-        "starter_component": score.starter_component,
-        "reliever_component": score.reliever_component,
-        "running_score_component": score.running_score_component,
-        "in_game_overall": player.overall,
-        "in_game_potential": player.potential,
-        "demand": player.demand or "",
-        "raw_overall_score": score.raw_overall_score,
-        "components": score.components,
+        "id": s.id,
+        "name": s.name,
+        "position": s.position,
+        "age": s.age,
+        "model_score": round(s.overall_score, 2),
+        "position_player_score": s.position_player_score,
+        "fielding_score_component": s.fielding_score_component,
+        "batting_score_component": s.batting_score_component,
+        "pitcher_score": s.pitcher_score,
+        "starter_component": s.starter_component,
+        "reliever_component": s.reliever_component,
+        "running_score_component": s.running_score_component,
+        "in_game_overall": s.in_game_overall,
+        "in_game_potential": s.in_game_potential,
+        "demand": s.demand or "",
+        "raw_overall_score": s.raw_overall_score,
+        "components": s.components,
     }
 
 
@@ -429,12 +430,17 @@ def _score_and_write(ctx: LeagueSnapshotContext, method: str, out_file: Path) ->
 def _score_and_write_locked(
     ctx: LeagueSnapshotContext, method: str, out_file: Path
 ) -> list[dict]:
-    with open(ctx.data_file, newline="") as f:
-        players = [GamePlayer(row) for row in csv.DictReader(f)]
-    by_id = {p.id: p for p in players}
     ranker = get_ranker_for_method(method)
-    scores = ranker.rank(players)  # already sorted best-first
-    rows = [_ranked_row(i, by_id[s.id], s) for i, s in enumerate(scores)]
+
+    def _players():
+        # Stream GamePlayers straight off disk so the batched ranker never holds
+        # the whole ~15k-player pool in memory at once.
+        with open(ctx.data_file, newline="") as f:
+            for row in csv.DictReader(f):
+                yield GamePlayer(row)
+
+    scored = ranker.rank(_players(), batch_size=DEFAULT_BATCH_SIZE)
+    rows = [_ranked_row(i, s) for i, s in enumerate(scored)]
     out_file.parent.mkdir(parents=True, exist_ok=True)
     with open(out_file, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=RANKED_PLAYER_FIELDNAMES)

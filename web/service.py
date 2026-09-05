@@ -957,7 +957,7 @@ async def refresh_league_snapshot(league_id: str):
 
 
 def _refresh_league_snapshot_sync(league_id: str):
-    lg, _ = _league_ctx(league_id)
+    lg, ctx = _league_ctx(league_id)
     if not lg.get("league_url"):
         raise InvalidInput(
             f"League {lg['name']!r} has no StatsPlus URL. Add one on the Settings page."
@@ -965,6 +965,14 @@ def _refresh_league_snapshot_sync(league_id: str):
     league_snapshot.fetch_and_build(lg, cookie=cookie_header(load_settings()))
     league_snapshot.evict_ranked_cache(league_id)
     _evict_league_payload_cache(league_id)
+    # Score both rankings now, inside this background job, so the league overview
+    # only ever reads ranked_players.csv from disk and never blocks a request on
+    # a full model run.
+    for method in league_snapshot.LEAGUE_RANKING_METHODS:
+        try:
+            league_snapshot.ranked_rows(ctx, method)
+        except Exception:  # a transient scorer failure shouldn't fail the refresh
+            pass
     return league_snapshot_payload(league_id)
 
 

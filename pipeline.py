@@ -84,9 +84,13 @@ def normalise_dataset(ctx) -> None:
             csv.writer(f).writerows(rows)
 
 
-def load_player_data(ctx) -> list:
+def load_player_data(ctx):
+    """Yield GamePlayers lazily so the ranker can score in batches. The CSV rows
+    are read up front (cheap) and the file closed; only GamePlayer construction
+    is deferred."""
     with open(get_draft_class_data_file(ctx), newline="") as csvfile:
-        return [GamePlayer(row) for row in csv.DictReader(csvfile)]
+        rows = list(csv.DictReader(csvfile))
+    return (GamePlayer(row) for row in rows)
 
 
 def write_player_scores(ctx, players) -> None:
@@ -97,34 +101,32 @@ def write_player_scores(ctx, players) -> None:
 
 
 def _write_player_scores(ctx, players) -> None:
-    players_by_id = {player.id: player for player in players}
     ranker = get_ranker(ctx)
-    player_scores = ranker.rank(players)
+    scored = ranker.rank(players)
     with open(get_draft_class_eval_model_file(ranker, ctx), "w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=EVAL_MODEL_FIELDNAMES)
         writer.writeheader()
-        for i, score in enumerate(player_scores):
-            player = players_by_id[score.id]
+        for i, s in enumerate(scored):
             writer.writerow(
                 {
                     "ranking": i,
-                    "id": player.id,
-                    "name": player.name,
-                    "position": player.position,
-                    "age": player.age,
-                    "position_player_score": score.position_player_score,
-                    "fielding_score_component": score.fielding_score_component,
-                    "batting_score_component": score.batting_score_component,
-                    "pitcher_score": score.pitcher_score,
-                    "starter_component": score.starter_component,
-                    "reliever_component": score.reliever_component,
-                    "running_score_component": score.running_score_component,
-                    "overall_score": round(score.overall_score, 2),
-                    "in_game_overall": player.overall,
-                    "in_game_potential": player.potential,
-                    "demand": player.demand,
-                    "raw_overall_score": score.raw_overall_score,
-                    "components": score.components,
+                    "id": s.id,
+                    "name": s.name,
+                    "position": s.position,
+                    "age": s.age,
+                    "position_player_score": s.position_player_score,
+                    "fielding_score_component": s.fielding_score_component,
+                    "batting_score_component": s.batting_score_component,
+                    "pitcher_score": s.pitcher_score,
+                    "starter_component": s.starter_component,
+                    "reliever_component": s.reliever_component,
+                    "running_score_component": s.running_score_component,
+                    "overall_score": round(s.overall_score, 2),
+                    "in_game_overall": s.in_game_overall,
+                    "in_game_potential": s.in_game_potential,
+                    "demand": s.demand,
+                    "raw_overall_score": s.raw_overall_score,
+                    "components": s.components,
                 }
             )
 
