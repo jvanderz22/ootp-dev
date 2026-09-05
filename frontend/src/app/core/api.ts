@@ -8,6 +8,7 @@ import {
   CREATE_LEAGUE,
   DELETE_DRAFT_CLASS,
   DELETE_LEAGUE,
+  CHECK_LEAGUE_SNAPSHOT_FRESHNESS,
   DRAFT_CLASSES,
   LEAGUE_SNAPSHOT,
   LEAGUE_SNAPSHOT_PLAYERS,
@@ -31,6 +32,7 @@ import {
   DraftClass,
   DraftedRefreshResult,
   League,
+  LeagueFreshness,
   LeagueGroupBy,
   LeagueSnapshot,
   LeagueTeam,
@@ -390,6 +392,22 @@ export class ApiService {
         }),
       );
       return res.data!.refreshLeagueSnapshot;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  /** On league-page load: is the stored snapshot still current? Only hits
+   *  StatsPlus (for the in-game date) when the snapshot is over a day old. */
+  async checkLeagueSnapshotFreshness(leagueId: string): Promise<LeagueFreshness> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.mutate<{ checkLeagueSnapshotFreshness: LeagueFreshness }>({
+          mutation: CHECK_LEAGUE_SNAPSHOT_FRESHNESS,
+          variables: { leagueId },
+        }),
+      );
+      return res.data!.checkLeagueSnapshotFreshness;
     } catch (e) {
       unwrap(e);
     }

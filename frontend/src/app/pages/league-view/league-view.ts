@@ -72,6 +72,7 @@ function defaultQuery(): RankedQuery {
       </button>
     </div>
 
+    @if (notice()) { <p class="notice">{{ notice() }}</p> }
     @if (busy()) {
       <p class="muted">
         Pulling the whole player pool and ranking it — this takes a minute or two.
@@ -199,6 +200,7 @@ export class LeagueViewPage {
   protected readonly loadingMore = signal(false);
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
+  protected readonly notice = signal<string | null>(null);
 
   protected readonly queryState = signal<RankedQuery>(defaultQuery());
   protected readonly resetToken = signal(0);
@@ -242,12 +244,37 @@ export class LeagueViewPage {
     });
   }
 
+  /** Freshness gate: if the stored snapshot is over a day old and the sim has
+   *  advanced past its date, pull a fresh one before showing the page. */
+  private async gateOnFreshness(id: string): Promise<void> {
+    try {
+      const f = await this.api.checkLeagueSnapshotFreshness(id);
+      this.snapshot.set(f.snapshot);
+      if (f.stale && f.snapshot) {
+        this.notice.set(
+          `League advanced${f.leagueDate ? ` to ${f.leagueDate}` : ''} — pulling a fresh snapshot…`,
+        );
+        this.busy.set(true);
+        try {
+          this.snapshot.set(await this.api.refreshLeagueSnapshot(id));
+          this.notice.set(`Auto-refreshed to ${f.leagueDate ?? 'the current date'}.`);
+        } finally {
+          this.busy.set(false);
+        }
+      }
+    } catch {
+      // freshness check failed — carry on with whatever is stored
+    }
+  }
+
   /** Full load for a league (route change or after a refresh): snapshot meta,
    *  org/team facets, and the first batch for the current method/grouping. */
   private async load(id: string): Promise<void> {
     if (!this.hydrated) this.hydrateFromUrl();
     this.loading.set(true);
     this.error.set(null);
+    this.notice.set(null);
+    await this.gateOnFreshness(id);
     try {
       const d = await this.api.leagueViewDetail(
         id,

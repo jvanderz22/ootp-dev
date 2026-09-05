@@ -29,7 +29,13 @@ from load_draft_class import (
 )
 from rankers.get_ranker import RANKERS
 from ranking_csv import build_upload_rows, write_upload_file
-from statsplus_api import fetch_draft_picks, write_drafted_players_file
+from statsplus_api import (
+    StatsPlusAuthError,
+    StatsPlusError,
+    fetch_draft_picks,
+    fetch_league_date,
+    write_drafted_players_file,
+)
 from web.settings import cookie_header, load_settings
 
 _pipeline_lock = asyncio.Lock()
@@ -859,3 +865,35 @@ def _refresh_league_snapshot_sync(league_id: str):
     league_snapshot.evict_ranked_cache(league_id)
     _evict_league_payload_cache(league_id)
     return league_snapshot_payload(league_id)
+
+
+async def check_league_snapshot_freshness(league_id: str):
+    return await anyio.to_thread.run_sync(_check_league_snapshot_freshness_sync, league_id)
+
+
+def _check_league_snapshot_freshness_sync(league_id: str) -> dict:
+    """Is the stored snapshot still current? Cheap unless the snapshot is more
+    than a day old, in which case the league's in-game date (`GET /api/date/`) is
+    checked: an advance since the snapshot was pulled -> `stale: True`, and the
+    caller (the league page) refreshes. A match just quiets the check for a day."""
+    lg, ctx = _league_ctx(league_id)
+    snap = league_snapshot_payload(league_id)
+    idle = {"snapshot": snap, "stale": False, "checked": False, "league_date": None}
+    if snap is None:
+        return idle
+
+    age = league_snapshot.snapshot_age(ctx)
+    if age is not None and age < league_snapshot.STALE_AFTER:
+        return idle
+    if not lg.get("league_url"):
+        return idle
+    try:
+        current = fetch_league_date(lg["league_url"], cookie_header(load_settings()))
+    except (StatsPlusError, StatsPlusAuthError):
+        return idle  # can't check now; keep serving what we have
+
+    stored = (ctx.load_meta() or {}).get("league_date")
+    if stored and current == stored:
+        league_snapshot.touch_checked(ctx, current)
+        return {"snapshot": snap, "stale": False, "checked": True, "league_date": current}
+    return {"snapshot": snap, "stale": True, "checked": True, "league_date": current}

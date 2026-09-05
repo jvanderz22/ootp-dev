@@ -111,6 +111,19 @@ enum LeagueGroupBy {
   TEAM
 }
 
+"""
+Result of the on-load freshness check for a stored league snapshot.
+`stale` = the sim advanced past the snapshot's `leagueDate`; the page should
+refresh. `checked` = the league's in-game date was actually fetched this call
+(only when the snapshot is more than a day old).
+"""
+type LeagueFreshness {
+  snapshot: LeagueSnapshot
+  stale: Boolean!
+  checked: Boolean!
+  leagueDate: String
+}
+
 type DraftedRefreshResult {
   draftedCount: Int!
   matchedById: Int!
@@ -175,4 +188,5 @@ type Mutation {
   deleteLeague(id: ID!): String!
   setClassLeague(name: String!, leagueId: String): DraftClass!
   refreshLeagueSnapshot(leagueId: ID!): LeagueSnapshot!
+  checkLeagueSnapshotFreshness(leagueId: ID!): LeagueFreshness!
 }

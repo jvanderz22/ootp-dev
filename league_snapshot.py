@@ -31,7 +31,7 @@ import json
 import threading
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from context import default_base_dir
@@ -39,7 +39,13 @@ from io_utils import atomic_write_json
 from models.game_players import PLAYER_FIELDS, GamePlayer
 from ranking_csv import RANKED_PLAYER_FIELDNAMES
 from rankers.get_ranker import get_ranker_for_method
-from statsplus_api import fetch_players, fetch_ratings, fetch_teams
+from statsplus_api import (
+    StatsPlusError,
+    fetch_league_date,
+    fetch_players,
+    fetch_ratings,
+    fetch_teams,
+)
 
 # The league view only ever offers these two ranking methods (see the plan / the
 # `statsplus-api` memory): neither reads `demand` / `adaptability`, the fields the
@@ -278,11 +284,22 @@ def join_rows(ratings_csv: str, players_csv: str, teams_csv: str) -> list[dict]:
     return out
 
 
+# A stored snapshot older than this has its freshness re-checked against the
+# league's in-game date (GET /api/date/) the next time the league page loads.
+STALE_AFTER = timedelta(days=1)
+
+
 def build_snapshot(
-    ctx: LeagueSnapshotContext, ratings_csv: str, players_csv: str, teams_csv: str
+    ctx: LeagueSnapshotContext,
+    ratings_csv: str,
+    players_csv: str,
+    teams_csv: str,
+    *,
+    league_date: str = None,
 ) -> LeagueSnapshotContext:
     """Pure transform + write: join the three CSV blobs, write `ctx.data_file`,
-    stash the teams CSV, and write `meta.json`."""
+    stash the teams CSV, and write `meta.json`. `league_date` is the in-game date
+    the data was pulled at, kept so a later load can tell the sim has advanced."""
     rows = join_rows(ratings_csv, players_csv, teams_csv)
     ctx.ensure_dirs()
     with open(ctx.data_file, "w", newline="") as f:
@@ -290,19 +307,50 @@ def build_snapshot(
         writer.writeheader()
         writer.writerows(rows)
     ctx.teams_file.write_text(teams_csv)
+    now = datetime.now(timezone.utc).isoformat()
     atomic_write_json(
         ctx.meta_file,
         {
             "league_id": ctx.league_id,
-            "fetched_at": datetime.now(timezone.utc).isoformat(),
+            "fetched_at": now,
+            "last_checked_at": now,
             "player_count": len(rows),
+            "league_date": league_date,
         },
     )
     return ctx
 
 
+def touch_checked(ctx: LeagueSnapshotContext, league_date: str = None) -> None:
+    """Record that the snapshot was verified current (its `league_date` still
+    matches the sim) so the freshness check stays quiet for another day."""
+    meta = ctx.load_meta()
+    if not meta:
+        return
+    meta["last_checked_at"] = datetime.now(timezone.utc).isoformat()
+    if league_date:
+        meta["league_date"] = league_date
+    atomic_write_json(ctx.meta_file, meta)
+
+
+def snapshot_age(ctx: LeagueSnapshotContext):
+    """`timedelta` since the snapshot was last fetched or checked, or None if
+    there is no snapshot / no usable timestamp."""
+    meta = ctx.load_meta()
+    stamp = meta.get("last_checked_at") or meta.get("fetched_at")
+    if not stamp:
+        return None
+    try:
+        when = datetime.fromisoformat(stamp)
+    except ValueError:
+        return None
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=timezone.utc)
+    return datetime.now(timezone.utc) - when
+
+
 def fetch_and_build(league: dict, *, base_dir=None, cookie: str = None) -> LeagueSnapshotContext:
-    """Fetch the three endpoints for `league` (a `web/leagues.py` dict) and build
+    """Fetch the four endpoints for `league` (a `web/leagues.py` dict) and build
     the stored snapshot. `cookie` defaults to the app-wide StatsPlus cookie."""
     if not league or not league.get("league_url"):
         raise ValueError("League has no StatsPlus URL configured.")
@@ -312,6 +360,11 @@ def fetch_and_build(league: dict, *, base_dir=None, cookie: str = None) -> Leagu
         cookie = cookie_header(load_settings())
 
     league_url = league["league_url"]
+    league_date = None
+    try:
+        league_date = fetch_league_date(league_url, cookie)
+    except StatsPlusError:
+        pass  # non-fatal: the snapshot is still valid, just can't stamp the date
     ratings_csv = fetch_ratings(league_url, cookie)
     players_csv = fetch_players(league_url, cookie)
     teams_csv = fetch_teams(league_url, cookie)
@@ -319,7 +372,7 @@ def fetch_and_build(league: dict, *, base_dir=None, cookie: str = None) -> Leagu
     ctx = LeagueSnapshotContext(
         league["id"], base_dir=base_dir or default_base_dir()
     )
-    return build_snapshot(ctx, ratings_csv, players_csv, teams_csv)
+    return build_snapshot(ctx, ratings_csv, players_csv, teams_csv, league_date=league_date)
 
 
 # ------------------------------------------------------------- ranking + cache

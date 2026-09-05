@@ -264,6 +264,20 @@ export const REFRESH_LEAGUE_SNAPSHOT = gql`
   }
 `;
 
+export const CHECK_LEAGUE_SNAPSHOT_FRESHNESS = gql`
+  ${LEAGUE_SNAPSHOT_FIELDS}
+  mutation CheckLeagueSnapshotFreshness($leagueId: ID!) {
+    checkLeagueSnapshotFreshness(leagueId: $leagueId) {
+      snapshot {
+        ...LeagueSnapshotFields
+      }
+      stale
+      checked
+      leagueDate
+    }
+  }
+`;
+
 export const CREATE_LEAGUE = gql`
   ${LEAGUE_FIELDS}
   mutation CreateLeague(

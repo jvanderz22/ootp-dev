@@ -410,6 +410,61 @@ def test_refresh_league_snapshot(client, monkeypatch):
     assert calls["league_id"] == lid
 
 
+def test_check_league_snapshot_freshness(client, monkeypatch):
+    import json as _json
+
+    import league_snapshot
+    from web import service
+
+    lid = gql(client, 'mutation { createLeague(name: "YF4", leagueUrl: "yfmlb") { id } }')[
+        "createLeague"
+    ]["id"]
+    ctx = _seed_snapshot(lid)
+
+    check = "mutation($l: ID!) { checkLeagueSnapshotFreshness(leagueId: $l) { stale checked leagueDate snapshot { playerCount } } }"
+
+    # 1. just-built snapshot -> under a day old, no external date call
+    out = gql(client, check, l=lid)["checkLeagueSnapshotFreshness"]
+    assert out == {"stale": False, "checked": False, "leagueDate": None,
+                   "snapshot": {"playerCount": 2}}
+
+    dates = iter(["2042-05-19", "2042-06-02"])
+    monkeypatch.setattr(service, "fetch_league_date", lambda *a, **k: next(dates))
+
+    def age_snapshot(league_date):
+        meta = ctx.load_meta()
+        meta["fetched_at"] = "2000-01-01T00:00:00+00:00"
+        meta["last_checked_at"] = "2000-01-01T00:00:00+00:00"
+        meta["league_date"] = league_date
+        ctx.meta_file.write_text(_json.dumps(meta))
+
+    # 2. old snapshot, sim date unchanged -> checked, not stale, and the check
+    #    stamps last_checked_at so it goes quiet again
+    age_snapshot("2042-05-19")
+    out = gql(client, check, l=lid)["checkLeagueSnapshotFreshness"]
+    assert out["checked"] is True and out["stale"] is False
+    assert out["leagueDate"] == "2042-05-19"
+    assert ctx.load_meta()["last_checked_at"] > "2001"
+
+    # 3. old snapshot, sim advanced -> stale (page will auto-refresh)
+    age_snapshot("2042-05-19")
+    out = gql(client, check, l=lid)["checkLeagueSnapshotFreshness"]
+    assert out["checked"] is True and out["stale"] is True
+    assert out["leagueDate"] == "2042-06-02"
+
+
+def test_check_freshness_no_snapshot(client):
+    lid = gql(client, 'mutation { createLeague(name: "YF5", leagueUrl: "yfmlb") { id } }')[
+        "createLeague"
+    ]["id"]
+    out = gql(
+        client,
+        "mutation($l: ID!) { checkLeagueSnapshotFreshness(leagueId: $l) { stale checked snapshot { playerCount } } }",
+        l=lid,
+    )["checkLeagueSnapshotFreshness"]
+    assert out == {"stale": False, "checked": False, "snapshot": None}
+
+
 def test_league_accepts_bare_slug_and_alt_host(client):
     out = gql(
         client,

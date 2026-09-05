@@ -207,6 +207,12 @@ def fetch_players(league_url: str, cookie: str, timeout: float = 60.0) -> str:
     return _get_api_text(_api_url(league_url, "players"), cookie, timeout=timeout)
 
 
+def fetch_league_date(league_url: str, cookie: str, timeout: float = 30.0) -> str:
+    """The league's current in-game date (`GET /api/date/` -> e.g. `2042-05-19`).
+    Cheap; used to decide whether a stored snapshot is out of date."""
+    return _get_api_text(_api_url(league_url, "date"), cookie, timeout=timeout).strip()
+
+
 def fetch_teams(league_url: str, cookie: str, timeout: float = 60.0) -> str:
     """Raw CSV text from `GET /api/teams/` (id -> name for teams/orgs/leagues)."""
     return _get_api_text(_api_url(league_url, "teams"), cookie, timeout=timeout)

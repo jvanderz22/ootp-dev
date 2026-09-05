@@ -77,3 +77,8 @@ def resolve_set_class_league(_, __, name, league_id=None):
 @mutation.field("refreshLeagueSnapshot")
 async def resolve_refresh_league_snapshot(_, __, league_id):
     return await service.refresh_league_snapshot(league_id)
+
+
+@mutation.field("checkLeagueSnapshotFreshness")
+async def resolve_check_league_snapshot_freshness(_, __, league_id):
+    return await service.check_league_snapshot_freshness(league_id)

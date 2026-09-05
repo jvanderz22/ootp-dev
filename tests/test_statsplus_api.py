@@ -4,14 +4,76 @@ from context import DraftClassContext
 from drafted_players import get_drafted_player_ids, get_drafted_players_info
 import pytest as _pytest
 
+import statsplus_api
 from statsplus_api import (
     StatsPlusAuthError,
     StatsPlusError,
     _parse_draft_csv,
     fetch_draft_picks,
+    fetch_league_date,
     normalize_league_url,
+    poll_ratings_export,
+    start_ratings_job,
     write_drafted_players_file,
 )
+
+
+class _FakeResp:
+    def __init__(self, text, status_code=200):
+        self.text = text
+        self.status_code = status_code
+
+
+def _stub_get(monkeypatch, *responses):
+    """Patch httpx.get to hand back `responses` in order (last one repeats)."""
+    import httpx
+
+    seq = list(responses)
+
+    def fake_get(*_a, **_k):
+        return seq.pop(0) if len(seq) > 1 else seq[0]
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+
+def test_fetch_league_date(monkeypatch):
+    _stub_get(monkeypatch, _FakeResp("2042-05-19\n"))
+    assert fetch_league_date("yfmlb", "sessionid=x; csrftoken=y") == "2042-05-19"
+
+
+def test_start_ratings_job_parses_poll_url(monkeypatch):
+    uuid = "3de70b01-337b-4baf-a948-f18831706dc4"
+    _stub_get(
+        monkeypatch,
+        _FakeResp(f"queued; poll https://statsplus.net/yfmlb/api/mycsv/?request={uuid}"),
+    )
+    assert start_ratings_job("yfmlb", "c").endswith(f"request={uuid}")
+
+
+def test_start_ratings_job_without_poll_url_raises(monkeypatch):
+    _stub_get(monkeypatch, _FakeResp("Request too soon, wait 284 seconds"))
+    with pytest.raises(StatsPlusError):
+        start_ratings_job("yfmlb", "c")
+
+
+def test_poll_ratings_export_waits_then_returns_csv(monkeypatch):
+    _stub_get(
+        monkeypatch,
+        _FakeResp("...still in progress..."),
+        _FakeResp("ID,Name\n1,Bob\n"),
+    )
+    out = poll_ratings_export(
+        "https://statsplus.net/yfmlb/api/mycsv/?request=abc", "c",
+        interval=0, _sleep=lambda _s: None,
+    )
+    assert out.startswith("ID,Name")
+
+
+def test_poll_ratings_export_times_out(monkeypatch):
+    _stub_get(monkeypatch, _FakeResp("still in progress"))
+    with pytest.raises(StatsPlusError):
+        poll_ratings_export("https://x/api/mycsv/?request=abc", "c",
+                            timeout=0, interval=0, _sleep=lambda _s: None)
 
 
 @_pytest.mark.parametrize(
