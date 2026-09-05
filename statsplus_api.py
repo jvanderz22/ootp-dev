@@ -13,6 +13,8 @@ Cookies) into the app settings as `sessionid=<v>; csrftoken=<v>`.
 """
 import csv
 import io
+import re
+import time
 from dataclasses import asdict, dataclass
 from urllib.parse import urlparse, urlunparse
 
@@ -103,6 +105,111 @@ def fetch_draft_picks(league_url: str, cookie: str, lid=None, timeout: float = 3
         raise StatsPlusAuthError("StatsPlus returned a login page instead of draft data.")
 
     return _parse_draft_csv(body)
+
+
+# --------------------------------------------------------------------- league snapshot
+#
+# The draft-board scrape only ever needed `/api/draftv2/`. The live-league
+# snapshot (see league_snapshot.py) pulls the whole player pool from three more
+# endpoints, all under the same `<league-url>/api/` root and the same cookie:
+#
+#   GET /api/ratings/  -> fires an async CSV export, body carries a
+#                         `.../api/mycsv/?request=<uuid>` poll URL (valid ~30 min)
+#   GET <poll-url>     -> "...still in progress..." until ready, then the full CSV
+#   GET /api/players/  -> biographical / roster / contract CSV (one row per player)
+#   GET /api/teams/    -> id -> name CSV for the numeric team/org/league ids
+#
+# These return raw CSV text (unlike `fetch_draft_picks`, which returns parsed
+# rows) so the join/rename logic downstream can be unit-tested against small
+# fixture strings.
+
+_MYCSV_URL_RE = re.compile(r"https?://[^\s\"'<>]+/api/mycsv/\?request=[0-9a-fA-F-]+")
+
+
+def _api_url(league_url: str, endpoint: str) -> str:
+    return normalize_league_url(league_url).rstrip("/") + f"/api/{endpoint}/"
+
+
+def _get_api_text(url: str, cookie: str, *, params=None, timeout: float = 60.0) -> str:
+    """GET `url` with the StatsPlus session cookie and return the body text,
+    applying the same auth / HTML-login detection as `fetch_draft_picks`."""
+    if not (url or "").strip():
+        raise StatsPlusError("StatsPlus league URL is not configured.")
+    if not cookie:
+        raise StatsPlusAuthError("StatsPlus session cookie is not configured.")
+
+    import httpx
+
+    headers = {"Cookie": cookie.strip(), "Accept": "text/csv, */*"}
+    try:
+        resp = httpx.get(
+            url, params=params or None, headers=headers, timeout=timeout,
+            follow_redirects=False,
+        )
+    except httpx.HTTPError as exc:  # noqa: F821 - httpx imported above
+        raise StatsPlusError(f"Could not reach StatsPlus: {exc}") from exc
+
+    if resp.status_code in (301, 302, 401, 403):
+        raise StatsPlusAuthError(
+            "StatsPlus rejected the session cookie - re-copy sessionid/csrftoken "
+            "from a logged-in browser tab."
+        )
+    if resp.status_code >= 400:
+        raise StatsPlusError(f"StatsPlus returned HTTP {resp.status_code}.")
+
+    body = resp.text
+    if body.lstrip().startswith("<"):  # got an HTML login page, not CSV
+        raise StatsPlusAuthError("StatsPlus returned a login page instead of data.")
+    return body
+
+
+def start_ratings_job(league_url: str, cookie: str, timeout: float = 60.0) -> str:
+    """Fire the async ratings export and return the poll URL parsed out of the
+    `GET /api/ratings/` response body."""
+    body = _get_api_text(_api_url(league_url, "ratings"), cookie, timeout=timeout)
+    match = _MYCSV_URL_RE.search(body)
+    if not match:
+        raise StatsPlusError(
+            "StatsPlus /api/ratings/ did not return an export URL "
+            f"(response began {body[:200]!r})."
+        )
+    return match.group(0)
+
+
+def poll_ratings_export(
+    poll_url: str, cookie: str, timeout: float = 240.0, interval: float = 15.0,
+    _sleep=time.sleep,
+) -> str:
+    """Poll `poll_url` until the export is ready and return the finished CSV text.
+    Raises `StatsPlusError` if it is still in progress after `timeout` seconds."""
+    deadline = time.monotonic() + timeout
+    while True:
+        body = _get_api_text(poll_url, cookie, timeout=60.0)
+        if "in progress" not in body.lower():
+            return body
+        if time.monotonic() >= deadline:
+            raise StatsPlusError(
+                f"StatsPlus ratings export was still in progress after {timeout:.0f}s."
+            )
+        _sleep(interval)
+
+
+def fetch_ratings(
+    league_url: str, cookie: str, timeout: float = 240.0, interval: float = 15.0
+) -> str:
+    """Convenience: `start_ratings_job` + `poll_ratings_export` in one call."""
+    poll_url = start_ratings_job(league_url, cookie)
+    return poll_ratings_export(poll_url, cookie, timeout=timeout, interval=interval)
+
+
+def fetch_players(league_url: str, cookie: str, timeout: float = 60.0) -> str:
+    """Raw CSV text from `GET /api/players/` (one row per player)."""
+    return _get_api_text(_api_url(league_url, "players"), cookie, timeout=timeout)
+
+
+def fetch_teams(league_url: str, cookie: str, timeout: float = 60.0) -> str:
+    """Raw CSV text from `GET /api/teams/` (id -> name for teams/orgs/leagues)."""
+    return _get_api_text(_api_url(league_url, "teams"), cookie, timeout=timeout)
 
 
 def _parse_draft_csv(text: str):
