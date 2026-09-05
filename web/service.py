@@ -862,6 +862,11 @@ def league_snapshot_players_page(
     page_size=50,
     all_rows=False,
 ):
+    # No snapshot yet is a normal state (the league page loads before the first
+    # refresh) - hand back an empty page rather than erroring the whole query.
+    _, ctx = _league_ctx(league_id)
+    if not ctx.data_file.exists():
+        return {"rows": [], "total_records": 0}
     rows = _grouped(_league_built_rows(league_id, method), group_by, group_id)
     return _filter_sort_page(rows, filter, sort, page, page_size, all_rows)
 
