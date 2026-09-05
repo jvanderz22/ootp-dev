@@ -382,6 +382,23 @@ def test_league_snapshot_players_rejects_bad_method(client):
     assert "draft_class" in body["errors"][0]["message"]
 
 
+def _await_refresh(client, lid, *, timeout=5.0):
+    """Poll leagueRefreshStatus until the background thread finishes."""
+    import time
+
+    status_q = (
+        "query($l: ID!) { leagueRefreshStatus(leagueId: $l) "
+        "{ state error snapshot { playerCount } } }"
+    )
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        st = gql(client, status_q, l=lid)["leagueRefreshStatus"]
+        if st["state"] != "running":
+            return st
+        time.sleep(0.05)
+    raise AssertionError(f"refresh for {lid!r} never finished: {st}")
+
+
 def test_refresh_league_snapshot(client, monkeypatch):
     import league_snapshot
 
@@ -401,13 +418,41 @@ def test_refresh_league_snapshot(client, monkeypatch):
 
     monkeypatch.setattr(league_snapshot, "fetch_and_build", fake_fetch_and_build)
 
-    out = gql(
+    # the mutation only kicks the job off - it comes back straight away
+    started = gql(
         client,
-        'mutation($l: ID!) { refreshLeagueSnapshot(leagueId: $l) { leagueId playerCount } }',
+        'mutation($l: ID!) { refreshLeagueSnapshot(leagueId: $l) { leagueId state } }',
         l=lid,
     )["refreshLeagueSnapshot"]
-    assert out == {"leagueId": lid, "playerCount": 2}
+    assert started["leagueId"] == lid
+    assert started["state"] in ("running", "done")
+
+    done = _await_refresh(client, lid)
+    assert done["state"] == "done"
+    assert done["error"] is None
+    assert done["snapshot"]["playerCount"] == 2
     assert calls["league_id"] == lid
+
+
+def test_league_refresh_status_idle_then_error(client, monkeypatch):
+    from web import service
+
+    lid = gql(client, 'mutation { createLeague(name: "YF3b", leagueUrl: "yfmlb") { id } }')[
+        "createLeague"
+    ]["id"]
+
+    status_q = "query($l: ID!) { leagueRefreshStatus(leagueId: $l) { state error } }"
+    assert gql(client, status_q, l=lid)["leagueRefreshStatus"]["state"] == "idle"
+
+    def boom(_league_id):
+        raise service.StatsPlusError("statsplus is down")
+
+    monkeypatch.setattr(service, "_refresh_league_snapshot_sync", boom)
+
+    gql(client, 'mutation($l: ID!) { refreshLeagueSnapshot(leagueId: $l) { state } }', l=lid)
+    done = _await_refresh(client, lid)
+    assert done["state"] == "error"
+    assert "statsplus is down" in done["error"]
 
 
 def test_check_league_snapshot_freshness(client, monkeypatch):

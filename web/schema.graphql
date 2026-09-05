@@ -18,6 +18,8 @@ type League {
   leagueUrl: String
   defaultLid: Int
   classNames: [String!]!
+  "ISO timestamp of the last snapshot pull, or null if never refreshed."
+  updatedAt: String
 }
 
 type RankedPlayer {
@@ -124,6 +126,20 @@ type LeagueFreshness {
   leagueDate: String
 }
 
+"""
+Progress of a background league-snapshot refresh. `state` is one of
+`idle` | `running` | `done` | `error`. The job outlives the request that
+started it, so a client that navigated away can poll back in and re-attach.
+"""
+type LeagueRefreshStatus {
+  leagueId: ID!
+  state: String!
+  startedAt: String
+  finishedAt: String
+  error: String
+  snapshot: LeagueSnapshot
+}
+
 type DraftedRefreshResult {
   draftedCount: Int!
   matchedById: Int!
@@ -160,6 +176,8 @@ type Query {
   ): RankedPlayerPage!
   leagueOrgs(leagueId: ID!): [LeagueTeam!]!
   leagueTeams(leagueId: ID!): [LeagueTeam!]!
+  "Status of the in-flight (or last) background refresh for this league."
+  leagueRefreshStatus(leagueId: ID!): LeagueRefreshStatus!
 }
 
 type Mutation {
@@ -187,6 +205,7 @@ type Mutation {
   ): League!
   deleteLeague(id: ID!): String!
   setClassLeague(name: String!, leagueId: String): DraftClass!
-  refreshLeagueSnapshot(leagueId: ID!): LeagueSnapshot!
+  "Start a background snapshot refresh; returns immediately with `state: running`."
+  refreshLeagueSnapshot(leagueId: ID!): LeagueRefreshStatus!
   checkLeagueSnapshotFreshness(leagueId: ID!): LeagueFreshness!
 }

@@ -3,8 +3,10 @@
     <a routerLink="/" class="brand">OOTP Ops</a>
 
     <nav class="row">
-      <a routerLink="/upload">Upload</a>
-      <a routerLink="/settings">Settings</a>
+      @for (lg of recentLeagues(); track lg.id) {
+        <a [routerLink]="['/league', lg.id]" routerLinkActive="active">{{ lg.name }}</a>
+      }
+      <a routerLink="/settings" routerLinkActive="active">Settings</a>
     </nav>
 
     <span class="spacer"></span>

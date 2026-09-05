@@ -1,4 +1,12 @@
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -7,6 +15,7 @@ import { map } from 'rxjs';
 import { ApiService } from '../../core/api';
 import {
   LeagueGroupBy,
+  LeagueRefreshStatus,
   LeagueSnapshot,
   LeagueTeam,
   RANKED_PAGE_SIZE,
@@ -73,7 +82,7 @@ function defaultQuery(): RankedQuery {
     </div>
 
     @if (notice()) { <p class="notice">{{ notice() }}</p> }
-    @if (busy()) {
+    @if (busy() && !notice()) {
       <p class="muted">
         Pulling the whole player pool and ranking it — this takes a minute or two.
       </p>
@@ -176,6 +185,7 @@ export class LeagueViewPage {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly methods = METHODS;
   protected readonly groupings = GROUPINGS;
@@ -211,12 +221,53 @@ export class LeagueViewPage {
   );
 
   private hydrated = false;
+  private destroyed = false;
+  /** guards against two poll loops running at once (manual refresh + re-attach) */
+  private polling = false;
 
   constructor() {
+    this.destroyRef.onDestroy(() => (this.destroyed = true));
     effect(() => {
       const id = this.leagueId();
       if (id) untracked(() => void this.load(id));
     });
+  }
+
+  /** Follow a background refresh to completion: show the progress state, poll
+   *  `leagueRefreshStatus` every few seconds, and settle `snapshot` / `error`
+   *  when it finishes. Safe to call from a fresh navigation (re-attach) or right
+   *  after kicking one off. Returns the terminal status. */
+  private async trackRefresh(
+    id: string,
+    status: LeagueRefreshStatus,
+  ): Promise<LeagueRefreshStatus> {
+    if (this.polling) return status;
+    this.polling = true;
+    if (status.state === 'running') {
+      this.busy.set(true);
+      if (!this.notice()) {
+        this.notice.set('Refreshing from StatsPlus — this takes a minute or two.');
+      }
+    }
+    try {
+      while (status.state === 'running' && !this.destroyed) {
+        await new Promise((r) => setTimeout(r, 2500));
+        if (this.destroyed) return status;
+        status = await this.api.leagueRefreshStatus(id);
+      }
+      if (this.destroyed) return status;
+      if (status.state === 'error') {
+        this.error.set(status.error ?? 'Refresh from StatsPlus failed.');
+        this.notice.set(null);
+      } else if (status.state === 'done') {
+        this.snapshot.set(status.snapshot);
+        this.notice.set(null);
+      }
+      return status;
+    } finally {
+      this.polling = false;
+      if (!this.destroyed) this.busy.set(false);
+    }
   }
 
   private hydrateFromUrl(): void {
@@ -254,12 +305,10 @@ export class LeagueViewPage {
         this.notice.set(
           `League advanced${f.leagueDate ? ` to ${f.leagueDate}` : ''} — pulling a fresh snapshot…`,
         );
-        this.busy.set(true);
-        try {
-          this.snapshot.set(await this.api.refreshLeagueSnapshot(id));
+        const started = await this.api.refreshLeagueSnapshot(id);
+        const term = await this.trackRefresh(id, started);
+        if (term.state === 'done') {
           this.notice.set(`Auto-refreshed to ${f.leagueDate ?? 'the current date'}.`);
-        } finally {
-          this.busy.set(false);
         }
       }
     } catch {
@@ -274,7 +323,15 @@ export class LeagueViewPage {
     this.loading.set(true);
     this.error.set(null);
     this.notice.set(null);
-    await this.gateOnFreshness(id);
+
+    // Re-attach to a refresh kicked off before we navigated here; otherwise do
+    // the once-a-day freshness check (which may start one of its own).
+    const inflight = await this.api.leagueRefreshStatus(id).catch(() => null);
+    if (inflight?.state === 'running') {
+      await this.trackRefresh(id, inflight);
+    } else {
+      await this.gateOnFreshness(id);
+    }
     try {
       const d = await this.api.leagueViewDetail(
         id,
@@ -385,12 +442,13 @@ export class LeagueViewPage {
     if (!id || this.busy()) return;
     this.busy.set(true);
     this.error.set(null);
+    this.notice.set(null);
     try {
-      this.snapshot.set(await this.api.refreshLeagueSnapshot(id));
-      await this.load(id);
+      const started = await this.api.refreshLeagueSnapshot(id);
+      const term = await this.trackRefresh(id, started);
+      if (term.state === 'done') await this.load(id);
     } catch (e) {
       this.error.set((e as Error).message);
-    } finally {
       this.busy.set(false);
     }
   }

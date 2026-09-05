@@ -76,6 +76,8 @@ def resolve_set_class_league(_, __, name, league_id=None):
 
 @mutation.field("refreshLeagueSnapshot")
 async def resolve_refresh_league_snapshot(_, __, league_id):
+    """Starts a background refresh and returns its status right away; the client
+    polls `leagueRefreshStatus` for progress."""
     return await service.refresh_league_snapshot(league_id)
 
 

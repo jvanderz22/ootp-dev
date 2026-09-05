@@ -55,6 +55,7 @@ const LEAGUE_FIELDS = gql`
     leagueUrl
     defaultLid
     classNames
+    updatedAt
   }
 `;
 
@@ -255,11 +256,34 @@ export const LEAGUE_SNAPSHOT_PLAYERS = gql`
   }
 `;
 
-export const REFRESH_LEAGUE_SNAPSHOT = gql`
+const LEAGUE_REFRESH_STATUS_FIELDS = gql`
   ${LEAGUE_SNAPSHOT_FIELDS}
+  fragment LeagueRefreshStatusFields on LeagueRefreshStatus {
+    leagueId
+    state
+    startedAt
+    finishedAt
+    error
+    snapshot {
+      ...LeagueSnapshotFields
+    }
+  }
+`;
+
+export const REFRESH_LEAGUE_SNAPSHOT = gql`
+  ${LEAGUE_REFRESH_STATUS_FIELDS}
   mutation RefreshLeagueSnapshot($leagueId: ID!) {
     refreshLeagueSnapshot(leagueId: $leagueId) {
-      ...LeagueSnapshotFields
+      ...LeagueRefreshStatusFields
+    }
+  }
+`;
+
+export const LEAGUE_REFRESH_STATUS = gql`
+  ${LEAGUE_REFRESH_STATUS_FIELDS}
+  query LeagueRefreshStatus($leagueId: ID!) {
+    leagueRefreshStatus(leagueId: $leagueId) {
+      ...LeagueRefreshStatusFields
     }
   }
 `;

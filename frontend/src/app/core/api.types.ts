@@ -15,6 +15,21 @@ export interface League {
   leagueUrl: string | null;
   defaultLid: number | null;
   classNames: string[];
+  /** ISO timestamp of the last snapshot pull; null if never refreshed. */
+  updatedAt: string | null;
+}
+
+export type LeagueRefreshState = 'idle' | 'running' | 'done' | 'error';
+
+/** Progress of a background league-snapshot refresh. Survives navigation: the
+ *  job runs server-side, the page polls `leagueRefreshStatus` to re-attach. */
+export interface LeagueRefreshStatus {
+  leagueId: string;
+  state: LeagueRefreshState;
+  startedAt: string | null;
+  finishedAt: string | null;
+  error: string | null;
+  snapshot: LeagueSnapshot | null;
 }
 
 export interface LeagueSnapshot {

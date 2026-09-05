@@ -10,6 +10,7 @@ import {
   DELETE_LEAGUE,
   CHECK_LEAGUE_SNAPSHOT_FRESHNESS,
   DRAFT_CLASSES,
+  LEAGUE_REFRESH_STATUS,
   LEAGUE_SNAPSHOT,
   LEAGUE_SNAPSHOT_PLAYERS,
   LEAGUE_VIEW_DETAIL,
@@ -34,6 +35,7 @@ import {
   League,
   LeagueFreshness,
   LeagueGroupBy,
+  LeagueRefreshStatus,
   LeagueSnapshot,
   LeagueTeam,
   RANKED_PAGE_SIZE,
@@ -383,15 +385,34 @@ export class ApiService {
     }
   }
 
-  async refreshLeagueSnapshot(leagueId: string): Promise<LeagueSnapshot> {
+  /** Kick off a background snapshot refresh. Returns immediately with
+   *  `state: 'running'`; poll `leagueRefreshStatus` for progress. */
+  async refreshLeagueSnapshot(leagueId: string): Promise<LeagueRefreshStatus> {
     try {
       const res = await firstValueFrom(
-        this.apollo.mutate<{ refreshLeagueSnapshot: LeagueSnapshot }>({
+        this.apollo.mutate<{ refreshLeagueSnapshot: LeagueRefreshStatus }>({
           mutation: REFRESH_LEAGUE_SNAPSHOT,
           variables: { leagueId },
         }),
       );
       return res.data!.refreshLeagueSnapshot;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  /** Current status of the in-flight (or last) background refresh for a league.
+   *  Used to re-attach the progress indicator after navigating back to the page. */
+  async leagueRefreshStatus(leagueId: string): Promise<LeagueRefreshStatus> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.query<{ leagueRefreshStatus: LeagueRefreshStatus }>({
+          query: LEAGUE_REFRESH_STATUS,
+          variables: { leagueId },
+          fetchPolicy: 'network-only',
+        }),
+      );
+      return res.data!.leagueRefreshStatus;
     } catch (e) {
       unwrap(e);
     }

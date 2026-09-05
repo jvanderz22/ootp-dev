@@ -1,5 +1,11 @@
 import { Component, computed, effect, inject } from '@angular/core';
-import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import {
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 
@@ -9,7 +15,7 @@ import { LeagueStore } from './core/league-store';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -30,6 +36,19 @@ export class App {
   );
 
   protected readonly showChrome = computed(() => !this.url()?.startsWith('/login'));
+
+  /** Up to four leagues for the top-bar shortcuts: most-recently-refreshed
+   *  first, falling back to name order for leagues never refreshed. */
+  protected readonly recentLeagues = computed(() =>
+    [...this.leagueStore.leagues()]
+      .sort((a, b) => {
+        if (a.updatedAt && b.updatedAt) return b.updatedAt.localeCompare(a.updatedAt);
+        if (a.updatedAt) return -1;
+        if (b.updatedAt) return 1;
+        return a.name.localeCompare(b.name);
+      })
+      .slice(0, 4),
+  );
 
   constructor() {
     effect(() => {

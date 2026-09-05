@@ -347,8 +347,22 @@ def draft_class_payload(name: str):
 
 
 # --------------------------------------------------------------------- leagues
+def _league_updated_at(league_id: str):
+    """When this league's snapshot was last pulled - drives the "recent leagues"
+    shortcuts in the top bar. `None` if the league has never been refreshed."""
+    try:
+        meta = league_snapshot.LeagueSnapshotContext(league_id).load_meta()
+    except Exception:
+        return None
+    return (meta or {}).get("fetched_at")
+
+
 def _league_payload(league: dict) -> dict:
-    return {**league, "class_names": leagues.class_names_for_league(league["id"])}
+    return {
+        **league,
+        "class_names": leagues.class_names_for_league(league["id"]),
+        "updated_at": _league_updated_at(league["id"]),
+    }
 
 
 def list_leagues():
@@ -358,7 +372,14 @@ def list_leagues():
         explicit = leagues.explicit_class_league_id(cname)
         if explicit in buckets:
             buckets[explicit].append(cname)
-    return [{**lg, "class_names": sorted(buckets[lg["id"]])} for lg in all_leagues]
+    return [
+        {
+            **lg,
+            "class_names": sorted(buckets[lg["id"]]),
+            "updated_at": _league_updated_at(lg["id"]),
+        }
+        for lg in all_leagues
+    ]
 
 
 def create_league(name, league_url=None, default_lid=None, class_names=None):
@@ -851,8 +872,83 @@ def _evict_league_payload_cache(league_id: str) -> None:
             del _league_payload_cache[key]
 
 
+# A league refresh (StatsPlus pull + rebuild) takes a minute or two, so it runs
+# on a background daemon thread and the page polls `leagueRefreshStatus`. The
+# job outlives the request that started it, so navigating away and back re-attaches
+# to the same run instead of losing the progress indicator.
+_refresh_jobs: "dict[str, dict]" = {}
+_refresh_threads: "dict[str, threading.Thread]" = {}
+_refresh_jobs_lock = threading.Lock()
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _refresh_status(league_id: str) -> dict:
+    with _refresh_jobs_lock:
+        job = _refresh_jobs.get(league_id) or {}
+    return {
+        "league_id": league_id,
+        "state": job.get("state", "idle"),
+        "started_at": job.get("started_at"),
+        "finished_at": job.get("finished_at"),
+        "error": job.get("error"),
+        "snapshot": league_snapshot_payload(league_id),
+    }
+
+
+def league_refresh_status(league_id: str) -> dict:
+    _league_ctx(league_id)  # 404 for an unknown league
+    return _refresh_status(league_id)
+
+
+def _run_league_refresh_thread(league_id: str) -> None:
+    try:
+        _refresh_league_snapshot_sync(league_id)
+        state, error = "done", None
+    except Exception as exc:  # surface any failure to the poller
+        state, error = "error", str(exc)
+    with _refresh_jobs_lock:
+        job = _refresh_jobs.get(league_id) or {}
+        job.update(state=state, error=error, finished_at=_now_iso())
+        _refresh_jobs[league_id] = job
+    _refresh_threads.pop(league_id, None)
+
+
+def start_league_refresh(league_id: str) -> dict:
+    lg, _ = _league_ctx(league_id)
+    with _refresh_jobs_lock:
+        job = _refresh_jobs.get(league_id)
+        if job and job.get("state") == "running":
+            return _refresh_status(league_id)  # already in flight - just report it
+        _refresh_jobs[league_id] = {
+            "state": "running",
+            "started_at": _now_iso(),
+            "finished_at": None,
+            "error": None,
+        }
+
+    if not lg.get("league_url"):
+        with _refresh_jobs_lock:
+            _refresh_jobs[league_id].update(
+                state="error",
+                finished_at=_now_iso(),
+                error=f"League {lg['name']!r} has no StatsPlus URL. Add one on the Settings page.",
+            )
+        return _refresh_status(league_id)
+
+    thread = threading.Thread(
+        target=_run_league_refresh_thread, args=(league_id,), daemon=True
+    )
+    _refresh_threads[league_id] = thread
+    thread.start()
+    return _refresh_status(league_id)
+
+
 async def refresh_league_snapshot(league_id: str):
-    return await anyio.to_thread.run_sync(_refresh_league_snapshot_sync, league_id)
+    """Kick off a background refresh and return its status immediately."""
+    return await anyio.to_thread.run_sync(start_league_refresh, league_id)
 
 
 def _refresh_league_snapshot_sync(league_id: str):
