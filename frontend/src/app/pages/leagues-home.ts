@@ -7,10 +7,7 @@ import { LeagueStore } from '../core/league-store';
   selector: 'app-leagues-home',
   imports: [RouterLink],
   template: `
-    <div class="head">
-      <h1>Leagues</h1>
-      <a routerLink="/upload"><button class="primary">Upload a draft class</button></a>
-    </div>
+    <h1>Leagues</h1>
 
     @if (store.leagues().length === 0 && !store.loading()) {
       <p class="muted">
@@ -37,7 +34,6 @@ import { LeagueStore } from '../core/league-store';
     </div>
   `,
   styles: `
-    .head { display: flex; align-items: center; justify-content: space-between; }
     a { text-decoration: none; color: inherit; }
     .grid {
       display: grid;

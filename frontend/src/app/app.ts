@@ -29,11 +29,6 @@ export class App {
     { initialValue: this.router.url },
   );
 
-  protected readonly currentClass = computed(() => {
-    const m = /^\/class\/([^/?#]+)/.exec(this.url() ?? '');
-    return m ? decodeURIComponent(m[1]) : '';
-  });
-
   protected readonly showChrome = computed(() => !this.url()?.startsWith('/login'));
 
   constructor() {
@@ -43,10 +38,6 @@ export class App {
         this.leagueStore.reload();
       }
     });
-  }
-
-  onPickClass(name: string): void {
-    if (name) this.router.navigate(['/class', name]);
   }
 
   logout(): void {

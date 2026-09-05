@@ -1,26 +1,65 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 
 import { ApiService } from '../../core/api';
-import { LeagueSnapshot } from '../../core/api.types';
+import {
+  LeagueGroupBy,
+  LeagueSnapshot,
+  LeagueTeam,
+  RANKED_PAGE_SIZE,
+  RankedPlayer,
+  RankedQuery,
+} from '../../core/api.types';
+import { DEFAULT_SORT, POSITION_ORDER } from '../../core/ranked-columns';
+import { paramsToQuery, queryToParams } from '../../core/table-url';
+import { RankedTableComponent } from '../class-view/ranked-table';
+
+type Method = 'overall' | 'potential';
+
+const METHODS: { label: string; value: Method }[] = [
+  { label: 'Current', value: 'overall' },
+  { label: 'Potential', value: 'potential' },
+];
+
+const GROUPINGS: { label: string; value: LeagueGroupBy }[] = [
+  { label: 'Whole league', value: 'LEAGUE' },
+  { label: 'By org', value: 'ORG' },
+  { label: 'By team', value: 'TEAM' },
+];
+
+function defaultQuery(): RankedQuery {
+  return {
+    view: 'modeled',
+    search: '',
+    positions: [],
+    batHands: [],
+    throwHands: [],
+    teams: [],
+    hideDrafted: false,
+    numericFilters: [],
+    sortField: DEFAULT_SORT.modeled.field,
+    sortOrder: DEFAULT_SORT.modeled.order,
+  };
+}
 
 /**
- * Live league snapshot view. This is the milestone-4 shell: it shows the stored
- * snapshot's status and the manual "Refresh from StatsPlus" action. The grouped,
- * filterable player table (reusing the class-view ranked table) lands in
- * milestone 5.
+ * Live league snapshot view: the whole player pool pulled from StatsPlus, ranked
+ * by the "current" or "potential" model, optionally narrowed to one org or one
+ * roster team. Fetch/filter/sort/infinite-scroll mirror `class-view.ts`, against
+ * `leagueSnapshotPlayers` instead of `rankedPlayers`, and it reuses the
+ * class-view ranked table unchanged.
  */
 @Component({
   selector: 'app-league-view',
-  imports: [DatePipe],
+  imports: [DatePipe, RankedTableComponent],
   template: `
     <div class="bar">
-      <div>
+      <div class="status">
         @if (snapshot(); as s) {
-          <span>{{ s.playerCount }} players</span>
+          <b>{{ s.playerCount }}</b> players
           @if (s.fetchedAt) {
             <span class="muted"> · refreshed {{ s.fetchedAt | date: 'medium' }}</span>
           }
@@ -33,14 +72,75 @@ import { LeagueSnapshot } from '../../core/api.types';
       </button>
     </div>
 
-    @if (error()) { <p class="error">{{ error() }}</p> }
     @if (busy()) {
       <p class="muted">
         Pulling the whole player pool and ranking it — this takes a minute or two.
       </p>
     }
+    @if (error()) { <p class="error">{{ error() }}</p> }
 
-    <p class="muted todo">Player table coming in the next step.</p>
+    @if (snapshot()) {
+      <div class="controls">
+        <div class="seg">
+          @for (m of methods; track m.value) {
+            <button
+              type="button"
+              [class.active]="method() === m.value"
+              [disabled]="loading()"
+              (click)="setMethod(m.value)"
+            >{{ m.label }}</button>
+          }
+        </div>
+
+        <div class="seg">
+          @for (g of groupings; track g.value) {
+            <button
+              type="button"
+              [class.active]="groupBy() === g.value"
+              [disabled]="loading()"
+              (click)="setGroupBy(g.value)"
+            >{{ g.label }}</button>
+          }
+        </div>
+
+        @if (groupBy() === 'ORG') {
+          <select [value]="groupId() ?? ''" [disabled]="loading()"
+            (change)="setGroupId($any($event.target).value)">
+            <option value="">Pick an org…</option>
+            @for (o of orgs(); track o.id) {
+              <option [value]="o.id">{{ o.name }}</option>
+            }
+          </select>
+        } @else if (groupBy() === 'TEAM') {
+          <select [value]="groupId() ?? ''" [disabled]="loading()"
+            (change)="setGroupId($any($event.target).value)">
+            <option value="">Pick a team…</option>
+            @for (t of teams(); track t.id) {
+              <option [value]="t.id">{{ t.name }}</option>
+            }
+          </select>
+        }
+      </div>
+
+      @if (groupBy() !== 'LEAGUE' && !groupId()) {
+        <p class="muted">Choose {{ groupBy() === 'ORG' ? 'an org' : 'a team' }} to see its players.</p>
+      } @else {
+        <app-ranked-table
+          [rows]="rows()"
+          [totalRecords]="totalRecords()"
+          [positions]="positionOptions"
+          [teams]="[]"
+          [loading]="loading()"
+          [loadingMore]="loadingMore()"
+          [hasMore]="hasMore()"
+          [resetToken]="resetToken()"
+          [classKey]="tableKey()"
+          [initialQuery]="queryState()"
+          (queryChange)="onQueryChange($event)"
+          (loadMore)="onLoadMore()"
+        />
+      }
+    }
   `,
   styles: `
     .bar {
@@ -49,40 +149,206 @@ import { LeagueSnapshot } from '../../core/api.types';
       justify-content: space-between;
       gap: 12px;
     }
-    .todo { margin-top: 24px; font-style: italic; }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin: 14px 0 10px;
+    }
+    .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .seg button {
+      background: none;
+      border: none;
+      border-right: 1px solid var(--border);
+      padding: 6px 12px;
+      cursor: pointer;
+      font: inherit;
+      color: var(--muted, #666);
+    }
+    .seg button:last-child { border-right: none; }
+    .seg button.active { background: var(--accent); color: #fff; font-weight: 600; }
   `,
 })
 export class LeagueViewPage {
-  private readonly route = inject(ActivatedRoute);
   private readonly api = inject(ApiService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  protected readonly methods = METHODS;
+  protected readonly groupings = GROUPINGS;
+  protected readonly positionOptions = POSITION_ORDER;
 
   protected readonly leagueId = toSignal(
     (this.route.parent ?? this.route).paramMap.pipe(map((p) => p.get('id') ?? '')),
     { initialValue: (this.route.parent ?? this.route).snapshot.paramMap.get('id') ?? '' },
   );
 
+  protected readonly method = signal<Method>('overall');
+  protected readonly groupBy = signal<LeagueGroupBy>('LEAGUE');
+  protected readonly groupId = signal<string | null>(null);
+
   protected readonly snapshot = signal<LeagueSnapshot | null>(null);
-  protected readonly loading = signal(true);
+  protected readonly orgs = signal<LeagueTeam[]>([]);
+  protected readonly teams = signal<LeagueTeam[]>([]);
+
+  protected readonly rows = signal<RankedPlayer[]>([]);
+  protected readonly totalRecords = signal(0);
+  protected readonly loading = signal(false);
+  protected readonly loadingMore = signal(false);
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  protected readonly ready = computed(() => !this.loading());
+  protected readonly queryState = signal<RankedQuery>(defaultQuery());
+  protected readonly resetToken = signal(0);
+
+  protected readonly hasMore = computed(() => this.rows().length < this.totalRecords());
+  protected readonly tableKey = computed(
+    () => `${this.leagueId()}:${this.method()}:${this.groupBy()}:${this.groupId() ?? ''}`,
+  );
+
+  private hydrated = false;
 
   constructor() {
-    void this.load();
+    effect(() => {
+      const id = this.leagueId();
+      if (id) untracked(() => void this.load(id));
+    });
   }
 
-  private async load(): Promise<void> {
-    const id = this.leagueId();
-    if (!id) return;
+  private hydrateFromUrl(): void {
+    const p = this.route.snapshot.queryParamMap;
+    const m = p.get('method');
+    this.method.set(m === 'potential' ? 'potential' : 'overall');
+    const g = p.get('group');
+    this.groupBy.set(g === 'ORG' || g === 'TEAM' ? g : 'LEAGUE');
+    this.groupId.set(p.get('gid') || null);
+    this.queryState.set(paramsToQuery(p));
+    this.hydrated = true;
+  }
+
+  private syncUrl(replace = true): void {
+    const params: Record<string, string | null> = {
+      ...queryToParams(this.queryState()),
+      method: this.method() === 'overall' ? null : 'potential',
+      group: this.groupBy() === 'LEAGUE' ? null : this.groupBy(),
+      gid: this.groupBy() === 'LEAGUE' ? null : this.groupId() || null,
+    };
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: params,
+      replaceUrl: replace,
+    });
+  }
+
+  /** Full load for a league (route change or after a refresh): snapshot meta,
+   *  org/team facets, and the first batch for the current method/grouping. */
+  private async load(id: string): Promise<void> {
+    if (!this.hydrated) this.hydrateFromUrl();
     this.loading.set(true);
     this.error.set(null);
     try {
-      this.snapshot.set(await this.api.leagueSnapshot(id));
+      const d = await this.api.leagueViewDetail(
+        id,
+        this.method(),
+        this.groupBy(),
+        this.groupId(),
+        this.queryState(),
+      );
+      this.snapshot.set(d.snapshot);
+      this.orgs.set([...d.orgs].sort((a, b) => a.name.localeCompare(b.name)));
+      this.teams.set([...d.teams].sort((a, b) => a.name.localeCompare(b.name)));
+      this.rows.set(d.page.rows);
+      this.totalRecords.set(d.page.totalRecords);
+      this.resetToken.update((v) => v + 1);
+    } catch (e) {
+      this.error.set((e as Error).message);
+      this.rows.set([]);
+      this.totalRecords.set(0);
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  private async resetAndFetch(): Promise<void> {
+    if (!this.snapshot()) return;
+    this.loading.set(true);
+    this.error.set(null);
+    try {
+      const batch = await this.api.leagueSnapshotPlayersPage(
+        this.leagueId(),
+        this.method(),
+        this.groupBy(),
+        this.groupId(),
+        this.queryState(),
+        0,
+      );
+      this.rows.set(batch.rows);
+      this.totalRecords.set(batch.totalRecords);
+      this.resetToken.update((v) => v + 1);
     } catch (e) {
       this.error.set((e as Error).message);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  protected async onLoadMore(): Promise<void> {
+    if (this.loading() || this.loadingMore() || !this.hasMore()) return;
+    this.loadingMore.set(true);
+    this.error.set(null);
+    try {
+      const nextPage = Math.floor(this.rows().length / RANKED_PAGE_SIZE);
+      const batch = await this.api.leagueSnapshotPlayersPage(
+        this.leagueId(),
+        this.method(),
+        this.groupBy(),
+        this.groupId(),
+        this.queryState(),
+        nextPage,
+      );
+      this.rows.update((rs) => [...rs, ...batch.rows]);
+      this.totalRecords.set(batch.totalRecords);
+    } catch (e) {
+      this.error.set((e as Error).message);
+    } finally {
+      this.loadingMore.set(false);
+    }
+  }
+
+  protected async onQueryChange(q: RankedQuery): Promise<void> {
+    this.queryState.set(q);
+    this.syncUrl();
+    await this.resetAndFetch();
+  }
+
+  protected async setMethod(m: Method): Promise<void> {
+    if (m === this.method()) return;
+    this.method.set(m);
+    this.syncUrl();
+    await this.resetAndFetch();
+  }
+
+  protected async setGroupBy(g: LeagueGroupBy): Promise<void> {
+    if (g === this.groupBy()) return;
+    this.groupBy.set(g);
+    if (g === 'LEAGUE') this.groupId.set(null);
+    this.syncUrl();
+    // LEAGUE needs no pick; ORG/TEAM wait for a groupId before refetching
+    if (g === 'LEAGUE' || this.groupId()) await this.resetAndFetch();
+    else {
+      this.rows.set([]);
+      this.totalRecords.set(0);
+    }
+  }
+
+  protected async setGroupId(id: string): Promise<void> {
+    this.groupId.set(id || null);
+    this.syncUrl();
+    if (this.groupId()) await this.resetAndFetch();
+    else {
+      this.rows.set([]);
+      this.totalRecords.set(0);
     }
   }
 
@@ -93,6 +359,7 @@ export class LeagueViewPage {
     this.error.set(null);
     try {
       this.snapshot.set(await this.api.refreshLeagueSnapshot(id));
+      await this.load(id);
     } catch (e) {
       this.error.set((e as Error).message);
     } finally {

@@ -199,6 +199,40 @@ def test_settings_update(client):
     assert again["hasSessionid"] and again["hasCsrftoken"]
 
 
+def test_class_league_is_explicit_only(client):
+    from tests.conftest import SAMPLE_DATASET
+
+    if not SAMPLE_DATASET.exists():
+        pytest.skip("sample dataset not present")
+
+    lid = gql(client, 'mutation { createLeague(name: "Solo", leagueUrl: "yfmlb") { id } }')[
+        "createLeague"
+    ]["id"]
+
+    q = (
+        "mutation($file: Upload!) { uploadDraftClass("
+        'name: "u", rankingMethod: "draft_class", file: $file) { name leagueId leagueName } }'
+    )
+    ops = json.dumps({"query": q, "variables": {"file": None}})
+    with open(SAMPLE_DATASET, "rb") as fh:
+        resp = client.post(
+            "/graphql",
+            data={"operations": ops, "map": json.dumps({"0": ["variables.file"]})},
+            files={"0": ("u.csv", fh, "text/csv")},
+        )
+    body = resp.json()
+    assert "errors" not in body, body["errors"]
+    # one league exists, but the class was not assigned -> no fallback mapping
+    assert body["data"]["uploadDraftClass"]["leagueId"] is None
+    assert gql(client, "{ leagues { classNames } }")["leagues"][0]["classNames"] == []
+
+    assigned = gql(
+        client, f'mutation {{ setClassLeague(name: "u", leagueId: "{lid}") {{ leagueId leagueName }} }}'
+    )["setClassLeague"]
+    assert assigned == {"leagueId": lid, "leagueName": "Solo"}
+    assert gql(client, "{ leagues { classNames } }")["leagues"][0]["classNames"] == ["u"]
+
+
 def test_league_crud_and_class_assignment(client):
     made = gql(
         client,

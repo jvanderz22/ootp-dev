@@ -319,7 +319,10 @@ def draft_class_payload(name: str):
     drafted_ids = get_drafted_player_ids(ctx)
     drafted_count = len(drafted_ids & _dataset_ids(ctx)) if drafted_ids else 0
 
-    league = leagues.league_for_class(name)
+    # Only an *explicit* pin counts as a class's league here: the single-league
+    # fallback stays internal (drafted-refresh still uses it) so the UI can
+    # surface genuinely unmapped classes for assignment on the Settings page.
+    league = leagues.get_league(leagues.explicit_class_league_id(name))
 
     return {
         "name": name,
@@ -342,9 +345,9 @@ def list_leagues():
     all_leagues = leagues.load_leagues()
     buckets = {lg["id"]: [] for lg in all_leagues}
     for cname in DraftClassContext.list_classes():
-        lg = leagues.league_for_class(cname)
-        if lg and lg["id"] in buckets:
-            buckets[lg["id"]].append(cname)
+        explicit = leagues.explicit_class_league_id(cname)
+        if explicit in buckets:
+            buckets[explicit].append(cname)
     return [{**lg, "class_names": sorted(buckets[lg["id"]])} for lg in all_leagues]
 
 

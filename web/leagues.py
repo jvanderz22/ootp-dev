@@ -139,12 +139,14 @@ def league_for_class(name: str):
 
 
 def class_names_for_league(league_id: str) -> list:
-    out = []
-    for name in DraftClassContext.list_classes():
-        league = league_for_class(name)
-        if league and league["id"] == league_id:
-            out.append(name)
-    return sorted(out)
+    """Classes *explicitly* pinned to `league_id`. The single-league fallback in
+    `league_for_class` is deliberately not applied here: an unpinned class counts
+    as unmapped for listing / assignment purposes (see the Settings page)."""
+    return sorted(
+        name
+        for name in DraftClassContext.list_classes()
+        if explicit_class_league_id(name) == league_id
+    )
 
 
 def set_class_league(name: str, league_id):

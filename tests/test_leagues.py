@@ -41,6 +41,8 @@ def test_single_league_fallback(data_dir):
     # class has no explicit league_id, but there is exactly one league
     assert leagues.explicit_class_league_id("alpha") is None
     assert leagues.league_for_class("alpha")["id"] == "only"
+    # ...but listing is explicit-only: an unpinned class is "unmapped"
+    assert leagues.class_names_for_league("only") == []
 
 
 def test_slug_dedupe(data_dir):
