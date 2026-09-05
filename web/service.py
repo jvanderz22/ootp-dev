@@ -10,7 +10,7 @@ import shutil
 import tempfile
 import threading
 from collections import OrderedDict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import anyio
 
@@ -890,15 +890,41 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+# If a job says "running" but started this long ago, the worker is gone (the
+# machine was stopped / restarted mid-run) - report it as failed so the page can
+# offer a retry instead of spinning forever.
+_REFRESH_MAX_AGE = timedelta(minutes=20)
+
+
+def _job_is_stale(job: dict) -> bool:
+    if not job or job.get("state") != "running":
+        return False
+    started = job.get("started_at")
+    if not started:
+        return True
+    try:
+        when = datetime.fromisoformat(started)
+    except ValueError:
+        return True
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=timezone.utc)
+    return datetime.now(timezone.utc) - when > _REFRESH_MAX_AGE
+
+
 def _refresh_status(league_id: str) -> dict:
     with _refresh_jobs_lock:
-        job = _refresh_jobs.get(league_id) or {}
+        job = dict(_refresh_jobs.get(league_id) or {})
+    state = job.get("state", "idle")
+    error = job.get("error")
+    if _job_is_stale(job):
+        state = "error"
+        error = "The refresh was interrupted before it finished. Try again."
     return {
         "league_id": league_id,
-        "state": job.get("state", "idle"),
+        "state": state,
         "started_at": job.get("started_at"),
         "finished_at": job.get("finished_at"),
-        "error": job.get("error"),
+        "error": error,
         "snapshot": league_snapshot_payload(league_id),
     }
 
@@ -925,7 +951,7 @@ def start_league_refresh(league_id: str) -> dict:
     lg, _ = _league_ctx(league_id)
     with _refresh_jobs_lock:
         job = _refresh_jobs.get(league_id)
-        if job and job.get("state") == "running":
+        if job and job.get("state") == "running" and not _job_is_stale(job):
             return _refresh_status(league_id)  # already in flight - just report it
         _refresh_jobs[league_id] = {
             "state": "running",

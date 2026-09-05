@@ -250,10 +250,19 @@ export class LeagueViewPage {
       }
     }
     try {
+      let failures = 0;
       while (status.state === 'running' && !this.destroyed) {
         await new Promise((r) => setTimeout(r, 2500));
         if (this.destroyed) return status;
-        status = await this.api.leagueRefreshStatus(id);
+        try {
+          // Each poll is also what keeps the Fly machine awake during the job.
+          status = await this.api.leagueRefreshStatus(id);
+          failures = 0;
+        } catch (e) {
+          // A blip (the machine autostopping/restarting) shouldn't abort the
+          // progress view — keep polling for a bit before giving up.
+          if (++failures >= 6) throw e;
+        }
       }
       if (this.destroyed) return status;
       if (status.state === 'error') {
