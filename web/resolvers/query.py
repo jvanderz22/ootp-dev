@@ -48,3 +48,45 @@ def resolve_settings(*_):
 @query.field("leagues")
 def resolve_leagues(*_):
     return service.list_leagues()
+
+
+@query.field("leagueSnapshot")
+def resolve_league_snapshot(_, __, league_id):
+    return service.league_snapshot_payload(league_id)
+
+
+@query.field("leagueSnapshotPlayers")
+def resolve_league_snapshot_players(
+    _,
+    __,
+    league_id,
+    method,
+    group_by,
+    group_id=None,
+    filter=None,
+    sort=None,
+    page=0,
+    page_size=50,
+    all_rows=False,
+):
+    return service.league_snapshot_players_page(
+        league_id,
+        method,
+        group_by=group_by,
+        group_id=group_id,
+        filter=filter,
+        sort=sort,
+        page=page,
+        page_size=page_size,
+        all_rows=all_rows,
+    )
+
+
+@query.field("leagueOrgs")
+def resolve_league_orgs(_, __, league_id):
+    return service.list_league_orgs(league_id)
+
+
+@query.field("leagueTeams")
+def resolve_league_teams(_, __, league_id):
+    return service.list_league_teams(league_id)

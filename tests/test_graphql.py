@@ -247,6 +247,125 @@ def test_settings_accepts_name_prefixed_paste(client):
     assert cookie_header(load_settings()) == "sessionid=xyz; csrftoken=qrs"
 
 
+def _seed_snapshot(league_id="yf"):
+    """Build a stored snapshot under the test DATA_DIR without hitting StatsPlus."""
+    from league_snapshot import LeagueSnapshotContext, build_snapshot
+    from tests.test_league_snapshot import make_snapshot_csvs
+
+    ctx = LeagueSnapshotContext(league_id)
+    build_snapshot(ctx, *make_snapshot_csvs())
+    return ctx
+
+
+def test_league_snapshot_queries(client):
+    made = gql(
+        client,
+        'mutation { createLeague(name: "YF", leagueUrl: "yfmlb") { id } }',
+    )["createLeague"]
+    lid = made["id"]
+    _seed_snapshot(lid)
+
+    snap = gql(
+        client,
+        'query($l: ID!) { leagueSnapshot(leagueId: $l) { leagueId fetchedAt playerCount } }',
+        l=lid,
+    )["leagueSnapshot"]
+    assert snap["leagueId"] == lid
+    assert snap["playerCount"] == 2
+    assert snap["fetchedAt"]
+
+    orgs = gql(client, 'query($l: ID!) { leagueOrgs(leagueId: $l) { id name parentTeamId } }', l=lid)[
+        "leagueOrgs"
+    ]
+    assert {o["name"] for o in orgs} == {"Milwaukee Brewers", "Pittsburgh Pirates"}
+    assert all(o["parentTeamId"] is None for o in orgs)
+
+    teams = gql(client, 'query($l: ID!) { leagueTeams(leagueId: $l) { id name parentTeamId } }', l=lid)[
+        "leagueTeams"
+    ]
+    assert {t["name"] for t in teams} == {
+        "Milwaukee Brewers", "Pittsburgh Pirates", "Indianapolis Indians",
+    }
+    indy = next(t for t in teams if t["id"] == "168")
+    assert indy["parentTeamId"] == "52"
+
+    def players(method, **kw):
+        q = (
+            "query($l: ID!, $m: String!, $g: LeagueGroupBy!, $gid: ID) {"
+            " leagueSnapshotPlayers(leagueId: $l, method: $m, groupBy: $g, groupId: $gid,"
+            " allRows: true) { totalRecords rows { id name rank type modelScore drafted draftedTeam } } }"
+        )
+        return gql(client, q, l=lid, m=method, g=kw.get("g", "LEAGUE"), gid=kw.get("gid"))[
+            "leagueSnapshotPlayers"
+        ]
+
+    whole_overall = players("overall")
+    assert whole_overall["totalRecords"] == 2
+    assert {r["id"] for r in whole_overall["rows"]} == {"100", "200"}
+    assert [r["rank"] for r in whole_overall["rows"]] == [1, 2]
+    assert all(r["drafted"] is False and r["draftedTeam"] is None for r in whole_overall["rows"])
+
+    whole_potential = players("potential")
+    assert whole_potential["totalRecords"] == 2
+    # the two methods can order the two players differently or the same; both must score
+    assert all(r["modelScore"] is not None for r in whole_potential["rows"])
+
+    by_org = players("overall", g="ORG", gid="52")
+    assert [r["id"] for r in by_org["rows"]] == ["200"]
+
+    by_team = players("overall", g="TEAM", gid="46")
+    assert [r["id"] for r in by_team["rows"]] == ["100"]
+
+    empty = players("overall", g="ORG", gid="999")
+    assert empty["totalRecords"] == 0
+
+
+def test_league_snapshot_players_rejects_bad_method(client):
+    lid = gql(client, 'mutation { createLeague(name: "YF2", leagueUrl: "yfmlb") { id } }')[
+        "createLeague"
+    ]["id"]
+    _seed_snapshot(lid)
+    resp = client.post(
+        "/graphql",
+        json={
+            "query": "query($l: ID!) { leagueSnapshotPlayers(leagueId: $l, method: "
+            '"draft_class", groupBy: LEAGUE) { totalRecords } }',
+            "variables": {"l": lid},
+        },
+    )
+    body = resp.json()
+    assert "errors" in body
+    assert "draft_class" in body["errors"][0]["message"]
+
+
+def test_refresh_league_snapshot(client, monkeypatch):
+    import league_snapshot
+
+    lid = gql(client, 'mutation { createLeague(name: "YF3", leagueUrl: "yfmlb") { id } }')[
+        "createLeague"
+    ]["id"]
+
+    from tests.test_league_snapshot import make_snapshot_csvs
+
+    calls = {}
+
+    def fake_fetch_and_build(league, *, base_dir=None, cookie=None):
+        calls["league_id"] = league["id"]
+        calls["cookie"] = cookie
+        ctx = league_snapshot.LeagueSnapshotContext(league["id"])
+        return league_snapshot.build_snapshot(ctx, *make_snapshot_csvs())
+
+    monkeypatch.setattr(league_snapshot, "fetch_and_build", fake_fetch_and_build)
+
+    out = gql(
+        client,
+        'mutation($l: ID!) { refreshLeagueSnapshot(leagueId: $l) { leagueId playerCount } }',
+        l=lid,
+    )["refreshLeagueSnapshot"]
+    assert out == {"leagueId": lid, "playerCount": 2}
+    assert calls["league_id"] == lid
+
+
 def test_league_accepts_bare_slug_and_alt_host(client):
     out = gql(
         client,

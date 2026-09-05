@@ -87,6 +87,26 @@ type StatsPlusSettings {
   hasCsrftoken: Boolean!
 }
 
+"One stored live-league snapshot pulled from StatsPlus (the whole player pool)."
+type LeagueSnapshot {
+  leagueId: ID!
+  fetchedAt: String
+  playerCount: Int!
+}
+
+"A club in the league's org tree. `parentTeamId` is null for a top-level org."
+type LeagueTeam {
+  id: ID!
+  name: String!
+  parentTeamId: ID
+}
+
+enum LeagueGroupBy {
+  LEAGUE
+  ORG
+  TEAM
+}
+
 type DraftedRefreshResult {
   draftedCount: Int!
   matchedById: Int!
@@ -109,6 +129,20 @@ type Query {
   draftTeams(name: String!): [String!]!
   statsPlusSettings: StatsPlusSettings!
   leagues: [League!]!
+  leagueSnapshot(leagueId: ID!): LeagueSnapshot
+  leagueSnapshotPlayers(
+    leagueId: ID!
+    method: String!
+    groupBy: LeagueGroupBy!
+    groupId: ID
+    filter: RankedPlayerFilter
+    sort: RankedPlayerSort
+    page: Int = 0
+    pageSize: Int = 50
+    allRows: Boolean = false
+  ): RankedPlayerPage!
+  leagueOrgs(leagueId: ID!): [LeagueTeam!]!
+  leagueTeams(leagueId: ID!): [LeagueTeam!]!
 }
 
 type Mutation {
@@ -136,4 +170,5 @@ type Mutation {
   ): League!
   deleteLeague(id: ID!): String!
   setClassLeague(name: String!, leagueId: String): DraftClass!
+  refreshLeagueSnapshot(leagueId: ID!): LeagueSnapshot!
 }

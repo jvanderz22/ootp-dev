@@ -82,24 +82,26 @@ def _csv(header, rows):
     return buf.getvalue()
 
 
-@pytest.fixture
-def snapshot_csvs():
+def make_snapshot_csvs():
+    """(ratings_csv, players_csv, teams_csv) for a two-player fixture league:
+    id 100 = SP on Milwaukee (org 46), id 200 = RF on a Pittsburgh affiliate
+    (roster team 168, parent org 52)."""
     pitcher = _ratings_row(
-        ID="100", Name="Ace Hurler", Pos="SP", Org="46", Bats="L", Throws="L",
+        ID="100", Name="Ace Hurler", Pos="SP", Team="46", Org="46", Bats="L", Throws="L",
         Acc="H", GB="35", GBType="1", FBType="2",
         Stf="60", Mov="55", Ctrl="50", PotStf="65", PotMov="60", PotCtrl="55",
         Fst="60", PotFst="65", Sld="55", PotSld="60", Chg="50", PotChg="55",
         Ovr="60", Pot="65",
     )
     hitter = _ratings_row(
-        ID="200", Name="Big Bat", Pos="RF", Org="168", LgLvl="3", Bats="S",
+        ID="200", Name="Big Bat", Pos="RF", Team="168", Org="52", LgLvl="3", Bats="S",
         Acc="A", GB="62", Cntct="55", Gap="50", Pow="65", Eye="45", Ks="50",
         PotCntct="60", PotPow="70", IFR="30", OFR="55", OFA="60", Speed="55",
         Steal="45", Run="50", Ovr="55", Pot="65",
     )
     players = [
-        _players_row(ID="100", Level="1", **{"Parent Team ID": "46", "Organization ID": "46"}),
-        _players_row(ID="200", Level="4", **{"Parent Team ID": "52", "Organization ID": "52"}),
+        _players_row(ID="100", Level="1", **{"Team ID": "46", "Parent Team ID": "46", "Organization ID": "46"}),
+        _players_row(ID="200", Level="4", **{"Team ID": "168", "Parent Team ID": "52", "Organization ID": "52"}),
         # note: no players row for a would-be id "300" -> join must tolerate it
     ]
     return (
@@ -107,6 +109,11 @@ def snapshot_csvs():
         _csv(PLAYERS_HEADER, players),
         TEAMS_CSV,
     )
+
+
+@pytest.fixture
+def snapshot_csvs():
+    return make_snapshot_csvs()
 
 
 def test_header_covers_player_fields(snapshot_csvs):
@@ -144,13 +151,24 @@ def test_rename_and_value_maps(snapshot_csvs):
     assert h["Lev"] == "A+"
     assert p["Lev"] == "MLB"
 
-    # org resolved through the teams map: 46 -> Milwaukee, 168's parent 52 uses
-    # the ratings Org (already the parent) -> Pittsburgh
+    # org resolved through the teams map (ratings Org is already the parent id)
     assert p["ORG"] == "Milwaukee"
     assert h["ORG"] == "Pittsburgh"
 
+    # roster team / parent org ids kept for the web layer's grouping
+    assert (p["snap_team_id"], p["snap_org_id"]) == ("46", "46")
+    assert (h["snap_team_id"], h["snap_org_id"]) == ("168", "52")
+
     # phantom pitches (ratings "0") are blanked so they stay out of get_pitches()
     assert p["SI"] == "" and p["CT"] == "" and h["FB"] == ""
+
+
+def test_org_name_walks_affiliate_to_parent():
+    # an affiliate id in the ratings Org column still resolves to the top club
+    ratings = _csv(RATINGS_HEADER, [_ratings_row(ID="9", Name="Farmhand", Pos="C", Org="168")])
+    rows = join_rows(ratings, _csv(PLAYERS_HEADER, []), TEAMS_CSV)
+    assert rows[0]["ORG"] == "Pittsburgh"
+    assert rows[0]["snap_org_id"] == "168"
 
 
 def test_gf_bucketing():

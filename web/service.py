@@ -8,10 +8,13 @@ import os
 import re
 import shutil
 import tempfile
+import threading
+from collections import OrderedDict
 from datetime import datetime, timezone
 
 import anyio
 
+import league_snapshot
 import pipeline
 from context import DraftClassContext, default_base_dir
 from web import class_index, leagues
@@ -410,15 +413,10 @@ def _apply_numeric_filter(rows, nf):
     return [r for r in rows if keep(r)]
 
 
-def ranked_players_page(
-    name: str, *, filter=None, sort=None, page=0, page_size=50, all_rows=False
-):
-    """One filtered/sorted/paginated slice of a class, served from the in-memory
-    index (see web/class_index.py). `filter` = {search, positions, hide_drafted};
+def _filter_sort_page(rows, filter=None, sort=None, page=0, page_size=50, all_rows=False):
+    """Apply a RankedPlayerFilter / RankedPlayerSort / paging to an already-built
+    list of player payloads. Shared by the draft-class and league-snapshot pages.
     `sort` = {field, order} with order 1 asc / -1 desc."""
-    idx = class_index.get_index(_ctx(name))
-    rows = idx.rows
-
     f = filter or {}
     search = (f.get("search") or "").strip().lower()
     pos_set = set(f.get("positions") or [])
@@ -456,6 +454,16 @@ def ranked_players_page(
         rows = rows[start : start + page_size]
 
     return {"rows": rows, "total_records": total}
+
+
+def ranked_players_page(
+    name: str, *, filter=None, sort=None, page=0, page_size=50, all_rows=False
+):
+    """One filtered/sorted/paginated slice of a class, served from the in-memory
+    index (see web/class_index.py). `filter` = {search, positions, hide_drafted};
+    `sort` = {field, order} with order 1 asc / -1 desc."""
+    idx = class_index.get_index(_ctx(name))
+    return _filter_sort_page(idx.rows, filter, sort, page, page_size, all_rows)
 
 
 def ranked_players(name: str):
@@ -636,3 +644,164 @@ def _refresh_drafted_sync(name: str):
         "matched_by_name": 0,
         "unmatched": len(picks) - matched,
     }
+
+
+# ------------------------------------------------------- league snapshot (live)
+#
+# The live-league view (whole player pool pulled from StatsPlus) reuses the
+# RankedPlayer* GraphQL types: a snapshot payload is `_player_payload` with no
+# `drafted_info` (the drafted* fields come back null/false) and the built rows
+# are grouped to a roster team / parent org before the shared filter/sort/page.
+
+_LEAGUE_PAYLOAD_MAX = 10  # (league, method) pairs; ~5 leagues x 2 methods
+_league_payload_cache: "OrderedDict[tuple, dict]" = OrderedDict()
+_league_payload_lock = threading.Lock()
+
+
+def _league_ctx(league_id: str):
+    lg = leagues.get_league(league_id)
+    if not lg:
+        raise NotFound(f"League {league_id!r} not found.")
+    return lg, league_snapshot.LeagueSnapshotContext(league_id)
+
+
+def league_snapshot_payload(league_id: str):
+    _, ctx = _league_ctx(league_id)
+    if not ctx.data_file.exists():
+        return None
+    meta = ctx.load_meta()
+    return {
+        "league_id": league_id,
+        "fetched_at": meta.get("fetched_at"),
+        "player_count": meta.get("player_count") or 0,
+    }
+
+
+def _read_teams_csv(ctx) -> list:
+    try:
+        with open(ctx.teams_file, newline="") as f:
+            return [r for r in csv.DictReader(f) if r.get("ID")]
+    except FileNotFoundError:
+        return []
+
+
+def _team_payload(row: dict) -> dict:
+    name = (row.get("Name") or "").strip()
+    nickname = (row.get("Nickname") or "").strip()
+    parent = (row.get("Parent Team ID") or "").strip()
+    return {
+        "id": row["ID"],
+        "name": f"{name} {nickname}".strip() or name or row["ID"],
+        "parent_team_id": parent if parent and parent != "0" else None,
+    }
+
+
+def _is_org(row: dict) -> bool:
+    return (row.get("Parent Team ID") or "").strip() in ("", "0")
+
+
+def list_league_teams(league_id: str) -> list:
+    _, ctx = _league_ctx(league_id)
+    return [_team_payload(r) for r in _read_teams_csv(ctx)]
+
+
+def list_league_orgs(league_id: str) -> list:
+    _, ctx = _league_ctx(league_id)
+    return [_team_payload(r) for r in _read_teams_csv(ctx) if _is_org(r)]
+
+
+def _snapshot_side_tables(ctx):
+    """`(game_players_by_id, {player_id: (org_id, team_id)})` from the stored
+    snapshot CSV - the scouting grid for the ratings payload plus the ids the
+    org / team grouping filters on."""
+    with open(ctx.data_file, newline="") as f:
+        raw = list(csv.DictReader(f))
+    game_players = GamePlayers(raw).game_players_by_id
+    groups = {
+        r["ID"]: (r.get("snap_org_id") or "", r.get("snap_team_id") or "")
+        for r in raw
+        if r.get("ID")
+    }
+    return game_players, groups
+
+
+def _league_built_rows(league_id: str, method: str) -> list:
+    _, ctx = _league_ctx(league_id)
+    if not ctx.data_file.exists():
+        raise NotFound(
+            f"League {league_id!r} has no snapshot yet - refresh it from StatsPlus first."
+        )
+    mtime = os.path.getmtime(ctx.data_file)
+    key = (league_id, method)
+    with _league_payload_lock:
+        hit = _league_payload_cache.get(key)
+        if hit is not None and hit["mtime"] == mtime:
+            _league_payload_cache.move_to_end(key)
+            return hit["rows"]
+
+    try:
+        ranked = league_snapshot.ranked_rows(ctx, method)
+    except ValueError as exc:  # method not in LEAGUE_RANKING_METHODS
+        raise InvalidInput(str(exc)) from exc
+    game_players, groups = _snapshot_side_tables(ctx)
+    built = []
+    for i, row in enumerate(ranked):
+        payload = _player_payload(i + 1, row, None, game_players.get(row["id"]))
+        org_id, team_id = groups.get(row["id"], ("", ""))
+        payload["org_id"] = org_id
+        payload["team_id"] = team_id
+        built.append(payload)
+
+    with _league_payload_lock:
+        _league_payload_cache[key] = {"mtime": mtime, "rows": built}
+        _league_payload_cache.move_to_end(key)
+        while len(_league_payload_cache) > _LEAGUE_PAYLOAD_MAX:
+            _league_payload_cache.popitem(last=False)
+    return built
+
+
+def _grouped(rows, group_by, group_id):
+    gb = (group_by or "LEAGUE").upper()
+    if gb == "LEAGUE" or not group_id:
+        return rows
+    field = "org_id" if gb == "ORG" else "team_id"
+    gid = str(group_id)
+    return [r for r in rows if str(r.get(field) or "") == gid]
+
+
+def league_snapshot_players_page(
+    league_id: str,
+    method: str,
+    *,
+    group_by="LEAGUE",
+    group_id=None,
+    filter=None,
+    sort=None,
+    page=0,
+    page_size=50,
+    all_rows=False,
+):
+    rows = _grouped(_league_built_rows(league_id, method), group_by, group_id)
+    return _filter_sort_page(rows, filter, sort, page, page_size, all_rows)
+
+
+def _evict_league_payload_cache(league_id: str) -> None:
+    with _league_payload_lock:
+        for key in [k for k in _league_payload_cache if k[0] == league_id]:
+            del _league_payload_cache[key]
+
+
+async def refresh_league_snapshot(league_id: str):
+    return await anyio.to_thread.run_sync(_refresh_league_snapshot_sync, league_id)
+
+
+def _refresh_league_snapshot_sync(league_id: str):
+    lg, _ = _league_ctx(league_id)
+    if not lg.get("league_url"):
+        raise InvalidInput(
+            f"League {lg['name']!r} has no StatsPlus URL. Add one on the Settings page."
+        )
+    league_snapshot.fetch_and_build(lg, cookie=cookie_header(load_settings()))
+    league_snapshot.evict_ranked_cache(league_id)
+    _evict_league_payload_cache(league_id)
+    return league_snapshot_payload(league_id)

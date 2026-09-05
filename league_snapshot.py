@@ -51,6 +51,12 @@ LEAGUE_RANKING_METHODS = ("overall", "potential")
 OUTPUT_FIELDNAMES = list(dict.fromkeys(PLAYER_FIELDS.values()))
 UNSOURCED_FIELDS = {"DEM", "Sign", "AD"}
 
+# Non-OOTP bookkeeping columns kept alongside the scouting grid so the web layer
+# can group a snapshot by roster team / parent org. `GamePlayer` ignores columns
+# it doesn't know, so these are invisible to the rankers.
+SNAPSHOT_META_FIELDS = ["snap_team_id", "snap_org_id"]
+SNAPSHOT_FIELDNAMES = OUTPUT_FIELDNAMES + SNAPSHOT_META_FIELDS
+
 
 # --------------------------------------------------------------- column mapping
 # ratings CSV column -> OOTP scouting-export header. Straight renames only;
@@ -200,7 +206,7 @@ def _rows(csv_text: str):
 
 
 def _map_row(rat: dict, ply: dict, teams: dict) -> dict:
-    row = {name: "" for name in OUTPUT_FIELDNAMES}
+    row = {name: "" for name in SNAPSHOT_FIELDNAMES}
 
     for src, dst in RATINGS_COLUMN_MAP.items():
         value = rat.get(src)
@@ -235,6 +241,10 @@ def _map_row(rat: dict, ply: dict, teams: dict) -> dict:
 
     row["ID"] = (rat.get("ID") or "").strip()
     row["Name"] = rat.get("Name") or ""
+    row["snap_team_id"] = (
+        (rat.get("Team") or "").strip() or (ply.get("Team ID") if ply else "") or ""
+    ).strip()
+    row["snap_org_id"] = org_id
     return row
 
 
@@ -276,7 +286,7 @@ def build_snapshot(
     rows = join_rows(ratings_csv, players_csv, teams_csv)
     ctx.ensure_dirs()
     with open(ctx.data_file, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=OUTPUT_FIELDNAMES)
+        writer = csv.DictWriter(f, fieldnames=SNAPSHOT_FIELDNAMES)
         writer.writeheader()
         writer.writerows(rows)
     ctx.teams_file.write_text(teams_csv)
