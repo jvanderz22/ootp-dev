@@ -148,6 +148,7 @@ export function pitchingMiscRows(p: RankedPlayer): [string, string][] {
     ['Stamina', pt.stamina],
     ['Velocity', pt.velocity],
     ['GB type', pt.groundballType],
+    ['Arm slot', pt.armSlot],
   ];
   return rows.filter(([, v]) => v != null && v !== 0).map(([k, v]) => [k, String(v)]);
 }

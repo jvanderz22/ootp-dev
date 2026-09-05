@@ -102,7 +102,6 @@
   border-bottom: 1px dotted var(--border);
   padding-bottom: 2px;
 }
-.rating.arsenal { grid-template-columns: 1fr auto; }
 .rating span { color: var(--text-dim); overflow-wrap: anywhere; }
 .rating b { font-variant-numeric: tabular-nums; }
 .rating i { color: var(--text-dim); font-style: normal; font-variant-numeric: tabular-nums; }

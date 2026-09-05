@@ -184,6 +184,7 @@ def _ratings_payload(gp):
             "stamina": gp.stamina,
             "velocity": gp.velocity or None,
             "groundballType": gp.groundball_type or None,
+            "armSlot": gp.arm_slot or None,
             "pitches": _pitch_ratings(gp),
         },
     }

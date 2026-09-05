@@ -65,6 +65,7 @@ PLAYER_FIELDS = {
     "stamina": "STM",
     "velocity": "VT",
     "groundball_type": "G/F",
+    "arm_slot": "Slot",
     "fastball": "FBP",
     "changeup": "CHP",
     "curveball": "CBP",
@@ -77,18 +78,18 @@ PLAYER_FIELDS = {
     "screwball": "SCP",
     "knuckleball": "KNP",
     "knucklecurve": "KCP",
-    "fastball_ovr": "FBP",
-    "changeup_ovr": "CHP",
-    "curveball_ovr": "CBP",
-    "slider_ovr": "SLP",
-    "sinker_ovr": "SIP",
-    "splitter_ovr": "SPP",
-    "cutter_ovr": "CTP",
-    "forkball_ovr": "FOP",
-    "circlechange_ovr": "CCP",
-    "screwball_ovr": "SCP",
-    "knuckleball_ovr": "KNP",
-    "knucklecurve_ovr": "KCP",
+    "fastball_ovr": "FB",
+    "changeup_ovr": "CH",
+    "curveball_ovr": "CB",
+    "slider_ovr": "SL",
+    "sinker_ovr": "SI",
+    "splitter_ovr": "SP",
+    "cutter_ovr": "CT",
+    "forkball_ovr": "FO",
+    "circlechange_ovr": "CC",
+    "screwball_ovr": "SC",
+    "knuckleball_ovr": "KN",
+    "knucklecurve_ovr": "KC",
 }
 
 
@@ -379,6 +380,10 @@ class GamePlayer:
     @property
     def groundball_type(self):
         return self._groundball_type
+
+    @property
+    def arm_slot(self):
+        return self._arm_slot
 
     @property
     def fastball(self):

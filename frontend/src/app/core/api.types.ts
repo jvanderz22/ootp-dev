@@ -73,6 +73,7 @@ export interface PlayerRatings {
     stamina: number | null;
     velocity: string | null;
     groundballType: string | null;
+    armSlot: string | null;
     pitches: PitchRating[];
   };
 }

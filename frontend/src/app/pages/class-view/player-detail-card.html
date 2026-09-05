@@ -123,10 +123,11 @@
         <section class="detail-section">
           <h4>Arsenal</h4>
           <div class="rating-grid">
-            <div class="rating rating-head arsenal"><span>Pitch</span><b>pot</b></div>
+            <div class="rating rating-head arsenal"><span>Pitch</span><i>cur</i><b>pot</b></div>
             @for (pi of pitchArsenal(p); track pi.name) {
               <div class="rating arsenal">
                 <span>{{ pi.name }}</span>
+                <i>{{ pi.current ?? '—' }}</i>
                 <b>{{ pi.potential ?? '—' }}</b>
               </div>
             }
