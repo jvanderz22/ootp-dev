@@ -28,14 +28,23 @@ verify against a real in-game scouting report before trusting them):
 import csv
 import io
 import json
+import threading
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
 from context import default_base_dir
 from io_utils import atomic_write_json
-from models.game_players import PLAYER_FIELDS
+from models.game_players import PLAYER_FIELDS, GamePlayer
+from ranking_csv import RANKED_PLAYER_FIELDNAMES
+from rankers.get_ranker import get_ranker_for_method
 from statsplus_api import fetch_players, fetch_ratings, fetch_teams
+
+# The league view only ever offers these two ranking methods (see the plan / the
+# `statsplus-api` memory): neither reads `demand` / `adaptability`, the fields the
+# API can't supply.
+LEAGUE_RANKING_METHODS = ("overall", "potential")
 
 # Every OOTP header the pipeline can read. We write them all; the ones with no
 # API source (DEM / Sign / AD and any unmapped extra) stay blank.
@@ -301,3 +310,117 @@ def fetch_and_build(league: dict, *, base_dir=None, cookie: str = None) -> Leagu
         league["id"], base_dir=base_dir or default_base_dir()
     )
     return build_snapshot(ctx, ratings_csv, players_csv, teams_csv)
+
+
+# ------------------------------------------------------------- ranking + cache
+#
+# `ranked_rows(ctx, method)` scores the stored snapshot with one of the two
+# league-view rankers and returns rows in `ranking_csv.RANKED_PLAYER_FIELDNAMES`
+# shape, so `web/service._player_payload` consumes a snapshot row exactly like a
+# draft-class row (the `drafted*` / custom-order bits just come back empty).
+#
+# A full-league export is ~15k players and scoring it takes tens of seconds, so
+# the result is cached two ways: on disk as `ctx.ranked_players_file(ranker)`
+# (rebuilt when `players.csv` is newer) and in a small in-process LRU keyed on
+# `(snapshot_dir, method)`. The in-memory entry lives until the snapshot file's
+# mtime changes (a refresh) or it's evicted as least-recently-used - no TTL.
+
+_MAX_CACHED_LEAGUES = 5
+_MAX_RANKED_ENTRIES = _MAX_CACHED_LEAGUES * len(LEAGUE_RANKING_METHODS)
+_ranked_cache: "OrderedDict[tuple, dict]" = OrderedDict()
+_ranked_cache_lock = threading.Lock()
+
+
+def _ranked_row(index: int, player: GamePlayer, score) -> dict:
+    return {
+        "overall_ranking": index,
+        "model_ranking": index,
+        "ranking_difference": 0,
+        "id": player.id,
+        "name": player.name,
+        "position": player.position,
+        "age": player.age,
+        "model_score": round(score.overall_score, 2),
+        "position_player_score": score.position_player_score,
+        "fielding_score_component": score.fielding_score_component,
+        "batting_score_component": score.batting_score_component,
+        "pitcher_score": score.pitcher_score,
+        "starter_component": score.starter_component,
+        "reliever_component": score.reliever_component,
+        "running_score_component": score.running_score_component,
+        "in_game_overall": player.overall,
+        "in_game_potential": player.potential,
+        "demand": player.demand or "",
+        "raw_overall_score": score.raw_overall_score,
+        "components": score.components,
+    }
+
+
+def _score_and_write(ctx: LeagueSnapshotContext, method: str, out_file: Path) -> list[dict]:
+    with open(ctx.data_file, newline="") as f:
+        players = [GamePlayer(row) for row in csv.DictReader(f)]
+    by_id = {p.id: p for p in players}
+    ranker = get_ranker_for_method(method)
+    scores = ranker.rank(players)  # already sorted best-first
+    rows = [_ranked_row(i, by_id[s.id], s) for i, s in enumerate(scores)]
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_file, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=RANKED_PLAYER_FIELDNAMES)
+        writer.writeheader()
+        writer.writerows(rows)
+    return rows
+
+
+def _disk_rows(ctx: LeagueSnapshotContext, method: str) -> list[dict]:
+    """Read the cached `ranked_players.csv` if it is at least as new as the
+    snapshot data file, otherwise re-score and rewrite it."""
+    out_file = ctx.ranked_players_file(get_ranker_for_method(method).__class__.__name__)
+    try:
+        fresh = out_file.stat().st_mtime >= ctx.data_file.stat().st_mtime
+    except FileNotFoundError:
+        fresh = False
+    if fresh:
+        with open(out_file, newline="") as f:
+            return list(csv.DictReader(f))
+    return _score_and_write(ctx, method, out_file)
+
+
+def ranked_rows(ctx: LeagueSnapshotContext, ranking_method: str) -> list[dict]:
+    """Snapshot rows scored + ordered by `ranking_method` ("overall" or
+    "potential"), best-first, served from the process cache when warm."""
+    if ranking_method not in LEAGUE_RANKING_METHODS:
+        raise ValueError(
+            f"League view supports {LEAGUE_RANKING_METHODS}, not {ranking_method!r}."
+        )
+    if not ctx.data_file.exists():
+        raise FileNotFoundError(
+            f"No league snapshot for {ctx.league_id!r}; refresh it first."
+        )
+
+    src_mtime = ctx.data_file.stat().st_mtime
+    key = (str(ctx.snapshot_dir), ranking_method)
+    with _ranked_cache_lock:
+        cached = _ranked_cache.get(key)
+        if cached is not None and cached["src_mtime"] == src_mtime:
+            _ranked_cache.move_to_end(key)  # mark most-recently-used
+            return cached["rows"]
+
+    rows = _disk_rows(ctx, ranking_method)
+
+    with _ranked_cache_lock:
+        _ranked_cache[key] = {"src_mtime": src_mtime, "rows": rows}
+        _ranked_cache.move_to_end(key)
+        while len(_ranked_cache) > _MAX_RANKED_ENTRIES:
+            _ranked_cache.popitem(last=False)
+    return rows
+
+
+def evict_ranked_cache(league_id=None) -> None:
+    """Drop cached ranked rows - all leagues, or one. Call after a refresh."""
+    with _ranked_cache_lock:
+        if league_id is None:
+            _ranked_cache.clear()
+            return
+        marker = f"league_snapshots/{league_id}"
+        for key in [k for k in _ranked_cache if marker in k[0]]:
+            del _ranked_cache[key]

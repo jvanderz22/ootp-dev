@@ -9,14 +9,17 @@ import io
 
 import pytest
 
+import league_snapshot
 from league_snapshot import (
     LeagueSnapshotContext,
     UNSOURCED_FIELDS,
     build_snapshot,
     gf_from_gb,
     join_rows,
+    ranked_rows,
 )
 from models.game_players import PLAYER_FIELDS
+from ranking_csv import RANKED_PLAYER_FIELDNAMES
 from rankers.get_ranker import get_ranker_for_method
 
 # --- real captured headers --------------------------------------------------
@@ -196,3 +199,77 @@ def test_build_snapshot_writes_files(tmp_path, snapshot_csvs):
     assert meta["player_count"] == 2
     assert "fetched_at" in meta
     assert ctx.teams_file.exists()
+
+
+# --------------------------------------------------------------- ranking layer
+@pytest.fixture
+def built_ctx(tmp_path, snapshot_csvs):
+    league_snapshot.evict_ranked_cache()
+    ctx = LeagueSnapshotContext("yfmlb", base_dir=tmp_path)
+    build_snapshot(ctx, *snapshot_csvs)
+    yield ctx
+    league_snapshot.evict_ranked_cache()
+
+
+@pytest.mark.parametrize("method", ["overall", "potential"])
+def test_ranked_rows_shape_and_order(built_ctx, method):
+    rows = ranked_rows(built_ctx, method)
+
+    assert [r["id"] for r in rows] == ["100", "200"] or [r["id"] for r in rows] == ["200", "100"]
+    assert set(rows[0]) == set(RANKED_PLAYER_FIELDNAMES)
+    # best-first: model_score descending, overall_ranking 0..n
+    scores = [float(r["model_score"]) for r in rows]
+    assert scores == sorted(scores, reverse=True)
+    assert [int(r["overall_ranking"]) for r in rows] == list(range(len(rows)))
+    # snapshot has no demand source
+    assert all(r["demand"] == "" for r in rows)
+
+
+def test_ranked_rows_rejects_draft_class_method(built_ctx):
+    with pytest.raises(ValueError):
+        ranked_rows(built_ctx, "draft_class")
+
+
+def test_ranked_rows_writes_and_reuses_disk_cache(built_ctx):
+    ranker_name = get_ranker_for_method("overall").__class__.__name__
+    out_file = built_ctx.ranked_players_file(ranker_name)
+
+    ranked_rows(built_ctx, "overall")
+    assert out_file.exists()
+    first_mtime = out_file.stat().st_mtime
+
+    league_snapshot.evict_ranked_cache()  # force past the process cache
+    ranked_rows(built_ctx, "overall")
+    assert out_file.stat().st_mtime == first_mtime  # not rewritten
+
+    # a newer snapshot file invalidates the on-disk cache
+    import os, time as _t
+    later = _t.time() + 5
+    os.utime(built_ctx.data_file, (later, later))
+    league_snapshot.evict_ranked_cache()
+    ranked_rows(built_ctx, "overall")
+    assert out_file.stat().st_mtime > first_mtime
+
+
+def test_ranked_rows_requires_a_snapshot(tmp_path):
+    ctx = LeagueSnapshotContext("missing", base_dir=tmp_path)
+    with pytest.raises(FileNotFoundError):
+        ranked_rows(ctx, "overall")
+
+
+def test_ranked_cache_evicts_least_recently_used(tmp_path, snapshot_csvs, monkeypatch):
+    monkeypatch.setattr(league_snapshot, "_MAX_RANKED_ENTRIES", 2)
+    league_snapshot.evict_ranked_cache()
+
+    ctxs = []
+    for i in range(3):
+        ctx = LeagueSnapshotContext(f"lg{i}", base_dir=tmp_path)
+        build_snapshot(ctx, *snapshot_csvs)
+        ranked_rows(ctx, "overall")
+        ctxs.append(ctx)
+
+    keys = {k[0] for k in league_snapshot._ranked_cache}
+    assert len(league_snapshot._ranked_cache) == 2
+    assert str(ctxs[0].snapshot_dir) not in keys  # first one evicted
+    assert str(ctxs[2].snapshot_dir) in keys
+    league_snapshot.evict_ranked_cache()
