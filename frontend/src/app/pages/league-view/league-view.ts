@@ -130,6 +130,7 @@ function defaultQuery(): RankedQuery {
           [totalRecords]="totalRecords()"
           [positions]="positionOptions"
           [teams]="[]"
+          [context]="'league'"
           [loading]="loading()"
           [loadingMore]="loadingMore()"
           [hasMore]="hasMore()"

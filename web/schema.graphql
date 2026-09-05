@@ -29,6 +29,10 @@ type RankedPlayer {
   age: Int
   batHand: String
   throwHand: String
+  "live-league snapshot only: parent org name, roster team name, level"
+  org: String
+  team: String
+  level: String
   modelScore: Float
   inGameOverall: Int
   inGamePotential: Int

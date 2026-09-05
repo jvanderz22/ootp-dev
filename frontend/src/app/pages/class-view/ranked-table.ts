@@ -21,9 +21,9 @@ import {
   ColumnDef,
   DEFAULT_SORT,
   FILTERABLE_FIELDS,
-  VIEW_COLUMNS,
   VIEW_OPTIONS,
   groupSpans,
+  viewColumns,
 } from '../../core/ranked-columns';
 import { typeSeverity } from '../../core/player-stats';
 import { PlayerDetailCardComponent } from './player-detail-card';
@@ -83,6 +83,9 @@ export class RankedTableComponent {
   /** Seed state (parsed from the URL by the container). Applied on first render
    *  and whenever `classKey` changes; `null` falls back to plain defaults. */
   readonly initialQuery = input<RankedQuery | null>(null);
+  /** `'league'` swaps in the live-league column set (Org/Team/Level after Name,
+   *  no demand / drafted columns) and hides the drafted-only filters. */
+  readonly context = input<'class' | 'league'>('class');
   /** Bumped by the container whenever `rows` was replaced from scratch rather
    *  than appended to — collapses expanded rows and scrolls back to the top. */
   readonly resetToken = input(0);
@@ -128,7 +131,9 @@ export class RankedTableComponent {
   private colHideTimer: ReturnType<typeof setTimeout> | undefined;
   private readonly dismissColPop = () => this.closeColPop();
 
-  protected readonly columns = computed<ColumnDef[]>(() => VIEW_COLUMNS[this.view()]);
+  protected readonly columns = computed<ColumnDef[]>(() =>
+    viewColumns(this.view(), this.context()),
+  );
   protected readonly headerGroups = computed(() => groupSpans(this.columns()));
 
   /** Visible width of the horizontal-scroll viewport, so an expanded row can be

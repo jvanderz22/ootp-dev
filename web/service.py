@@ -223,6 +223,10 @@ def _player_payload(rank, row, drafted_info, game_player=None):
         "drafted_round_pick": _to_int(info.get("round_selection")) if info else None,
         "components": _parse_components(row.get("components")),
         "ratings": _ratings_payload(game_player),
+        # populated only for live-league snapshot rows (see _league_built_rows)
+        "org": None,
+        "team": None,
+        "level": None,
     }
     for field in _FLOAT_FIELDS:
         payload[field] = _to_number(row.get(field))
@@ -703,29 +707,73 @@ def _is_org(row: dict) -> bool:
     return (row.get("Parent Team ID") or "").strip() in ("", "0")
 
 
+def _snapshot_membership(ctx):
+    """`(org_ids, team_ids)` that roster at least one player in the stored
+    snapshot - so the grouping pickers only offer clubs you can actually pick."""
+    orgs, teams = set(), set()
+    try:
+        with open(ctx.data_file, newline="") as f:
+            for r in csv.DictReader(f):
+                if r.get("snap_org_id"):
+                    orgs.add(r["snap_org_id"])
+                if r.get("snap_team_id"):
+                    teams.add(r["snap_team_id"])
+    except FileNotFoundError:
+        pass
+    return orgs, teams
+
+
 def list_league_teams(league_id: str) -> list:
     _, ctx = _league_ctx(league_id)
-    return [_team_payload(r) for r in _read_teams_csv(ctx)]
+    rows = _read_teams_csv(ctx)
+    _, members = _snapshot_membership(ctx)
+    if members:
+        rows = [r for r in rows if r["ID"] in members]
+    return [_team_payload(r) for r in rows]
 
 
 def list_league_orgs(league_id: str) -> list:
+    """Top-level clubs that actually field players in the snapshot - i.e. the
+    ~30 MLB parents, not every stub franchise in `teams.csv`."""
     _, ctx = _league_ctx(league_id)
-    return [_team_payload(r) for r in _read_teams_csv(ctx) if _is_org(r)]
+    rows = [r for r in _read_teams_csv(ctx) if _is_org(r)]
+    members, _ = _snapshot_membership(ctx)
+    if members:
+        rows = [r for r in rows if r["ID"] in members]
+    return [_team_payload(r) for r in rows]
+
+
+def _team_display_names(ctx) -> dict:
+    return {
+        r["ID"]: _team_payload(r)["name"] for r in _read_teams_csv(ctx)
+    }
 
 
 def _snapshot_side_tables(ctx):
-    """`(game_players_by_id, {player_id: (org_id, team_id)})` from the stored
-    snapshot CSV - the scouting grid for the ratings payload plus the ids the
-    org / team grouping filters on."""
+    """`(game_players_by_id, {player_id: {org_id, team_id, org, team, level}})`
+    from the stored snapshot CSV - the scouting grid for the ratings payload plus
+    the roster/org identity shown in the league table and used by the grouping."""
     with open(ctx.data_file, newline="") as f:
         raw = list(csv.DictReader(f))
     game_players = GamePlayers(raw).game_players_by_id
-    groups = {
-        r["ID"]: (r.get("snap_org_id") or "", r.get("snap_team_id") or "")
-        for r in raw
-        if r.get("ID")
-    }
-    return game_players, groups
+    team_names = _team_display_names(ctx)
+    meta = {}
+    for r in raw:
+        rid = r.get("ID")
+        if not rid:
+            continue
+        team_id = r.get("snap_team_id") or ""
+        org_id = r.get("snap_org_id") or ""
+        meta[rid] = {
+            "org_id": org_id,
+            "team_id": team_id,
+            # prefer the "City Nickname" from teams.csv; fall back to the plain
+            # ORG name the snapshot join wrote.
+            "org": team_names.get(org_id) or r.get("ORG") or None,
+            "team": team_names.get(team_id) or None,
+            "level": r.get("Lev") or None,
+        }
+    return game_players, meta
 
 
 def _league_built_rows(league_id: str, method: str) -> list:
@@ -746,13 +794,16 @@ def _league_built_rows(league_id: str, method: str) -> list:
         ranked = league_snapshot.ranked_rows(ctx, method)
     except ValueError as exc:  # method not in LEAGUE_RANKING_METHODS
         raise InvalidInput(str(exc)) from exc
-    game_players, groups = _snapshot_side_tables(ctx)
+    game_players, meta = _snapshot_side_tables(ctx)
     built = []
     for i, row in enumerate(ranked):
         payload = _player_payload(i + 1, row, None, game_players.get(row["id"]))
-        org_id, team_id = groups.get(row["id"], ("", ""))
-        payload["org_id"] = org_id
-        payload["team_id"] = team_id
+        m = meta.get(row["id"], {})
+        payload["org_id"] = m.get("org_id", "")
+        payload["team_id"] = m.get("team_id", "")
+        payload["org"] = m.get("org")
+        payload["team"] = m.get("team")
+        payload["level"] = m.get("level")
         built.append(payload)
 
     with _league_payload_lock:

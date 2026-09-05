@@ -308,6 +308,7 @@ def test_league_snapshot_queries(client):
     assert snap["playerCount"] == 2
     assert snap["fetchedAt"]
 
+    # pickers only offer clubs that actually roster a player in the snapshot
     orgs = gql(client, 'query($l: ID!) { leagueOrgs(leagueId: $l) { id name parentTeamId } }', l=lid)[
         "leagueOrgs"
     ]
@@ -317,9 +318,9 @@ def test_league_snapshot_queries(client):
     teams = gql(client, 'query($l: ID!) { leagueTeams(leagueId: $l) { id name parentTeamId } }', l=lid)[
         "leagueTeams"
     ]
-    assert {t["name"] for t in teams} == {
-        "Milwaukee Brewers", "Pittsburgh Pirates", "Indianapolis Indians",
-    }
+    # id 100 rosters on team 46, id 200 on affiliate 168 -> parent club 52 has
+    # no direct roster, so it's absent from the team picker
+    assert {t["name"] for t in teams} == {"Milwaukee Brewers", "Indianapolis Indians"}
     indy = next(t for t in teams if t["id"] == "168")
     assert indy["parentTeamId"] == "52"
 
@@ -327,7 +328,8 @@ def test_league_snapshot_queries(client):
         q = (
             "query($l: ID!, $m: String!, $g: LeagueGroupBy!, $gid: ID) {"
             " leagueSnapshotPlayers(leagueId: $l, method: $m, groupBy: $g, groupId: $gid,"
-            " allRows: true) { totalRecords rows { id name rank type modelScore drafted draftedTeam } } }"
+            " allRows: true) { totalRecords rows { id name rank type modelScore drafted"
+            " draftedTeam org team level } } }"
         )
         return gql(client, q, l=lid, m=method, g=kw.get("g", "LEAGUE"), gid=kw.get("gid"))[
             "leagueSnapshotPlayers"
@@ -338,6 +340,14 @@ def test_league_snapshot_queries(client):
     assert {r["id"] for r in whole_overall["rows"]} == {"100", "200"}
     assert [r["rank"] for r in whole_overall["rows"]] == [1, 2]
     assert all(r["drafted"] is False and r["draftedTeam"] is None for r in whole_overall["rows"])
+
+    by_id = {r["id"]: r for r in whole_overall["rows"]}
+    assert by_id["100"]["org"] == "Milwaukee Brewers"
+    assert by_id["100"]["team"] == "Milwaukee Brewers"
+    assert by_id["100"]["level"] == "MLB"
+    assert by_id["200"]["org"] == "Pittsburgh Pirates"
+    assert by_id["200"]["team"] == "Indianapolis Indians"
+    assert by_id["200"]["level"] == "A+"
 
     whole_potential = players("potential")
     assert whole_potential["totalRecords"] == 2

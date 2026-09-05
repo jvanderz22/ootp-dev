@@ -29,6 +29,15 @@ export interface LeagueTeam {
   parentTeamId: string | null;
 }
 
+export interface LeagueFreshness {
+  snapshot: LeagueSnapshot | null;
+  /** the sim advanced past the snapshot's date — the page should refresh */
+  stale: boolean;
+  /** the league's in-game date was actually fetched this call */
+  checked: boolean;
+  leagueDate: string | null;
+}
+
 /** How `leagueSnapshotPlayers` narrows the pool. `LEAGUE` ignores `groupId`. */
 export type LeagueGroupBy = 'LEAGUE' | 'ORG' | 'TEAM';
 
@@ -45,6 +54,10 @@ export interface RankedPlayer {
   age: number | null;
   batHand: string | null;
   throwHand: string | null;
+  /** live-league snapshot only: parent org name, roster team name, level */
+  org: string | null;
+  team: string | null;
+  level: string | null;
   modelScore: number | null;
   inGameOverall: number | null;
   inGamePotential: number | null;

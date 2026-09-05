@@ -10,6 +10,9 @@ const PLAYER_FIELDS = gql`
     age
     batHand
     throwHand
+    org
+    team
+    level
     modelScore
     inGameOverall
     inGamePotential

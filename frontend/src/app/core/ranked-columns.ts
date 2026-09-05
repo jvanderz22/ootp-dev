@@ -114,6 +114,14 @@ export const LEADING_COLUMNS: ColumnDef[] = [
   { field: 'modelScore', header: 'Overall', numeric: true, descFirst: true, group: 'Model', value: model('modelScore'), fmt: fmtNum2 },
 ];
 
+/** Org / Team / Level identity — live-league view only, inserted right after the
+ *  Name column in every view (see `viewColumns`). */
+export const LEAGUE_IDENTITY_COLUMNS: ColumnDef[] = [
+  { field: 'org', header: 'Org', numeric: false, descFirst: false, group: 'Player', value: model('org'), fmt: fmtText, wide: true },
+  { field: 'team', header: 'Team', numeric: false, descFirst: false, group: 'Player', value: model('team'), fmt: fmtText, wide: true },
+  { field: 'level', header: 'Lvl', title: 'Level', numeric: false, descFirst: false, group: 'Player', value: model('level'), fmt: fmtText },
+];
+
 /** compact factory for a 20–80 scouting-grade column */
 const gradeCol = (
   fieldKey: string,
@@ -244,6 +252,26 @@ export const VIEW_COLUMNS: Record<ClassView, ColumnDef[]> = {
   batting: [...BATTING_LEAD, ...BATTING_COLUMNS],
   pitching: [...PITCHING_LEAD, ...PITCHING_COLUMNS],
 };
+
+/** Draft-class columns with no meaning for a live-league snapshot. */
+const DROPPED_IN_LEAGUE = new Set(['demandKey', 'draftedPick', 'draftedTeam']);
+
+/** Columns for a view in a given context. `'league'` drops the demand / drafted
+ *  columns and inserts Org / Team / Level right after the Name column. */
+export function viewColumns(
+  view: ClassView,
+  context: 'class' | 'league' = 'class',
+): ColumnDef[] {
+  const base = VIEW_COLUMNS[view];
+  if (context !== 'league') return base;
+  // Drop the drafted/demand columns; also un-stick Pos — the hardcoded sticky
+  // offsets assume Pos sits right after Name, which the identity columns break.
+  const trimmed = base
+    .filter((c) => !DROPPED_IN_LEAGUE.has(c.field))
+    .map((c) => (c.sticky === 'pos' ? { ...c, sticky: undefined } : c));
+  const at = trimmed.findIndex((c) => c.field === 'name') + 1;
+  return [...trimmed.slice(0, at), ...LEAGUE_IDENTITY_COLUMNS, ...trimmed.slice(at)];
+}
 
 export const DEFAULT_SORT: Record<ClassView, { field: string; order: 1 | -1 }> = {
   modeled: { field: 'rank', order: 1 },

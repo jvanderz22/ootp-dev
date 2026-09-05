@@ -27,21 +27,23 @@
     [throwHands]="throwHandSel()"
     [teams]="teams()"
     [teamSel]="teamSel()"
-    [showTeams]="view() === 'modeled'"
+    [showTeams]="context() !== 'league' && view() === 'modeled'"
     (valueChange)="onNumericFilters($event)"
     (batHandsChange)="onBatHands($event)"
     (throwHandsChange)="onThrowHands($event)"
     (teamsChange)="onTeams($event)"
   />
 
-  <label class="row chk">
-    <input
-      type="checkbox"
-      [ngModel]="hideDrafted()"
-      (ngModelChange)="onHideDrafted($event)"
-    />
-    <span>Hide drafted</span>
-  </label>
+  @if (context() !== 'league') {
+    <label class="row chk">
+      <input
+        type="checkbox"
+        [ngModel]="hideDrafted()"
+        (ngModelChange)="onHideDrafted($event)"
+      />
+      <span>Hide drafted</span>
+    </label>
+  }
 
   <button
     type="button"
