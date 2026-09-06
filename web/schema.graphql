@@ -20,6 +20,9 @@ type League {
   classNames: [String!]!
   "ISO timestamp of the last snapshot pull, or null if never refreshed."
   updatedAt: String
+  "Whether this league has a stored StatsPlus session cookie. The values themselves are never returned."
+  hasSessionid: Boolean!
+  hasCsrftoken: Boolean!
 }
 
 type RankedPlayer {
@@ -95,11 +98,6 @@ type RankedPlayerPage {
   totalRecords: Int!
 }
 
-type StatsPlusSettings {
-  hasSessionid: Boolean!
-  hasCsrftoken: Boolean!
-}
-
 "One stored live-league snapshot pulled from StatsPlus (the whole player pool)."
 type LeagueSnapshot {
   leagueId: ID!
@@ -173,7 +171,6 @@ type Query {
   ): RankedPlayerPage!
   classPositions(name: String!): [String!]!
   draftTeams(name: String!): [String!]!
-  statsPlusSettings: StatsPlusSettings!
   leagues: [League!]!
   leagueSnapshot(leagueId: ID!): LeagueSnapshot
   leagueSnapshotPlayers(
@@ -204,12 +201,13 @@ type Mutation {
   setPlayerRank(name: String!, id: ID!, rank: Int!): DraftClass!
   clearCustomOrder(name: String!): DraftClass!
   refreshDraftedFromStatsPlus(name: String!): DraftedRefreshResult!
-  updateStatsPlusSettings(sessionid: String, csrftoken: String): StatsPlusSettings!
   createLeague(
     name: String!
     leagueUrl: String
     defaultLid: Int
     classNames: [String!]
+    sessionid: String
+    csrftoken: String
   ): League!
   updateLeague(
     id: ID!
@@ -217,6 +215,8 @@ type Mutation {
     leagueUrl: String
     defaultLid: Int
     classNames: [String!]
+    sessionid: String
+    csrftoken: String
   ): League!
   deleteLeague(id: ID!): String!
   setClassLeague(name: String!, leagueId: String): DraftClass!

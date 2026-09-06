@@ -185,18 +185,31 @@ def test_draft_pick_columns_and_team_filter(client):
     assert rows(numeric=[{"field": "draftedPick", "min": 2}])["totalRecords"] == 0
 
 
-def test_settings_update(client):
-    out = gql(
+def test_league_cookie_is_per_league_and_never_exposed(client):
+    made = gql(
         client,
-        'mutation { updateStatsPlusSettings(sessionid: "abc", csrftoken: "def") '
+        'mutation { createLeague(name: "Ck", leagueUrl: "yfmlb", '
+        'sessionid: "abc", csrftoken: "def") { id hasSessionid hasCsrftoken } }',
+    )["createLeague"]
+    assert made["hasSessionid"] is True and made["hasCsrftoken"] is True
+    lid = made["id"]
+
+    # the values themselves are never in the schema
+    listed = gql(client, "{ leagues { hasSessionid hasCsrftoken } }")["leagues"][0]
+    assert listed == {"hasSessionid": True, "hasCsrftoken": True}
+
+    from web import leagues
+
+    assert leagues.get_league(lid)["sessionid"] == "abc"
+
+    # a blank value on update keeps what's stored; a non-blank one replaces it
+    gql(
+        client,
+        f'mutation {{ updateLeague(id: "{lid}", csrftoken: "ghi") '
         "{ hasSessionid hasCsrftoken } }",
-    )["updateStatsPlusSettings"]
-    assert out == {"hasSessionid": True, "hasCsrftoken": True}
-    # the values themselves are never exposed
-    again = gql(
-        client, "{ statsPlusSettings { hasSessionid hasCsrftoken } }"
-    )["statsPlusSettings"]
-    assert again["hasSessionid"] and again["hasCsrftoken"]
+    )
+    stored = leagues.get_league(lid)
+    assert stored["sessionid"] == "abc" and stored["csrftoken"] == "ghi"
 
 
 def test_class_league_is_explicit_only(client):
@@ -267,18 +280,19 @@ def test_create_league_rejects_foreign_host(client):
     assert "statsplus.net" in body["errors"][0]["message"]
 
 
-def test_settings_accepts_name_prefixed_paste(client):
+def test_league_cookie_accepts_name_prefixed_paste(client):
     # each field pulls out just its own value, whether you paste `name=value`,
     # a bare value, or a whole cookie blob
-    gql(
+    lid = gql(
         client,
-        'mutation { updateStatsPlusSettings('
-        'sessionid: "sessionid=xyz; csrftoken=qrs", csrftoken: "  qrs ; ") '
-        "{ hasSessionid hasCsrftoken } }",
-    )
-    from web.settings import cookie_header, load_settings
+        'mutation { createLeague(name: "Paste", leagueUrl: "yfmlb", '
+        'sessionid: "sessionid=xyz; csrftoken=qrs", csrftoken: "  qrs ; ") { id } }',
+    )["createLeague"]["id"]
 
-    assert cookie_header(load_settings()) == "sessionid=xyz; csrftoken=qrs"
+    from web import leagues
+    from web.settings import cookie_header
+
+    assert cookie_header(leagues.get_league(lid)) == "sessionid=xyz; csrftoken=qrs"
 
 
 def _seed_snapshot(league_id="yf"):
@@ -449,9 +463,11 @@ def _await_refresh(client, lid, *, timeout=5.0):
 def test_refresh_league_snapshot(client, monkeypatch):
     import league_snapshot
 
-    lid = gql(client, 'mutation { createLeague(name: "YF3", leagueUrl: "yfmlb") { id } }')[
-        "createLeague"
-    ]["id"]
+    lid = gql(
+        client,
+        'mutation { createLeague(name: "YF3", leagueUrl: "yfmlb", '
+        'sessionid: "s", csrftoken: "c") { id } }',
+    )["createLeague"]["id"]
 
     from tests.test_league_snapshot import make_snapshot_csvs
 
@@ -508,9 +524,11 @@ def test_check_league_snapshot_freshness(client, monkeypatch):
     import league_snapshot
     from web import service
 
-    lid = gql(client, 'mutation { createLeague(name: "YF4", leagueUrl: "yfmlb") { id } }')[
-        "createLeague"
-    ]["id"]
+    lid = gql(
+        client,
+        'mutation { createLeague(name: "YF4", leagueUrl: "yfmlb", '
+        'sessionid: "s", csrftoken: "c") { id } }',
+    )["createLeague"]["id"]
     ctx = _seed_snapshot(lid)
 
     check = "mutation($l: ID!) { checkLeagueSnapshotFreshness(leagueId: $l) { stale checked leagueDate snapshot { playerCount } } }"

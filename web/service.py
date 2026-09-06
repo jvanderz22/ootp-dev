@@ -37,7 +37,7 @@ from statsplus_api import (
     statsplus_player_url,
     write_drafted_players_file,
 )
-from web.settings import cookie_header, load_settings
+from web.settings import cookie_header
 
 _pipeline_lock = asyncio.Lock()
 
@@ -365,7 +365,7 @@ def _league_updated_at(league_id: str):
 
 def _league_payload(league: dict) -> dict:
     return {
-        **league,
+        **leagues.public_league(league),
         "class_names": leagues.class_names_for_league(league["id"]),
         "updated_at": _league_updated_at(league["id"]),
     }
@@ -380,7 +380,7 @@ def list_leagues():
             buckets[explicit].append(cname)
     return [
         {
-            **lg,
+            **leagues.public_league(lg),
             "class_names": sorted(buckets[lg["id"]]),
             "updated_at": _league_updated_at(lg["id"]),
         }
@@ -388,17 +388,31 @@ def list_leagues():
     ]
 
 
-def create_league(name, league_url=None, default_lid=None, class_names=None):
+def create_league(
+    name, league_url=None, default_lid=None, class_names=None, sessionid=None, csrftoken=None
+):
     try:
-        league = leagues.create_league(name, league_url, default_lid, class_names)
+        league = leagues.create_league(
+            name, league_url, default_lid, class_names, sessionid, csrftoken
+        )
     except ValueError as exc:
         raise InvalidInput(str(exc)) from exc
     return _league_payload(league)
 
 
-def update_league(id, name=None, league_url=None, default_lid=None, class_names=None):
+def update_league(
+    id,
+    name=None,
+    league_url=None,
+    default_lid=None,
+    class_names=None,
+    sessionid=None,
+    csrftoken=None,
+):
     try:
-        league = leagues.update_league(id, name, league_url, default_lid, class_names)
+        league = leagues.update_league(
+            id, name, league_url, default_lid, class_names, sessionid, csrftoken
+        )
     except ValueError as exc:
         raise InvalidInput(str(exc)) from exc
     return _league_payload(league)
@@ -672,10 +686,14 @@ def _refresh_drafted_sync(name: str):
         raise InvalidInput(
             f"League {league['name']!r} has no StatsPlus URL. Add one on the Settings page."
         )
-    settings = load_settings()
+    if not cookie_header(league):
+        raise InvalidInput(
+            f"League {league['name']!r} has no StatsPlus session cookie. Add one on "
+            f"the Settings page (edit the league)."
+        )
     picks = fetch_draft_picks(
         league["league_url"],
-        cookie_header(settings),
+        cookie_header(league),
         league.get("default_lid"),
     )
     write_drafted_players_file(ctx, picks)
@@ -1084,12 +1102,17 @@ def _refresh_league_snapshot_sync(league_id: str):
         raise InvalidInput(
             f"League {lg['name']!r} has no StatsPlus URL. Add one on the Settings page."
         )
+    if not cookie_header(lg):
+        raise InvalidInput(
+            f"League {lg['name']!r} has no StatsPlus session cookie. Add one on "
+            f"the Settings page (edit the league)."
+        )
 
     def _phase(msg):
         _set_refresh_progress(league_id, msg)
 
     league_snapshot.fetch_and_build(
-        lg, cookie=cookie_header(load_settings()), on_phase=_phase
+        lg, cookie=cookie_header(lg), on_phase=_phase
     )
     league_snapshot.evict_ranked_cache(league_id)
     _evict_league_payload_cache(league_id)
@@ -1134,10 +1157,10 @@ def _check_league_snapshot_freshness_sync(league_id: str) -> dict:
     age = league_snapshot.snapshot_age(ctx)
     if age is not None and age < league_snapshot.STALE_AFTER:
         return idle
-    if not lg.get("league_url"):
+    if not lg.get("league_url") or not cookie_header(lg):
         return idle
     try:
-        current = fetch_league_date(lg["league_url"], cookie_header(load_settings()))
+        current = fetch_league_date(lg["league_url"], cookie_header(lg))
     except (StatsPlusError, StatsPlusAuthError):
         return idle  # can't check now; keep serving what we have
 

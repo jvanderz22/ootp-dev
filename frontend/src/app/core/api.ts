@@ -24,9 +24,7 @@ import {
   SET_CLASS_LEAGUE,
   SET_PLAYER_RANK,
   SET_RANKING_METHOD,
-  STATSPLUS_SETTINGS,
   UPDATE_LEAGUE,
-  UPDATE_SETTINGS,
   UPLOAD_DRAFT_CLASS,
 } from './gql';
 import {
@@ -42,7 +40,6 @@ import {
   RankedPlayer,
   RankedPlayerPage,
   RankedQuery,
-  StatsPlusSettings,
 } from './api.types';
 
 type ReorderPlayer = Pick<
@@ -439,37 +436,6 @@ export class ApiService {
     }
   }
 
-  async settings(): Promise<StatsPlusSettings> {
-    try {
-      const res = await firstValueFrom(
-        this.apollo.query<{ statsPlusSettings: StatsPlusSettings }>({
-          query: STATSPLUS_SETTINGS,
-          fetchPolicy: 'network-only',
-        }),
-      );
-      return res.data!.statsPlusSettings;
-    } catch (e) {
-      unwrap(e);
-    }
-  }
-
-  async updateSettings(input: {
-    sessionid?: string;
-    csrftoken?: string;
-  }): Promise<StatsPlusSettings> {
-    try {
-      const res = await firstValueFrom(
-        this.apollo.mutate<{ updateStatsPlusSettings: StatsPlusSettings }>({
-          mutation: UPDATE_SETTINGS,
-          variables: input,
-        }),
-      );
-      return res.data!.updateStatsPlusSettings;
-    } catch (e) {
-      unwrap(e);
-    }
-  }
-
   async leagues(): Promise<League[]> {
     try {
       const res = await firstValueFrom(
@@ -489,6 +455,8 @@ export class ApiService {
     leagueUrl?: string | null;
     defaultLid?: number | null;
     classNames?: string[];
+    sessionid?: string;
+    csrftoken?: string;
   }): Promise<League> {
     try {
       const res = await firstValueFrom(
@@ -509,6 +477,8 @@ export class ApiService {
     leagueUrl?: string | null;
     defaultLid?: number | null;
     classNames?: string[];
+    sessionid?: string;
+    csrftoken?: string;
   }): Promise<League> {
     try {
       const res = await firstValueFrom(

@@ -4,7 +4,6 @@ import anyio
 from ariadne import QueryType
 
 from web import service
-from web.settings import public_settings
 
 query = QueryType()
 
@@ -50,11 +49,6 @@ async def resolve_class_positions(_, __, name):
 @query.field("draftTeams")
 async def resolve_draft_teams(_, __, name):
     return await _off_loop(service.draft_teams, name)
-
-
-@query.field("statsPlusSettings")
-def resolve_settings(*_):
-    return public_settings()
 
 
 @query.field("leagues")

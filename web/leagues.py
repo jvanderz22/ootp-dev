@@ -1,10 +1,15 @@
 """Leagues stored as leagues.json under DATA_DIR.
 
-A *league* is a StatsPlus association: it owns the league's StatsPlus home URL
-and (optionally) a default `lid`. Every draft class is assigned to at most one
-league; that assignment is persisted as `league_id` inside the class's own
+A *league* is a StatsPlus association: it owns the league's StatsPlus home URL,
+(optionally) a default `lid`, and its own StatsPlus auth cookie (`sessionid` /
+`csrftoken`). Every draft class is assigned to at most one league; that
+assignment is persisted as `league_id` inside the class's own
 `processed_classes/<name>/config.json`. "Refresh drafted" for a class hits its
-league's URL. The session cookies stay app-wide (see web/settings.py).
+league's URL with that league's cookie.
+
+The cookie values are secret: they live on the (private) data volume and are
+never returned to clients - the API exposes only `has_sessionid` /
+`has_csrftoken` (see `public_league`).
 """
 import json
 import re
@@ -12,9 +17,11 @@ import re
 from context import DraftClassContext, default_base_dir
 from io_utils import atomic_write_json
 from statsplus_api import normalize_league_url
+from web.settings import clean_cookie_value
 
 _FILENAME = "leagues.json"
-_FIELDS = ("id", "name", "league_url", "default_lid")
+_FIELDS = ("id", "name", "league_url", "default_lid", "sessionid", "csrftoken")
+_COOKIE_KEYS = ("sessionid", "csrftoken")
 
 
 def _path():
@@ -43,33 +50,71 @@ def _normalize_url(value):
 
 
 def _clean(league: dict) -> dict:
+    """Storage projection - keeps the secret cookie values. Never hand this
+    straight to a client; use `public_league`."""
     return {
         "id": league.get("id"),
         "name": league.get("name") or league.get("id") or "",
         "league_url": league.get("league_url") or "",
         "default_lid": league.get("default_lid") or None,
+        "sessionid": league.get("sessionid") or "",
+        "csrftoken": league.get("csrftoken") or "",
+    }
+
+
+def public_league(league: dict) -> dict:
+    """Client-safe projection: the cookie values are replaced with the booleans
+    `has_sessionid` / `has_csrftoken`."""
+    return {
+        "id": league.get("id"),
+        "name": league.get("name") or league.get("id") or "",
+        "league_url": league.get("league_url") or "",
+        "default_lid": league.get("default_lid") or None,
+        "has_sessionid": bool(league.get("sessionid")),
+        "has_csrftoken": bool(league.get("csrftoken")),
     }
 
 
 # --------------------------------------------------------------------- storage
 def _write(leagues) -> None:
-    atomic_write_json(_path(), {"leagues": [_clean(x) for x in leagues]})
+    atomic_write_json(
+        _path(),
+        {"leagues": [_clean(x) for x in leagues], "cookies_seeded": True},
+    )
 
 
 def load_leagues() -> list:
     try:
         with open(_path()) as f:
             data = json.load(f)
-        leagues = [_clean(x) for x in data.get("leagues", []) if x.get("id")]
-        return leagues
     except (FileNotFoundError, json.JSONDecodeError):
         return _migrate_from_legacy()
+    leagues = [_clean(x) for x in data.get("leagues", []) if x.get("id")]
+    if not data.get("cookies_seeded"):
+        leagues = _seed_legacy_cookies(leagues)
+    return leagues
+
+
+def _seed_legacy_cookies(leagues: list) -> list:
+    """One-time upgrade for installs that predate per-league cookies: fold the
+    old app-wide `sessionid` / `csrftoken` into every league that has none, then
+    stamp `cookies_seeded` so this never runs again."""
+    from web.settings import legacy_cookie
+
+    cookie = legacy_cookie()
+    if cookie:
+        for lg in leagues:
+            if not lg.get("sessionid") and not lg.get("csrftoken"):
+                lg["sessionid"] = cookie.get("sessionid", "")
+                lg["csrftoken"] = cookie.get("csrftoken", "")
+    _write(leagues)
+    return leagues
 
 
 def _migrate_from_legacy() -> list:
     """First run after the leagues upgrade: fold the old single app-wide
-    `league_url` / `default_lid` (web_config.json) into one 'Default' league."""
-    from web.settings import legacy_league_config
+    `league_url` / `default_lid` / cookie (web_config.json) into one league."""
+    from web.settings import legacy_cookie, legacy_league_config
 
     legacy = legacy_league_config()
     url = legacy.get("league_url") or ""
@@ -80,12 +125,15 @@ def _migrate_from_legacy() -> list:
     m = re.search(r"/([^/]+)/?$", url.rstrip("/"))
     if m:
         name = m.group(1)
+    cookie = legacy_cookie()
     league = _clean(
         {
             "id": _slugify(name) if name else "default",
             "name": name or "Default",
             "league_url": url,
             "default_lid": legacy.get("default_lid"),
+            "sessionid": cookie.get("sessionid", ""),
+            "csrftoken": cookie.get("csrftoken", ""),
         }
     )
     _write([league])
@@ -169,7 +217,14 @@ def assign_classes(league_id: str, class_names) -> None:
 
 
 # --------------------------------------------------------------------- mutations
-def create_league(name: str, league_url=None, default_lid=None, class_names=None) -> dict:
+def create_league(
+    name: str,
+    league_url=None,
+    default_lid=None,
+    class_names=None,
+    sessionid=None,
+    csrftoken=None,
+) -> dict:
     name = (name or "").strip()
     if not name:
         raise ValueError("League name is required.")
@@ -180,6 +235,8 @@ def create_league(name: str, league_url=None, default_lid=None, class_names=None
             "name": name,
             "league_url": _normalize_url(league_url) or "",
             "default_lid": default_lid or None,
+            "sessionid": clean_cookie_value(sessionid or "", "sessionid"),
+            "csrftoken": clean_cookie_value(csrftoken or "", "csrftoken"),
         }
     )
     leagues.append(league)
@@ -189,7 +246,13 @@ def create_league(name: str, league_url=None, default_lid=None, class_names=None
 
 
 def update_league(
-    league_id: str, name=None, league_url=None, default_lid=None, class_names=None
+    league_id: str,
+    name=None,
+    league_url=None,
+    default_lid=None,
+    class_names=None,
+    sessionid=None,
+    csrftoken=None,
 ) -> dict:
     leagues = load_leagues()
     target = next((x for x in leagues if x["id"] == league_id), None)
@@ -201,6 +264,12 @@ def update_league(
         target["league_url"] = _normalize_url(league_url) or ""
     if default_lid is not None:
         target["default_lid"] = default_lid or None
+    # cookie fields follow the settings-page convention: a blank value means
+    # "keep what's stored", a non-blank one replaces it.
+    if sessionid is not None and sessionid.strip():
+        target["sessionid"] = clean_cookie_value(sessionid, "sessionid")
+    if csrftoken is not None and csrftoken.strip():
+        target["csrftoken"] = clean_cookie_value(csrftoken, "csrftoken")
     _write(leagues)
     assign_classes(league_id, class_names)
     return _clean(target)

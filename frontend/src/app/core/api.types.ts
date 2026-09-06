@@ -17,6 +17,9 @@ export interface League {
   classNames: string[];
   /** ISO timestamp of the last snapshot pull; null if never refreshed. */
   updatedAt: string | null;
+  /** Whether the league has a stored StatsPlus cookie. Values are never returned. */
+  hasSessionid: boolean;
+  hasCsrftoken: boolean;
 }
 
 export type LeagueRefreshState = 'idle' | 'running' | 'done' | 'error';
@@ -181,11 +184,6 @@ export interface RankedQuery {
 
 /** Infinite-scroll batch size: how many rows a single fetch pulls. */
 export const RANKED_PAGE_SIZE = 50;
-
-export interface StatsPlusSettings {
-  hasSessionid: boolean;
-  hasCsrftoken: boolean;
-}
 
 export interface DraftedRefreshResult {
   draftedCount: number;

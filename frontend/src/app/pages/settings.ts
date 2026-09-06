@@ -12,13 +12,27 @@ interface LeagueDraft {
   leagueUrl: string;
   defaultLid: number | null;
   classNames: Set<string>;
+  sessionid: string;
+  csrftoken: string;
+  hasSessionid: boolean;
+  hasCsrftoken: boolean;
 }
 
 function emptyDraft(): LeagueDraft {
-  return { id: null, name: '', leagueUrl: '', defaultLid: null, classNames: new Set() };
+  return {
+    id: null,
+    name: '',
+    leagueUrl: '',
+    defaultLid: null,
+    classNames: new Set(),
+    sessionid: '',
+    csrftoken: '',
+    hasSessionid: false,
+    hasCsrftoken: false,
+  };
 }
 
-type SettingsTab = 'leagues' | 'classes' | 'cookie';
+type SettingsTab = 'leagues' | 'classes';
 
 @Component({
   selector: 'app-settings',
@@ -34,18 +48,17 @@ type SettingsTab = 'leagues' | 'classes' | 'cookie';
         Draft classes
         @if (unmappedCount() > 0) { <span class="badge">{{ unmappedCount() }}</span> }
       </button>
-      <button type="button" [class.active]="tab() === 'cookie'" (click)="tab.set('cookie')">
-        Session cookie
-      </button>
     </nav>
 
     @if (tab() === 'leagues') {
       <section class="block">
         <h2>Leagues</h2>
         <p class="muted">
-          Each league has its own StatsPlus home URL. “Refresh drafted” for a class
-          calls <code>&lt;that league’s URL&gt;/api/draftv2/</code>. Assign classes to a
-          league here, on the Draft classes tab, or from the class menu.
+          Each league has its own StatsPlus home URL and its own session cookie.
+          “Refresh drafted” for a class calls
+          <code>&lt;that league’s URL&gt;/api/draftv2/</code> with that league’s cookie.
+          Assign classes to a league here, on the Draft classes tab, or from the
+          class menu.
         </p>
 
         @if (leagueStore.leagues().length === 0) {
@@ -65,6 +78,12 @@ type SettingsTab = 'leagues' | 'classes' | 'cookie';
               <div class="muted small">
                 {{ l.leagueUrl || 'no URL set' }}
                 @if (l.defaultLid != null) { · lid {{ l.defaultLid }} }
+                ·
+                @if (l.hasSessionid && l.hasCsrftoken) {
+                  cookie set
+                } @else {
+                  <span class="warn">no cookie</span>
+                }
               </div>
               <div class="chips">
                 @for (c of l.classNames; track c) { <span class="chip">{{ c }}</span> }
@@ -98,6 +117,35 @@ type SettingsTab = 'leagues' | 'classes' | 'cookie';
               Default league id — <code>lid</code>, only for associations with multiple drafts (optional)
               <input name="llid" type="number" [(ngModel)]="d.defaultLid" />
             </label>
+            <fieldset>
+              <legend>Session cookie</legend>
+              <small class="muted">
+                StatsPlus has no API key. Log into this league in a browser, open
+                DevTools → Application → Cookies → the StatsPlus host, and paste
+                the two values. They expire after a while — re-paste when a
+                refresh reports an auth error.
+              </small>
+              <label>
+                sessionid
+                {{ d.hasSessionid ? '— stored; leave blank to keep it' : '' }}
+                <input
+                  name="lsessionid"
+                  [(ngModel)]="d.sessionid"
+                  autocomplete="off"
+                  placeholder="paste the sessionid value"
+                />
+              </label>
+              <label>
+                csrftoken
+                {{ d.hasCsrftoken ? '— stored; leave blank to keep it' : '' }}
+                <input
+                  name="lcsrftoken"
+                  [(ngModel)]="d.csrftoken"
+                  autocomplete="off"
+                  placeholder="paste the csrftoken value"
+                />
+              </label>
+            </fieldset>
             <fieldset>
               <legend>Classes in this league</legend>
               @if (classStore.classes().length === 0) {
@@ -166,34 +214,6 @@ type SettingsTab = 'leagues' | 'classes' | 'cookie';
           </div>
           @if (classMsg()) { <p [class.error]="classErr()">{{ classMsg() }}</p> }
         }
-      </section>
-    }
-
-    @if (tab() === 'cookie') {
-      <section class="block">
-        <h2>Session cookie</h2>
-        <form class="card" (submit)="save($event)">
-          <small class="muted">
-            StatsPlus has no API key. Log into your league in a browser, open
-            DevTools → Application → Cookies → <code>https://statsplus.net</code>, and
-            paste the two values below. They expire after a while — re-paste when
-            “Refresh drafted” reports an auth error.
-          </small>
-
-          <label>
-            sessionid {{ hasSessionid() ? '— stored; leave blank to keep it' : '' }}
-            <input name="sessionid" [(ngModel)]="sessionid" placeholder="paste the sessionid value" />
-          </label>
-          <label>
-            csrftoken {{ hasCsrftoken() ? '— stored; leave blank to keep it' : '' }}
-            <input name="csrftoken" [(ngModel)]="csrftoken" placeholder="paste the csrftoken value" />
-          </label>
-
-          @if (message()) { <p [class.error]="isError()">{{ message() }}</p> }
-          <button class="primary" type="submit" [disabled]="busy()">
-            {{ busy() ? 'Saving…' : 'Save' }}
-          </button>
-        </form>
       </section>
     }
   `,
@@ -268,6 +288,7 @@ type SettingsTab = 'leagues' | 'classes' | 'cookie';
     }
     .maprow.unmapped { border-color: var(--accent); }
     .maprow .cname { font-weight: 600; }
+    .warn { color: var(--danger, #c0392b); }
   `,
 })
 export class SettingsPage implements OnInit {
@@ -277,13 +298,7 @@ export class SettingsPage implements OnInit {
 
   protected readonly tab = signal<SettingsTab>('leagues');
 
-  protected sessionid = '';
-  protected csrftoken = '';
-  protected readonly hasSessionid = signal(false);
-  protected readonly hasCsrftoken = signal(false);
   protected readonly busy = signal(false);
-  protected readonly message = signal<string | null>(null);
-  protected readonly isError = signal(false);
 
   protected readonly draft = signal<LeagueDraft | null>(null);
   protected readonly leagueMsg = signal<string | null>(null);
@@ -306,17 +321,9 @@ export class SettingsPage implements OnInit {
     }),
   );
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
     void this.leagueStore.reload();
     void this.classStore.reload();
-    try {
-      const s = await this.api.settings();
-      this.hasSessionid.set(s.hasSessionid);
-      this.hasCsrftoken.set(s.hasCsrftoken);
-    } catch (e) {
-      this.isError.set(true);
-      this.message.set((e as Error).message);
-    }
   }
 
   // -------------------------------------------------------------- leagues
@@ -333,6 +340,10 @@ export class SettingsPage implements OnInit {
       leagueUrl: l.leagueUrl ?? '',
       defaultLid: l.defaultLid,
       classNames: new Set(l.classNames),
+      sessionid: '',
+      csrftoken: '',
+      hasSessionid: l.hasSessionid,
+      hasCsrftoken: l.hasCsrftoken,
     });
   }
 
@@ -353,6 +364,8 @@ export class SettingsPage implements OnInit {
       leagueUrl: d.leagueUrl.trim(),
       defaultLid: d.defaultLid ? Number(d.defaultLid) : null,
       classNames: [...d.classNames],
+      sessionid: d.sessionid.trim() || undefined,
+      csrftoken: d.csrftoken.trim() || undefined,
     };
     try {
       if (d.id) await this.api.updateLeague({ id: d.id, ...input });
@@ -397,30 +410,6 @@ export class SettingsPage implements OnInit {
       this.classMsg.set((e as Error).message);
     } finally {
       this.assigning.set(null);
-    }
-  }
-
-  // -------------------------------------------------------------- cookies
-  async save(ev: Event): Promise<void> {
-    ev.preventDefault();
-    this.busy.set(true);
-    this.message.set(null);
-    this.isError.set(false);
-    try {
-      const s = await this.api.updateSettings({
-        sessionid: this.sessionid.trim() || undefined,
-        csrftoken: this.csrftoken.trim() || undefined,
-      });
-      this.hasSessionid.set(s.hasSessionid);
-      this.hasCsrftoken.set(s.hasCsrftoken);
-      this.sessionid = '';
-      this.csrftoken = '';
-      this.message.set('Saved.');
-    } catch (e) {
-      this.isError.set(true);
-      this.message.set((e as Error).message);
-    } finally {
-      this.busy.set(false);
     }
   }
 }

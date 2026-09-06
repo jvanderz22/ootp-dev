@@ -58,6 +58,8 @@ const LEAGUE_FIELDS = gql`
     defaultLid
     classNames
     updatedAt
+    hasSessionid
+    hasCsrftoken
   }
 `;
 
@@ -138,15 +140,6 @@ export const REORDER_PLAYERS = gql`
         modelScore
         drafted
       }
-    }
-  }
-`;
-
-export const STATSPLUS_SETTINGS = gql`
-  query StatsPlusSettings {
-    statsPlusSettings {
-      hasSessionid
-      hasCsrftoken
     }
   }
 `;
@@ -315,12 +308,16 @@ export const CREATE_LEAGUE = gql`
     $leagueUrl: String
     $defaultLid: Int
     $classNames: [String!]
+    $sessionid: String
+    $csrftoken: String
   ) {
     createLeague(
       name: $name
       leagueUrl: $leagueUrl
       defaultLid: $defaultLid
       classNames: $classNames
+      sessionid: $sessionid
+      csrftoken: $csrftoken
     ) {
       ...LeagueFields
     }
@@ -335,6 +332,8 @@ export const UPDATE_LEAGUE = gql`
     $leagueUrl: String
     $defaultLid: Int
     $classNames: [String!]
+    $sessionid: String
+    $csrftoken: String
   ) {
     updateLeague(
       id: $id
@@ -342,6 +341,8 @@ export const UPDATE_LEAGUE = gql`
       leagueUrl: $leagueUrl
       defaultLid: $defaultLid
       classNames: $classNames
+      sessionid: $sessionid
+      csrftoken: $csrftoken
     ) {
       ...LeagueFields
     }
@@ -434,11 +435,3 @@ export const REFRESH_DRAFTED = gql`
   }
 `;
 
-export const UPDATE_SETTINGS = gql`
-  mutation UpdateStatsPlusSettings($sessionid: String, $csrftoken: String) {
-    updateStatsPlusSettings(sessionid: $sessionid, csrftoken: $csrftoken) {
-      hasSessionid
-      hasCsrftoken
-    }
-  }
-`;

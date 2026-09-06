@@ -1,7 +1,6 @@
 from ariadne import MutationType
 
 from web import service
-from web.settings import public_settings, update_settings
 
 mutation = MutationType()
 
@@ -46,22 +45,37 @@ async def resolve_refresh_drafted(_, __, name):
     return await service.refresh_drafted(name)
 
 
-@mutation.field("updateStatsPlusSettings")
-def resolve_update_settings(_, __, sessionid=None, csrftoken=None):
-    update_settings(sessionid=sessionid, csrftoken=csrftoken)
-    return public_settings()
-
-
 @mutation.field("createLeague")
-def resolve_create_league(_, __, name, league_url=None, default_lid=None, class_names=None):
-    return service.create_league(name, league_url, default_lid, class_names)
+def resolve_create_league(
+    _,
+    __,
+    name,
+    league_url=None,
+    default_lid=None,
+    class_names=None,
+    sessionid=None,
+    csrftoken=None,
+):
+    return service.create_league(
+        name, league_url, default_lid, class_names, sessionid, csrftoken
+    )
 
 
 @mutation.field("updateLeague")
 def resolve_update_league(
-    _, __, id, name=None, league_url=None, default_lid=None, class_names=None
+    _,
+    __,
+    id,
+    name=None,
+    league_url=None,
+    default_lid=None,
+    class_names=None,
+    sessionid=None,
+    csrftoken=None,
 ):
-    return service.update_league(id, name, league_url, default_lid, class_names)
+    return service.update_league(
+        id, name, league_url, default_lid, class_names, sessionid, csrftoken
+    )
 
 
 @mutation.field("deleteLeague")

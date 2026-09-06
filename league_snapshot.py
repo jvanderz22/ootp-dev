@@ -475,16 +475,16 @@ def fetch_and_build(
     league: dict, *, base_dir=None, cookie: str = None, on_phase=None
 ) -> LeagueSnapshotContext:
     """Fetch the four endpoints for `league` (a `web/leagues.py` dict) and build
-    the stored snapshot. `cookie` defaults to the app-wide StatsPlus cookie.
+    the stored snapshot. `cookie` defaults to the league's own StatsPlus cookie.
 
     `on_phase`, if given, is called with a short status string as each endpoint
     is pulled - the league refresh streams these to the page."""
     if not league or not league.get("league_url"):
         raise ValueError("League has no StatsPlus URL configured.")
     if cookie is None:
-        from web.settings import cookie_header, load_settings
+        from web.settings import cookie_header
 
-        cookie = cookie_header(load_settings())
+        cookie = cookie_header(league)
 
     def _phase(msg):
         if on_phase:

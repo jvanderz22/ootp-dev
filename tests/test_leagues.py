@@ -82,9 +82,49 @@ def test_migrates_legacy_web_config(data_dir):
     assert migrated[0]["name"] == "yfmlb"
     assert migrated[0]["league_url"] == "https://statsplus.net/yfmlb/"
     assert migrated[0]["default_lid"] == 3
+    # the old app-wide cookie is folded into the seeded league
+    assert migrated[0]["sessionid"] == "s"
+    assert migrated[0]["csrftoken"] == "c"
     # persisted, so a second load is a plain read
     assert (data_dir / "leagues.json").exists()
     assert leagues.load_leagues() == migrated
+
+
+def test_seeds_legacy_cookie_into_existing_leagues(data_dir):
+    """An install that already has leagues.json but predates per-league cookies:
+    the old app-wide cookie is folded into every cookie-less league, once."""
+    (data_dir / "leagues.json").write_text(
+        json.dumps({"leagues": [{"id": "a", "name": "A", "league_url": "x"}]})
+    )
+    (data_dir / "web_config.json").write_text(
+        json.dumps({"sessionid": "leg-s", "csrftoken": "leg-c"})
+    )
+    seeded = leagues.load_leagues()
+    assert seeded[0]["sessionid"] == "leg-s" and seeded[0]["csrftoken"] == "leg-c"
+
+    stored = json.loads((data_dir / "leagues.json").read_text())
+    assert stored["cookies_seeded"] is True
+    # a later web_config change is ignored - seeding only runs once
+    (data_dir / "web_config.json").write_text(json.dumps({"sessionid": "new"}))
+    assert leagues.load_leagues()[0]["sessionid"] == "leg-s"
+
+
+def test_per_league_cookie_crud_and_public_projection(data_dir):
+    from web.settings import cookie_header
+
+    lg = leagues.create_league("Ck", "yfmlb", sessionid="  aa ", csrftoken="csrftoken=bb")
+    assert lg["sessionid"] == "aa" and lg["csrftoken"] == "bb"
+    assert cookie_header(lg) == "sessionid=aa; csrftoken=bb"
+
+    # public projection hides the values, exposes booleans only
+    pub = leagues.public_league(leagues.get_league(lg["id"]))
+    assert "sessionid" not in pub and "csrftoken" not in pub
+    assert pub["has_sessionid"] is True and pub["has_csrftoken"] is True
+
+    # blank keeps, non-blank replaces
+    leagues.update_league(lg["id"], sessionid="", csrftoken="cc")
+    stored = leagues.get_league(lg["id"])
+    assert stored["sessionid"] == "aa" and stored["csrftoken"] == "cc"
 
 
 def test_no_legacy_config_yields_empty(data_dir):

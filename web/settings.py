@@ -1,21 +1,19 @@
-"""App settings stored as web_config.json under DATA_DIR.
+"""Legacy StatsPlus config reader - kept only to seed leagues on upgrade.
 
-Holds the two StatsPlus auth cookie values (`sessionid`, `csrftoken`) used by the
-drafted-players refresh. These are app-wide - the per-league StatsPlus URL lives
-in leagues.json (see web/leagues.py). The cookie values are secret: they are
-written to the (private) data volume and never returned to clients - the API
-exposes only `has_sessionid` / `has_csrftoken`.
+The StatsPlus auth cookie (`sessionid`, `csrftoken`) is now **per league** and
+lives in leagues.json (see web/leagues.py). This module survives only to fold
+the old app-wide values - `web_config.json` or the `STATSPLUS_*` env vars - into
+the leagues store the first time it is read. Nothing here is part of the live
+settings surface any more.
 """
 import json
 import os
 import re
 
 from context import default_base_dir
-from io_utils import atomic_write_json
 from statsplus_api import StatsPlusError, normalize_league_url
 
 _FILENAME = "web_config.json"
-_DEFAULTS = {"sessionid": "", "csrftoken": ""}
 _COOKIE_KEYS = ("sessionid", "csrftoken")
 
 
@@ -53,14 +51,15 @@ def _read_raw() -> dict:
     return stored if isinstance(stored, dict) else {}
 
 
-def load_settings() -> dict:
-    data = dict(_DEFAULTS)
+def legacy_cookie() -> dict:
+    """The old app-wide `sessionid` / `csrftoken` (from `web_config.json` or the
+    `STATSPLUS_*` env vars), read once by web/leagues.py to seed leagues on
+    upgrade. Returns only the keys that are actually set - `{}` if none are."""
     stored = _read_raw()
-    data.update({k: stored.get(k, v) for k, v in _DEFAULTS.items()})
+    data = {k: stored.get(k, "") or "" for k in _COOKIE_KEYS}
     if not (data["sessionid"] or data["csrftoken"]) and stored.get("cookie"):
         data.update(_split_cookie_header(stored["cookie"]))
 
-    # env fallbacks (useful for a first deploy before the settings page is used)
     if not (data["sessionid"] or data["csrftoken"]):
         env_sid = os.environ.get("STATSPLUS_SESSIONID", "")
         env_csrf = os.environ.get("STATSPLUS_CSRFTOKEN", "")
@@ -69,7 +68,7 @@ def load_settings() -> dict:
             data["csrftoken"] = clean_cookie_value(env_csrf, "csrftoken")
         elif os.environ.get("STATSPLUS_COOKIE"):
             data.update(_split_cookie_header(os.environ["STATSPLUS_COOKIE"]))
-    return data
+    return {k: v for k, v in data.items() if v}
 
 
 def _safe_normalize(value) -> str:
@@ -93,25 +92,9 @@ def legacy_league_config() -> dict:
     return {"league_url": league_url, "default_lid": stored.get("default_lid")}
 
 
-def update_settings(sessionid=None, csrftoken=None) -> dict:
-    current = load_settings()
-    if sessionid is not None and sessionid.strip():
-        current["sessionid"] = clean_cookie_value(sessionid, "sessionid")
-    if csrftoken is not None and csrftoken.strip():
-        current["csrftoken"] = clean_cookie_value(csrftoken, "csrftoken")
-    atomic_write_json(_path(), current)
-    return current
-
-
-def cookie_header(settings=None) -> str:
-    s = settings or load_settings()
+def cookie_header(source=None) -> str:
+    """`sessionid=…; csrftoken=…` built from a mapping - a `web/leagues.py`
+    league dict, or any dict carrying those keys. Empty string if neither is set."""
+    s = source or {}
     parts = [f"{k}={s[k]}" for k in _COOKIE_KEYS if s.get(k)]
     return "; ".join(parts)
-
-
-def public_settings(settings=None) -> dict:
-    s = settings or load_settings()
-    return {
-        "has_sessionid": bool(s.get("sessionid")),
-        "has_csrftoken": bool(s.get("csrftoken")),
-    }
