@@ -1005,7 +1005,9 @@ def _refresh_status(league_id: str) -> dict:
 
 def _set_refresh_progress(league_id: str, message: str) -> None:
     """Stash a human-readable progress line on the in-flight job so the polling
-    page can show what the refresh is doing right now."""
+    page can show what the refresh is doing right now, and echo it to stdout so
+    the same status shows up in the prod log stream."""
+    print(f"[league refresh {league_id}] {message}", flush=True)
     with _refresh_jobs_lock:
         job = _refresh_jobs.get(league_id)
         if job is not None and job.get("state") == "running":
@@ -1021,8 +1023,10 @@ def _run_league_refresh_thread(league_id: str) -> None:
     try:
         _refresh_league_snapshot_sync(league_id)
         state, error = "done", None
+        print(f"[league refresh {league_id}] done", flush=True)
     except Exception as exc:  # surface any failure to the poller
         state, error = "error", str(exc)
+        print(f"[league refresh {league_id}] error: {exc}", flush=True)
     with _refresh_jobs_lock:
         job = _refresh_jobs.get(league_id) or {}
         job.update(state=state, error=error, finished_at=_now_iso())
@@ -1043,6 +1047,7 @@ def start_league_refresh(league_id: str) -> dict:
             "error": None,
             "progress": "Contacting StatsPlus…",
         }
+    print(f"[league refresh {league_id}] Contacting StatsPlus…", flush=True)
 
     if not lg.get("league_url"):
         with _refresh_jobs_lock:
