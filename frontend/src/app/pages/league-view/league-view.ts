@@ -76,21 +76,30 @@ function defaultQuery(): RankedQuery {
             >Refreshed {{ s.fetchedAt | date: 'medium' }}</span
           >
         }
-      } @else if (!loading()) {
+      } @else if (!loading() && !refreshing()) {
         <span class="muted">No snapshot yet — pull one from StatsPlus.</span>
       }
-      <button class="primary" [disabled]="busy()" (click)="refresh()">
-        {{ busy() ? 'Refreshing…' : 'Refresh from StatsPlus' }}
+      <button class="primary" [disabled]="refreshing()" (click)="refresh()">
+        {{ refreshing() ? 'Refreshing…' : 'Refresh from StatsPlus' }}
       </button>
     </div>
 
     @if (notice()) { <p class="notice">{{ notice() }}</p> }
-    @if (busy() && !notice()) {
-      <p class="muted">
-        Pulling the whole player pool and ranking it — this takes a minute or two.
-      </p>
+
+    @if (refreshing()) {
+      <section class="refresh">
+        <span class="spin" aria-hidden="true"></span>
+        <div>
+          <p class="phase">{{ phase() ?? 'Refreshing from StatsPlus…' }}</p>
+          <p class="muted">
+            Pulling the whole player pool and ranking it — a minute or two. This
+            keeps running if you leave the page.
+          </p>
+        </div>
+      </section>
     }
-    @if (methodNotReady() && !busy()) {
+
+    @if (methodNotReady() && !refreshing()) {
       <p class="notice">
         The {{ methodLabel() }} model hasn't been run for this snapshot yet — it'll
         compute the first time you open it (about a minute).
@@ -98,7 +107,7 @@ function defaultQuery(): RankedQuery {
     }
     @if (error()) { <p class="error">{{ error() }}</p> }
 
-    @if (snapshot()) {
+    @if (snapshot() && !refreshing()) {
       <div class="controls">
         <div class="seg">
           @for (m of methods; track m.value) {
@@ -192,6 +201,29 @@ function defaultQuery(): RankedQuery {
     }
     .seg button:last-child { border-right: none; }
     .seg button.active { background: var(--accent); color: #fff; font-weight: 600; }
+    .refresh {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      margin: 12px 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg-elev, #f6f6f6);
+    }
+    .refresh .phase { margin: 0 0 4px; font-weight: 600; }
+    .refresh .muted { margin: 0; }
+    .spin {
+      flex: none;
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   `,
 })
 export class LeagueViewPage {
@@ -257,7 +289,13 @@ export class LeagueViewPage {
   protected readonly totalRecords = signal(0);
   protected readonly loading = signal(false);
   protected readonly loadingMore = signal(false);
-  protected readonly busy = signal(false);
+  /** A full snapshot refresh (manual or auto) is in flight. Distinct from
+   *  `loading`, which is just a ranked-player fetch (seconds). While this is set
+   *  the controls/table are hidden in favour of the progress panel. */
+  protected readonly refreshing = signal(false);
+  /** Live phase line for the in-flight refresh — the server's `progress` string
+   *  ("Reading ratings…", "Scoring the potential model — 1,200 of 5,400…"). */
+  protected readonly phase = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
 
@@ -294,10 +332,8 @@ export class LeagueViewPage {
     if (this.polling) return status;
     this.polling = true;
     if (status.state === 'running') {
-      this.busy.set(true);
-      if (!this.notice()) {
-        this.notice.set('Refreshing from StatsPlus — this takes a minute or two.');
-      }
+      this.refreshing.set(true);
+      this.phase.set(status.progress ?? 'Refreshing from StatsPlus…');
     }
     try {
       let failures = 0;
@@ -313,6 +349,9 @@ export class LeagueViewPage {
           // progress view — keep polling for a bit before giving up.
           if (++failures >= 6) throw e;
         }
+        if (status.state === 'running') {
+          this.phase.set(status.progress ?? this.phase());
+        }
       }
       if (this.destroyed) return status;
       if (status.state === 'error') {
@@ -325,7 +364,8 @@ export class LeagueViewPage {
       return status;
     } finally {
       this.polling = false;
-      if (!this.destroyed) this.busy.set(false);
+      this.phase.set(null);
+      if (!this.destroyed) this.refreshing.set(false);
     }
   }
 
@@ -512,8 +552,11 @@ export class LeagueViewPage {
 
   protected async refresh(): Promise<void> {
     const id = this.leagueId();
-    if (!id || this.busy()) return;
-    this.busy.set(true);
+    if (!id || this.refreshing()) return;
+    // Flip the UI into the progress state immediately, before the mutation
+    // round-trips — `trackRefresh` then keeps it set and clears it when done.
+    this.refreshing.set(true);
+    this.phase.set('Contacting StatsPlus…');
     this.error.set(null);
     this.notice.set(null);
     try {
@@ -522,7 +565,8 @@ export class LeagueViewPage {
       if (term.state === 'done') await this.load(id);
     } catch (e) {
       this.error.set((e as Error).message);
-      this.busy.set(false);
+      this.phase.set(null);
+      this.refreshing.set(false);
     }
   }
 }
