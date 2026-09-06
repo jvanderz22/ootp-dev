@@ -130,12 +130,27 @@ PITCH_COLUMNS = (
     "FBP", "SIP", "CTP", "CBP", "SLP", "CHP", "SPP", "FOP", "CCP", "SCP", "KNP", "KCP",
 )
 
-# integer level code -> level name. UNVERIFIED beyond "1 == MLB" and "0 ==
-# unaffiliated" (those rows have Team / Org / League / Level all 0 - free agents
-# and the amateur pool).
+# integer level code -> level name, from StatsPlus's documented `Level` table
+# (wiki.statsplus.net/web-tools/statsplus-api, "Reference tables"):
+#   1 ml · 2 aaa · 3 aa · 4 a · 5 short a · 6 rookie · 7 indy · 8 international
+#   10 college · 11 high school
+# OOTP has only one full-season "A" level (code 4 covers every A-ball league), so
+# there is no "A+". Code 0 is "no team" - a released pro shows here as a free
+# agent; the amateur pools are filtered out upstream (`_is_amateur`).
 LEVEL_NAMES = {
-    "0": "FA", "1": "MLB", "2": "AAA", "3": "AA", "4": "A+", "5": "A", "6": "A-",
+    "0": "FA", "1": "MLB", "2": "AAA", "3": "AA", "4": "A", "5": "A-",
+    "6": "R", "7": "Indy", "8": "INT", "10": "NCAA", "11": "HS",
 }
+
+# Level shown for a player StatsPlus flags as international-complex (negative
+# league id) - they carry their parent MLB club's id at level 1, so their raw
+# `Level` code would otherwise read "MLB".
+INTL_COMPLEX_LEVEL = "INT"
+
+# Display order for the `Lev` column, best (highest) level first. Values not
+# listed sort last, alphabetically. Shared by the web layer for the by-org team
+# picker and the level filter.
+LEVEL_ORDER = ["MLB", "AAA", "AA", "A", "A-", "R", "Indy", "INT", "NCAA", "HS", "FA"]
 
 # `G/F` bucketed from the numeric `GB` column: (exclusive-upper-bound, label),
 # then `GF_DEFAULT` above the last bound. Must resolve to one of the keys in
@@ -170,6 +185,19 @@ def _is_amateur(ply: dict, level_code: str) -> bool:
     )
     no_last_team = (ply.get("last_team_id") or "").strip() in ("", "0")
     return never_pro and no_last_team
+
+
+def _is_intl_complex(rat: dict, ply: dict) -> bool:
+    """StatsPlus flags an international-complex player with a NEGATIVE league id -
+    `League` in the ratings CSV, `League ID` in the players CSV (documented at
+    wiki.statsplus.net/web-tools/statsplus-api). These teenagers are carried on
+    the parent MLB club's id at level 1, so without this check they'd be scored
+    and grouped as big leaguers."""
+    for value in ((rat or {}).get("League"), (ply or {}).get("League ID")):
+        n = _int(value)
+        if n is not None and n < 0:
+            return True
+    return False
 
 
 def gf_from_gb(gb) -> str:
@@ -259,8 +287,11 @@ def _map_row(rat: dict, ply: dict, teams: dict) -> dict:
     row["BBT"] = "Normal"  # no API source; model default
     row["G/F"] = gf_from_gb(rat.get("GB"))
 
+    intl_complex = _is_intl_complex(rat, ply)
     level_code = ((ply.get("Level") if ply else "") or rat.get("LgLvl") or "").strip()
-    row["Lev"] = LEVEL_NAMES.get(level_code, "")
+    row["Lev"] = (
+        INTL_COMPLEX_LEVEL if intl_complex else LEVEL_NAMES.get(level_code, "")
+    )
 
     org_id = (
         (rat.get("Org") or "").strip()
@@ -286,11 +317,16 @@ def _map_row(rat: dict, ply: dict, teams: dict) -> dict:
     team_id = (
         (rat.get("Team") or "").strip() or (ply.get("Team ID") if ply else "") or ""
     ).strip()
-    # A non-MLB player whose "team" is actually a top-level club (an MLB parent,
-    # an independent league, a national team) isn't on a real affiliate roster -
-    # that's the international-complex / org-pool slot. Keep the org, drop the
-    # team so they don't show up on the big-league club in the by-team view.
-    if team_id and level_code != "1" and _is_top_level_team(team_id, teams):
+    # Keep the org but drop the roster team for a player who isn't actually on a
+    # real affiliate: either StatsPlus flags him as international-complex (carried
+    # on the parent MLB id at level 1), or his "team" is a top-level club (an MLB
+    # parent, an independent league, a national team) while he plays below the
+    # majors - the org-pool / complex slot. Otherwise he'd show up on the
+    # big-league club in the by-team view.
+    if team_id and (
+        intl_complex
+        or (level_code != "1" and _is_top_level_team(team_id, teams))
+    ):
         team_id = ""
     row["snap_team_id"] = team_id
     row["snap_org_id"] = org_id

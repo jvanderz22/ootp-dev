@@ -46,6 +46,9 @@ export interface LeagueTeam {
   id: string;
   name: string;
   parentTeamId: string | null;
+  /** playing level of this club in the snapshot (MLB, AAA, AA, A, A-, R); null
+   *  for an org row or a club with no ranked players */
+  level: string | null;
 }
 
 export interface LeagueFreshness {
@@ -166,6 +169,8 @@ export interface RankedQuery {
   batHands: string[];
   throwHands: string[];
   teams: string[];
+  /** live-league view only: keep only these playing levels (MLB, AAA, …) */
+  levels: string[];
   hideDrafted: boolean;
   numericFilters: NumericFilter[];
   sortField: string | null;

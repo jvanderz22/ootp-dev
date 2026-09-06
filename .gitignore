@@ -9,6 +9,7 @@ datasets/**/*.csv
 processed_data/*.csv
 processed_classes/**/*.csv
 processed_classes/**/*
+league_snapshots/
 web_config.json
 leagues.json
 

@@ -43,6 +43,9 @@ PLAYERS_HEADER = [
     "draft_eligible",
 ]
 
+# `League ID` is negative for a player in the international complex (see
+# `_is_intl_complex`); the default fixture rows use a positive placeholder.
+
 TEAMS_CSV = (
     "ID,Name,Nickname,Parent Team ID\n"
     "46,Milwaukee,Brewers,0\n"
@@ -71,7 +74,7 @@ def _ratings_row(**over):
 
 def _players_row(**over):
     row = {h: "0" for h in PLAYERS_HEADER}
-    row.update({"Age": "25", "bats": "1", "throws": "1", "Level": "1"})
+    row.update({"Age": "25", "bats": "1", "throws": "1", "Level": "1", "League ID": "153"})
     row.update(over)
     return row
 
@@ -149,8 +152,9 @@ def test_rename_and_value_maps(snapshot_csvs):
     assert (h["CON P"], h["POW P"]) == ("60", "70")
     assert (h["OF RNG"], h["OF ARM"]) == ("55", "60")
 
-    # level name comes from the /api/players/ integer code (4 -> A+)
-    assert h["Lev"] == "A+"
+    # level name comes from the /api/players/ integer code (4 -> A, per the
+    # documented StatsPlus Level table)
+    assert h["Lev"] == "A"
     assert p["Lev"] == "MLB"
 
     # org resolved through the teams map (ratings Org is already the parent id)
@@ -187,6 +191,26 @@ def test_international_complex_player_has_no_team():
     ratings = _csv(RATINGS_HEADER, [_ratings_row(ID="8", Name="Vet", Pos="1B", Team="46", Org="46")])
     players = _csv(PLAYERS_HEADER, [_players_row(ID="8", Level="1", **{"Team ID": "46"})])
     assert join_rows(ratings, players, TEAMS_CSV)[0]["snap_team_id"] == "46"
+
+
+def test_negative_league_id_marks_international_complex():
+    # StatsPlus carries international-complex teenagers on the parent MLB club's
+    # id at level 1, flagged only by a negative league id. They must not land on
+    # the big-league roster, and the level reads "INT" not "MLB".
+    ratings = _csv(RATINGS_HEADER, [
+        _ratings_row(ID="11", Name="Intl Complex Kid", Pos="SS", Team="46", Org="46",
+                     League="-153", LgLvl="1"),
+    ])
+    players = _csv(PLAYERS_HEADER, [
+        _players_row(ID="11", Level="1", **{"Team ID": "46", "Parent Team ID": "46",
+                                            "Organization ID": "46", "League ID": "-153"}),
+    ])
+    row = join_rows(ratings, players, TEAMS_CSV)[0]
+    assert row["Lev"] == "INT"
+    assert row["snap_org_id"] == "46"
+    assert row["snap_team_id"] == ""
+    # not an amateur pool - he's signed, so he still gets ranked
+    assert row["is_amateur"] == ""
 
 
 def test_national_team_is_not_an_org():

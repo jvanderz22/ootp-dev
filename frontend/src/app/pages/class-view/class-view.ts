@@ -22,6 +22,7 @@ function defaultQuery(): RankedQuery {
     batHands: [],
     throwHands: [],
     teams: [],
+    levels: [],
     hideDrafted: false,
     numericFilters: [],
     sortField: DEFAULT_SORT.modeled.field,

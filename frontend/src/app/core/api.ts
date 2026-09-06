@@ -65,6 +65,7 @@ function queryVars(name: string, q: RankedQuery, page: number, pageSize: number)
       batHands: q.batHands.length ? q.batHands : null,
       throwHands: q.throwHands.length ? q.throwHands : null,
       teams: q.teams.length ? q.teams : null,
+      levels: q.levels.length ? q.levels : null,
       hideDrafted: q.hideDrafted,
       numeric: numeric.length ? numeric : null,
     },
@@ -336,6 +337,7 @@ export class ApiService {
     snapshot: LeagueSnapshot | null;
     orgs: LeagueTeam[];
     teams: LeagueTeam[];
+    levels: string[];
     page: RankedPlayerPage;
   }> {
     try {
@@ -344,6 +346,7 @@ export class ApiService {
           leagueSnapshot: LeagueSnapshot | null;
           leagueOrgs: LeagueTeam[];
           leagueTeams: LeagueTeam[];
+          leagueLevels: string[];
           leagueSnapshotPlayers: RankedPlayerPage;
         }>({
           query: LEAGUE_VIEW_DETAIL,
@@ -355,6 +358,7 @@ export class ApiService {
         snapshot: res.data!.leagueSnapshot,
         orgs: res.data!.leagueOrgs,
         teams: res.data!.leagueTeams,
+        levels: res.data!.leagueLevels,
         page: res.data!.leagueSnapshotPlayers,
       };
     } catch (e) {

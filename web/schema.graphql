@@ -65,6 +65,8 @@ input RankedPlayerFilter {
   batHands: [String!]
   throwHands: [String!]
   teams: [String!]
+  "live-league snapshot only: keep only these playing levels (MLB, AAA, ...)"
+  levels: [String!]
   hideDrafted: Boolean
   numeric: [NumericFilter!]
 }
@@ -110,6 +112,8 @@ type LeagueTeam {
   id: ID!
   name: String!
   parentTeamId: ID
+  "playing level of this club in the snapshot (MLB, AAA, AA, A, A-, R); null for an org row or a club with no ranked players"
+  level: String
 }
 
 enum LeagueGroupBy {
@@ -142,6 +146,8 @@ type LeagueRefreshStatus {
   startedAt: String
   finishedAt: String
   error: String
+  "Human-readable line describing the current step, set only while `state` is `running`."
+  progress: String
   snapshot: LeagueSnapshot
 }
 
@@ -181,6 +187,8 @@ type Query {
   ): RankedPlayerPage!
   leagueOrgs(leagueId: ID!): [LeagueTeam!]!
   leagueTeams(leagueId: ID!): [LeagueTeam!]!
+  "Distinct playing levels present in the snapshot, ordered MLB-first - the level filter's options."
+  leagueLevels(leagueId: ID!): [String!]!
   "Status of the in-flight (or last) background refresh for this league."
   leagueRefreshStatus(leagueId: ID!): LeagueRefreshStatus!
 }

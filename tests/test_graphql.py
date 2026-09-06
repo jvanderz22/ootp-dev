@@ -316,14 +316,25 @@ def test_league_snapshot_queries(client):
     assert {o["name"] for o in orgs} == {"Milwaukee Brewers", "Pittsburgh Pirates"}
     assert all(o["parentTeamId"] is None for o in orgs)
 
-    teams = gql(client, 'query($l: ID!) { leagueTeams(leagueId: $l) { id name parentTeamId } }', l=lid)[
-        "leagueTeams"
-    ]
+    teams = gql(
+        client,
+        'query($l: ID!) { leagueTeams(leagueId: $l) { id name parentTeamId level } }',
+        l=lid,
+    )["leagueTeams"]
     # id 100 rosters on team 46, id 200 on affiliate 168 -> parent club 52 has
     # no direct roster, so it's absent from the team picker
     assert {t["name"] for t in teams} == {"Milwaukee Brewers", "Indianapolis Indians"}
     indy = next(t for t in teams if t["id"] == "168")
     assert indy["parentTeamId"] == "52"
+    # each roster team is tagged with its level, and the list is ordered MLB-first
+    assert [(t["name"], t["level"]) for t in teams] == [
+        ("Milwaukee Brewers", "MLB"),
+        ("Indianapolis Indians", "A"),
+    ]
+
+    # the level filter's option set: distinct levels in the snapshot, MLB-first
+    levels = gql(client, 'query($l: ID!) { leagueLevels(leagueId: $l) }', l=lid)["leagueLevels"]
+    assert levels == ["MLB", "A"]
 
     def players(method, **kw):
         q = (
@@ -348,7 +359,7 @@ def test_league_snapshot_queries(client):
     assert by_id["100"]["level"] == "MLB"
     assert by_id["200"]["org"] == "Pittsburgh Pirates"
     assert by_id["200"]["team"] == "Indianapolis Indians"
-    assert by_id["200"]["level"] == "A+"
+    assert by_id["200"]["level"] == "A"
 
     whole_potential = players("potential")
     assert whole_potential["totalRecords"] == 2
@@ -367,6 +378,17 @@ def test_league_snapshot_queries(client):
 
     empty = players("overall", g="ORG", gid="999")
     assert empty["totalRecords"] == 0
+
+    # level filter narrows the whole-league pool to the chosen playing levels
+    lvl_q = (
+        "query($l: ID!, $lv: [String!]) { leagueSnapshotPlayers(leagueId: $l,"
+        ' method: "overall", groupBy: LEAGUE, filter: { levels: $lv }, allRows: true)'
+        " { totalRecords rows { id level } } }"
+    )
+    only_a = gql(client, lvl_q, l=lid, lv=["A"])["leagueSnapshotPlayers"]
+    assert [r["id"] for r in only_a["rows"]] == ["200"]
+    both = gql(client, lvl_q, l=lid, lv=["MLB", "A"])["leagueSnapshotPlayers"]
+    assert {r["id"] for r in both["rows"]} == {"100", "200"}
 
 
 def test_league_players_no_selection_is_empty_and_skips_scoring(client):
@@ -435,7 +457,7 @@ def test_refresh_league_snapshot(client, monkeypatch):
 
     calls = {}
 
-    def fake_fetch_and_build(league, *, base_dir=None, cookie=None):
+    def fake_fetch_and_build(league, *, base_dir=None, cookie=None, on_phase=None):
         calls["league_id"] = league["id"]
         calls["cookie"] = cookie
         ctx = league_snapshot.LeagueSnapshotContext(league["id"])

@@ -31,6 +31,7 @@ import { PlayerDetailCardComponent } from './player-detail-card';
 import { PositionFilterComponent } from './position-filter';
 import { HandednessFilterComponent } from './handedness-filter';
 import { TeamFilterComponent } from './team-filter';
+import { LevelFilterComponent } from './level-filter';
 import { NumericFiltersComponent } from './numeric-filters';
 import { PlayerCompareComponent } from '../player-compare';
 
@@ -59,6 +60,7 @@ const COL_POP_MARGIN = 8;
     PositionFilterComponent,
     HandednessFilterComponent,
     TeamFilterComponent,
+    LevelFilterComponent,
     NumericFiltersComponent,
     PlayerCompareComponent,
   ],
@@ -73,6 +75,9 @@ export class RankedTableComponent {
   readonly positions = input.required<string[]>();
   /** Teams that drafted someone in this class — the Team filter's option set. */
   readonly teams = input<string[]>([]);
+  /** Playing levels present in the snapshot — the Level filter's option set
+   *  (live-league context only). */
+  readonly levels = input<string[]>([]);
   /** A from-scratch fetch (filter/sort/view/class change) is in flight. */
   readonly loading = input(false);
   /** An infinite-scroll append (the next batch) is in flight. */
@@ -107,6 +112,7 @@ export class RankedTableComponent {
   protected readonly batHandSel = signal<string[]>([]);
   protected readonly throwHandSel = signal<string[]>([]);
   protected readonly teamSel = signal<string[]>([]);
+  protected readonly levelSel = signal<string[]>([]);
   protected readonly hideDrafted = signal(false);
   protected readonly numericFilters = signal<NumericFilter[]>([]);
   protected readonly sortField = signal<string>(DEFAULT_SORT.modeled.field);
@@ -280,6 +286,11 @@ export class RankedTableComponent {
     this.emitQuery();
   }
 
+  protected onLevels(value: string[]): void {
+    this.levelSel.set(value);
+    this.emitQuery();
+  }
+
   protected onHideDrafted(value: boolean): void {
     this.hideDrafted.set(value);
     this.emitQuery();
@@ -366,8 +377,17 @@ export class RankedTableComponent {
     return c.field === 'draftedTeam';
   }
 
+  protected isLevelCol(c: ColumnDef): boolean {
+    return c.field === 'level';
+  }
+
   protected isColFilterable(c: ColumnDef): boolean {
-    return this.filterableFields.has(c.field) || this.isHandCol(c) || this.isTeamCol(c);
+    return (
+      this.filterableFields.has(c.field) ||
+      this.isHandCol(c) ||
+      this.isTeamCol(c) ||
+      (this.isLevelCol(c) && this.levels().length > 0)
+    );
   }
 
   /** Existing numeric bound (if any) on a column, for the hover panel prefill. */
@@ -382,6 +402,7 @@ export class RankedTableComponent {
     if (c.field === 'batHand') return this.batHandSel().length > 0;
     if (c.field === 'throwHand') return this.throwHandSel().length > 0;
     if (c.field === 'draftedTeam') return this.teamSel().length > 0;
+    if (c.field === 'level') return this.levelSel().length > 0;
     return !!this.colFilter(c);
   }
 
@@ -494,6 +515,8 @@ export class RankedTableComponent {
       this.onThrowHands([]);
     } else if (c?.field === 'draftedTeam') {
       this.onTeams([]);
+    } else if (c?.field === 'level') {
+      this.onLevels([]);
     } else if (c && this.colFilter(c)) {
       this.numericFilters.set(this.numericFilters().filter((f) => f.field !== c.field));
       this.emitQuery();
@@ -511,6 +534,7 @@ export class RankedTableComponent {
       batHands: this.batHandSel(),
       throwHands: this.throwHandSel(),
       teams: this.teamSel(),
+      levels: this.levelSel(),
       hideDrafted: this.hideDrafted(),
       numericFilters: this.numericFilters(),
       sortField: this.sortField(),
@@ -534,6 +558,7 @@ export class RankedTableComponent {
     this.batHandSel.set(q.batHands);
     this.throwHandSel.set(q.throwHands);
     this.teamSel.set(q.teams);
+    this.levelSel.set(q.levels);
     this.hideDrafted.set(q.hideDrafted);
     this.numericFilters.set(q.numericFilters);
     this.sortField.set(q.sortField ?? DEFAULT_SORT[q.view].field);
@@ -552,6 +577,7 @@ export class RankedTableComponent {
     this.batHandSel.set([]);
     this.throwHandSel.set([]);
     this.teamSel.set([]);
+    this.levelSel.set([]);
     this.hideDrafted.set(false);
     this.numericFilters.set([]);
     this.sortField.set(DEFAULT_SORT.modeled.field);

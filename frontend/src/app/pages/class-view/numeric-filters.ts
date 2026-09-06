@@ -16,6 +16,7 @@ import { NumericFilter } from '../../core/api.types';
 import { FILTERABLE_FIELDS, FilterableField } from '../../core/ranked-columns';
 import { HandednessFilterComponent } from './handedness-filter';
 import { TeamFilterComponent } from './team-filter';
+import { LevelFilterComponent } from './level-filter';
 
 const EMIT_DEBOUNCE_MS = 300;
 
@@ -29,7 +30,13 @@ const EMIT_DEBOUNCE_MS = 300;
  */
 @Component({
   selector: 'app-numeric-filters',
-  imports: [FormsModule, PopoverModule, HandednessFilterComponent, TeamFilterComponent],
+  imports: [
+    FormsModule,
+    PopoverModule,
+    HandednessFilterComponent,
+    TeamFilterComponent,
+    LevelFilterComponent,
+  ],
   template: `
     <button type="button" class="filter-btn" [class.active]="activeCount()" (click)="op.toggle($event)">
       Filters@if (activeCount()) { <span class="badge">{{ activeCount() }}</span> }
@@ -55,6 +62,14 @@ const EMIT_DEBOUNCE_MS = 300;
               [teams]="teams()"
               [value]="teamSel()"
               (valueChange)="teamsChange.emit($event)"
+            />
+          }
+          @if (levels().length) {
+            <app-level-filter
+              label="Level"
+              [levels]="levels()"
+              [value]="levelSel()"
+              (valueChange)="levelsChange.emit($event)"
             />
           }
         </div>
@@ -174,6 +189,12 @@ export class NumericFiltersComponent {
   readonly showTeams = input(false);
   readonly teamsChange = output<string[]>();
 
+  /** Playing-level facet + selection (live-league view only). An empty
+   *  `levels` list hides the control. */
+  readonly levels = input<string[]>([]);
+  readonly levelSel = input<string[]>([]);
+  readonly levelsChange = output<string[]>();
+
   protected readonly rows = signal<NumericFilter[]>([]);
 
   protected readonly groups = computed(() => {
@@ -191,7 +212,8 @@ export class NumericFiltersComponent {
       this.rows().filter((r) => r.field && (r.min != null || r.max != null)).length +
       (this.batHands().length ? 1 : 0) +
       (this.throwHands().length ? 1 : 0) +
-      (this.teamSel().length ? 1 : 0),
+      (this.teamSel().length ? 1 : 0) +
+      (this.levelSel().length ? 1 : 0),
   );
 
   private emitTimer: ReturnType<typeof setTimeout> | undefined;

@@ -462,8 +462,12 @@ def _filter_sort_page(rows, filter=None, sort=None, page=0, page_size=50, all_ro
     bat_set = set(f.get("bat_hands") or [])
     throw_set = set(f.get("throw_hands") or [])
     team_set = set(f.get("teams") or [])
+    level_set = set(f.get("levels") or [])
     hide_drafted = bool(f.get("hide_drafted"))
-    if search or pos_set or best_pos_set or bat_set or throw_set or team_set or hide_drafted:
+    if (
+        search or pos_set or best_pos_set or bat_set or throw_set
+        or team_set or level_set or hide_drafted
+    ):
         rows = [
             r
             for r in rows
@@ -473,6 +477,7 @@ def _filter_sort_page(rows, filter=None, sort=None, page=0, page_size=50, all_ro
             and (not bat_set or r["bat_hand"] in bat_set)
             and (not throw_set or r["throw_hand"] in throw_set)
             and (not team_set or r["drafted_team"] in team_set)
+            and (not level_set or r.get("level") in level_set)
             and (not hide_drafted or not r["drafted"])
         ]
 
@@ -761,13 +766,64 @@ def _snapshot_membership(ctx):
     return orgs, teams
 
 
+def _level_sort_key(level):
+    """(rank, label) so `Lev` values sort in `league_snapshot.LEVEL_ORDER`
+    (MLB, AAA, AA, ...) with anything unknown trailing alphabetically."""
+    order = {lv: i for i, lv in enumerate(league_snapshot.LEVEL_ORDER)}
+    return (order.get(level, len(order)), level or "")
+
+
+def _snapshot_team_levels(ctx) -> dict:
+    """`{team_id: level}` - the most common `Lev` among a roster team's players
+    in the snapshot. Drives the level label + ordering of the by-org team picker."""
+    counts = {}
+    try:
+        with open(ctx.data_file, newline="") as f:
+            for r in csv.DictReader(f):
+                tid = (r.get("snap_team_id") or "").strip()
+                lev = (r.get("Lev") or "").strip()
+                if tid and lev:
+                    counts.setdefault(tid, Counter())[lev] += 1
+    except FileNotFoundError:
+        pass
+    return {tid: c.most_common(1)[0][0] for tid, c in counts.items()}
+
+
 def list_league_teams(league_id: str) -> list:
+    """Roster teams that field a player in the snapshot, each tagged with its
+    playing level and ordered MLB -> AAA -> ... so the by-org picker reads
+    top-down."""
     _, ctx = _league_ctx(league_id)
     rows = _read_teams_csv(ctx)
     _, members = _snapshot_membership(ctx)
     if members:
         rows = [r for r in rows if r["ID"] in members]
-    return [_team_payload(r) for r in rows]
+    levels = _snapshot_team_levels(ctx)
+    out = []
+    for r in rows:
+        payload = _team_payload(r)
+        payload["level"] = levels.get(r["ID"])
+        out.append(payload)
+    out.sort(key=lambda t: (_level_sort_key(t.get("level")), t["name"]))
+    return out
+
+
+def list_league_levels(league_id: str) -> list:
+    """Distinct `Lev` values present in the snapshot's ranked pool, ordered
+    MLB-first - the option set for the level filter."""
+    _, ctx = _league_ctx(league_id)
+    present = set()
+    try:
+        with open(ctx.data_file, newline="") as f:
+            for r in csv.DictReader(f):
+                if r.get("is_amateur") == "1":
+                    continue
+                lev = (r.get("Lev") or "").strip()
+                if lev:
+                    present.add(lev)
+    except FileNotFoundError:
+        return []
+    return sorted(present, key=_level_sort_key)
 
 
 def list_league_orgs(league_id: str) -> list:

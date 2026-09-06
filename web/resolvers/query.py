@@ -105,6 +105,11 @@ async def resolve_league_teams(_, __, league_id):
     return await _off_loop(service.list_league_teams, league_id)
 
 
+@query.field("leagueLevels")
+async def resolve_league_levels(_, __, league_id):
+    return await _off_loop(service.list_league_levels, league_id)
+
+
 @query.field("leagueRefreshStatus")
 async def resolve_league_refresh_status(_, __, league_id):
     return await _off_loop(service.league_refresh_status, league_id)

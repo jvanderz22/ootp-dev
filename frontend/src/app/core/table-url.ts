@@ -13,6 +13,7 @@
  *   bats      comma-separated batting hands (Right | Left | Switch)
  *   throws    comma-separated throwing hands (Right | Left | Switch)
  *   team      comma-separated drafting teams
+ *   lvl       comma-separated playing levels (live-league view only)
  *   undrafted 1  — "hide drafted" is on
  *   sort      field, `-` prefix for descending (omitted at the view default)
  *   f         numeric filters: `field~min~max`, comma-separated, blank side = open
@@ -33,6 +34,7 @@ export function queryToParams(q: RankedQuery): Params {
   if (q.batHands.length) p['bats'] = q.batHands.join(',');
   if (q.throwHands.length) p['throws'] = q.throwHands.join(',');
   if (q.teams.length) p['team'] = q.teams.join(',');
+  if (q.levels.length) p['lvl'] = q.levels.join(',');
   if (q.hideDrafted) p['undrafted'] = '1';
 
   const dflt = DEFAULT_SORT[q.view];
@@ -88,6 +90,7 @@ export function paramsToQuery(pm: Readable): RankedQuery {
     batHands: (pm.get('bats') ?? '').split(',').filter(Boolean),
     throwHands: (pm.get('throws') ?? '').split(',').filter(Boolean),
     teams: (pm.get('team') ?? '').split(',').filter(Boolean),
+    levels: (pm.get('lvl') ?? '').split(',').filter(Boolean),
     hideDrafted: pm.get('undrafted') === '1',
     numericFilters,
     sortField,

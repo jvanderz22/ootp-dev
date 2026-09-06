@@ -173,6 +173,7 @@ const LEAGUE_TEAM_FIELDS = gql`
     id
     name
     parentTeamId
+    level
   }
 `;
 
@@ -209,6 +210,7 @@ export const LEAGUE_VIEW_DETAIL = gql`
     leagueTeams(leagueId: $leagueId) {
       ...LeagueTeamFields
     }
+    leagueLevels(leagueId: $leagueId)
     leagueSnapshotPlayers(
       leagueId: $leagueId
       method: $method

@@ -39,10 +39,13 @@
     [teams]="teams()"
     [teamSel]="teamSel()"
     [showTeams]="context() !== 'league' && view() === 'modeled'"
+    [levels]="context() === 'league' ? levels() : []"
+    [levelSel]="levelSel()"
     (valueChange)="onNumericFilters($event)"
     (batHandsChange)="onBatHands($event)"
     (throwHandsChange)="onThrowHands($event)"
     (teamsChange)="onTeams($event)"
+    (levelsChange)="onLevels($event)"
   />
 
   @if (context() !== 'league') {
@@ -238,6 +241,17 @@
         [teams]="teams()"
         [value]="teamSel()"
         (valueChange)="onTeams($event)"
+      />
+      @if (isColFiltered(c)) {
+        <div class="cqf-foot">
+          <button type="button" class="sm" (click)="clearColFilter()">Clear</button>
+        </div>
+      }
+    } @else if (isLevelCol(c)) {
+      <app-level-filter
+        [levels]="levels()"
+        [value]="levelSel()"
+        (valueChange)="onLevels($event)"
       />
       @if (isColFiltered(c)) {
         <div class="cqf-foot">

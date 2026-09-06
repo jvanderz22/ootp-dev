@@ -33,10 +33,12 @@ const METHODS: { label: string; value: Method }[] = [
   { label: 'Potential', value: 'potential' },
 ];
 
-const GROUPINGS: { label: string; value: LeagueGroupBy }[] = [
+/** Top-level grouping. "By org" carries a second dropdown (Full org / one of the
+ *  org's clubs); picking a club there fetches with `groupBy: TEAM` under the
+ *  hood, so there is no separate "By team" button. */
+const GROUPINGS: { label: string; value: 'LEAGUE' | 'ORG' }[] = [
   { label: 'Whole league', value: 'LEAGUE' },
   { label: 'By org', value: 'ORG' },
-  { label: 'By team', value: 'TEAM' },
 ];
 
 function defaultQuery(): RankedQuery {
@@ -48,6 +50,7 @@ function defaultQuery(): RankedQuery {
     batHands: [],
     throwHands: [],
     teams: [],
+    levels: [],
     hideDrafted: false,
     numericFilters: [],
     sortField: DEFAULT_SORT.modeled.field,
@@ -119,7 +122,7 @@ function defaultQuery(): RankedQuery {
           }
         </div>
 
-        @if (groupBy() === 'ORG' || groupBy() === 'TEAM') {
+        @if (groupBy() === 'ORG') {
           <select [value]="orgId() ?? ''" [disabled]="loading()"
             (change)="setOrg($any($event.target).value)">
             <option value="">Pick an org…</option>
@@ -128,29 +131,28 @@ function defaultQuery(): RankedQuery {
             }
           </select>
         }
-        @if (groupBy() === 'TEAM' && orgId()) {
+        @if (groupBy() === 'ORG' && orgId()) {
           <select [value]="teamId() ?? ''" [disabled]="loading()"
             (change)="setTeam($any($event.target).value)">
-            <option value="">Pick a team…</option>
+            <option value="">Full org</option>
             @for (t of orgTeams(); track t.id) {
-              <option [value]="t.id">{{ t.name }}</option>
+              <option [value]="t.id">
+                {{ t.name }}@if (t.level) { · {{ t.level }} }
+              </option>
             }
           </select>
         }
       </div>
 
-      @if (groupBy() !== 'LEAGUE' && !groupId()) {
-        <p class="muted">
-          @if (groupBy() === 'ORG') { Choose an org to see its players. }
-          @else if (!orgId()) { Choose an org, then a team. }
-          @else { Choose a team. }
-        </p>
+      @if (groupBy() === 'ORG' && !orgId()) {
+        <p class="muted">Choose an org to see its players.</p>
       } @else {
         <app-ranked-table
           [rows]="rows()"
           [totalRecords]="totalRecords()"
           [positions]="positionOptions"
           [teams]="[]"
+          [levels]="levels()"
           [context]="'league'"
           [loading]="loading()"
           [loadingMore]="loadingMore()"
@@ -208,23 +210,30 @@ export class LeagueViewPage {
   );
 
   protected readonly method = signal<Method>('potential');
-  protected readonly groupBy = signal<LeagueGroupBy>('ORG');
+  /** Top-level grouping the user picked: whole league, or by org. */
+  protected readonly groupBy = signal<'LEAGUE' | 'ORG'>('ORG');
   protected readonly orgId = signal<string | null>(null);
+  /** ORG mode only: a specific club within the org, or null for "Full org". */
   protected readonly teamId = signal<string | null>(null);
 
-  /** What actually goes to the API as `groupId`: the org in ORG mode, the team
-   *  in TEAM mode (which is scoped to a chosen org), nothing for whole-league. */
-  protected readonly groupId = computed(() =>
-    this.groupBy() === 'ORG'
-      ? this.orgId()
-      : this.groupBy() === 'TEAM'
-        ? this.teamId()
-        : null,
+  /** What the API is actually asked for. Picking a club inside an org fetches
+   *  with `groupBy: TEAM`; "Full org" stays `ORG`; whole-league is `LEAGUE`. */
+  protected readonly apiGroupBy = computed<LeagueGroupBy>(() =>
+    this.groupBy() === 'LEAGUE' ? 'LEAGUE' : this.teamId() ? 'TEAM' : 'ORG',
+  );
+  protected readonly apiGroupId = computed(() => {
+    if (this.groupBy() === 'LEAGUE') return null;
+    return this.teamId() ?? this.orgId();
+  });
+  /** Whether enough is selected to show a table (whole-league, or an org chosen). */
+  protected readonly hasSelection = computed(
+    () => this.groupBy() === 'LEAGUE' || !!this.orgId(),
   );
 
   protected readonly snapshot = signal<LeagueSnapshot | null>(null);
   protected readonly orgs = signal<LeagueTeam[]>([]);
   protected readonly teams = signal<LeagueTeam[]>([]);
+  protected readonly levels = signal<string[]>([]);
 
   /** Teams under the selected org. Affiliates carry their parent club directly
    *  as `parentTeamId`, so no extra request is needed to scope the picker. */
@@ -257,7 +266,8 @@ export class LeagueViewPage {
 
   protected readonly hasMore = computed(() => this.rows().length < this.totalRecords());
   protected readonly tableKey = computed(
-    () => `${this.leagueId()}:${this.method()}:${this.groupBy()}:${this.groupId() ?? ''}`,
+    () =>
+      `${this.leagueId()}:${this.method()}:${this.apiGroupBy()}:${this.apiGroupId() ?? ''}`,
   );
 
   private hydrated = false;
@@ -322,8 +332,7 @@ export class LeagueViewPage {
   private hydrateFromUrl(): void {
     const p = this.route.snapshot.queryParamMap;
     this.method.set(p.get('method') === 'overall' ? 'overall' : 'potential');
-    const g = p.get('group');
-    this.groupBy.set(g === 'TEAM' || g === 'LEAGUE' ? g : 'ORG');
+    this.groupBy.set(p.get('group') === 'LEAGUE' ? 'LEAGUE' : 'ORG');
     this.orgId.set(p.get('org') || null);
     this.teamId.set(p.get('team') || null);
     this.queryState.set(paramsToQuery(p));
@@ -335,8 +344,8 @@ export class LeagueViewPage {
       ...queryToParams(this.queryState()),
       method: this.method() === 'potential' ? null : 'overall',
       group: this.groupBy() === 'ORG' ? null : this.groupBy(),
-      org: this.orgId() || null,
-      team: this.groupBy() === 'TEAM' ? this.teamId() || null : null,
+      org: this.groupBy() === 'ORG' ? this.orgId() || null : null,
+      team: this.groupBy() === 'ORG' ? this.teamId() || null : null,
     };
     void this.router.navigate([], {
       relativeTo: this.route,
@@ -386,13 +395,15 @@ export class LeagueViewPage {
       const d = await this.api.leagueViewDetail(
         id,
         this.method(),
-        this.groupBy(),
-        this.groupId(),
+        this.apiGroupBy(),
+        this.apiGroupId(),
         this.queryState(),
       );
       this.snapshot.set(d.snapshot);
       this.orgs.set([...d.orgs].sort((a, b) => a.name.localeCompare(b.name)));
-      this.teams.set([...d.teams].sort((a, b) => a.name.localeCompare(b.name)));
+      // teams arrive already ordered by level (MLB → AAA → …) — keep that order.
+      this.teams.set(d.teams);
+      this.levels.set(d.levels);
       this.rows.set(d.page.rows);
       this.totalRecords.set(d.page.totalRecords);
       this.resetToken.update((v) => v + 1);
@@ -414,8 +425,8 @@ export class LeagueViewPage {
       const batch = await this.api.leagueSnapshotPlayersPage(
         this.leagueId(),
         this.method(),
-        this.groupBy(),
-        this.groupId(),
+        this.apiGroupBy(),
+        this.apiGroupId(),
         this.queryState(),
         0,
       );
@@ -443,8 +454,8 @@ export class LeagueViewPage {
       const batch = await this.api.leagueSnapshotPlayersPage(
         this.leagueId(),
         this.method(),
-        this.groupBy(),
-        this.groupId(),
+        this.apiGroupBy(),
+        this.apiGroupId(),
         this.queryState(),
         nextPage,
       );
@@ -475,27 +486,27 @@ export class LeagueViewPage {
     this.totalRecords.set(0);
   }
 
-  protected async setGroupBy(g: LeagueGroupBy): Promise<void> {
+  protected async setGroupBy(g: 'LEAGUE' | 'ORG'): Promise<void> {
     if (g === this.groupBy()) return;
     this.groupBy.set(g);
     this.syncUrl();
-    // LEAGUE needs no pick; ORG/TEAM wait for their selection before refetching
-    if (g === 'LEAGUE' || this.groupId()) await this.resetAndFetch();
+    // LEAGUE needs no pick; ORG waits for an org before refetching
+    if (this.hasSelection()) await this.resetAndFetch();
     else this.clearRows();
   }
 
   protected async setOrg(id: string): Promise<void> {
     this.orgId.set(id || null);
-    if (this.groupBy() === 'TEAM') this.teamId.set(null); // team list just changed
+    this.teamId.set(null); // the org's club list just changed — back to "Full org"
     this.syncUrl();
-    if (this.groupId()) await this.resetAndFetch();
+    if (this.hasSelection()) await this.resetAndFetch();
     else this.clearRows();
   }
 
   protected async setTeam(id: string): Promise<void> {
     this.teamId.set(id || null);
     this.syncUrl();
-    if (this.groupId()) await this.resetAndFetch();
+    if (this.hasSelection()) await this.resetAndFetch();
     else this.clearRows();
   }
 
