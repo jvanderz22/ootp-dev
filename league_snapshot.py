@@ -421,9 +421,14 @@ def snapshot_age(ctx: LeagueSnapshotContext):
     return datetime.now(timezone.utc) - when
 
 
-def fetch_and_build(league: dict, *, base_dir=None, cookie: str = None) -> LeagueSnapshotContext:
+def fetch_and_build(
+    league: dict, *, base_dir=None, cookie: str = None, on_phase=None
+) -> LeagueSnapshotContext:
     """Fetch the four endpoints for `league` (a `web/leagues.py` dict) and build
-    the stored snapshot. `cookie` defaults to the app-wide StatsPlus cookie."""
+    the stored snapshot. `cookie` defaults to the app-wide StatsPlus cookie.
+
+    `on_phase`, if given, is called with a short status string as each endpoint
+    is pulled - the league refresh streams these to the page."""
     if not league or not league.get("league_url"):
         raise ValueError("League has no StatsPlus URL configured.")
     if cookie is None:
@@ -431,15 +436,23 @@ def fetch_and_build(league: dict, *, base_dir=None, cookie: str = None) -> Leagu
 
         cookie = cookie_header(load_settings())
 
+    def _phase(msg):
+        if on_phase:
+            on_phase(msg)
+
     league_url = league["league_url"]
     league_date = None
     try:
         league_date = fetch_league_date(league_url, cookie)
     except StatsPlusError:
         pass  # non-fatal: the snapshot is still valid, just can't stamp the date
+    _phase("Reading ratings from StatsPlus…")
     ratings_csv = fetch_ratings(league_url, cookie)
+    _phase("Reading players from StatsPlus…")
     players_csv = fetch_players(league_url, cookie)
+    _phase("Reading team rosters from StatsPlus…")
     teams_csv = fetch_teams(league_url, cookie)
+    _phase("Building the snapshot…")
 
     ctx = LeagueSnapshotContext(
         league["id"], base_dir=base_dir or default_base_dir()
@@ -492,15 +505,17 @@ def _ranked_row(index: int, s) -> dict:
     }
 
 
-def _score_and_write(ctx: LeagueSnapshotContext, method: str, out_file: Path) -> list[dict]:
+def _score_and_write(
+    ctx: LeagueSnapshotContext, method: str, out_file: Path, progress=None
+) -> list[dict]:
     from scoring.model_cache import HEAVY_SCORING_LOCK
 
     with HEAVY_SCORING_LOCK:
-        return _score_and_write_locked(ctx, method, out_file)
+        return _score_and_write_locked(ctx, method, out_file, progress)
 
 
 def _score_and_write_locked(
-    ctx: LeagueSnapshotContext, method: str, out_file: Path
+    ctx: LeagueSnapshotContext, method: str, out_file: Path, progress=None
 ) -> list[dict]:
     ranker = get_ranker_for_method(method)
 
@@ -526,7 +541,9 @@ def _score_and_write_locked(
                     continue
                 yield GamePlayer(row)
 
-    scored = ranker.rank(_players(), batch_size=DEFAULT_BATCH_SIZE)
+    scored = ranker.rank(
+        _players(), batch_size=DEFAULT_BATCH_SIZE, progress=progress
+    )
     rows = [_ranked_row(i, s) for i, s in enumerate(scored)]
     out_file.parent.mkdir(parents=True, exist_ok=True)
     with open(out_file, "w", newline="") as f:
@@ -553,7 +570,7 @@ def ranked_method_is_fresh(ctx: LeagueSnapshotContext, method: str) -> bool:
         return False
 
 
-def _disk_rows(ctx: LeagueSnapshotContext, method: str) -> list[dict]:
+def _disk_rows(ctx: LeagueSnapshotContext, method: str, progress=None) -> list[dict]:
     """Read the cached `ranked_players.csv` if it is at least as new as the
     snapshot data file, otherwise re-score and rewrite it."""
     out_file = _ranked_file_for(ctx, method)
@@ -564,12 +581,17 @@ def _disk_rows(ctx: LeagueSnapshotContext, method: str) -> list[dict]:
         # but missing a column - re-score rather than serve the stale shape.
         if not rows or set(RANKED_PLAYER_FIELDNAMES) <= set(rows[0]):
             return rows
-    return _score_and_write(ctx, method, out_file)
+    return _score_and_write(ctx, method, out_file, progress)
 
 
-def ranked_rows(ctx: LeagueSnapshotContext, ranking_method: str) -> list[dict]:
+def ranked_rows(
+    ctx: LeagueSnapshotContext, ranking_method: str, progress=None
+) -> list[dict]:
     """Snapshot rows scored + ordered by `ranking_method` ("overall" or
-    "potential"), best-first, served from the process cache when warm."""
+    "potential"), best-first, served from the process cache when warm.
+
+    `progress`, if given, is forwarded to the ranker and called with the running
+    count of players scored - but only on a cache miss that actually re-scores."""
     if ranking_method not in LEAGUE_RANKING_METHODS:
         raise ValueError(
             f"League view supports {LEAGUE_RANKING_METHODS}, not {ranking_method!r}."
@@ -587,7 +609,7 @@ def ranked_rows(ctx: LeagueSnapshotContext, ranking_method: str) -> list[dict]:
             _ranked_cache.move_to_end(key)  # mark most-recently-used
             return cached["rows"]
 
-    rows = _disk_rows(ctx, ranking_method)
+    rows = _disk_rows(ctx, ranking_method, progress)
 
     with _ranked_cache_lock:
         _ranked_cache[key] = {"src_mtime": src_mtime, "rows": rows}

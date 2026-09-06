@@ -9,7 +9,7 @@ import re
 import shutil
 import tempfile
 import threading
-from collections import OrderedDict
+from collections import Counter, OrderedDict
 from datetime import datetime, timedelta, timezone
 
 import anyio
@@ -942,8 +942,18 @@ def _refresh_status(league_id: str) -> dict:
         "started_at": job.get("started_at"),
         "finished_at": job.get("finished_at"),
         "error": error,
+        "progress": job.get("progress") if state == "running" else None,
         "snapshot": league_snapshot_payload(league_id),
     }
+
+
+def _set_refresh_progress(league_id: str, message: str) -> None:
+    """Stash a human-readable progress line on the in-flight job so the polling
+    page can show what the refresh is doing right now."""
+    with _refresh_jobs_lock:
+        job = _refresh_jobs.get(league_id)
+        if job is not None and job.get("state") == "running":
+            job["progress"] = message
 
 
 def league_refresh_status(league_id: str) -> dict:
@@ -975,6 +985,7 @@ def start_league_refresh(league_id: str) -> dict:
             "started_at": _now_iso(),
             "finished_at": None,
             "error": None,
+            "progress": "Contacting StatsPlus…",
         }
 
     if not lg.get("league_url"):
@@ -999,21 +1010,42 @@ async def refresh_league_snapshot(league_id: str):
     return await anyio.to_thread.run_sync(start_league_refresh, league_id)
 
 
+_METHOD_LABELS = {"overall": "current", "potential": "potential"}
+
+
 def _refresh_league_snapshot_sync(league_id: str):
     lg, ctx = _league_ctx(league_id)
     if not lg.get("league_url"):
         raise InvalidInput(
             f"League {lg['name']!r} has no StatsPlus URL. Add one on the Settings page."
         )
-    league_snapshot.fetch_and_build(lg, cookie=cookie_header(load_settings()))
+
+    def _phase(msg):
+        _set_refresh_progress(league_id, msg)
+
+    league_snapshot.fetch_and_build(
+        lg, cookie=cookie_header(load_settings()), on_phase=_phase
+    )
     league_snapshot.evict_ranked_cache(league_id)
     _evict_league_payload_cache(league_id)
+    total = league_snapshot_payload(league_id).get("player_count") or 0
     # Score both rankings now, inside this background job, so the league overview
     # only ever reads ranked_players.csv from disk and never blocks a request on
     # a full model run.
-    for method in league_snapshot.LEAGUE_RANKING_METHODS:
+    methods = league_snapshot.LEAGUE_RANKING_METHODS
+    for i, method in enumerate(methods, 1):
+        label = _METHOD_LABELS.get(method, method)
+        step = f"model {i} of {len(methods)}"
+
+        def _progress(done, _label=label, _step=step):
+            pct = f" — {done:,} of {total:,}" if total else f" — {done:,}"
+            _set_refresh_progress(
+                league_id, f"Scoring the {_label} model ({_step}){pct} players"
+            )
+
+        _set_refresh_progress(league_id, f"Scoring the {label} model ({step})…")
         try:
-            league_snapshot.ranked_rows(ctx, method)
+            league_snapshot.ranked_rows(ctx, method, progress=_progress)
         except Exception:  # a transient scorer failure shouldn't fail the refresh
             pass
     return league_snapshot_payload(league_id)

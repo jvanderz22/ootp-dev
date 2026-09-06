@@ -29,6 +29,8 @@ export interface LeagueRefreshStatus {
   startedAt: string | null;
   finishedAt: string | null;
   error: string | null;
+  /** what the refresh is doing right now; set only while `state` is `running` */
+  progress: string | null;
   snapshot: LeagueSnapshot | null;
 }
 

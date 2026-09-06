@@ -266,6 +266,7 @@ const LEAGUE_REFRESH_STATUS_FIELDS = gql`
     startedAt
     finishedAt
     error
+    progress
     snapshot {
       ...LeagueSnapshotFields
     }

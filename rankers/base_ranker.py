@@ -55,7 +55,7 @@ class BaseRanker(ABC):
     def filter_players(self, players):
         return players
 
-    def rank(self, players, batch_size: int = DEFAULT_BATCH_SIZE):
+    def rank(self, players, batch_size: int = DEFAULT_BATCH_SIZE, progress=None):
         """Score `players` (a list or any iterable of GamePlayer) and return a
         list of ScoredPlayer sorted best-first, ranks applied.
 
@@ -65,11 +65,15 @@ class BaseRanker(ABC):
         single pass - behaviour is identical either way for rankers without
         rank-adjusted modifiers, and rank-adjusted modifiers still see the global
         rank because they run after every batch is scored.
+
+        `progress`, if given, is called with the running count of players scored
+        after each batch - the league refresh uses it to stream an evaluation
+        count to the page.
         """
         with runtime_components_scope() as store:
-            return self._rank_impl(players, batch_size, store)
+            return self._rank_impl(players, batch_size, store, progress)
 
-    def _rank_impl(self, players, batch_size, store):
+    def _rank_impl(self, players, batch_size, store, progress=None):
         results = []
         batch = []
         done = 0
@@ -79,9 +83,14 @@ class BaseRanker(ABC):
                 done += len(batch)
                 self._score_batch(batch, store, results)
                 print(f"Evaluated {done} players")
+                if progress:
+                    progress(done)
                 batch = []
         if batch:
+            done += len(batch)
             self._score_batch(batch, store, results)
+            if progress:
+                progress(done)
 
         results.sort(key=lambda r: r.raw_overall_score, reverse=True)
         for i, result in enumerate(results):
