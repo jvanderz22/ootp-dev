@@ -21,21 +21,13 @@
     (valueChange)="onPositions($event)"
   />
 
-  @if (view() !== 'pitching') {
-    <label class="best-pos-filter row">
-      <span>Best pos</span>
-      <app-position-filter
-        [positions]="fieldingPositions"
-        [value]="bestPosSel()"
-        (valueChange)="onBestPositions($event)"
-      />
-    </label>
-  }
-
   <app-numeric-filters
     [value]="numericFilters()"
     [batHands]="batHandSel()"
     [throwHands]="throwHandSel()"
+    [bestPositions]="fieldingPositions"
+    [bestPosSel]="bestPosSel()"
+    [showBestPos]="view() !== 'pitching'"
     [teams]="teams()"
     [teamSel]="teamSel()"
     [showTeams]="context() !== 'league' && view() === 'modeled'"
@@ -44,6 +36,7 @@
     (valueChange)="onNumericFilters($event)"
     (batHandsChange)="onBatHands($event)"
     (throwHandsChange)="onThrowHands($event)"
+    (bestPosChange)="onBestPositions($event)"
     (teamsChange)="onTeams($event)"
     (levelsChange)="onLevels($event)"
   />

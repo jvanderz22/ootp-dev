@@ -17,11 +17,13 @@ import { FILTERABLE_FIELDS, FilterableField } from '../../core/ranked-columns';
 import { HandednessFilterComponent } from './handedness-filter';
 import { TeamFilterComponent } from './team-filter';
 import { LevelFilterComponent } from './level-filter';
+import { BestPosFilterComponent } from './best-pos-filter';
 
 const EMIT_DEBOUNCE_MS = 300;
 
 /**
- * "Filters" dropdown: batting / throwing handedness and drafting team, plus any
+ * "Filters" dropdown: batting / throwing handedness, best position, drafting
+ * team and playing level, plus any
  * number of greater-than / less-than bounds on the table's sortable columns
  * (numeric ratings & scores, plus the graded-text and demand columns, compared
  * on their tier ordinal). Everything is AND-combined; the button shows how many
@@ -36,6 +38,7 @@ const EMIT_DEBOUNCE_MS = 300;
     HandednessFilterComponent,
     TeamFilterComponent,
     LevelFilterComponent,
+    BestPosFilterComponent,
   ],
   template: `
     <button type="button" class="filter-btn" [class.active]="activeCount()" (click)="op.toggle($event)">
@@ -56,6 +59,14 @@ const EMIT_DEBOUNCE_MS = 300;
             [value]="throwHands()"
             (valueChange)="throwHandsChange.emit($event)"
           />
+          @if (showBestPos()) {
+            <app-best-pos-filter
+              label="Best pos"
+              [positions]="bestPositions()"
+              [value]="bestPosSel()"
+              (valueChange)="bestPosChange.emit($event)"
+            />
+          }
           @if (showTeams() && teams().length) {
             <app-team-filter
               label="Team"
@@ -182,6 +193,13 @@ export class NumericFiltersComponent {
   readonly batHandsChange = output<string[]>();
   readonly throwHandsChange = output<string[]>();
 
+  /** Best-position facet + selection. `showBestPos` gates it to the views that
+   *  have a Best-pos column (modeled / batting, not pitching). */
+  readonly bestPositions = input<string[]>([]);
+  readonly bestPosSel = input<string[]>([]);
+  readonly showBestPos = input(false);
+  readonly bestPosChange = output<string[]>();
+
   /** Drafting-team facet + selection. `showTeams` gates the row to the view
    *  that actually has a Team column (modeled). */
   readonly teams = input<string[]>([]);
@@ -212,6 +230,7 @@ export class NumericFiltersComponent {
       this.rows().filter((r) => r.field && (r.min != null || r.max != null)).length +
       (this.batHands().length ? 1 : 0) +
       (this.throwHands().length ? 1 : 0) +
+      (this.bestPosSel().length ? 1 : 0) +
       (this.teamSel().length ? 1 : 0) +
       (this.levelSel().length ? 1 : 0),
   );
