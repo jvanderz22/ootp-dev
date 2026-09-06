@@ -26,5 +26,8 @@ class ScoredPlayer:
     reliever_component: float
 
     raw_overall_score: float
+    # the fielding position the model scores this player highest at (None for
+    # pitchers / anyone with no positive fielding score)
+    best_position: str = None
     overall_score: float = None
     components: dict = field(default_factory=dict)

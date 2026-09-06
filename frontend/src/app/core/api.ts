@@ -61,6 +61,7 @@ function queryVars(name: string, q: RankedQuery, page: number, pageSize: number)
     filter: {
       search: q.search.trim() || null,
       positions: q.positions.length ? q.positions : null,
+      bestPositions: q.bestPositions.length ? q.bestPositions : null,
       batHands: q.batHands.length ? q.batHands : null,
       throwHands: q.throwHands.length ? q.throwHands : null,
       teams: q.teams.length ? q.teams : null,

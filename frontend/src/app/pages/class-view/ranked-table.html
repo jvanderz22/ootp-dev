@@ -21,6 +21,17 @@
     (valueChange)="onPositions($event)"
   />
 
+  @if (view() !== 'pitching') {
+    <label class="best-pos-filter row">
+      <span>Best pos</span>
+      <app-position-filter
+        [positions]="fieldingPositions"
+        [value]="bestPosSel()"
+        (valueChange)="onBestPositions($event)"
+      />
+    </label>
+  }
+
   <app-numeric-filters
     [value]="numericFilters()"
     [batHands]="batHandSel()"

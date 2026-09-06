@@ -9,6 +9,7 @@
  *   view      modeled | batting | pitching   (omitted when modeled)
  *   q         search text
  *   pos       comma-separated positions
+ *   bpos      comma-separated best-fit positions
  *   bats      comma-separated batting hands (Right | Left | Switch)
  *   throws    comma-separated throwing hands (Right | Left | Switch)
  *   team      comma-separated drafting teams
@@ -28,6 +29,7 @@ export function queryToParams(q: RankedQuery): Params {
   if (q.view !== 'modeled') p['view'] = q.view;
   if (q.search.trim()) p['q'] = q.search.trim();
   if (q.positions.length) p['pos'] = q.positions.join(',');
+  if (q.bestPositions.length) p['bpos'] = q.bestPositions.join(',');
   if (q.batHands.length) p['bats'] = q.batHands.join(',');
   if (q.throwHands.length) p['throws'] = q.throwHands.join(',');
   if (q.teams.length) p['team'] = q.teams.join(',');
@@ -82,6 +84,7 @@ export function paramsToQuery(pm: Readable): RankedQuery {
     view,
     search: pm.get('q') ?? '',
     positions: (pm.get('pos') ?? '').split(',').filter(Boolean),
+    bestPositions: (pm.get('bpos') ?? '').split(',').filter(Boolean),
     batHands: (pm.get('bats') ?? '').split(',').filter(Boolean),
     throwHands: (pm.get('throws') ?? '').split(',').filter(Boolean),
     teams: (pm.get('team') ?? '').split(',').filter(Boolean),

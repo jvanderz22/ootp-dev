@@ -67,6 +67,8 @@ export interface RankedPlayer {
   id: string;
   name: string;
   position: string;
+  /** the model's best-fit fielding position; null for pitchers */
+  bestPosition: string | null;
   type: PlayerType;
   age: number | null;
   batHand: string | null;
@@ -158,6 +160,7 @@ export interface RankedQuery {
   view: ClassView;
   search: string;
   positions: string[];
+  bestPositions: string[];
   batHands: string[];
   throwHands: string[];
   teams: string[];

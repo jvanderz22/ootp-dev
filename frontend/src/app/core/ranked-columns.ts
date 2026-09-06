@@ -15,6 +15,10 @@ export const POSITION_ORDER = [
 
 export const PITCHER_POSITIONS = ['P', 'SP', 'RP', 'CL'];
 
+/** The eight positions the fielding models score — the option set for the
+ *  "Best Pos" filter (which is model-derived, so pitchers never appear). */
+export const FIELDING_POSITIONS = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF'];
+
 export type ColGroup =
   | 'Player'
   | 'Draft'
@@ -175,11 +179,21 @@ const DRAFT_COLUMNS: ColumnDef[] = [
   },
 ];
 
+/** The model's best-fit fielding position — a categorical value, filtered via a
+ *  dedicated position picker rather than a numeric bound. Sits in the Model
+ *  group in every view that carries it. */
+const BEST_POS_COLUMN: ColumnDef = {
+  field: 'bestPosition', header: 'Best Pos', title: 'Model best-fit position',
+  numeric: false, descFirst: false, group: 'Model', value: model('bestPosition'),
+  fmt: fmtText, wide: true,
+};
+
 const MODELED_COLUMNS: ColumnDef[] = [
   { field: 'positionPlayerScore', header: 'Batter', numeric: true, descFirst: true, group: 'Model', value: model('positionPlayerScore'), fmt: fmtNum2 },
   { field: 'pitcherScore', header: 'Pitcher', numeric: true, descFirst: true, group: 'Model', value: model('pitcherScore'), fmt: fmtNum2 },
   { field: 'battingScoreComponent', header: 'Batting', numeric: true, descFirst: true, group: 'Model', value: model('battingScoreComponent'), fmt: fmtNum2 },
   { field: 'fieldingScoreComponent', header: 'Fielding', numeric: true, descFirst: true, group: 'Model', value: model('fieldingScoreComponent'), fmt: fmtNum2 },
+  BEST_POS_COLUMN,
   { field: 'runningScoreComponent', header: 'Running', numeric: true, descFirst: true, group: 'Model', value: model('runningScoreComponent'), fmt: fmtNum2 },
   { field: 'starterComponent', header: 'SP', numeric: true, descFirst: true, group: 'Model', value: model('starterComponent'), fmt: fmtNum2 },
   { field: 'relieverComponent', header: 'RP', numeric: true, descFirst: true, group: 'Model', value: model('relieverComponent'), fmt: fmtNum2 },
@@ -193,6 +207,7 @@ const BATTING_COLUMNS: ColumnDef[] = [
   gradeCol('batting.gap', 'GAP', 'Gap', 'Batting', bat('gap')),
   gradeCol('batting.power', 'POW', 'Power', 'Batting', bat('power')),
   gradeCol('batting.eye', 'EYE', 'Eye', 'Batting', bat('eye')),
+  BEST_POS_COLUMN,
   gradeCol('fielding.ifRange', 'IFR', 'IF Range', 'Infield', field('ifRange')),
   gradeCol('fielding.ifArm', 'IFA', 'IF Arm', 'Infield', field('ifArm')),
   gradeCol('fielding.turnDp', 'DP', 'Turn DP', 'Infield', field('turnDp')),

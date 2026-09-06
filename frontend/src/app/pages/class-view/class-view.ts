@@ -18,6 +18,7 @@ function defaultQuery(): RankedQuery {
     view: 'modeled',
     search: '',
     positions: [],
+    bestPositions: [],
     batHands: [],
     throwHands: [],
     teams: [],

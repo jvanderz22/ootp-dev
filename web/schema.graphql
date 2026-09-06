@@ -27,6 +27,8 @@ type RankedPlayer {
   id: ID!
   name: String!
   position: String!
+  "the model's best-fit fielding position (null for pitchers)"
+  bestPosition: String
   type: String!
   age: Int
   batHand: String
@@ -59,6 +61,7 @@ type RankedPlayer {
 input RankedPlayerFilter {
   search: String
   positions: [String!]
+  bestPositions: [String!]
   batHands: [String!]
   throwHands: [String!]
   teams: [String!]

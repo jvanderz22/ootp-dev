@@ -20,6 +20,7 @@ import { ClassView, NumericFilter, RankedPlayerRow, RankedQuery } from '../../co
 import {
   ColumnDef,
   DEFAULT_SORT,
+  FIELDING_POSITIONS,
   FILTERABLE_FIELDS,
   VIEW_OPTIONS,
   groupSpans,
@@ -96,11 +97,13 @@ export class RankedTableComponent {
 
   protected readonly typeSeverity = typeSeverity;
   protected readonly viewOptions = VIEW_OPTIONS;
+  protected readonly fieldingPositions = FIELDING_POSITIONS;
 
   // ------------------------------------------------------------- table state
   protected readonly view = signal<ClassView>('modeled');
   protected readonly search = signal('');
   protected readonly positionSel = signal<string[]>([]);
+  protected readonly bestPosSel = signal<string[]>([]);
   protected readonly batHandSel = signal<string[]>([]);
   protected readonly throwHandSel = signal<string[]>([]);
   protected readonly teamSel = signal<string[]>([]);
@@ -254,6 +257,11 @@ export class RankedTableComponent {
 
   protected onPositions(value: string[]): void {
     this.positionSel.set(value);
+    this.emitQuery();
+  }
+
+  protected onBestPositions(value: string[]): void {
+    this.bestPosSel.set(value);
     this.emitQuery();
   }
 
@@ -499,6 +507,7 @@ export class RankedTableComponent {
       view: this.view(),
       search: this.search(),
       positions: this.positionSel(),
+      bestPositions: this.bestPosSel(),
       batHands: this.batHandSel(),
       throwHands: this.throwHandSel(),
       teams: this.teamSel(),
@@ -521,6 +530,7 @@ export class RankedTableComponent {
     this.view.set(q.view);
     this.search.set(q.search);
     this.positionSel.set(q.positions);
+    this.bestPosSel.set(q.bestPositions);
     this.batHandSel.set(q.batHands);
     this.throwHandSel.set(q.throwHands);
     this.teamSel.set(q.teams);
@@ -538,6 +548,7 @@ export class RankedTableComponent {
     this.view.set('modeled');
     this.search.set('');
     this.positionSel.set([]);
+    this.bestPosSel.set([]);
     this.batHandSel.set([]);
     this.throwHandSel.set([]);
     this.teamSel.set([]);

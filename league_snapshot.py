@@ -483,6 +483,7 @@ def _ranked_row(index: int, s) -> dict:
         "starter_component": s.starter_component,
         "reliever_component": s.reliever_component,
         "running_score_component": s.running_score_component,
+        "best_position": s.best_position or "",
         "in_game_overall": s.in_game_overall,
         "in_game_potential": s.in_game_potential,
         "demand": s.demand or "",
@@ -558,7 +559,11 @@ def _disk_rows(ctx: LeagueSnapshotContext, method: str) -> list[dict]:
     out_file = _ranked_file_for(ctx, method)
     if ranked_method_is_fresh(ctx, method):
         with open(out_file, newline="") as f:
-            return list(csv.DictReader(f))
+            rows = list(csv.DictReader(f))
+        # A ranked file written before a fieldname was added is "fresh" by mtime
+        # but missing a column - re-score rather than serve the stale shape.
+        if not rows or set(RANKED_PLAYER_FIELDNAMES) <= set(rows[0]):
+            return rows
     return _score_and_write(ctx, method, out_file)
 
 

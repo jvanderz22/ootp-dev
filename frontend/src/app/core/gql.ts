@@ -6,6 +6,7 @@ const PLAYER_FIELDS = gql`
     id
     name
     position
+    bestPosition
     type
     age
     batHand

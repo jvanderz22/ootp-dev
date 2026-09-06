@@ -229,6 +229,8 @@ def _player_payload(rank, row, drafted_info, game_player=None):
         "drafted_round_pick": _to_int(info.get("round_selection")) if info else None,
         "components": _parse_components(row.get("components")),
         "ratings": _ratings_payload(game_player),
+        # the model's best-fit fielding position; nulled for pitchers below
+        "best_position": row.get("best_position") or None,
         # populated only for live-league snapshot rows (see _league_built_rows)
         "org": None,
         "team": None,
@@ -239,6 +241,8 @@ def _player_payload(rank, row, drafted_info, game_player=None):
     payload["type"] = _classify(
         payload["position_player_score"], payload["pitcher_score"]
     )
+    if payload["type"] == "Pitcher":
+        payload["best_position"] = None
     return payload
 
 
@@ -454,16 +458,18 @@ def _filter_sort_page(rows, filter=None, sort=None, page=0, page_size=50, all_ro
     f = filter or {}
     search = (f.get("search") or "").strip().lower()
     pos_set = set(f.get("positions") or [])
+    best_pos_set = set(f.get("best_positions") or [])
     bat_set = set(f.get("bat_hands") or [])
     throw_set = set(f.get("throw_hands") or [])
     team_set = set(f.get("teams") or [])
     hide_drafted = bool(f.get("hide_drafted"))
-    if search or pos_set or bat_set or throw_set or team_set or hide_drafted:
+    if search or pos_set or best_pos_set or bat_set or throw_set or team_set or hide_drafted:
         rows = [
             r
             for r in rows
             if (not search or search in r["name"].lower())
             and (not pos_set or r["position"] in pos_set)
+            and (not best_pos_set or r.get("best_position") in best_pos_set)
             and (not bat_set or r["bat_hand"] in bat_set)
             and (not throw_set or r["throw_hand"] in throw_set)
             and (not team_set or r["drafted_team"] in team_set)
