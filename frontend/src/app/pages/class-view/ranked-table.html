@@ -112,8 +112,8 @@
             [class.col-filtered]="isColFiltered(c)"
             [attr.title]="c.title ?? null"
             (click)="onSort(c)"
-            (mouseenter)="onColEnter(c, $event)"
-            (mouseleave)="onColLeave()"
+            (pointerenter)="onColEnter(c, $event)"
+            (pointerleave)="onColLeave()"
           >
             {{ c.header }}
             @if (sortCaret(c); as caret) {

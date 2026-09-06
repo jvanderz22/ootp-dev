@@ -46,8 +46,11 @@ const NARROW_VIEWPORT_QUERY = '(max-width: 640px)';
  *  infinite-scroll batch fetch. */
 const SCROLL_LOAD_THRESHOLD_PX = 300;
 
-/** Hover-intent before the column-header quick filter opens. */
-const COL_POP_DELAY_MS = 400;
+/** Hover-intent before the column-header quick filter opens. Deliberately
+ *  unhurried — it's a power-user affordance, not something to surprise anyone
+ *  brushing past a header. Mouse hover only (see `onColEnter`); touch / pen
+ *  never open it. */
+const COL_POP_DELAY_MS = 800;
 /** Grace period after the pointer leaves the header / panel. */
 const COL_POP_CLOSE_MS = 220;
 /** Gap between the header edge and the panel, and min viewport margin. */
@@ -443,7 +446,10 @@ export class RankedTableComponent {
     else this.onThrowHands(value);
   }
 
-  protected onColEnter(c: ColumnDef, ev: MouseEvent): void {
+  protected onColEnter(c: ColumnDef, ev: PointerEvent): void {
+    // Genuine mouse hover only — a tap synthesises a `pointerenter` (and later a
+    // `mouseenter`) too, and we don't want the panel ambushing touch users.
+    if (ev.pointerType !== 'mouse') return;
     if (!this.isColFilterable(c)) return;
     const el = ev.currentTarget as HTMLElement;
     clearTimeout(this.colHideTimer);
