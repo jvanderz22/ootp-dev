@@ -58,10 +58,17 @@ LEAGUE_RANKING_METHODS = ("overall", "potential")
 OUTPUT_FIELDNAMES = list(dict.fromkeys(PLAYER_FIELDS.values()))
 UNSOURCED_FIELDS = {"DEM", "Sign", "AD"}
 
-# Non-OOTP bookkeeping columns kept alongside the scouting grid so the web layer
-# can group a snapshot by roster team / parent org. `GamePlayer` ignores columns
-# it doesn't know, so these are invisible to the rankers.
-SNAPSHOT_META_FIELDS = ["snap_team_id", "snap_org_id"]
+# Non-OOTP bookkeeping columns kept alongside the scouting grid, all sourced from
+# `/api/players/` and all invisible to the rankers (`GamePlayer` ignores columns
+# it doesn't know):
+#   snap_team_id / snap_org_id  - the web layer groups a snapshot by these
+#   mlb_service_years           - gates the potential ranking to < 1 year MLS
+#   is_amateur ("1" / "")       - the amateur draft class + international /
+#                                 undrafted amateur FA pool; excluded from BOTH
+#                                 rankings (see `_is_amateur`)
+SNAPSHOT_META_FIELDS = [
+    "snap_team_id", "snap_org_id", "mlb_service_years", "is_amateur",
+]
 SNAPSHOT_FIELDNAMES = OUTPUT_FIELDNAMES + SNAPSHOT_META_FIELDS
 
 
@@ -142,6 +149,27 @@ def _int(value, default=None):
         return int(str(value).strip())
     except (TypeError, ValueError):
         return default
+
+
+def _is_amateur(ply: dict, level_code: str) -> bool:
+    """Whether a player is in an amateur pool - the upcoming Rule 4 draft class or
+    the international / undrafted amateur FA pool - rather than a real free agent.
+
+    Both amateur pools sit at level 0 with no team, no org, and no history of
+    affiliated ball; a genuine free agent (a released pro) carries pro service
+    time or a `last_team_id`. `draft_eligible == 1` is the draft class exactly and
+    is a strict subset of this; the rest are the international / undrafted pool.
+    """
+    if not ply or (level_code or "").strip() not in ("", "0"):
+        return False
+    if (ply.get("draft_eligible") or "").strip() == "1":
+        return True
+    never_pro = (
+        _int(ply.get("pro_service_years"), 0) == 0
+        and _int(ply.get("pro_service_days"), 0) == 0
+    )
+    no_last_team = (ply.get("last_team_id") or "").strip() in ("", "0")
+    return never_pro and no_last_team
 
 
 def gf_from_gb(gb) -> str:
@@ -266,6 +294,13 @@ def _map_row(rat: dict, ply: dict, teams: dict) -> dict:
         team_id = ""
     row["snap_team_id"] = team_id
     row["snap_org_id"] = org_id
+    # `/api/players/` reports MLB service as a floored whole-year count plus
+    # leftover days; the potential ranking only wants players under a year, i.e.
+    # `mlb_service_years == 0`. Missing players row (unjoined id) -> treat as 0.
+    row["mlb_service_years"] = (
+        (ply.get("mlb_service_years") if ply else "") or ""
+    ).strip()
+    row["is_amateur"] = "1" if _is_amateur(ply, level_code) else ""
     return row
 
 
@@ -339,13 +374,19 @@ def build_snapshot(
         writer.writerows(rows)
     ctx.teams_file.write_text(teams_csv)
     now = datetime.now(timezone.utc).isoformat()
+    # `player_count` is the number the league page shows and is the count the
+    # rankings actually work from: the amateur pools (draft class + international
+    # / undrafted amateur FAs) are excluded from every ranking, so they don't
+    # count as players here either. `total_row_count` keeps the raw snapshot size.
+    ranked_pool = sum(1 for r in rows if r.get("is_amateur") != "1")
     atomic_write_json(
         ctx.meta_file,
         {
             "league_id": ctx.league_id,
             "fetched_at": now,
             "last_checked_at": now,
-            "player_count": len(rows),
+            "player_count": ranked_pool,
+            "total_row_count": len(rows),
             "league_date": league_date,
         },
     )
@@ -462,11 +503,26 @@ def _score_and_write_locked(
 ) -> list[dict]:
     ranker = get_ranker_for_method(method)
 
+    # The potential ranking is about players who haven't established themselves in
+    # the majors yet, so it only scores players with under a year of MLB service
+    # time (an OOTP service year is 172 days; `mlb_service_years` is already the
+    # floored whole-year count, so "< 1 year" is exactly 0 / blank). The `overall`
+    # ranking - and the draft-class pipeline, which carries no service-time
+    # column - are unaffected.
+    rookies_only = method == "potential"
+
     def _players():
         # Stream GamePlayers straight off disk so the batched ranker never holds
         # the whole ~15k-player pool in memory at once.
         with open(ctx.data_file, newline="") as f:
             for row in csv.DictReader(f):
+                # Amateur pools (draft class + international / undrafted amateur
+                # FAs) are not real rostered players - drop them from every
+                # ranking, not just the potential one.
+                if row.get("is_amateur") == "1":
+                    continue
+                if rookies_only and _int(row.get("mlb_service_years"), 0) >= 1:
+                    continue
                 yield GamePlayer(row)
 
     scored = ranker.rank(_players(), batch_size=DEFAULT_BATCH_SIZE)

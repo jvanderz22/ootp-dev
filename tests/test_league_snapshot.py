@@ -39,6 +39,8 @@ RATINGS_HEADER = (
 PLAYERS_HEADER = [
     "ID", "First Name", "Last Name", "Team ID", "Parent Team ID", "Level", "Pos",
     "Role", "Age", "Organization ID", "League ID", "bats", "throws",
+    "mlb_service_years", "pro_service_years", "pro_service_days", "last_team_id",
+    "draft_eligible",
 ]
 
 TEAMS_CSV = (
@@ -270,6 +272,81 @@ def test_ranked_rows_shape_and_order(built_ctx, method):
     assert [int(r["overall_ranking"]) for r in rows] == list(range(len(rows)))
     # snapshot has no demand source
     assert all(r["demand"] == "" for r in rows)
+
+
+def test_potential_ranking_excludes_established_mlb_players(tmp_path, snapshot_csvs):
+    """`mlb_service_years >= 1` drops a player from the potential ranking only -
+    the overall ranking still scores everyone."""
+    league_snapshot.evict_ranked_cache()
+    ratings, _players, teams = snapshot_csvs
+    players = _csv(PLAYERS_HEADER, [
+        _players_row(ID="100", Level="1", **{"mlb_service_years": "6"}),   # vet
+        _players_row(ID="200", Level="4", **{"mlb_service_years": "0"}),   # rookie
+    ])
+    ctx = LeagueSnapshotContext("svc", base_dir=tmp_path)
+    build_snapshot(ctx, ratings, players, teams)
+
+    assert {r["id"] for r in ranked_rows(ctx, "overall")} == {"100", "200"}
+    assert [r["id"] for r in ranked_rows(ctx, "potential")] == ["200"]
+    league_snapshot.evict_ranked_cache()
+
+
+def test_amateur_pools_flagged_on_join(snapshot_csvs):
+    ratings, _p, teams = snapshot_csvs
+    players = _csv(PLAYERS_HEADER, [
+        # draft class: draft_eligible flag, level 0, no history
+        _players_row(ID="100", Level="0", **{"draft_eligible": "1", "last_team_id": "0"}),
+        # int'l / undrafted amateur FA: not draft eligible but never signed
+        _players_row(ID="200", Level="0", **{
+            "draft_eligible": "0", "pro_service_years": "0",
+            "pro_service_days": "0", "last_team_id": "0",
+        }),
+    ])
+    rows = {r["ID"]: r for r in join_rows(ratings, players, teams)}
+    assert rows["100"]["is_amateur"] == "1"
+    assert rows["200"]["is_amateur"] == "1"
+
+
+def test_released_free_agent_is_not_flagged_amateur(snapshot_csvs):
+    ratings, _p, teams = snapshot_csvs
+    players = _csv(PLAYERS_HEADER, [
+        # level 0 but a former pro (service time + a last team) -> a real FA
+        _players_row(ID="100", Level="0", **{
+            "draft_eligible": "0", "pro_service_years": "8", "last_team_id": "46",
+        }),
+    ])
+    row = join_rows(ratings, players, teams)[0]
+    assert row["is_amateur"] == ""
+
+
+def test_rankings_exclude_amateur_pools(tmp_path, snapshot_csvs):
+    """Draft-class and amateur-FA players are dropped from BOTH rankings."""
+    league_snapshot.evict_ranked_cache()
+    ratings, _p, teams = snapshot_csvs
+    players = _csv(PLAYERS_HEADER, [
+        _players_row(ID="100", Level="0", **{"draft_eligible": "1"}),          # draft class
+        _players_row(ID="200", Level="4", **{"last_team_id": "168"}),          # real prospect
+    ])
+    ctx = LeagueSnapshotContext("amateurs", base_dir=tmp_path)
+    build_snapshot(ctx, ratings, players, teams)
+
+    for method in ("overall", "potential"):
+        assert [r["id"] for r in ranked_rows(ctx, method)] == ["200"]
+    league_snapshot.evict_ranked_cache()
+
+
+def test_player_count_excludes_amateurs(tmp_path, snapshot_csvs):
+    ratings, _p, teams = snapshot_csvs
+    players = _csv(PLAYERS_HEADER, [
+        _players_row(ID="100", Level="0", **{"draft_eligible": "1"}),   # amateur
+        _players_row(ID="200", Level="4", **{"last_team_id": "168"}),   # real player
+    ])
+    ctx = LeagueSnapshotContext("count", base_dir=tmp_path)
+    build_snapshot(ctx, ratings, players, teams)
+
+    meta = ctx.load_meta()
+    assert meta["player_count"] == 1        # the amateur doesn't count
+    assert meta["total_row_count"] == 2     # raw snapshot size still recorded
 
 
 def test_ranked_rows_rejects_draft_class_method(built_ctx):
