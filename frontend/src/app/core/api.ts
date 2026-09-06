@@ -10,6 +10,7 @@ import {
   DELETE_LEAGUE,
   CHECK_LEAGUE_SNAPSHOT_FRESHNESS,
   DRAFT_CLASSES,
+  LEAGUE_ORG_RANKINGS,
   LEAGUE_REFRESH_STATUS,
   LEAGUE_SNAPSHOT,
   LEAGUE_SNAPSHOT_PLAYERS,
@@ -36,6 +37,7 @@ import {
   LeagueRefreshStatus,
   LeagueSnapshot,
   LeagueTeam,
+  OrgProspectSummary,
   RANKED_PAGE_SIZE,
   RankedPlayer,
   RankedPlayerPage,
@@ -358,6 +360,23 @@ export class ApiService {
         levels: res.data!.leagueLevels,
         page: res.data!.leagueSnapshotPlayers,
       };
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  /** Farm systems ranked against each other by the potential model, best first.
+   *  Backs the System Rankings page. */
+  async leagueOrgRankings(leagueId: string): Promise<OrgProspectSummary[]> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.query<{ leagueOrgRankings: OrgProspectSummary[] }>({
+          query: LEAGUE_ORG_RANKINGS,
+          variables: { leagueId },
+          fetchPolicy: 'network-only',
+        }),
+      );
+      return res.data!.leagueOrgRankings;
     } catch (e) {
       unwrap(e);
     }

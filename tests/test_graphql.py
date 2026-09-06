@@ -425,6 +425,50 @@ def test_league_players_no_selection_is_empty_and_skips_scoring(client):
     assert ready == []
 
 
+def test_league_org_rankings(client):
+    lid = gql(client, 'mutation { createLeague(name: "YFo", leagueUrl: "yfmlb") { id } }')[
+        "createLeague"
+    ]["id"]
+    _seed_snapshot(lid)
+
+    # no snapshot -> empty (a different league that was never seeded)
+    other = gql(client, 'mutation { createLeague(name: "None", leagueUrl: "wbf") { id } }')[
+        "createLeague"
+    ]["id"]
+    assert gql(
+        client,
+        "query($l: ID!) { leagueOrgRankings(leagueId: $l) { orgId } }",
+        l=other,
+    )["leagueOrgRankings"] == []
+
+    q = (
+        "query($l: ID!) { leagueOrgRankings(leagueId: $l) {"
+        " orgId orgName orgScore prospectCount top10 top50 top100 top250 top500"
+        " topProspects { id rank modelScore } } }"
+    )
+    rows = gql(client, q, l=lid)["leagueOrgRankings"]
+
+    # the fixture has one prospect per org (both under a year of MLB service)
+    assert {r["orgName"] for r in rows} == {"Milwaukee Brewers", "Pittsburgh Pirates"}
+    assert [r["orgScore"] for r in rows] == sorted(
+        (r["orgScore"] for r in rows), reverse=True
+    )
+    for r in rows:
+        assert r["prospectCount"] == 1
+        assert len(r["topProspects"]) == 1
+        assert r["topProspects"][0]["modelScore"] is not None
+        # tier counts never exceed the org's prospect count
+        assert r["top500"] <= r["prospectCount"]
+
+    # scoring potential here also marks it ready on the snapshot
+    ready = gql(
+        client,
+        'query($l: ID!) { leagueSnapshot(leagueId: $l) { rankedMethods } }',
+        l=lid,
+    )["leagueSnapshot"]["rankedMethods"]
+    assert "potential" in ready
+
+
 def test_league_snapshot_players_rejects_bad_method(client):
     lid = gql(client, 'mutation { createLeague(name: "YF2", leagueUrl: "yfmlb") { id } }')[
         "createLeague"

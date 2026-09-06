@@ -1,6 +1,5 @@
 import {
   Component,
-  DestroyRef,
   computed,
   effect,
   inject,
@@ -8,15 +7,13 @@ import {
   untracked,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 
 import { ApiService } from '../../core/api';
+import { LeagueSnapshotStore } from '../../core/league-snapshot-store';
 import {
   LeagueGroupBy,
-  LeagueRefreshStatus,
-  LeagueSnapshot,
   LeagueTeam,
   RANKED_PAGE_SIZE,
   RankedPlayer,
@@ -64,42 +61,17 @@ function defaultQuery(): RankedQuery {
  * roster team. Fetch/filter/sort/infinite-scroll mirror `class-view.ts`, against
  * `leagueSnapshotPlayers` instead of `rankedPlayers`, and it reuses the
  * class-view ranked table unchanged.
+ *
+ * Snapshot freshness, the manual refresh, and the progress panel live on the
+ * shared `LeagueSnapshotStore` (rendered by `league-shell`); this page just
+ * reads `store.snapshot()` / `store.refreshing()` and reloads when the snapshot
+ * changes under it (e.g. after a refresh).
  */
 @Component({
   selector: 'app-league-view',
-  imports: [DatePipe, RankedTableComponent],
+  imports: [RankedTableComponent],
   template: `
-    <div class="bar">
-      @if (snapshot(); as s) {
-        @if (s.fetchedAt) {
-          <span class="muted" [title]="s.playerCount + ' players'"
-            >Refreshed {{ s.fetchedAt | date: 'medium' }}</span
-          >
-        }
-      } @else if (!loading() && !refreshing()) {
-        <span class="muted">No snapshot yet — pull one from StatsPlus.</span>
-      }
-      <button class="primary" [disabled]="refreshing()" (click)="refresh()">
-        {{ refreshing() ? 'Refreshing…' : 'Refresh from StatsPlus' }}
-      </button>
-    </div>
-
-    @if (notice()) { <p class="notice">{{ notice() }}</p> }
-
-    @if (refreshing()) {
-      <section class="refresh">
-        <span class="spin" aria-hidden="true"></span>
-        <div>
-          <p class="phase">{{ phase() ?? 'Refreshing from StatsPlus…' }}</p>
-          <p class="muted">
-            Pulling the whole player pool and ranking it — a minute or two. This
-            keeps running if you leave the page.
-          </p>
-        </div>
-      </section>
-    }
-
-    @if (methodNotReady() && !refreshing()) {
+    @if (methodNotReady() && !store.refreshing()) {
       <p class="notice">
         The {{ methodLabel() }} model hasn't been run for this snapshot yet — it'll
         compute the first time you open it (about a minute).
@@ -107,7 +79,7 @@ function defaultQuery(): RankedQuery {
     }
     @if (error()) { <p class="error">{{ error() }}</p> }
 
-    @if (snapshot() && !refreshing()) {
+    @if (store.snapshot() && !store.refreshing()) {
       <div class="controls">
         <div class="seg">
           @for (m of methods; track m.value) {
@@ -176,12 +148,6 @@ function defaultQuery(): RankedQuery {
     }
   `,
   styles: `
-    .bar {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 10px;
-    }
     .controls {
       display: flex;
       flex-wrap: wrap;
@@ -201,36 +167,14 @@ function defaultQuery(): RankedQuery {
     }
     .seg button:last-child { border-right: none; }
     .seg button.active { background: var(--accent); color: #fff; font-weight: 600; }
-    .refresh {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      padding: 14px 16px;
-      margin: 12px 0;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--bg-elev, #f6f6f6);
-    }
-    .refresh .phase { margin: 0 0 4px; font-weight: 600; }
-    .refresh .muted { margin: 0; }
-    .spin {
-      flex: none;
-      width: 16px;
-      height: 16px;
-      margin-top: 2px;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .notice { color: var(--ok); }
   `,
 })
 export class LeagueViewPage {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly destroyRef = inject(DestroyRef);
+  protected readonly store = inject(LeagueSnapshotStore);
 
   protected readonly methods = METHODS;
   protected readonly groupings = GROUPINGS;
@@ -262,7 +206,6 @@ export class LeagueViewPage {
     () => this.groupBy() === 'LEAGUE' || !!this.orgId(),
   );
 
-  protected readonly snapshot = signal<LeagueSnapshot | null>(null);
   protected readonly orgs = signal<LeagueTeam[]>([]);
   protected readonly teams = signal<LeagueTeam[]>([]);
   protected readonly levels = signal<string[]>([]);
@@ -277,10 +220,9 @@ export class LeagueViewPage {
 
   /** The chosen ranking's model hasn't been scored for this snapshot yet — the
    *  first open will compute it (a minute or so). */
-  protected readonly methodNotReady = computed(() => {
-    const s = this.snapshot();
-    return !!s && !s.rankedMethods.includes(this.method());
-  });
+  protected readonly methodNotReady = computed(
+    () => !this.store.methodReady(this.method()),
+  );
   protected readonly methodLabel = computed(
     () => METHODS.find((m) => m.value === this.method())?.label ?? '',
   );
@@ -289,15 +231,7 @@ export class LeagueViewPage {
   protected readonly totalRecords = signal(0);
   protected readonly loading = signal(false);
   protected readonly loadingMore = signal(false);
-  /** A full snapshot refresh (manual or auto) is in flight. Distinct from
-   *  `loading`, which is just a ranked-player fetch (seconds). While this is set
-   *  the controls/table are hidden in favour of the progress panel. */
-  protected readonly refreshing = signal(false);
-  /** Live phase line for the in-flight refresh — the server's `progress` string
-   *  ("Reading ratings…", "Scoring the potential model — 1,200 of 5,400…"). */
-  protected readonly phase = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
-  protected readonly notice = signal<string | null>(null);
 
   protected readonly queryState = signal<RankedQuery>(defaultQuery());
   protected readonly resetToken = signal(0);
@@ -309,71 +243,27 @@ export class LeagueViewPage {
   );
 
   private hydrated = false;
-  private destroyed = false;
-  /** guards against two poll loops running at once (manual refresh + re-attach) */
-  private polling = false;
+  /** `fetchedAt` of the snapshot the current rows were loaded against — so a
+   *  refresh landing under us triggers exactly one reload, not a loop. */
+  private loadedFetchedAt: string | null | undefined = undefined;
 
   constructor() {
-    this.destroyRef.onDestroy(() => (this.destroyed = true));
     effect(() => {
       const id = this.leagueId();
       if (id) untracked(() => void this.load(id));
     });
-  }
-
-  /** Follow a background refresh to completion: show the progress state, poll
-   *  `leagueRefreshStatus` every few seconds, and settle `snapshot` / `error`
-   *  when it finishes. Safe to call from a fresh navigation (re-attach) or right
-   *  after kicking one off. Returns the terminal status. */
-  private async trackRefresh(
-    id: string,
-    status: LeagueRefreshStatus,
-  ): Promise<LeagueRefreshStatus> {
-    if (this.polling) return status;
-    this.polling = true;
-    if (status.state === 'running') {
-      this.refreshing.set(true);
-      this.phase.set(status.progress ?? 'Refreshing from StatsPlus…');
-    }
-    try {
-      let failures = 0;
-      while (status.state === 'running' && !this.destroyed) {
-        await new Promise((r) => setTimeout(r, 2500));
-        if (this.destroyed) return status;
-        try {
-          // Each poll is also what keeps the Fly machine awake during the job.
-          status = await this.api.leagueRefreshStatus(id);
-          failures = 0;
-        } catch (e) {
-          // A blip (the machine autostopping/restarting) shouldn't abort the
-          // progress view — keep polling for a bit before giving up.
-          if (++failures >= 6) throw e;
-        }
-        if (status.state === 'running') {
-          this.phase.set(status.progress ?? this.phase());
-        }
-      }
-      if (this.destroyed) return status;
-      if (status.state === 'error') {
-        this.error.set(status.error ?? 'Refresh from StatsPlus failed.');
-        this.notice.set(null);
-      } else if (status.state === 'done') {
-        this.snapshot.set(status.snapshot);
-        this.notice.set(null);
-      }
-      return status;
-    } catch (e) {
-      // The poll itself kept failing (machine down, network) — surface it
-      // instead of leaving the page stuck behind a spinner, and hand the
-      // (non-terminal) status back so the caller doesn't treat it as done.
-      this.error.set((e as Error).message || 'Lost contact with the refresh job.');
-      this.notice.set(null);
-      return status;
-    } finally {
-      this.polling = false;
-      this.phase.set(null);
-      if (!this.destroyed) this.refreshing.set(false);
-    }
+    // Reload when the shared snapshot changes under us (manual/auto refresh
+    // finished). The first settle from `store.init()` matches what `load()`
+    // already fetched, so it no-ops on the `loadedFetchedAt` guard.
+    effect(() => {
+      const snap = this.store.snapshot();
+      const refreshing = this.store.refreshing();
+      if (refreshing) return;
+      const id = untracked(() => this.leagueId());
+      if (!id || untracked(() => this.loading())) return;
+      if ((snap?.fetchedAt ?? null) === (this.loadedFetchedAt ?? null)) return;
+      untracked(() => void this.load(id));
+    });
   }
 
   private hydrateFromUrl(): void {
@@ -401,43 +291,13 @@ export class LeagueViewPage {
     });
   }
 
-  /** Freshness gate: if the stored snapshot is over a day old and the sim has
-   *  advanced past its date, pull a fresh one before showing the page. */
-  private async gateOnFreshness(id: string): Promise<void> {
-    try {
-      const f = await this.api.checkLeagueSnapshotFreshness(id);
-      this.snapshot.set(f.snapshot);
-      if (f.stale && f.snapshot) {
-        this.notice.set(
-          `League advanced${f.leagueDate ? ` to ${f.leagueDate}` : ''} — pulling a fresh snapshot…`,
-        );
-        const started = await this.api.refreshLeagueSnapshot(id);
-        const term = await this.trackRefresh(id, started);
-        if (term.state === 'done') {
-          this.notice.set(`Auto-refreshed to ${f.leagueDate ?? 'the current date'}.`);
-        }
-      }
-    } catch {
-      // freshness check failed — carry on with whatever is stored
-    }
-  }
-
-  /** Full load for a league (route change or after a refresh): snapshot meta,
-   *  org/team facets, and the first batch for the current method/grouping. */
+  /** Full load for a league (route change or after a refresh): org/team facets
+   *  and the first batch for the current method/grouping. Snapshot freshness /
+   *  re-attach is the shell's `LeagueSnapshotStore`, not this. */
   private async load(id: string): Promise<void> {
     if (!this.hydrated) this.hydrateFromUrl();
     this.loading.set(true);
     this.error.set(null);
-    this.notice.set(null);
-
-    // Re-attach to a refresh kicked off before we navigated here; otherwise do
-    // the once-a-day freshness check (which may start one of its own).
-    const inflight = await this.api.leagueRefreshStatus(id).catch(() => null);
-    if (inflight?.state === 'running') {
-      await this.trackRefresh(id, inflight);
-    } else {
-      await this.gateOnFreshness(id);
-    }
     try {
       const d = await this.api.leagueViewDetail(
         id,
@@ -446,7 +306,10 @@ export class LeagueViewPage {
         this.apiGroupId(),
         this.queryState(),
       );
-      this.snapshot.set(d.snapshot);
+      // The server served this against the on-disk snapshot; record its
+      // `fetchedAt` so `store.init()`'s priming set no-ops but a later refresh
+      // (new `fetchedAt`) triggers exactly one reload.
+      this.loadedFetchedAt = d.snapshot?.fetchedAt ?? null;
       this.orgs.set([...d.orgs].sort((a, b) => a.name.localeCompare(b.name)));
       // teams arrive already ordered by level (MLB → AAA → …) — keep that order.
       this.teams.set(d.teams);
@@ -454,6 +317,10 @@ export class LeagueViewPage {
       this.rows.set(d.page.rows);
       this.totalRecords.set(d.page.totalRecords);
       this.resetToken.update((v) => v + 1);
+      // that fetch may have lazily computed the model — refresh the ready flags
+      if (d.snapshot && !d.snapshot.rankedMethods.includes(this.method())) {
+        void this.store.refreshSnapshotMeta();
+      }
     } catch (e) {
       this.error.set((e as Error).message);
       this.rows.set([]);
@@ -464,7 +331,7 @@ export class LeagueViewPage {
   }
 
   private async resetAndFetch(): Promise<void> {
-    if (!this.snapshot()) return;
+    if (!this.store.snapshot()) return;
     this.loading.set(true);
     this.error.set(null);
     try {
@@ -482,8 +349,7 @@ export class LeagueViewPage {
       this.resetToken.update((v) => v + 1);
       if (wasNotReady) {
         // that fetch just computed the model — refresh the "ready" flags
-        const s = await this.api.leagueSnapshot(this.leagueId()).catch(() => null);
-        if (s) this.snapshot.set(s);
+        await this.store.refreshSnapshotMeta();
       }
     } catch (e) {
       this.error.set((e as Error).message);
@@ -555,25 +421,5 @@ export class LeagueViewPage {
     this.syncUrl();
     if (this.hasSelection()) await this.resetAndFetch();
     else this.clearRows();
-  }
-
-  protected async refresh(): Promise<void> {
-    const id = this.leagueId();
-    if (!id || this.refreshing()) return;
-    // Flip the UI into the progress state immediately, before the mutation
-    // round-trips — `trackRefresh` then keeps it set and clears it when done.
-    this.refreshing.set(true);
-    this.phase.set('Contacting StatsPlus…');
-    this.error.set(null);
-    this.notice.set(null);
-    try {
-      const started = await this.api.refreshLeagueSnapshot(id);
-      const term = await this.trackRefresh(id, started);
-      if (term.state === 'done') await this.load(id);
-    } catch (e) {
-      this.error.set((e as Error).message);
-      this.phase.set(null);
-      this.refreshing.set(false);
-    }
   }
 }

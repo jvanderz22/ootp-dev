@@ -254,6 +254,26 @@ export const LEAGUE_SNAPSHOT_PLAYERS = gql`
   }
 `;
 
+export const LEAGUE_ORG_RANKINGS = gql`
+  ${PLAYER_FIELDS}
+  query LeagueOrgRankings($leagueId: ID!) {
+    leagueOrgRankings(leagueId: $leagueId) {
+      orgId
+      orgName
+      orgScore
+      prospectCount
+      top10
+      top50
+      top100
+      top250
+      top500
+      topProspects {
+        ...PlayerFields
+      }
+    }
+  }
+`;
+
 const LEAGUE_REFRESH_STATUS_FIELDS = gql`
   ${LEAGUE_SNAPSHOT_FIELDS}
   fragment LeagueRefreshStatusFields on LeagueRefreshStatus {

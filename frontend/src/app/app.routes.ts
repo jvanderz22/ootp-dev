@@ -36,6 +36,13 @@ export const routes: Routes = [
               import('./pages/league-view/league-view').then((m) => m.LeagueViewPage),
           },
           {
+            path: 'system',
+            loadComponent: () =>
+              import('./pages/system-rankings/system-rankings').then(
+                (m) => m.SystemRankingsPage,
+              ),
+          },
+          {
             path: 'classes',
             loadComponent: () =>
               import('./pages/league-classes').then((m) => m.LeagueClassesPage),

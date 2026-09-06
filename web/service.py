@@ -17,7 +17,7 @@ import anyio
 import league_snapshot
 import pipeline
 from context import DraftClassContext, default_base_dir
-from web import class_index, leagues
+from web import class_index, leagues, org_rankings
 from custom_ranking import clear_order, has_custom_order, load_order, resolve_order, save_order
 from draft_class_files import get_ranked_players_file
 from drafted_players import get_drafted_player_ids
@@ -964,6 +964,18 @@ def league_snapshot_players_page(
         return {"rows": [], "total_records": 0}
     rows = _grouped(_league_built_rows(league_id, method), group_by, group_id)
     return _filter_sort_page(rows, filter, sort, page, page_size, all_rows)
+
+
+def league_org_rankings(league_id: str) -> list:
+    """Rank the league's farm systems against each other using the potential
+    model - the web equivalent of `print_org_summaries.py`. Reuses the
+    `(league, "potential")` built-rows cache, so this is cheap once the
+    potential model has been scored for the snapshot once."""
+    _, ctx = _league_ctx(league_id)
+    if not ctx.data_file.exists():
+        return []
+    rows = _league_built_rows(league_id, "potential")
+    return org_rankings.summarize_orgs(rows)
 
 
 def _evict_league_payload_cache(league_id: str) -> None:

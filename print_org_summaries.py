@@ -7,13 +7,11 @@ from get_game_players import get_game_players
 from models.game_players import GamePlayer
 from printers.org_player_printer import OrgPlayerPrinter
 from rankers.get_ranker import get_ranker
-from utils.rank_graditated_model import RankGradiatedModel
+from web.org_rankings import ORG_POINTS_MODEL
 
-# somewhere between 58 and 60 should be the minimum score for org summary value
-player_ranking_points_model = RankGradiatedModel(
-    [0, 58, 62, 65, 68, 70, 72, 75, 80, 85, 90, 100, 110, 120],
-    [0, 0, 2.2, 6, 9, 11, 14, 19, 32, 45, 61, 81, 92, 100],
-)
+# The points curve lives in web/org_rankings.py so the CLI and the web
+# System Rankings page score orgs identically.
+player_ranking_points_model = ORG_POINTS_MODEL
 
 
 class PlayerSummary:

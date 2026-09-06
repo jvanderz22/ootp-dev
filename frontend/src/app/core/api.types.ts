@@ -45,6 +45,23 @@ export interface LeagueSnapshot {
   rankedMethods: string[];
 }
 
+/** One org's farm system rolled up for the System Rankings page (potential
+ *  model). `orgScore` is the convex points curve from `print_org_summaries.py`;
+ *  `top10..top500` count this org's players inside that global rank. */
+export interface OrgProspectSummary {
+  orgId: string;
+  orgName: string;
+  orgScore: number;
+  prospectCount: number;
+  top10: number;
+  top50: number;
+  top100: number;
+  top250: number;
+  top500: number;
+  /** best prospects, best-first, capped at 25 server-side */
+  topProspects: RankedPlayer[];
+}
+
 export interface LeagueTeam {
   id: string;
   name: string;

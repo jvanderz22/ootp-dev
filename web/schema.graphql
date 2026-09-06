@@ -158,6 +158,26 @@ type DraftedRefreshResult {
   unmatched: Int!
 }
 
+"""
+One org's farm system rolled up for the System Rankings page. Scored by the
+potential model over rostered players with under a year of MLB service.
+`orgScore` is the steeply convex points curve from `print_org_summaries.py`;
+`top10..top500` count this org's players inside that global rank.
+"""
+type OrgProspectSummary {
+  orgId: ID!
+  orgName: String!
+  orgScore: Float!
+  prospectCount: Int!
+  top10: Int!
+  top50: Int!
+  top100: Int!
+  top250: Int!
+  top500: Int!
+  "this org's best prospects, best-first, capped at 25 server-side"
+  topProspects: [RankedPlayer!]!
+}
+
 type Query {
   draftClasses: [DraftClass!]!
   draftClass(name: String!): DraftClass
@@ -185,6 +205,8 @@ type Query {
     allRows: Boolean = false
   ): RankedPlayerPage!
   leagueOrgs(leagueId: ID!): [LeagueTeam!]!
+  "Farm systems ranked against each other by the potential model, best first."
+  leagueOrgRankings(leagueId: ID!): [OrgProspectSummary!]!
   leagueTeams(leagueId: ID!): [LeagueTeam!]!
   "Distinct playing levels present in the snapshot, ordered MLB-first - the level filter's options."
   leagueLevels(leagueId: ID!): [String!]!
