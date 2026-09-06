@@ -27,22 +27,57 @@ class PositionPlayerScorer:
         self.running_model = RunningAttributeModel()
 
     def score(self, player):
-        [fielding_score, _, _, best_position] = self.__calculate_fielding_score(player)
-        batting_score = self.batting_model.run(player)
-        running_score = self.running_model.run(player)
-        write_runtime_component(player.id, f"Pos - Batting Model", batting_score)
-        write_runtime_component(player.id, f"Pos - Running Model", running_score)
-        overall_score = (
-            (batting_score * 0.73) + (fielding_score * 0.22) + (running_score * 0.05)
-        )
-        write_runtime_component(player.id, f"Pos - Overall Model Score", overall_score)
-        return [overall_score, batting_score, fielding_score, running_score, best_position]
+        return self.score_many([player])[0]
 
-    def __calculate_fielding_score(self, player):
-        position_scores = {}
-        for fielding_position in self.fielding_models_map.keys():
-            model = self.fielding_models_map[fielding_position]
-            position_scores[fielding_position] = model.run(player)
+    def score_many(self, players):
+        """Score a whole batch at once. Each attribute model runs a single
+        batched prediction for the list (see `AttributeModel.predict_many`); the
+        per-player fielding aggregation, modifiers and runtime-component writes
+        are unchanged. Returns one
+        `[overall, batting, fielding, running, best_position]` per player."""
+        players = list(players)
+        if not players:
+            return []
+        batting_scores = self.batting_model.predict_many(players)
+        running_scores = self.running_model.predict_many(players)
+        fielding_by_position = {
+            position: model.predict_many(players)
+            for position, model in self.fielding_models_map.items()
+        }
+
+        results = []
+        for i, player in enumerate(players):
+            position_scores = {
+                position: fielding_by_position[position][i]
+                for position in self.fielding_models_map
+            }
+            [fielding_score, _, _, best_position] = self.__aggregate_fielding_score(
+                player, position_scores
+            )
+            batting_score = batting_scores[i]
+            running_score = running_scores[i]
+            write_runtime_component(player.id, f"Pos - Batting Model", batting_score)
+            write_runtime_component(player.id, f"Pos - Running Model", running_score)
+            overall_score = (
+                (batting_score * 0.73)
+                + (fielding_score * 0.22)
+                + (running_score * 0.05)
+            )
+            write_runtime_component(
+                player.id, f"Pos - Overall Model Score", overall_score
+            )
+            results.append(
+                [
+                    overall_score,
+                    batting_score,
+                    fielding_score,
+                    running_score,
+                    best_position,
+                ]
+            )
+        return results
+
+    def __aggregate_fielding_score(self, player, position_scores):
         [best_score, best_position] = self.__calculate_best_position_score(
             position_scores
         )

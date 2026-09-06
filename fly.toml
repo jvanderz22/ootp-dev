@@ -12,6 +12,8 @@ primary_region = 'iad'
 [env]
   DATA_DIR = '/data'
   PORT = '8080'
+  # One shared vCPU - keep XGBoost single-threaded (matches the Dockerfile).
+  OMP_NUM_THREADS = '1'
 
 [[mounts]]
   source = 'draft_data'

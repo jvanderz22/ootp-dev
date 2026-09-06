@@ -38,14 +38,35 @@ class AttributeModel(ABC):
         return None
 
     def run(self, player):
-        if self.right_hand_only and player.throw_hand != "Right":
-            return 0
+        return self.predict_many([player])[0]
 
-        player_attrs = [
-            getattr(player, self.fields_mapping[field]) for field in self.fields
-        ]
-        model_prediction = self.model.predict(xgb.DMatrix([player_attrs], []))[0]
-        return model_prediction if model_prediction > 0 else 0
+    def predict_many(self, players):
+        """Vectorised `run`: build one `DMatrix` for the whole list and predict
+        in a single call instead of once per player. Returns a list of plain
+        floats aligned with `players` - 0.0 where a `right_hand_only` model
+        doesn't apply or the raw prediction is <= 0 (same clamp `run` used).
+
+        A per-player `xgb.DMatrix([row], [])` + `predict` costs tens of
+        microseconds of Python/C boundary overhead each; at ~12 models x ~10k
+        players per ranking pass that dominated the run. One matrix per model
+        per batch collapses ~18k calls into ~12.
+        """
+        scores = [0.0] * len(players)
+        mapping = self.fields_mapping
+        fields = self.fields
+        rows = []
+        row_index = []
+        for i, player in enumerate(players):
+            if self.right_hand_only and player.throw_hand != "Right":
+                continue
+            rows.append([getattr(player, mapping[field]) for field in fields])
+            row_index.append(i)
+        if rows:
+            predictions = self.model.predict(xgb.DMatrix(rows))
+            for j, i in enumerate(row_index):
+                value = float(predictions[j])
+                scores[i] = value if value > 0 else 0.0
+        return scores
 
     @property
     def model(self):

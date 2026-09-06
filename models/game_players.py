@@ -1,4 +1,3 @@
-import copy
 import string
 
 
@@ -137,9 +136,16 @@ class GamePlayer:
         ]
         for attr, dict_attr in PLAYER_FIELDS.items():
             setattr(self, f"_{attr}", player_dict.get(dict_attr))
+        # `get_pitches()` / `get_ovr_pitches()` are called several times per
+        # player (both pitcher-model paths plus a handful of modifiers) and
+        # never change for a given instance - memoise the sorted lists.
+        self._pitches = None
+        self._ovr_pitches = None
 
     def attrs(self):
-        return copy.deepcopy(self._dict)
+        # A shallow copy is enough: every value is an immutable str / int /
+        # None and the only callers reassign whole top-level keys.
+        return dict(self._dict)
 
     @property
     def id(self):
@@ -554,21 +560,29 @@ class GamePlayer:
             return None
 
     def get_pitches(self):
-        pitches = []
-        for field in self.pitch_fields:
-            pitch_attr = getattr(self, field)
-            if pitch_attr is not None:
-                pitches.append(field)
-        return sorted(pitches, key=lambda p: getattr(self, p), reverse=True)
+        if self._pitches is None:
+            pitches = [
+                field
+                for field in self.pitch_fields
+                if getattr(self, field) is not None
+            ]
+            self._pitches = sorted(
+                pitches, key=lambda p: getattr(self, p), reverse=True
+            )
+        return self._pitches
 
     def get_pitch_ratings(self):
         pitches = self.get_pitches()
         return {pitch: getattr(self, pitch) for pitch in pitches}
 
     def get_ovr_pitches(self):
-        pitches = []
-        for field in self.pitch_ovr_fields:
-            pitch_attr = getattr(self, field)
-            if pitch_attr is not None:
-                pitches.append(field)
-        return sorted(pitches, key=lambda p: getattr(self, p), reverse=True)
+        if self._ovr_pitches is None:
+            pitches = [
+                field
+                for field in self.pitch_ovr_fields
+                if getattr(self, field) is not None
+            ]
+            self._ovr_pitches = sorted(
+                pitches, key=lambda p: getattr(self, p), reverse=True
+            )
+        return self._ovr_pitches

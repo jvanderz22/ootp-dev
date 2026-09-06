@@ -11,7 +11,9 @@ FROM python:3.11-slim AS runtime
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     DATA_DIR=/data \
-    PORT=8080
+    PORT=8080 \
+    # One shared vCPU in prod - XGBoost's OpenMP pool only adds contention.
+    OMP_NUM_THREADS=1
 
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \

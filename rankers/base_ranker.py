@@ -1,4 +1,5 @@
 from abc import ABC
+import gc
 import inspect
 from models.game_players import GamePlayer
 from models.scored_player import ScoredPlayer
@@ -74,48 +75,70 @@ class BaseRanker(ABC):
             return self._rank_impl(players, batch_size, store, progress)
 
     def _rank_impl(self, players, batch_size, store, progress=None):
-        results = []
-        batch = []
-        done = 0
-        for player in players:
-            batch.append(player)
-            if len(batch) >= batch_size:
+        # A whole-league pass builds one long `results` list while every batch
+        # churns a lot of short-lived garbage (per-batch DMatrices, the SP/RP
+        # estimate players, modifier temporaries). CPython's cyclic collector
+        # then walks the ever-growing `results` set on each pass, so per-batch
+        # time creeps up superlinearly. None of what we allocate here is
+        # cyclic - plain dicts/lists/dataclasses freed by refcount - so drop GC
+        # for the duration and collect once at the end.
+        gc_was_enabled = gc.isenabled()
+        gc.disable()
+        try:
+            results = []
+            batch = []
+            done = 0
+            for player in players:
+                batch.append(player)
+                if len(batch) >= batch_size:
+                    done += len(batch)
+                    self._score_batch(batch, store, results)
+                    print(f"Evaluated {done} players")
+                    if progress:
+                        progress(done)
+                    batch = []
+            if batch:
                 done += len(batch)
                 self._score_batch(batch, store, results)
-                print(f"Evaluated {done} players")
                 if progress:
                     progress(done)
-                batch = []
-        if batch:
-            done += len(batch)
-            self._score_batch(batch, store, results)
-            if progress:
-                progress(done)
 
-        results.sort(key=lambda r: r.raw_overall_score, reverse=True)
-        for i, result in enumerate(results):
-            result.overall_score = self._apply_rank_adjustment(result, i + 1)
-            result.components = str(result.components)
-        results.sort(key=lambda r: r.overall_score, reverse=True)
-        return results
+            results.sort(key=lambda r: r.raw_overall_score, reverse=True)
+            for i, result in enumerate(results):
+                result.overall_score = self._apply_rank_adjustment(result, i + 1)
+                result.components = str(result.components)
+            results.sort(key=lambda r: r.overall_score, reverse=True)
+            return results
+        finally:
+            if gc_was_enabled:
+                gc.enable()
+                gc.collect()
 
     def _score_batch(self, batch, store, results):
         """Score one chunk of GamePlayers, appending a ScoredPlayer for each and
         draining that player's runtime-component dict out of the shared store so
-        it doesn't pile up across batches."""
-        for player in self.filter_players(batch):
+        it doesn't pile up across batches.
+
+        The two model scorers run the whole chunk in one batched call each; the
+        modifiers and aggregation stay per player."""
+        players = list(self.filter_players(batch))
+        position_player_scores = self.position_player_scorer.score_many(players)
+        pitcher_scores = self.pitcher_scorer.score_many(players)
+        for player, position_player_result, pitcher_result in zip(
+            players, position_player_scores, pitcher_scores
+        ):
             (
                 position_player_score,
                 batting_score,
                 fielding_score,
                 running_score,
                 best_position,
-            ) = self.calculate_position_player_score(player)
+            ) = self._apply_position_player_modifier(player, position_player_result)
             (
                 pitcher_score,
                 starter_score,
                 reliever_score,
-            ) = self.calculate_pitcher_score(player)
+            ) = self._apply_pitcher_modifier(player, pitcher_result)
             results.append(
                 ScoredPlayer(
                     id=player.id,
@@ -162,13 +185,20 @@ class BaseRanker(ABC):
         return score
 
     def calculate_position_player_score(self, player: GamePlayer) -> list:
+        return self._apply_position_player_modifier(
+            player, self.position_player_scorer.score(player)
+        )
+
+    def _apply_position_player_modifier(
+        self, player: GamePlayer, base_score: list
+    ) -> list:
         [
             position_player_score,
             batting_score,
             fielding_score,
             running_score,
             best_position,
-        ] = self.position_player_scorer.score(player)
+        ] = base_score
         modifier = self.get_position_player_modifier(player, position_player_score)
         return [
             position_player_score * modifier,
@@ -197,11 +227,16 @@ class BaseRanker(ABC):
         return modifier_val
 
     def calculate_pitcher_score(self, player: GamePlayer) -> float:
+        return self._apply_pitcher_modifier(
+            player, self.pitcher_scorer.score(player)
+        )
+
+    def _apply_pitcher_modifier(self, player: GamePlayer, base_score: list) -> list:
         [
             pitcher_score,
             starter_component,
             reliever_component,
-        ] = self.pitcher_scorer.score(player)
+        ] = base_score
         modifier = self.get_pitcher_modifier(player, pitcher_score)
         return [pitcher_score * modifier, starter_component, reliever_component]
 
