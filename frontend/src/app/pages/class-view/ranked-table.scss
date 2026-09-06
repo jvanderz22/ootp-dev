@@ -210,6 +210,22 @@
     min-width: 44px;
     box-shadow: inset -1px 0 0 var(--border);
   }
+  /* phones: the Name cell is abbreviated to "J. Smith" (see ranked-table.ts),
+     so the frozen Name column can give a chunk of its width back and the Pos
+     column slides left to meet it */
+  @media (max-width: 640px) {
+    ::ng-deep th.sticky-name,
+    ::ng-deep td.sticky-name {
+      width: 96px;
+      min-width: 96px;
+      white-space: nowrap;
+    }
+    ::ng-deep th.sticky-pos,
+    ::ng-deep td.sticky-pos {
+      left: 168px;
+    }
+  }
+
   /* keep the elevated tint on frozen cells of an expanded / detail row */
   ::ng-deep tr.body-row.is-expanded > td.cmp-col,
   ::ng-deep tr.body-row.is-expanded > td.sticky-rank,

@@ -43,6 +43,29 @@ export function typeSeverity(t: PlayerType): 'info' | 'warn' | 'success' {
   return t === 'Two-way' ? 'warn' : t === 'Pitcher' ? 'info' : 'success';
 }
 
+/** Generational suffixes kept intact when a name is abbreviated. */
+const NAME_SUFFIXES = new Set(['jr', 'jr.', 'sr', 'sr.', 'ii', 'iii', 'iv', 'v']);
+
+/**
+ * Compact form of a player name for space-tight layouts (the mobile ranked
+ * table): first initial + last name, keeping any generational suffix.
+ * "Ronald Acuña Jr." → "R. Acuña Jr."; single-token or already-short names
+ * pass through unchanged.
+ */
+export function abbreviatePlayerName(name: string): string {
+  const raw = (name ?? '').trim();
+  const parts = raw.split(/\s+/);
+  if (parts.length < 2) return raw;
+  let last = parts.length - 1;
+  let suffix = '';
+  if (parts.length > 2 && NAME_SUFFIXES.has(parts[last].toLowerCase())) {
+    suffix = ` ${parts[last]}`;
+    last -= 1;
+  }
+  const initial = parts[0].charAt(0).toUpperCase();
+  return `${initial}. ${parts[last]}${suffix}`;
+}
+
 /**
  * Colour cue for the descriptive scouting grades (personality, injury
  * proneness, scout accuracy): red for the weakest tiers, amber for "average".

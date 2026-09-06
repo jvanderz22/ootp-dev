@@ -156,8 +156,8 @@
               [class.col-wide]="c.wide"
               [class.tone-danger]="c.tone?.(cv) === 'danger'"
               [class.tone-warn]="c.tone?.(cv) === 'warn'"
-              [attr.title]="c.cellTitle?.(cv) || null"
-            >{{ c.fmt(cv) }}</td>
+              [attr.title]="cellTitle(c, cv)"
+            >{{ cellText(c, cv) }}</td>
           }
         }
         <td class="num muted expander-col">{{ isExpanded(p) ? '▾' : '▸' }}</td>

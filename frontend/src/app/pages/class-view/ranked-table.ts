@@ -26,7 +26,7 @@ import {
   groupSpans,
   viewColumns,
 } from '../../core/ranked-columns';
-import { typeSeverity } from '../../core/player-stats';
+import { abbreviatePlayerName, typeSeverity } from '../../core/player-stats';
 import { PlayerDetailCardComponent } from './player-detail-card';
 import { PositionFilterComponent } from './position-filter';
 import { HandednessFilterComponent } from './handedness-filter';
@@ -36,6 +36,11 @@ import { NumericFiltersComponent } from './numeric-filters';
 import { PlayerCompareComponent } from '../player-compare';
 
 const SEARCH_DEBOUNCE_MS = 300;
+
+/** At or below this viewport width the Name cell shows "J. Smith" instead of
+ *  the full name (full name kept as the cell tooltip) to claw back horizontal
+ *  room on phones. Matches the `sticky-name` narrowing in the stylesheet. */
+const NARROW_VIEWPORT_QUERY = '(max-width: 640px)';
 
 /** How close to the bottom of the loaded rows (in px) triggers the next
  *  infinite-scroll batch fetch. */
@@ -149,6 +154,9 @@ export class RankedTableComponent {
    *  pinned to it instead of stretching the full (overflowing) table width. */
   protected readonly viewportWidth = signal<number | null>(null);
 
+  /** Phone-width viewport — abbreviates the Name cell to a first initial. */
+  protected readonly isNarrow = signal(false);
+
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly zone = inject(NgZone);
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
@@ -207,8 +215,16 @@ export class RankedTableComponent {
     };
     const ro = new ResizeObserver(measure);
     ro.observe(this.host.nativeElement);
+
+    // Track phone-width so the Name cell can drop to a first initial.
+    const mq = window.matchMedia(NARROW_VIEWPORT_QUERY);
+    this.isNarrow.set(mq.matches);
+    const onMq = (e: MediaQueryListEvent) => this.zone.run(() => this.isNarrow.set(e.matches));
+    mq.addEventListener('change', onMq);
+
     inject(DestroyRef).onDestroy(() => {
       ro.disconnect();
+      mq.removeEventListener('change', onMq);
       this.scrollEl?.removeEventListener('scroll', this.onScroll);
       clearTimeout(this.colShowTimer);
       clearTimeout(this.colHideTimer);
@@ -231,6 +247,20 @@ export class RankedTableComponent {
   }
 
   // ----------------------------------------------------------------- columns
+  /** Cell text — the column's own formatter, except the sticky Name cell drops
+   *  to "J. Smith" on a phone-width viewport. */
+  protected cellText(c: ColumnDef, v: unknown): string {
+    if (c.sticky === 'name' && this.isNarrow()) return abbreviatePlayerName(String(v ?? ''));
+    return c.fmt(v);
+  }
+
+  /** Cell tooltip — the full name behind an abbreviated Name cell, otherwise
+   *  the column's own `cellTitle` hook (team code → full club name, etc.). */
+  protected cellTitle(c: ColumnDef, v: unknown): string | null {
+    if (c.sticky === 'name' && this.isNarrow()) return String(v ?? '') || null;
+    return c.cellTitle?.(v) || null;
+  }
+
   protected sortCaret(c: ColumnDef): string {
     if (this.sortField() !== c.field) return '';
     return this.sortOrder() === 1 ? '▲' : '▼';
