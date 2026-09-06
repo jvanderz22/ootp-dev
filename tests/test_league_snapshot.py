@@ -165,6 +165,9 @@ def test_rename_and_value_maps(snapshot_csvs):
     assert (p["snap_team_id"], p["snap_org_id"]) == ("46", "46")
     assert (h["snap_team_id"], h["snap_org_id"]) == ("168", "52")
 
+    # in-game league id kept so the web layer can scope views to one league
+    assert p["snap_league_id"] == "153" and h["snap_league_id"] == "153"
+
     # phantom pitches (ratings "0") are blanked so they stay out of get_pitches()
     assert p["SI"] == "" and p["CT"] == "" and h["FB"] == ""
 
@@ -209,6 +212,9 @@ def test_negative_league_id_marks_international_complex():
     assert row["Lev"] == "INT"
     assert row["snap_org_id"] == "46"
     assert row["snap_team_id"] == ""
+    # the negated league id is stored as its magnitude, so an int'l-complex kid
+    # still counts toward his parent club's real league
+    assert row["snap_league_id"] == "153"
     # not an amateur pool - he's signed, so he still gets ranked
     assert row["is_amateur"] == ""
 

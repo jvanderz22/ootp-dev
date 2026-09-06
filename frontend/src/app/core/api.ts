@@ -10,6 +10,7 @@ import {
   DELETE_LEAGUE,
   CHECK_LEAGUE_SNAPSHOT_FRESHNESS,
   DRAFT_CLASSES,
+  LEAGUE_GAME_LEAGUES,
   LEAGUE_ORG_RANKINGS,
   LEAGUE_REFRESH_STATUS,
   LEAGUE_SNAPSHOT,
@@ -31,6 +32,7 @@ import {
 import {
   DraftClass,
   DraftedRefreshResult,
+  GameLeagueOption,
   League,
   LeagueFreshness,
   LeagueGroupBy,
@@ -476,6 +478,7 @@ export class ApiService {
     classNames?: string[];
     sessionid?: string;
     csrftoken?: string;
+    gameLeagueIds?: number[];
   }): Promise<League> {
     try {
       const res = await firstValueFrom(
@@ -498,6 +501,7 @@ export class ApiService {
     classNames?: string[];
     sessionid?: string;
     csrftoken?: string;
+    gameLeagueIds?: number[];
   }): Promise<League> {
     try {
       const res = await firstValueFrom(
@@ -507,6 +511,23 @@ export class ApiService {
         }),
       );
       return res.data!.updateLeague;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  /** In-game leagues found in a league's stored snapshot — the option set for
+   *  its `gameLeagueIds` scope. Empty until the league has a snapshot. */
+  async leagueGameLeagues(leagueId: string): Promise<GameLeagueOption[]> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.query<{ leagueGameLeagues: GameLeagueOption[] }>({
+          query: LEAGUE_GAME_LEAGUES,
+          variables: { leagueId },
+          fetchPolicy: 'network-only',
+        }),
+      );
+      return res.data!.leagueGameLeagues;
     } catch (e) {
       unwrap(e);
     }

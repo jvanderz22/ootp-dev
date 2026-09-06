@@ -127,5 +127,23 @@ def test_per_league_cookie_crud_and_public_projection(data_dir):
     assert stored["sessionid"] == "aa" and stored["csrftoken"] == "cc"
 
 
+def test_game_league_ids_round_trip_and_update_semantics(data_dir):
+    lg = leagues.create_league("WBF", "wbf", game_league_ids=["153", 153, "abc", -7, 0])
+    # deduped, positive, sorted; junk and 0 dropped; magnitude kept for negatives
+    assert lg["game_league_ids"] == [7, 153]
+    assert leagues.public_league(leagues.get_league(lg["id"]))["game_league_ids"] == [7, 153]
+
+    # persisted across a reload
+    assert leagues.get_league(lg["id"])["game_league_ids"] == [7, 153]
+
+    # None on update = leave as stored; an explicit list replaces; [] clears
+    leagues.update_league(lg["id"], name="WBF!")
+    assert leagues.get_league(lg["id"])["game_league_ids"] == [7, 153]
+    leagues.update_league(lg["id"], game_league_ids=[200])
+    assert leagues.get_league(lg["id"])["game_league_ids"] == [200]
+    leagues.update_league(lg["id"], game_league_ids=[])
+    assert leagues.get_league(lg["id"])["game_league_ids"] == []
+
+
 def test_no_legacy_config_yields_empty(data_dir):
     assert leagues.load_leagues() == []

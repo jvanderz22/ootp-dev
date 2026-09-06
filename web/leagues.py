@@ -20,7 +20,10 @@ from statsplus_api import normalize_league_url
 from web.settings import clean_cookie_value
 
 _FILENAME = "leagues.json"
-_FIELDS = ("id", "name", "league_url", "default_lid", "sessionid", "csrftoken")
+_FIELDS = (
+    "id", "name", "league_url", "default_lid", "sessionid", "csrftoken",
+    "game_league_ids",
+)
 _COOKIE_KEYS = ("sessionid", "csrftoken")
 
 
@@ -49,6 +52,26 @@ def _normalize_url(value):
     return normalize_league_url(value) if value else ""
 
 
+def _clean_league_ids(value) -> list:
+    """The OOTP in-game league ids that make up a league, as a sorted list of
+    unique positive ints. Tolerant of a list, a comma/space string, or None
+    (-> `[]`). An empty list means "no scoping" - every org in the snapshot."""
+    if value is None:
+        return []
+    if isinstance(value, str):
+        value = re.split(r"[,\s]+", value.strip())
+    out = set()
+    for item in value or []:
+        n = None
+        try:
+            n = int(str(item).strip())
+        except (TypeError, ValueError):
+            n = None
+        if n:
+            out.add(abs(n))
+    return sorted(out)
+
+
 def _clean(league: dict) -> dict:
     """Storage projection - keeps the secret cookie values. Never hand this
     straight to a client; use `public_league`."""
@@ -59,6 +82,7 @@ def _clean(league: dict) -> dict:
         "default_lid": league.get("default_lid") or None,
         "sessionid": league.get("sessionid") or "",
         "csrftoken": league.get("csrftoken") or "",
+        "game_league_ids": _clean_league_ids(league.get("game_league_ids")),
     }
 
 
@@ -72,6 +96,7 @@ def public_league(league: dict) -> dict:
         "default_lid": league.get("default_lid") or None,
         "has_sessionid": bool(league.get("sessionid")),
         "has_csrftoken": bool(league.get("csrftoken")),
+        "game_league_ids": _clean_league_ids(league.get("game_league_ids")),
     }
 
 
@@ -224,6 +249,7 @@ def create_league(
     class_names=None,
     sessionid=None,
     csrftoken=None,
+    game_league_ids=None,
 ) -> dict:
     name = (name or "").strip()
     if not name:
@@ -237,6 +263,7 @@ def create_league(
             "default_lid": default_lid or None,
             "sessionid": clean_cookie_value(sessionid or "", "sessionid"),
             "csrftoken": clean_cookie_value(csrftoken or "", "csrftoken"),
+            "game_league_ids": _clean_league_ids(game_league_ids),
         }
     )
     leagues.append(league)
@@ -253,6 +280,7 @@ def update_league(
     class_names=None,
     sessionid=None,
     csrftoken=None,
+    game_league_ids=None,
 ) -> dict:
     leagues = load_leagues()
     target = next((x for x in leagues if x["id"] == league_id), None)
@@ -264,6 +292,9 @@ def update_league(
         target["league_url"] = _normalize_url(league_url) or ""
     if default_lid is not None:
         target["default_lid"] = default_lid or None
+    # an explicit list (empty included) replaces; None means "leave as stored"
+    if game_league_ids is not None:
+        target["game_league_ids"] = _clean_league_ids(game_league_ids)
     # cookie fields follow the settings-page convention: a blank value means
     # "keep what's stored", a non-blank one replaces it.
     if sessionid is not None and sessionid.strip():

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../core/api';
 import { ClassStore } from '../core/class-store';
 import { LeagueStore } from '../core/league-store';
-import { League } from '../core/api.types';
+import { GameLeagueOption, League } from '../core/api.types';
 
 interface LeagueDraft {
   id: string | null;
@@ -16,6 +16,9 @@ interface LeagueDraft {
   csrftoken: string;
   hasSessionid: boolean;
   hasCsrftoken: boolean;
+  /** OOTP in-game league ids to scope this league to, as the user typed them
+   *  (comma/space separated). Parsed to `number[]` on save. Empty = no scope. */
+  gameLeagueIdsText: string;
 }
 
 function emptyDraft(): LeagueDraft {
@@ -29,7 +32,18 @@ function emptyDraft(): LeagueDraft {
     csrftoken: '',
     hasSessionid: false,
     hasCsrftoken: false,
+    gameLeagueIdsText: '',
   };
+}
+
+/** `"153, 7"` / `"153 7"` -> `[7, 153]`; junk and 0 dropped, deduped, sorted. */
+function parseLeagueIds(text: string): number[] {
+  const ids = new Set<number>();
+  for (const chunk of (text || '').split(/[^\d-]+/)) {
+    const n = Number.parseInt(chunk, 10);
+    if (Number.isFinite(n) && n !== 0) ids.add(Math.abs(n));
+  }
+  return [...ids].sort((a, b) => a - b);
 }
 
 type SettingsTab = 'leagues' | 'classes';
@@ -143,6 +157,48 @@ type SettingsTab = 'leagues' | 'classes';
                   [(ngModel)]="d.csrftoken"
                   autocomplete="off"
                   placeholder="paste the csrftoken value"
+                />
+              </label>
+            </fieldset>
+            <fieldset>
+              <legend>Organisation scope</legend>
+              <small class="muted">
+                When a StatsPlus export covers several OOTP in-game leagues, pin
+                the one(s) that make up this league. The “by org” picker and the
+                farm-system rankings then only show those orgs; free agents stay
+                available. Leave empty to include every org in the snapshot.
+              </small>
+              @if (loadingGameLeagues()) {
+                <small class="muted">Loading leagues from the snapshot…</small>
+              } @else if (gameLeagues().length > 0) {
+                @for (g of gameLeagues(); track g.id) {
+                  <label class="row">
+                    <input
+                      type="checkbox"
+                      [checked]="gameLeagueChecked(d, g.id)"
+                      (change)="toggleGameLeague(d, g.id, $any($event.target).checked)"
+                    />
+                    <span>
+                      #{{ g.id }} — {{ g.orgCount }} orgs, {{ g.playerCount }} players
+                      @if (g.sampleOrgs.length) {
+                        <span class="muted small">· e.g. {{ g.sampleOrgs.join(', ') }}</span>
+                      }
+                    </span>
+                  </label>
+                }
+              } @else if (d.id) {
+                <small class="muted">
+                  No snapshot yet — refresh this league from StatsPlus to pick
+                  from a list, or type the id(s) below.
+                </small>
+              }
+              <label>
+                League IDs (comma-separated)
+                <input
+                  name="lglids"
+                  [(ngModel)]="d.gameLeagueIdsText"
+                  autocomplete="off"
+                  placeholder="e.g. 153"
                 />
               </label>
             </fieldset>
@@ -308,6 +364,11 @@ export class SettingsPage implements OnInit {
   protected readonly classMsg = signal<string | null>(null);
   protected readonly classErr = signal(false);
 
+  /** In-game leagues discovered in the league being edited (from its snapshot);
+   *  the checkbox options for the organisation-scope fieldset. */
+  protected readonly gameLeagues = signal<GameLeagueOption[]>([]);
+  protected readonly loadingGameLeagues = signal(false);
+
   protected readonly unmappedCount = computed(
     () => this.classStore.classes().filter((c) => !c.leagueId).length,
   );
@@ -329,11 +390,13 @@ export class SettingsPage implements OnInit {
   // -------------------------------------------------------------- leagues
   protected startNew(): void {
     this.leagueMsg.set(null);
+    this.gameLeagues.set([]);
     this.draft.set(emptyDraft());
   }
 
   protected edit(l: League): void {
     this.leagueMsg.set(null);
+    this.gameLeagues.set([]);
     this.draft.set({
       id: l.id,
       name: l.name,
@@ -344,7 +407,33 @@ export class SettingsPage implements OnInit {
       csrftoken: '',
       hasSessionid: l.hasSessionid,
       hasCsrftoken: l.hasCsrftoken,
+      gameLeagueIdsText: (l.gameLeagueIds ?? []).join(', '),
     });
+    void this.loadGameLeagues(l.id);
+  }
+
+  private async loadGameLeagues(leagueId: string): Promise<void> {
+    this.loadingGameLeagues.set(true);
+    try {
+      const opts = await this.api.leagueGameLeagues(leagueId);
+      // ignore a stale response if the user already switched drafts
+      if (this.draft()?.id === leagueId) this.gameLeagues.set(opts);
+    } catch {
+      // a missing snapshot just means no options to offer — the manual field stays
+    } finally {
+      this.loadingGameLeagues.set(false);
+    }
+  }
+
+  protected gameLeagueChecked(d: LeagueDraft, id: number): boolean {
+    return parseLeagueIds(d.gameLeagueIdsText).includes(id);
+  }
+
+  protected toggleGameLeague(d: LeagueDraft, id: number, on: boolean): void {
+    const ids = new Set(parseLeagueIds(d.gameLeagueIdsText));
+    if (on) ids.add(id);
+    else ids.delete(id);
+    d.gameLeagueIdsText = [...ids].sort((a, b) => a - b).join(', ');
   }
 
   protected toggleClass(d: LeagueDraft, name: string, on: boolean): void {
@@ -366,6 +455,7 @@ export class SettingsPage implements OnInit {
       classNames: [...d.classNames],
       sessionid: d.sessionid.trim() || undefined,
       csrftoken: d.csrftoken.trim() || undefined,
+      gameLeagueIds: parseLeagueIds(d.gameLeagueIdsText),
     };
     try {
       if (d.id) await this.api.updateLeague({ id: d.id, ...input });

@@ -60,6 +60,7 @@ const LEAGUE_FIELDS = gql`
     updatedAt
     hasSessionid
     hasCsrftoken
+    gameLeagueIds
   }
 `;
 
@@ -330,6 +331,7 @@ export const CREATE_LEAGUE = gql`
     $classNames: [String!]
     $sessionid: String
     $csrftoken: String
+    $gameLeagueIds: [Int!]
   ) {
     createLeague(
       name: $name
@@ -338,6 +340,7 @@ export const CREATE_LEAGUE = gql`
       classNames: $classNames
       sessionid: $sessionid
       csrftoken: $csrftoken
+      gameLeagueIds: $gameLeagueIds
     ) {
       ...LeagueFields
     }
@@ -354,6 +357,7 @@ export const UPDATE_LEAGUE = gql`
     $classNames: [String!]
     $sessionid: String
     $csrftoken: String
+    $gameLeagueIds: [Int!]
   ) {
     updateLeague(
       id: $id
@@ -363,8 +367,20 @@ export const UPDATE_LEAGUE = gql`
       classNames: $classNames
       sessionid: $sessionid
       csrftoken: $csrftoken
+      gameLeagueIds: $gameLeagueIds
     ) {
       ...LeagueFields
+    }
+  }
+`;
+
+export const LEAGUE_GAME_LEAGUES = gql`
+  query LeagueGameLeagues($leagueId: ID!) {
+    leagueGameLeagues(leagueId: $leagueId) {
+      id
+      orgCount
+      playerCount
+      sampleOrgs
     }
   }
 `;

@@ -389,11 +389,13 @@ def list_leagues():
 
 
 def create_league(
-    name, league_url=None, default_lid=None, class_names=None, sessionid=None, csrftoken=None
+    name, league_url=None, default_lid=None, class_names=None, sessionid=None,
+    csrftoken=None, game_league_ids=None,
 ):
     try:
         league = leagues.create_league(
-            name, league_url, default_lid, class_names, sessionid, csrftoken
+            name, league_url, default_lid, class_names, sessionid, csrftoken,
+            game_league_ids=game_league_ids,
         )
     except ValueError as exc:
         raise InvalidInput(str(exc)) from exc
@@ -408,10 +410,12 @@ def update_league(
     class_names=None,
     sessionid=None,
     csrftoken=None,
+    game_league_ids=None,
 ):
     try:
         league = leagues.update_league(
-            id, name, league_url, default_lid, class_names, sessionid, csrftoken
+            id, name, league_url, default_lid, class_names, sessionid, csrftoken,
+            game_league_ids=game_league_ids,
         )
     except ValueError as exc:
         raise InvalidInput(str(exc)) from exc
@@ -786,6 +790,37 @@ def _snapshot_membership(ctx):
     return orgs, teams
 
 
+def _snapshot_org_leagues(ctx) -> dict:
+    """`{org_id: set(in-game league id strings)}` from the stored snapshot - which
+    OOTP league(s) each parent org fields players in. Empty when the snapshot
+    predates the `snap_league_id` column (a refresh adds it)."""
+    out = {}
+    try:
+        with open(ctx.data_file, newline="") as f:
+            for r in csv.DictReader(f):
+                oid = (r.get("snap_org_id") or "").strip()
+                lid = (r.get("snap_league_id") or "").strip()
+                if oid and lid:
+                    out.setdefault(oid, set()).add(lid)
+    except FileNotFoundError:
+        pass
+    return out
+
+
+def _allowed_org_ids(league: dict, ctx):
+    """The set of parent-org ids the league's `game_league_ids` config permits,
+    or `None` when the league scopes nothing (show every org). Also `None` if the
+    snapshot carries no `snap_league_id` yet, so an un-refreshed snapshot keeps
+    working instead of showing an empty picker."""
+    wanted = {str(x) for x in (league.get("game_league_ids") or [])}
+    if not wanted:
+        return None
+    org_leagues = _snapshot_org_leagues(ctx)
+    if not org_leagues:
+        return None
+    return {oid for oid, lids in org_leagues.items() if lids & wanted}
+
+
 def _level_sort_key(level):
     """(rank, label) so `Lev` values sort in `league_snapshot.LEVEL_ORDER`
     (MLB, AAA, AA, ...) with anything unknown trailing alphabetically."""
@@ -848,12 +883,17 @@ def list_league_levels(league_id: str) -> list:
 
 def list_league_orgs(league_id: str) -> list:
     """Top-level clubs that actually field players in the snapshot - i.e. the
-    ~30 MLB parents, not every stub franchise in `teams.csv`."""
-    _, ctx = _league_ctx(league_id)
+    ~30 MLB parents, not every stub franchise in `teams.csv`. When the league
+    pins `game_league_ids`, only orgs in those OOTP in-game leagues are kept, so
+    a StatsPlus export that spans several leagues still yields one league's orgs."""
+    lg, ctx = _league_ctx(league_id)
     rows = [r for r in _read_teams_csv(ctx) if _is_org(r)]
     members, _ = _snapshot_membership(ctx)
     if members:
         rows = [r for r in rows if r["ID"] in members]
+    allowed = _allowed_org_ids(lg, ctx)
+    if allowed is not None:
+        rows = [r for r in rows if r["ID"] in allowed]
     return [_team_payload(r) for r in rows]
 
 
@@ -970,12 +1010,58 @@ def league_org_rankings(league_id: str) -> list:
     """Rank the league's farm systems against each other using the potential
     model - the web equivalent of `print_org_summaries.py`. Reuses the
     `(league, "potential")` built-rows cache, so this is cheap once the
-    potential model has been scored for the snapshot once."""
-    _, ctx = _league_ctx(league_id)
+    potential model has been scored for the snapshot once.
+
+    Scoped to the league's `game_league_ids` when set, so a farm system from
+    another in-game league in the same StatsPlus export isn't ranked in."""
+    lg, ctx = _league_ctx(league_id)
     if not ctx.data_file.exists():
         return []
     rows = _league_built_rows(league_id, "potential")
+    allowed = _allowed_org_ids(lg, ctx)
+    if allowed is not None:
+        rows = [r for r in rows if str(r.get("org_id") or "") in allowed]
     return org_rankings.summarize_orgs(rows)
+
+
+def list_league_game_leagues(league_id: str) -> list:
+    """The OOTP in-game leagues present in the stored snapshot - the option set
+    for a league's `game_league_ids` config. Each entry carries a handful of org
+    names so the user can tell which id is which without opening OOTP."""
+    _, ctx = _league_ctx(league_id)
+    if not ctx.data_file.exists():
+        return []
+    names = _team_display_names(ctx)
+    by_league: dict = {}
+    try:
+        with open(ctx.data_file, newline="") as f:
+            for r in csv.DictReader(f):
+                if r.get("is_amateur") == "1":
+                    continue
+                lid = (r.get("snap_league_id") or "").strip()
+                if not lid:
+                    continue
+                bucket = by_league.setdefault(lid, {"orgs": {}, "players": 0})
+                bucket["players"] += 1
+                oid = (r.get("snap_org_id") or "").strip()
+                if oid:
+                    bucket["orgs"].setdefault(
+                        oid, names.get(oid) or (r.get("ORG") or "").strip() or oid
+                    )
+    except FileNotFoundError:
+        return []
+    out = []
+    for lid, bucket in by_league.items():
+        org_names = sorted(bucket["orgs"].values())
+        out.append({
+            "id": int(lid),
+            "org_count": len(bucket["orgs"]),
+            "player_count": bucket["players"],
+            "sample_orgs": org_names[:4],
+        })
+    # biggest league (most orgs) first - the "main" league a user usually wants
+    out.sort(key=lambda x: (-x["org_count"], -x["player_count"], x["id"]))
+    return out
 
 
 def _evict_league_payload_cache(league_id: str) -> None:

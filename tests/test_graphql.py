@@ -469,6 +469,58 @@ def test_league_org_rankings(client):
     assert "potential" in ready
 
 
+def test_game_league_scoping_of_orgs_and_rankings(client):
+    lid = gql(client, 'mutation { createLeague(name: "Scope", leagueUrl: "yfmlb") { id gameLeagueIds } }')[
+        "createLeague"
+    ]["id"]
+    _seed_snapshot(lid)  # fixture: both orgs (Milwaukee, Pittsburgh) in in-game league 153
+
+    # discovery: the in-game leagues present in the snapshot, with sample org names
+    opts = gql(
+        client,
+        "query($l: ID!) { leagueGameLeagues(leagueId: $l) { id orgCount playerCount sampleOrgs } }",
+        l=lid,
+    )["leagueGameLeagues"]
+    assert opts == [
+        {
+            "id": 153,
+            "orgCount": 2,
+            "playerCount": 2,
+            "sampleOrgs": ["Milwaukee Brewers", "Pittsburgh Pirates"],
+        }
+    ]
+
+    orgs_q = 'query($l: ID!) { leagueOrgs(leagueId: $l) { name } }'
+    rankings_q = "query($l: ID!) { leagueOrgRankings(leagueId: $l) { orgName } }"
+
+    # unscoped (default): every org that rosters a player
+    assert {o["name"] for o in gql(client, orgs_q, l=lid)["leagueOrgs"]} == {
+        "Milwaukee Brewers",
+        "Pittsburgh Pirates",
+    }
+
+    # scope to the real in-game league -> unchanged, and echoed back on the League
+    updated = gql(
+        client,
+        "mutation($l: ID!) { updateLeague(id: $l, gameLeagueIds: [153]) { gameLeagueIds } }",
+        l=lid,
+    )["updateLeague"]
+    assert updated["gameLeagueIds"] == [153]
+    assert {o["name"] for o in gql(client, orgs_q, l=lid)["leagueOrgs"]} == {
+        "Milwaukee Brewers",
+        "Pittsburgh Pirates",
+    }
+
+    # scope to a league that isn't in the snapshot -> picker and rankings go empty
+    gql(client, "mutation($l: ID!) { updateLeague(id: $l, gameLeagueIds: [999]) { id } }", l=lid)
+    assert gql(client, orgs_q, l=lid)["leagueOrgs"] == []
+    assert gql(client, rankings_q, l=lid)["leagueOrgRankings"] == []
+
+    # clearing the scope restores everything
+    gql(client, "mutation($l: ID!) { updateLeague(id: $l, gameLeagueIds: []) { id } }", l=lid)
+    assert len(gql(client, orgs_q, l=lid)["leagueOrgs"]) == 2
+
+
 def test_league_snapshot_players_rejects_bad_method(client):
     lid = gql(client, 'mutation { createLeague(name: "YF2", leagueUrl: "yfmlb") { id } }')[
         "createLeague"

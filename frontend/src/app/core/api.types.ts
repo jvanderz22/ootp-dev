@@ -20,6 +20,20 @@ export interface League {
   /** Whether the league has a stored StatsPlus cookie. Values are never returned. */
   hasSessionid: boolean;
   hasCsrftoken: boolean;
+  /** OOTP in-game league id(s) this league is scoped to. When non-empty, the
+   *  by-org picker and farm-system rankings only show orgs in these leagues.
+   *  Empty = every org in the snapshot. */
+  gameLeagueIds: number[];
+}
+
+/** One OOTP in-game league found in a stored snapshot — an option for a
+ *  league's `gameLeagueIds`. `sampleOrgs` helps a user recognise which id is
+ *  which without opening OOTP. */
+export interface GameLeagueOption {
+  id: number;
+  orgCount: number;
+  playerCount: number;
+  sampleOrgs: string[];
 }
 
 export type LeagueRefreshState = 'idle' | 'running' | 'done' | 'error';

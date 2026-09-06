@@ -23,6 +23,20 @@ type League {
   "Whether this league has a stored StatsPlus session cookie. The values themselves are never returned."
   hasSessionid: Boolean!
   hasCsrftoken: Boolean!
+  "OOTP in-game league id(s) this league is scoped to. When set, the by-org picker and farm-system rankings only show orgs in these leagues; empty = every org in the snapshot."
+  gameLeagueIds: [Int!]!
+}
+
+"""
+One OOTP in-game league found in a stored snapshot - the option set for a
+league's `gameLeagueIds`. `sampleOrgs` is a few org names so a user can tell
+which opaque id is which.
+"""
+type GameLeagueOption {
+  id: Int!
+  orgCount: Int!
+  playerCount: Int!
+  sampleOrgs: [String!]!
 }
 
 type RankedPlayer {
@@ -210,6 +224,8 @@ type Query {
   leagueTeams(leagueId: ID!): [LeagueTeam!]!
   "Distinct playing levels present in the snapshot, ordered MLB-first - the level filter's options."
   leagueLevels(leagueId: ID!): [String!]!
+  "OOTP in-game leagues present in the snapshot, biggest first - options for the league's `gameLeagueIds` config."
+  leagueGameLeagues(leagueId: ID!): [GameLeagueOption!]!
   "Status of the in-flight (or last) background refresh for this league."
   leagueRefreshStatus(leagueId: ID!): LeagueRefreshStatus!
 }
@@ -230,6 +246,7 @@ type Mutation {
     classNames: [String!]
     sessionid: String
     csrftoken: String
+    gameLeagueIds: [Int!]
   ): League!
   updateLeague(
     id: ID!
@@ -239,6 +256,8 @@ type Mutation {
     classNames: [String!]
     sessionid: String
     csrftoken: String
+    "null = leave as stored; a list (empty included) replaces the stored scope"
+    gameLeagueIds: [Int!]
   ): League!
   deleteLeague(id: ID!): String!
   setClassLeague(name: String!, leagueId: String): DraftClass!

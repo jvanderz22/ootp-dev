@@ -62,12 +62,19 @@ UNSOURCED_FIELDS = {"DEM", "Sign", "AD"}
 # `/api/players/` and all invisible to the rankers (`GamePlayer` ignores columns
 # it doesn't know):
 #   snap_team_id / snap_org_id  - the web layer groups a snapshot by these
+#   snap_league_id              - the OOTP in-game league the player's team plays
+#                                 in (abs value; StatsPlus negates it for the
+#                                 international complex). Lets the web layer scope
+#                                 the by-org / farm-system views to one in-game
+#                                 league when a StatsPlus export spans several
+#                                 (see `web/leagues.py` `game_league_ids`).
 #   mlb_service_years           - gates the potential ranking to < 1 year MLS
 #   is_amateur ("1" / "")       - the amateur draft class + international /
 #                                 undrafted amateur FA pool; excluded from BOTH
 #                                 rankings (see `_is_amateur`)
 SNAPSHOT_META_FIELDS = [
-    "snap_team_id", "snap_org_id", "mlb_service_years", "is_amateur",
+    "snap_team_id", "snap_org_id", "snap_league_id", "mlb_service_years",
+    "is_amateur",
 ]
 SNAPSHOT_FIELDNAMES = OUTPUT_FIELDNAMES + SNAPSHOT_META_FIELDS
 
@@ -306,6 +313,15 @@ def _map_row(rat: dict, ply: dict, teams: dict) -> dict:
     row["Lev"] = (
         INTL_COMPLEX_LEVEL if intl_complex else LEVEL_NAMES.get(level_code, "")
     )
+
+    # In-game league id of the player's team. StatsPlus negates it for the
+    # international complex (see `_is_intl_complex`); store the magnitude so those
+    # teenagers count toward their parent club's real league. Blank for a free
+    # agent / unaffiliated player.
+    league_code = _int(
+        (rat.get("League") or (ply.get("League ID") if ply else "") or "").strip()
+    )
+    row["snap_league_id"] = str(abs(league_code)) if league_code else ""
 
     org_id = (
         (rat.get("Org") or "").strip()

@@ -55,9 +55,11 @@ def resolve_create_league(
     class_names=None,
     sessionid=None,
     csrftoken=None,
+    game_league_ids=None,
 ):
     return service.create_league(
-        name, league_url, default_lid, class_names, sessionid, csrftoken
+        name, league_url, default_lid, class_names, sessionid, csrftoken,
+        game_league_ids=game_league_ids,
     )
 
 
@@ -72,9 +74,11 @@ def resolve_update_league(
     class_names=None,
     sessionid=None,
     csrftoken=None,
+    game_league_ids=None,
 ):
     return service.update_league(
-        id, name, league_url, default_lid, class_names, sessionid, csrftoken
+        id, name, league_url, default_lid, class_names, sessionid, csrftoken,
+        game_league_ids=game_league_ids,
     )
 
 
