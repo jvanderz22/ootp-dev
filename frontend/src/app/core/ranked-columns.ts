@@ -155,8 +155,14 @@ export const fmtScoutAcc = abbrev({
   low: 'L',
   'very low': 'VL',
 });
-/** Durable → D, Normal → N, Fragile → F */
-export const fmtDurability = abbrev({ durable: 'D', normal: 'N', fragile: 'F' });
+/** Iron Man → IM, Durable → D, Normal → N, Fragile → F, Wrecked → W */
+export const fmtDurability = abbrev({
+  'iron man': 'IM',
+  durable: 'D',
+  normal: 'N',
+  fragile: 'F',
+  wrecked: 'W',
+});
 
 // ---------------------------------------------------------------- accessors
 const bat = (k: string) => (p: RankedPlayerRow) => p.ratings?.batting?.[k] ?? null;
@@ -627,8 +633,8 @@ export const VIEW_OPTIONS: { label: string; value: ClassView }[] = [
 ];
 
 /** Descriptive-grade columns whose text maps to a tier ordinal the backend can
- *  still compare with >/< (Very Low = 0 … Very High = 4; Fragile/Normal/Durable
- *  = 0/1/2). */
+ *  still compare with >/< (Very Low = 0 … Very High = 4;
+ *  Wrecked/Fragile/Normal/Durable/Iron Man = 0/1/2/3/4). */
 const GRADED_TEXT_FIELDS = new Set([
   'injuryProne',
   'workEthic',

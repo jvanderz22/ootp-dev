@@ -279,7 +279,7 @@ def _demand_key(demand):
 # order within a single column matters, so overlapping vocabularies are fine.
 _GRADE_ORDINALS = {
     "l": 0, "n": 1, "h": 2,
-    "fragile": 0, "normal": 1, "durable": 2,
+    "wrecked": 0, "fragile": 1, "normal": 2, "durable": 3, "iron man": 4,
     "very low": 0, "low": 1, "average": 2, "high": 3, "very high": 4,
 }
 _RATING_META_KEYS = {

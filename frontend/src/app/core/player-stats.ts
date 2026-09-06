@@ -49,7 +49,7 @@ export function typeSeverity(t: PlayerType): 'info' | 'warn' | 'success' {
  */
 export function gradeTone(v: unknown): '' | 'danger' | 'warn' {
   const s = String(v ?? '').trim().toLowerCase();
-  if (s === 'fragile' || s === 'low' || s === 'very low') return 'danger';
+  if (s === 'wrecked' || s === 'fragile' || s === 'low' || s === 'very low') return 'danger';
   if (s === 'average') return 'warn';
   return '';
 }
