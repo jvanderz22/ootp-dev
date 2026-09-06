@@ -15,19 +15,19 @@ import { DraftClass, League, RANKING_METHODS } from '../../core/api.types';
         <div>
           <h1>{{ d.name }}</h1>
           <p class="muted sub">
-            {{ d.playerCount }} players ·
-            {{ shownCount() }} shown ·
-            {{ d.draftedCount }} drafted ·
+            {{ d.playerCount }} players · {{ shownCount() }} shown · {{ d.draftedCount }} drafted ·
             {{ d.rankingMethod }} ·
             {{ d.leagueName || 'no league' }}
-            @if (d.hasCustomOrder) { · <span class="tag">custom order</span> }
+            @if (d.hasCustomOrder) {
+              · <span class="tag">custom order</span>
+            }
           </p>
         </div>
 
         <div class="actions">
           @if (!notProcessed()) {
             <button (click)="refreshDrafted.emit()" [disabled]="busy()">Refresh drafted</button>
-            <button (click)="download.emit()" [disabled]="busy()">Download C+ CSV</button>
+            <button (click)="download.emit()" [disabled]="busy()">Download S+ CSV</button>
             @if (mode() === 'table') {
               <button class="primary" (click)="startReorder.emit()" [disabled]="busy()">
                 Edit custom order
@@ -58,7 +58,9 @@ import { DraftClass, League, RANKING_METHODS } from '../../core/api.types';
   `,
   styles: [
     `
-      :host { display: block; }
+      :host {
+        display: block;
+      }
       .head {
         display: flex;
         justify-content: space-between;
@@ -66,13 +68,32 @@ import { DraftClass, League, RANKING_METHODS } from '../../core/api.types';
         gap: 16px;
         flex-wrap: wrap;
       }
-      h1 { margin: 0 0 4px; }
-      .sub { margin: 0; }
-      .muted { color: var(--text-dim); }
-      .tag { color: var(--accent); }
-      .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-      .icon-btn { display: inline-flex; align-items: center; justify-content: center; }
-      .icon-btn i { font-size: 1rem; }
+      h1 {
+        margin: 0 0 4px;
+      }
+      .sub {
+        margin: 0;
+      }
+      .muted {
+        color: var(--text-dim);
+      }
+      .tag {
+        color: var(--accent);
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .icon-btn i {
+        font-size: 1rem;
+      }
     `,
   ],
 })
