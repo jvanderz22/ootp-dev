@@ -4,12 +4,14 @@
 including the OOTP player `ID`, which lets us match drafted players exactly
 instead of parsing "POS Firstname Lastname" strings.
 
-`<league-url>` is the league's StatsPlus home, e.g. `https://statsplus.net/yfmlb/`
-or `https://atl-01.statsplus.net/wbf/`. Either form is accepted, but every
-`/api/` request is sent to the canonical apex host `statsplus.net/<slug>/`: the
-per-node subdomains (`atl-01.statsplus.net`, ...) are OOTP game-server hosts and
-do not carry the StatsPlus web session, so the API answers there with
-"This API requires user to be logged in, visit https://statsplus.net/<slug>/ ...".
+`<league-url>` is the league's StatsPlus home, and every `/api/` request is sent
+to that host exactly as configured. Most leagues live on the apex host
+(`https://statsplus.net/<slug>/`), but some are served from a per-node subdomain
+(`https://atl-01.statsplus.net/<slug>/`) that the apex host only 301-redirects
+to - so we never rewrite the configured host to a "canonical" one; a league does
+not move hosts. A wrong host still fails cleanly: an unauthenticated `/api/`
+call comes back with a "This API requires user to be logged in" notice, which
+`_looks_like_login_notice` turns into a `StatsPlusAuthError`.
 
 Auth is a browser session cookie (there is no API-key scheme): copy `sessionid`
 and `csrftoken` from a logged-in StatsPlus tab (DevTools -> Application ->
@@ -75,14 +77,14 @@ def normalize_league_url(value: str) -> str:
 
 def statsplus_player_url(league_url: str, player_id) -> Optional[str]:
     """Public link to a player's page on the StatsPlus web app,
-    ``https://statsplus.net/<slug>/player/<id>``. Uses the apex host (the web
-    app is served there, like the API); returns ``None`` when the league has no
-    usable StatsPlus URL or the id is missing."""
+    ``<league-host>/<slug>/player/<id>`` on the league's configured host;
+    returns ``None`` when the league has no usable StatsPlus URL or the id is
+    missing."""
     pid = str(player_id or "").strip()
     if not pid:
         return None
     try:
-        base = _canonical_league_url(league_url)
+        base = normalize_league_url(league_url)
     except StatsPlusError:
         return None
     if not base:
@@ -90,22 +92,8 @@ def statsplus_player_url(league_url: str, player_id) -> Optional[str]:
     return f"{base.rstrip('/')}/player/{pid}"
 
 
-def _canonical_league_url(league_url: str) -> str:
-    """`normalize_league_url` but with the host forced to the apex
-    `statsplus.net`. The API is only served there; a per-node subdomain
-    (`atl-01.statsplus.net/wbf/`) reaches the OOTP game server, which has no
-    StatsPlus session and rejects every `/api/` call with a "log in" notice.
-    Only the league slug carries over."""
-    normalized = normalize_league_url(league_url)
-    if not normalized:
-        return ""
-    return urlunparse(
-        ("https", _STATSPLUS_DOMAIN, urlparse(normalized).path, "", "", "")
-    )
-
-
 def _draft_url(league_url: str) -> str:
-    return _canonical_league_url(league_url).rstrip("/") + "/api/draftv2/"
+    return normalize_league_url(league_url).rstrip("/") + "/api/draftv2/"
 
 
 def fetch_draft_picks(league_url: str, cookie: str, lid=None, timeout: float = 30.0):
@@ -185,7 +173,7 @@ def _looks_like_login_notice(body: str) -> bool:
 
 
 def _api_url(league_url: str, endpoint: str) -> str:
-    return _canonical_league_url(league_url).rstrip("/") + f"/api/{endpoint}/"
+    return normalize_league_url(league_url).rstrip("/") + f"/api/{endpoint}/"
 
 
 def _get_api_text(url: str, cookie: str, *, params=None, timeout: float = 60.0) -> str:

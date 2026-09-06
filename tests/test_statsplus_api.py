@@ -9,7 +9,6 @@ from statsplus_api import (
     StatsPlusAuthError,
     StatsPlusError,
     _api_url,
-    _canonical_league_url,
     _draft_url,
     _parse_draft_csv,
     fetch_draft_picks,
@@ -100,20 +99,20 @@ def test_normalize_league_url_rejects_other_hosts():
 
 
 @_pytest.mark.parametrize(
-    "raw",
+    "raw,host",
     [
-        "https://atl-01.statsplus.net/wbf/",
-        "atl-01.statsplus.net/wbf",
-        "https://statsplus.net/wbf/",
-        "wbf",
+        # a per-node subdomain is used as configured: the apex host only
+        # 301-redirects there for leagues that live on a node, and a league
+        # does not move hosts.
+        ("https://atl-01.statsplus.net/wbf/", "https://atl-01.statsplus.net"),
+        ("atl-01.statsplus.net/wbf", "https://atl-01.statsplus.net"),
+        ("https://statsplus.net/wbf/", "https://statsplus.net"),
+        ("wbf", "https://statsplus.net"),  # a bare slug defaults to the apex
     ],
 )
-def test_api_calls_target_the_apex_host(raw):
-    # A per-node subdomain reaches the game server, which has no StatsPlus
-    # session - every /api/ request must go to statsplus.net/<slug>/.
-    assert _canonical_league_url(raw) == "https://statsplus.net/wbf/"
-    assert _api_url(raw, "ratings") == "https://statsplus.net/wbf/api/ratings/"
-    assert _draft_url(raw) == "https://statsplus.net/wbf/api/draftv2/"
+def test_api_calls_target_the_configured_host(raw, host):
+    assert _api_url(raw, "ratings") == f"{host}/wbf/api/ratings/"
+    assert _draft_url(raw) == f"{host}/wbf/api/draftv2/"
 
 
 def test_login_notice_body_is_an_auth_error(monkeypatch):
