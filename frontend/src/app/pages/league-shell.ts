@@ -9,42 +9,48 @@ import { LeagueStore } from '../core/league-store';
   selector: 'app-league-shell',
   imports: [RouterLink, RouterLinkActive, RouterOutlet],
   template: `
-    <div class="head">
-      <a routerLink="/" class="back muted">← Leagues</a>
+    <header class="shell-head">
       <h1>{{ league()?.name ?? id() }}</h1>
-    </div>
-
-    <nav class="tabs">
-      <a
-        [routerLink]="['/league', id()]"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-      >Current League</a>
-      <a [routerLink]="['/league', id(), 'classes']" routerLinkActive="active"
-        >Draft Classes</a
-      >
-    </nav>
+      <nav class="seg">
+        <a
+          [routerLink]="['/league', id()]"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >Current League</a>
+        <a [routerLink]="['/league', id(), 'classes']" routerLinkActive="active"
+          >Draft Classes</a
+        >
+      </nav>
+    </header>
 
     <router-outlet />
   `,
   styles: `
     a { text-decoration: none; color: inherit; }
-    .head { display: flex; align-items: baseline; gap: 12px; }
-    .back { font-size: 13px; }
-    .tabs {
+    .shell-head {
       display: flex;
-      gap: 4px;
-      margin: 12px 0 16px;
-      border-bottom: 1px solid var(--border, #ddd);
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 16px;
     }
-    .tabs a {
-      padding: 8px 14px;
-      border-bottom: 2px solid transparent;
-      color: var(--muted, #666);
+    h1 { margin: 0; font-size: 20px; }
+    .seg {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
     }
-    .tabs a.active {
-      color: inherit;
-      border-bottom-color: var(--accent);
+    .seg a {
+      padding: 6px 14px;
+      color: var(--text-dim);
+      border-right: 1px solid var(--border);
+    }
+    .seg a:last-child { border-right: none; }
+    .seg a:hover { background: var(--bg-elev); }
+    .seg a.active {
+      background: var(--accent);
+      color: var(--accent-contrast);
       font-weight: 600;
     }
   `,

@@ -67,16 +67,15 @@ function defaultQuery(): RankedQuery {
   imports: [DatePipe, RankedTableComponent],
   template: `
     <div class="bar">
-      <div class="status">
-        @if (snapshot(); as s) {
-          <b>{{ s.playerCount }}</b> players
-          @if (s.fetchedAt) {
-            <span class="muted"> · refreshed {{ s.fetchedAt | date: 'medium' }}</span>
-          }
-        } @else if (!loading()) {
-          <span class="muted">No snapshot yet — pull one from StatsPlus.</span>
+      @if (snapshot(); as s) {
+        @if (s.fetchedAt) {
+          <span class="muted" [title]="s.playerCount + ' players'"
+            >Refreshed {{ s.fetchedAt | date: 'medium' }}</span
+          >
         }
-      </div>
+      } @else if (!loading()) {
+        <span class="muted">No snapshot yet — pull one from StatsPlus.</span>
+      }
       <button class="primary" [disabled]="busy()" (click)="refresh()">
         {{ busy() ? 'Refreshing…' : 'Refresh from StatsPlus' }}
       </button>
@@ -169,8 +168,8 @@ function defaultQuery(): RankedQuery {
     .bar {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      justify-content: flex-end;
+      gap: 10px;
     }
     .controls {
       display: flex;
