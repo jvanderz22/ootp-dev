@@ -35,6 +35,9 @@ export class PlayerDetailCardComponent {
   readonly player = input.required<RankedPlayerRow>();
   /** Total ranked players — upper bound for the rank input. */
   readonly totalRanked = input(0);
+  /** Whether the "Edit rank" control is offered — only draft classes have a
+   *  hand-editable order; the live-league view hides it. */
+  readonly canEditRank = input(true);
   /** New 1-based rank the user committed for this player. */
   readonly setRank = output<number>();
 
@@ -42,6 +45,14 @@ export class PlayerDetailCardComponent {
   protected readonly draftRank = signal<number | null>(null);
 
   protected readonly rankMax = computed(() => this.totalRanked() || null);
+
+  /** "Org · Team · Level" for live-league rows; empty in the draft-class view. */
+  protected readonly orgLine = computed(() => {
+    const p = this.player();
+    return [p.org, p.team && p.team !== p.org ? p.team : null, p.level]
+      .filter(Boolean)
+      .join(' · ');
+  });
 
   protected startEdit(): void {
     this.draftRank.set(this.player().rank);

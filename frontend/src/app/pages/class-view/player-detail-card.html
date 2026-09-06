@@ -7,15 +7,22 @@
       <p-tag value="Drafted" severity="danger" />
     }
     <span class="muted">{{ p.position }} · Age {{ p.age ?? '—' }}</span>
+    @if (orgLine(); as ol) {
+      <span class="muted">{{ ol }}</span>
+    }
     @if (p.demand) {
       <span class="muted">Demand {{ p.demand }}</span>
     }
     @if (p.ratings?.scoutingAccuracy; as sct) {
       <p-tag [value]="sct" [severity]="scoutSeverity(sct)" />
     }
+    @if (p.statsPlusUrl; as spUrl) {
+      <a class="splus-link" [href]="spUrl" target="_blank" rel="noopener noreferrer"
+        (click)="$event.stopPropagation()">StatsPlus ↗</a>
+    }
 
     <span class="rank-edit">
-      @if (editing()) {
+      @if (canEditRank() && editing()) {
         <span class="muted">Rank</span>
         <input
           type="number"
@@ -32,7 +39,9 @@
         <button type="button" class="sm" (click)="cancelEdit()">Cancel</button>
       } @else {
         <span class="muted">#{{ p.rank }}</span>
-        <button type="button" class="sm" (click)="startEdit()">Edit rank</button>
+        @if (canEditRank()) {
+          <button type="button" class="sm" (click)="startEdit()">Edit rank</button>
+        }
       }
     </span>
   </div>

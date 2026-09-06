@@ -34,6 +34,7 @@ from statsplus_api import (
     StatsPlusError,
     fetch_draft_picks,
     fetch_league_date,
+    statsplus_player_url,
     write_drafted_players_file,
 )
 from web.settings import cookie_header, load_settings
@@ -235,6 +236,7 @@ def _player_payload(rank, row, drafted_info, game_player=None):
         "org": None,
         "team": None,
         "level": None,
+        "stats_plus_url": None,
     }
     for field in _FLOAT_FIELDS:
         payload[field] = _to_number(row.get(field))
@@ -871,7 +873,7 @@ def _snapshot_side_tables(ctx):
 
 
 def _league_built_rows(league_id: str, method: str) -> list:
-    _, ctx = _league_ctx(league_id)
+    lg, ctx = _league_ctx(league_id)
     if not ctx.data_file.exists():
         raise NotFound(
             f"League {league_id!r} has no snapshot yet - refresh it from StatsPlus first."
@@ -889,6 +891,7 @@ def _league_built_rows(league_id: str, method: str) -> list:
     except ValueError as exc:  # method not in LEAGUE_RANKING_METHODS
         raise InvalidInput(str(exc)) from exc
     game_players, meta = _snapshot_side_tables(ctx)
+    league_url = lg.get("league_url")
     built = []
     for i, row in enumerate(ranked):
         payload = _player_payload(i + 1, row, None, game_players.get(row["id"]))
@@ -898,6 +901,7 @@ def _league_built_rows(league_id: str, method: str) -> list:
         payload["org"] = m.get("org")
         payload["team"] = m.get("team")
         payload["level"] = m.get("level")
+        payload["stats_plus_url"] = statsplus_player_url(league_url, row["id"])
         built.append(payload)
 
     with _league_payload_lock:

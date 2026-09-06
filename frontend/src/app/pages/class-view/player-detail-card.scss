@@ -18,6 +18,14 @@
 .dh-name { font-weight: 700; font-size: 15px; }
 .muted { color: var(--text-dim); }
 
+.splus-link {
+  font-size: 12px;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.splus-link:hover { text-decoration: underline; }
+
 .rank-edit {
   display: inline-flex;
   align-items: center;

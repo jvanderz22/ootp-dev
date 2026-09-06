@@ -171,6 +171,7 @@
             <app-player-detail-card
               [player]="p"
               [totalRanked]="totalRecords()"
+              [canEditRank]="context() === 'class'"
               (setRank)="onSetRank(p, $event)"
             />
           </div>

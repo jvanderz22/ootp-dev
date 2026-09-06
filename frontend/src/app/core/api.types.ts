@@ -82,6 +82,8 @@ export interface RankedPlayer {
   org: string | null;
   team: string | null;
   level: string | null;
+  /** live-league snapshot only: link to the player's StatsPlus page */
+  statsPlusUrl: string | null;
   modelScore: number | null;
   inGameOverall: number | null;
   inGamePotential: number | null;

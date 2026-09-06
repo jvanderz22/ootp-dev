@@ -37,6 +37,8 @@ type RankedPlayer {
   org: String
   team: String
   level: String
+  "live-league snapshot only: link to the player's StatsPlus page"
+  statsPlusUrl: String
   modelScore: Float
   inGameOverall: Int
   inGamePotential: Int

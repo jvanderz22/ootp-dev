@@ -20,6 +20,7 @@ import io
 import re
 import time
 from dataclasses import asdict, dataclass
+from typing import Optional
 from urllib.parse import urlparse, urlunparse
 
 DRAFTED_FIELDNAMES = ["id", "name", "position", "round", "pick", "overall", "team"]
@@ -70,6 +71,23 @@ def normalize_league_url(value: str) -> str:
     if not path.rstrip("/"):
         raise StatsPlusError("Missing the league slug in the StatsPlus URL.")
     return urlunparse(("https", host, path + "/", "", "", ""))
+
+
+def statsplus_player_url(league_url: str, player_id) -> Optional[str]:
+    """Public link to a player's page on the StatsPlus web app,
+    ``https://statsplus.net/<slug>/player/<id>``. Uses the apex host (the web
+    app is served there, like the API); returns ``None`` when the league has no
+    usable StatsPlus URL or the id is missing."""
+    pid = str(player_id or "").strip()
+    if not pid:
+        return None
+    try:
+        base = _canonical_league_url(league_url)
+    except StatsPlusError:
+        return None
+    if not base:
+        return None
+    return f"{base.rstrip('/')}/player/{pid}"
 
 
 def _canonical_league_url(league_url: str) -> str:
