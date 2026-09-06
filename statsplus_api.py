@@ -5,7 +5,11 @@ including the OOTP player `ID`, which lets us match drafted players exactly
 instead of parsing "POS Firstname Lastname" strings.
 
 `<league-url>` is the league's StatsPlus home, e.g. `https://statsplus.net/yfmlb/`
-or `https://atl-01.statsplus.net/wbf/`.
+or `https://atl-01.statsplus.net/wbf/`. Either form is accepted, but every
+`/api/` request is sent to the canonical apex host `statsplus.net/<slug>/`: the
+per-node subdomains (`atl-01.statsplus.net`, ...) are OOTP game-server hosts and
+do not carry the StatsPlus web session, so the API answers there with
+"This API requires user to be logged in, visit https://statsplus.net/<slug>/ ...".
 
 Auth is a browser session cookie (there is no API-key scheme): copy `sessionid`
 and `csrftoken` from a logged-in StatsPlus tab (DevTools -> Application ->
@@ -68,8 +72,22 @@ def normalize_league_url(value: str) -> str:
     return urlunparse(("https", host, path + "/", "", "", ""))
 
 
+def _canonical_league_url(league_url: str) -> str:
+    """`normalize_league_url` but with the host forced to the apex
+    `statsplus.net`. The API is only served there; a per-node subdomain
+    (`atl-01.statsplus.net/wbf/`) reaches the OOTP game server, which has no
+    StatsPlus session and rejects every `/api/` call with a "log in" notice.
+    Only the league slug carries over."""
+    normalized = normalize_league_url(league_url)
+    if not normalized:
+        return ""
+    return urlunparse(
+        ("https", _STATSPLUS_DOMAIN, urlparse(normalized).path, "", "", "")
+    )
+
+
 def _draft_url(league_url: str) -> str:
-    return normalize_league_url(league_url).rstrip("/") + "/api/draftv2/"
+    return _canonical_league_url(league_url).rstrip("/") + "/api/draftv2/"
 
 
 def fetch_draft_picks(league_url: str, cookie: str, lid=None, timeout: float = 30.0):
@@ -103,6 +121,12 @@ def fetch_draft_picks(league_url: str, cookie: str, lid=None, timeout: float = 3
         return []
     if body.lstrip().startswith("<"):  # got an HTML login page, not CSV
         raise StatsPlusAuthError("StatsPlus returned a login page instead of draft data.")
+    if _looks_like_login_notice(body):
+        raise StatsPlusAuthError(
+            "StatsPlus rejected the session for this league (response: "
+            f"{body[:160]!r}). Re-copy sessionid/csrftoken from a tab logged in "
+            "at statsplus.net, and check the team link for this league."
+        )
 
     return _parse_draft_csv(body)
 
@@ -125,9 +149,25 @@ def fetch_draft_picks(league_url: str, cookie: str, lid=None, timeout: float = 3
 
 _MYCSV_URL_RE = re.compile(r"https?://[^\s\"'<>]+/api/mycsv/\?request=[0-9a-fA-F-]+")
 
+# StatsPlus answers an unauthenticated `/api/` call with HTTP 200 and a short
+# plain-text notice (not an HTML login page), so the `startswith("<")` check
+# below misses it. Sniff the body for the notice and treat it as an auth error.
+_LOGIN_NOTICE_MARKERS = (
+    "requires user to be logged in",
+    "log in to a linked team",
+    "you must be logged in",
+    "please log in",
+    "not logged in",
+)
+
+
+def _looks_like_login_notice(body: str) -> bool:
+    head = (body or "")[:500].lower()
+    return any(marker in head for marker in _LOGIN_NOTICE_MARKERS)
+
 
 def _api_url(league_url: str, endpoint: str) -> str:
-    return normalize_league_url(league_url).rstrip("/") + f"/api/{endpoint}/"
+    return _canonical_league_url(league_url).rstrip("/") + f"/api/{endpoint}/"
 
 
 def _get_api_text(url: str, cookie: str, *, params=None, timeout: float = 60.0) -> str:
@@ -160,6 +200,12 @@ def _get_api_text(url: str, cookie: str, *, params=None, timeout: float = 60.0) 
     body = resp.text
     if body.lstrip().startswith("<"):  # got an HTML login page, not CSV
         raise StatsPlusAuthError("StatsPlus returned a login page instead of data.")
+    if _looks_like_login_notice(body):
+        raise StatsPlusAuthError(
+            "StatsPlus rejected the session for this league (response: "
+            f"{body.strip()[:160]!r}). Re-copy sessionid/csrftoken from a tab "
+            "logged in at statsplus.net, and check the team link for this league."
+        )
     return body
 
 

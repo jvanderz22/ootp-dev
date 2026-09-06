@@ -8,6 +8,9 @@ import statsplus_api
 from statsplus_api import (
     StatsPlusAuthError,
     StatsPlusError,
+    _api_url,
+    _canonical_league_url,
+    _draft_url,
     _parse_draft_csv,
     fetch_draft_picks,
     fetch_league_date,
@@ -94,6 +97,44 @@ def test_normalize_league_url(raw, expected):
 def test_normalize_league_url_rejects_other_hosts():
     with _pytest.raises(StatsPlusError):
         normalize_league_url("https://example.com/yfmlb")
+
+
+@_pytest.mark.parametrize(
+    "raw",
+    [
+        "https://atl-01.statsplus.net/wbf/",
+        "atl-01.statsplus.net/wbf",
+        "https://statsplus.net/wbf/",
+        "wbf",
+    ],
+)
+def test_api_calls_target_the_apex_host(raw):
+    # A per-node subdomain reaches the game server, which has no StatsPlus
+    # session - every /api/ request must go to statsplus.net/<slug>/.
+    assert _canonical_league_url(raw) == "https://statsplus.net/wbf/"
+    assert _api_url(raw, "ratings") == "https://statsplus.net/wbf/api/ratings/"
+    assert _draft_url(raw) == "https://statsplus.net/wbf/api/draftv2/"
+
+
+def test_login_notice_body_is_an_auth_error(monkeypatch):
+    _stub_get(
+        monkeypatch,
+        _FakeResp(
+            "This API requires user to be logged in, visit "
+            "https://statsplus.net/wbf/ and log in to a linked team"
+        ),
+    )
+    with pytest.raises(StatsPlusAuthError):
+        fetch_league_date("https://atl-01.statsplus.net/wbf/", "sessionid=x")
+
+
+def test_start_ratings_job_login_notice_is_an_auth_error(monkeypatch):
+    _stub_get(
+        monkeypatch,
+        _FakeResp("This API requires user to be logged in, visit ... linked team"),
+    )
+    with pytest.raises(StatsPlusAuthError):
+        start_ratings_job("wbf", "c")
 
 DRAFTV2_CSV = (
     "ID,Round,Pick In Round,Supp,Overall,Player Name,Team,Team ID,Position,Age,College,Auto Pick,Time (UTC)\n"
