@@ -15,10 +15,16 @@ class PitcherInjuryModifier(BaseModifier):
         modifier_weight = cls.modifier_weight_model.rank(model_score)
         injury_prone = player.injury_prone
 
-        if injury_prone == "Durable":
+        if injury_prone == "Iron Man":
+            base_iron_man_modifier = 1.15
+            modifier = base_iron_man_modifier**modifier_weight
+        elif injury_prone == "Durable":
             base_durable_modifier = 1.11
             modifier = base_durable_modifier**modifier_weight
         elif injury_prone == "Fragile":
             base_fragile_modifier = 0.6
             modifier = base_fragile_modifier**modifier_weight
+        elif injury_prone == "Wrecked":
+            base_wrecked_modifier = 0.52
+            modifier = base_wrecked_modifier**modifier_weight
         return modifier
