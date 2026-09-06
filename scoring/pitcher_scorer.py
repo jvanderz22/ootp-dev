@@ -91,7 +91,7 @@ def calculate_rp_modifier(player, type="potential"):
     modifier *= knuckleball_modifier
 
     gb_type = player.groundball_type
-    gb_type_modifier = rp_groundball_type_modifier_map[gb_type]
+    gb_type_modifier = rp_groundball_type_modifier_map.get(gb_type, 1)
     modifier *= gb_type_modifier
 
     stamina = player.stamina
@@ -272,7 +272,7 @@ def calculate_sp_modifiers(player, type="potential"):
     modifier *= KnuckleballModifier.calculate_player_modifier(player)
 
     gb_type = player.groundball_type
-    gb_type_modifier = sp_groundball_type_modifier_map[gb_type]
+    gb_type_modifier = sp_groundball_type_modifier_map.get(gb_type, 1)
     modifier *= gb_type_modifier
 
     stamina_modifier = sp_stamina_modifier_map[player.stamina]

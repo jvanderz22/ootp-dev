@@ -157,6 +157,9 @@ LEVEL_ORDER = ["MLB", "AAA", "AA", "A", "A-", "R", "Indy", "INT", "NCAA", "HS", 
 # `pitcher_scorer.rp_groundball_type_modifier_map` for every player.
 GF_BUCKETS = ((40, "EX FB"), (47, "FB"), (53, "NEU"), (60, "GB"))
 GF_DEFAULT = "EX GB"
+# The five labels a valid `G/F` cell holds - `pitcher_scorer` keys its modifier
+# maps on exactly these.
+GF_LABELS = frozenset(label for _, label in GF_BUCKETS) | {GF_DEFAULT}
 
 
 def _int(value, default=None):
@@ -209,6 +212,17 @@ def gf_from_gb(gb) -> str:
         if n < upper:
             return label
     return GF_DEFAULT
+
+
+def coerce_gf(value) -> str:
+    """Return a valid `G/F` label. A snapshot written by an older build (before
+    the numeric `GB` column was bucketed here) stored the raw rating in `G/F`;
+    re-bucket anything that isn't already one of `GF_LABELS` so a stale data file
+    doesn't `KeyError` the pitcher scorer."""
+    text = (str(value).strip() if value is not None else "")
+    if text in GF_LABELS:
+        return text
+    return gf_from_gb(text)
 
 
 # ------------------------------------------------------------------- the context
@@ -575,6 +589,8 @@ def _score_and_write_locked(
                     continue
                 if rookies_only and _int(row.get("mlb_service_years"), 0) >= 1:
                     continue
+                # Heal a legacy data file that stored the raw `GB` rating here.
+                row["G/F"] = coerce_gf(row.get("G/F"))
                 yield GamePlayer(row)
 
     scored = ranker.rank(

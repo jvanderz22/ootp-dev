@@ -362,6 +362,13 @@ export class LeagueViewPage {
         this.notice.set(null);
       }
       return status;
+    } catch (e) {
+      // The poll itself kept failing (machine down, network) — surface it
+      // instead of leaving the page stuck behind a spinner, and hand the
+      // (non-terminal) status back so the caller doesn't treat it as done.
+      this.error.set((e as Error).message || 'Lost contact with the refresh job.');
+      this.notice.set(null);
+      return status;
     } finally {
       this.polling = false;
       this.phase.set(null);
