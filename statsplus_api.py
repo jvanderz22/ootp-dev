@@ -176,6 +176,20 @@ def _api_url(league_url: str, endpoint: str) -> str:
     return normalize_league_url(league_url).rstrip("/") + f"/api/{endpoint}/"
 
 
+def _pin_to_league_host(league_url: str, url: str) -> str:
+    """`url` with its scheme + host swapped for the league's configured host.
+    The async ratings export hands back a poll URL on the apex `statsplus.net`
+    even when the request went to a per-node subdomain; forcing it onto the
+    league host keeps every `/api/` call on one host instead of chasing a 301
+    across hosts (see module docstring)."""
+    league = urlparse(normalize_league_url(league_url))
+    target = urlparse(url)
+    return urlunparse(
+        (league.scheme, league.netloc, target.path, target.params,
+         target.query, target.fragment)
+    )
+
+
 def _get_api_text(url: str, cookie: str, *, params=None, timeout: float = 60.0) -> str:
     """GET `url` with the StatsPlus session cookie and return the body text,
     applying the same auth / HTML-login detection as `fetch_draft_picks`."""
@@ -217,7 +231,9 @@ def _get_api_text(url: str, cookie: str, *, params=None, timeout: float = 60.0) 
 
 def start_ratings_job(league_url: str, cookie: str, timeout: float = 60.0) -> str:
     """Fire the async ratings export and return the poll URL parsed out of the
-    `GET /api/ratings/` response body."""
+    `GET /api/ratings/` response body, pinned to the league's configured host
+    (StatsPlus builds that URL with the apex host baked in even for a per-node
+    league, and the apex only 301-redirects back to the node)."""
     body = _get_api_text(_api_url(league_url, "ratings"), cookie, timeout=timeout)
     match = _MYCSV_URL_RE.search(body)
     if not match:
@@ -225,7 +241,7 @@ def start_ratings_job(league_url: str, cookie: str, timeout: float = 60.0) -> st
             "StatsPlus /api/ratings/ did not return an export URL "
             f"(response began {body[:200]!r})."
         )
-    return match.group(0)
+    return _pin_to_league_host(league_url, match.group(0))
 
 
 def poll_ratings_export(

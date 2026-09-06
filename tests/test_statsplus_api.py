@@ -52,6 +52,19 @@ def test_start_ratings_job_parses_poll_url(monkeypatch):
     assert start_ratings_job("yfmlb", "c").endswith(f"request={uuid}")
 
 
+def test_start_ratings_job_pins_poll_url_to_league_host(monkeypatch):
+    # StatsPlus builds the poll URL on the apex host even when the league lives
+    # on a per-node subdomain; it must be pinned back to the configured host so
+    # poll_ratings_export doesn't chase a cross-host 301.
+    uuid = "3de70b01-337b-4baf-a948-f18831706dc4"
+    _stub_get(
+        monkeypatch,
+        _FakeResp(f"check https://statsplus.net/wbf/api/mycsv/?request={uuid}"),
+    )
+    poll = start_ratings_job("https://atl-01.statsplus.net/wbf/", "c")
+    assert poll == f"https://atl-01.statsplus.net/wbf/api/mycsv/?request={uuid}"
+
+
 def test_start_ratings_job_without_poll_url_raises(monkeypatch):
     _stub_get(monkeypatch, _FakeResp("Request too soon, wait 284 seconds"))
     with pytest.raises(StatsPlusError):
