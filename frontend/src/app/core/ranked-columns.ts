@@ -9,8 +9,21 @@ import { gradeTone } from './player-stats';
 
 /** Pitchers first, then scorekeeping order for position players. */
 export const POSITION_ORDER = [
-  'P', 'SP', 'RP', 'CL',
-  'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'OF', 'IF', 'DH',
+  'P',
+  'SP',
+  'RP',
+  'CL',
+  'C',
+  '1B',
+  '2B',
+  '3B',
+  'SS',
+  'LF',
+  'CF',
+  'RF',
+  'OF',
+  'IF',
+  'DH',
 ];
 
 export const PITCHER_POSITIONS = ['P', 'SP', 'RP', 'CL'];
@@ -68,65 +81,223 @@ export const fmtNum2 = (v: unknown): string => (isBlank(v) ? '—' : N(v).toFixe
 export const fmtInt = (v: unknown): string => (isBlank(v) ? '—' : String(Math.round(N(v))));
 export const fmtText = (v: unknown): string => (v == null || v === '' ? '—' : String(v));
 /** 20–80 scouting grade: 0 / missing shows as a dash */
-export const fmtGrade = (v: unknown): string => (isBlank(v) || N(v) <= 0 ? '—' : String(Math.round(N(v))));
+export const fmtGrade = (v: unknown): string =>
+  isBlank(v) || N(v) <= 0 ? '—' : String(Math.round(N(v)));
 /** Right / Left / Switch → R / L / S */
 export const fmtHand = (v: unknown): string =>
   v == null || v === '' ? '—' : String(v).charAt(0).toUpperCase();
-/** Team name → a compact ~3-letter code ("Expos" → "EXP"); full name in a
- *  cell tooltip. Not the real MLB abbreviations — the source only gives names. */
+/** Real-world abbreviations for the clubs this league carries, keyed by the full
+ *  "City Nickname" string the snapshot / draft feed emits (StatsPlus has no
+ *  abbreviation field — `/api/teams/` is only id, city, nickname, parent). Add a
+ *  line here when a club is missing or renamed; unlisted names fall back to the
+ *  3-letter trim below. Keys are lower-cased. */
+const TEAM_CODES: Record<string, string> = {
+  'arizona diamondbacks': 'ARI',
+  'atlanta braves': 'ATL',
+  'baltimore orioles': 'BAL',
+  'boston red sox': 'BOS',
+  'chicago cubs': 'CHC',
+  'chicago white sox': 'CWS',
+  'cincinnati reds': 'CIN',
+  'cleveland guardians': 'CLE',
+  'cleveland spiders': 'CLE',
+  'colorado rockies': 'COL',
+  'detroit tigers': 'DET',
+  'houston astros': 'HOU',
+  'kansas city royals': 'KC',
+  'los angeles angels': 'LAA',
+  'los angeles dodgers': 'LAD',
+  'miami marlins': 'MIA',
+  'milwaukee brewers': 'MIL',
+  'minnesota twins': 'MIN',
+  'new york mets': 'NYM',
+  'new york yankees': 'NYY',
+  'oakland athletics': 'OAK',
+  'philadelphia phillies': 'PHI',
+  'pittsburgh pirates': 'PIT',
+  'san diego padres': 'SD',
+  'san francisco giants': 'SF',
+  'seattle mariners': 'SEA',
+  'st. louis cardinals': 'STL',
+  'st louis cardinals': 'STL',
+  'tampa bay rays': 'TB',
+  'texas rangers': 'TEX',
+  'toronto blue jays': 'TOR',
+  'washington nationals': 'WSH',
+  'washington senators': 'WSH',
+  'diablos rojos de cdmx': 'CDMX',
+};
+
+/** Team name → a compact code: a real abbreviation from `TEAM_CODES` when the
+ *  club is known, else a ~3-letter trim ("Expos" → "EXP"). Full name in a cell
+ *  tooltip either way. */
 export const fmtTeamCode = (v: unknown): string => {
-  const s = (v == null ? '' : String(v)).replace(/[^A-Za-z]/g, '');
+  if (v == null || v === '') return '—';
+  const name = String(v).trim();
+  const mapped = TEAM_CODES[name.toLowerCase()];
+  if (mapped) return mapped;
+  const s = name.replace(/[^A-Za-z]/g, '');
   return s ? s.slice(0, 3).toUpperCase() : '—';
 };
 /** Map full descriptive words to short tags; unknowns pass through unchanged. */
-const abbrev = (map: Record<string, string>) => (v: unknown): string => {
-  if (v == null || v === '') return '—';
-  const s = String(v).trim();
-  return map[s.toLowerCase()] ?? s;
-};
+const abbrev =
+  (map: Record<string, string>) =>
+  (v: unknown): string => {
+    if (v == null || v === '') return '—';
+    const s = String(v).trim();
+    return map[s.toLowerCase()] ?? s;
+  };
 /** Very High → VH, Average → A, Very Low → VL … */
-export const fmtScoutAcc = abbrev({ 'very high': 'VH', high: 'H', average: 'A', low: 'L', 'very low': 'VL' });
+export const fmtScoutAcc = abbrev({
+  'very high': 'VH',
+  high: 'H',
+  average: 'A',
+  low: 'L',
+  'very low': 'VL',
+});
 /** Durable → D, Normal → N, Fragile → F */
 export const fmtDurability = abbrev({ durable: 'D', normal: 'N', fragile: 'F' });
 
 // ---------------------------------------------------------------- accessors
 const bat = (k: string) => (p: RankedPlayerRow) => p.ratings?.batting?.[k] ?? null;
 const field = (k: string) => (p: RankedPlayerRow) => p.ratings?.fielding?.[k] ?? null;
-const pitch = (k: 'stuff' | 'movement' | 'control' | 'stamina' | 'velocity' | 'groundballType') => (
-  p: RankedPlayerRow,
-) => p.ratings?.pitching?.[k] ?? null;
+const pitch =
+  (k: 'stuff' | 'movement' | 'control' | 'stamina' | 'velocity' | 'groundballType') =>
+  (p: RankedPlayerRow) =>
+    p.ratings?.pitching?.[k] ?? null;
 const arsenal = (name: string) => (p: RankedPlayerRow) =>
   p.ratings?.pitching?.pitches?.find((x) => x.name.toLowerCase() === name.toLowerCase())
     ?.potential ?? null;
 
-const model = (k: keyof RankedPlayerRow): ((p: RankedPlayerRow) => unknown) => (p) => p[k];
+const model =
+  (k: keyof RankedPlayerRow): ((p: RankedPlayerRow) => unknown) =>
+  (p) =>
+    p[k];
 
 type MetaKey = 'injuryProne' | 'workEthic' | 'intelligence' | 'leadership' | 'scoutingAccuracy';
 const meta = (k: MetaKey) => (p: RankedPlayerRow) => p.ratings?.[k] ?? null;
 
 // ---------------------------------------------------------------- column sets
 export const LEADING_COLUMNS: ColumnDef[] = [
-  { field: 'rank', header: '#', numeric: true, descFirst: false, group: 'Player', value: model('rank'), fmt: fmtInt, sticky: 'rank' },
-  { field: 'name', header: 'Name', numeric: false, descFirst: false, group: 'Player', value: model('name'), fmt: fmtText, sticky: 'name' },
-  { field: 'type', header: 'Type', numeric: false, descFirst: false, group: 'Player', value: model('type'), fmt: fmtText, tag: true },
-  { field: 'position', header: 'Pos', numeric: false, descFirst: false, group: 'Player', value: model('position'), fmt: fmtText, sticky: 'pos' },
-  { field: 'age', header: 'Age', numeric: true, descFirst: false, group: 'Player', value: model('age'), fmt: fmtInt },
-  { field: 'batHand', header: 'Bats', numeric: false, descFirst: false, group: 'Player', value: model('batHand'), fmt: fmtHand },
-  { field: 'throwHand', header: 'Throws', numeric: false, descFirst: false, group: 'Player', value: model('throwHand'), fmt: fmtHand },
-  { field: 'inGameOverall', header: 'OVR', numeric: true, descFirst: true, group: 'In-Game', value: model('inGameOverall'), fmt: fmtInt },
-  { field: 'inGamePotential', header: 'POT', numeric: true, descFirst: true, group: 'In-Game', value: model('inGamePotential'), fmt: fmtInt },
-  { field: 'modelScore', header: 'Overall', numeric: true, descFirst: true, group: 'Model', value: model('modelScore'), fmt: fmtNum2 },
+  {
+    field: 'rank',
+    header: '#',
+    numeric: true,
+    descFirst: false,
+    group: 'Player',
+    value: model('rank'),
+    fmt: fmtInt,
+    sticky: 'rank',
+  },
+  {
+    field: 'name',
+    header: 'Name',
+    numeric: false,
+    descFirst: false,
+    group: 'Player',
+    value: model('name'),
+    fmt: fmtText,
+    sticky: 'name',
+  },
+  {
+    field: 'type',
+    header: 'Type',
+    numeric: false,
+    descFirst: false,
+    group: 'Player',
+    value: model('type'),
+    fmt: fmtText,
+    tag: true,
+  },
+  {
+    field: 'position',
+    header: 'Pos',
+    numeric: false,
+    descFirst: false,
+    group: 'Player',
+    value: model('position'),
+    fmt: fmtText,
+    sticky: 'pos',
+  },
+  {
+    field: 'age',
+    header: 'Age',
+    numeric: true,
+    descFirst: false,
+    group: 'Player',
+    value: model('age'),
+    fmt: fmtInt,
+  },
+  {
+    field: 'batHand',
+    header: 'Bats',
+    numeric: false,
+    descFirst: false,
+    group: 'Player',
+    value: model('batHand'),
+    fmt: fmtHand,
+  },
+  {
+    field: 'throwHand',
+    header: 'Throws',
+    numeric: false,
+    descFirst: false,
+    group: 'Player',
+    value: model('throwHand'),
+    fmt: fmtHand,
+  },
+  {
+    field: 'inGameOverall',
+    header: 'OVR',
+    numeric: true,
+    descFirst: true,
+    group: 'In-Game',
+    value: model('inGameOverall'),
+    fmt: fmtInt,
+  },
+  {
+    field: 'inGamePotential',
+    header: 'POT',
+    numeric: true,
+    descFirst: true,
+    group: 'In-Game',
+    value: model('inGamePotential'),
+    fmt: fmtInt,
+  },
+  {
+    field: 'modelScore',
+    header: 'Overall',
+    numeric: true,
+    descFirst: true,
+    group: 'Model',
+    value: model('modelScore'),
+    fmt: fmtNum2,
+  },
 ];
 
 /** Org (3-letter code, full name on hover) + Level identity — live-league view
  *  only, inserted right after the Pos column in every view (see `viewColumns`). */
 export const LEAGUE_IDENTITY_COLUMNS: ColumnDef[] = [
   {
-    field: 'org', header: 'Org', numeric: false, descFirst: false, group: 'Player',
-    value: model('org'), fmt: fmtTeamCode,
+    field: 'org',
+    header: 'Org',
+    numeric: false,
+    descFirst: false,
+    group: 'Player',
+    value: model('org'),
+    fmt: fmtTeamCode,
     cellTitle: (v) => (v == null || v === '' ? '' : String(v)),
   },
-  { field: 'level', header: 'Lvl', title: 'Level', numeric: false, descFirst: false, group: 'Player', value: model('level'), fmt: fmtText },
+  {
+    field: 'level',
+    header: 'Lvl',
+    title: 'Level',
+    numeric: false,
+    descFirst: false,
+    group: 'Player',
+    value: model('level'),
+    fmt: fmtText,
+  },
 ];
 
 /** compact factory for a 20–80 scouting-grade column */
@@ -136,7 +307,16 @@ const gradeCol = (
   title: string,
   group: ColGroup,
   value: (p: RankedPlayerRow) => unknown,
-): ColumnDef => ({ field: fieldKey, header, title, numeric: true, descFirst: true, group, value, fmt: fmtGrade });
+): ColumnDef => ({
+  field: fieldKey,
+  header,
+  title,
+  numeric: true,
+  descFirst: true,
+  group,
+  value,
+  fmt: fmtGrade,
+});
 
 /** compact factory for a descriptive text-grade column (personality, etc.) */
 const textCol = (
@@ -147,14 +327,26 @@ const textCol = (
   value: (p: RankedPlayerRow) => unknown,
   fmt: (v: unknown) => string = fmtText,
 ): ColumnDef => ({
-  field: fieldKey, header, title, numeric: false, descFirst: false, group, value,
-  fmt, tone: gradeTone,
+  field: fieldKey,
+  header,
+  title,
+  numeric: false,
+  descFirst: false,
+  group,
+  value,
+  fmt,
+  tone: gradeTone,
 });
 
 /** Market demand — trails every view as its own group. */
 const DEMAND_COLUMN: ColumnDef = {
-  field: 'demandKey', header: 'Demand', numeric: false, descFirst: false,
-  group: 'Demand', value: model('demand'), fmt: fmtText,
+  field: 'demandKey',
+  header: 'Demand',
+  numeric: false,
+  descFirst: false,
+  group: 'Demand',
+  value: model('demand'),
+  fmt: fmtText,
 };
 
 /** Personality / scouting grades shared by the batting & pitching views. */
@@ -162,19 +354,48 @@ const PERSONALITY_COLUMNS: ColumnDef[] = [
   textCol('workEthic', 'WE', 'Work ethic', 'Makeup', meta('workEthic')),
   textCol('intelligence', 'INT', 'Intelligence', 'Makeup', meta('intelligence')),
   textCol('leadership', 'L', 'Leadership', 'Makeup', meta('leadership')),
-  textCol('scoutingAccuracy', 'SCT', 'Scout accuracy', 'Makeup', meta('scoutingAccuracy'), fmtScoutAcc),
+  textCol(
+    'scoutingAccuracy',
+    'SCT',
+    'Scout accuracy',
+    'Makeup',
+    meta('scoutingAccuracy'),
+    fmtScoutAcc,
+  ),
 ];
 
-const DURABILITY_COLUMN = textCol('injuryProne', 'DUR', 'Durability', 'Makeup', meta('injuryProne'), fmtDurability);
+const DURABILITY_COLUMN = textCol(
+  'injuryProne',
+  'DUR',
+  'Durability',
+  'Makeup',
+  meta('injuryProne'),
+  fmtDurability,
+);
 
 /** Where a drafted player went — blank for players still on the board. Only the
  *  modeled view carries these, trailing every other column; `Pick` is the
  *  overall selection number, `Team` a short code with the full name on hover. */
 const DRAFT_COLUMNS: ColumnDef[] = [
-  { field: 'draftedPick', header: 'Pick', title: 'Overall pick', numeric: true, descFirst: false, group: 'Draft', value: model('draftedPick'), fmt: fmtInt },
   {
-    field: 'draftedTeam', header: 'Team', title: 'Drafting team', numeric: false,
-    descFirst: false, group: 'Draft', value: model('draftedTeam'), fmt: fmtTeamCode,
+    field: 'draftedPick',
+    header: 'Pick',
+    title: 'Overall pick',
+    numeric: true,
+    descFirst: false,
+    group: 'Draft',
+    value: model('draftedPick'),
+    fmt: fmtInt,
+  },
+  {
+    field: 'draftedTeam',
+    header: 'Team',
+    title: 'Drafting team',
+    numeric: false,
+    descFirst: false,
+    group: 'Draft',
+    value: model('draftedTeam'),
+    fmt: fmtTeamCode,
     cellTitle: (v) => (v == null || v === '' ? '' : String(v)),
   },
 ];
@@ -183,20 +404,82 @@ const DRAFT_COLUMNS: ColumnDef[] = [
  *  dedicated position picker rather than a numeric bound. Sits in the Model
  *  group in every view that carries it. */
 const BEST_POS_COLUMN: ColumnDef = {
-  field: 'bestPosition', header: 'Best Pos', title: 'Model best-fit position',
-  numeric: false, descFirst: false, group: 'Model', value: model('bestPosition'),
-  fmt: fmtText, wide: true,
+  field: 'bestPosition',
+  header: 'Best Pos',
+  title: 'Model best-fit position',
+  numeric: false,
+  descFirst: false,
+  group: 'Model',
+  value: model('bestPosition'),
+  fmt: fmtText,
+  wide: true,
 };
 
 const MODELED_COLUMNS: ColumnDef[] = [
-  { field: 'positionPlayerScore', header: 'Batter', numeric: true, descFirst: true, group: 'Model', value: model('positionPlayerScore'), fmt: fmtNum2 },
-  { field: 'pitcherScore', header: 'Pitcher', numeric: true, descFirst: true, group: 'Model', value: model('pitcherScore'), fmt: fmtNum2 },
-  { field: 'battingScoreComponent', header: 'Batting', numeric: true, descFirst: true, group: 'Model', value: model('battingScoreComponent'), fmt: fmtNum2 },
-  { field: 'fieldingScoreComponent', header: 'Fielding', numeric: true, descFirst: true, group: 'Model', value: model('fieldingScoreComponent'), fmt: fmtNum2 },
+  {
+    field: 'positionPlayerScore',
+    header: 'Batter',
+    numeric: true,
+    descFirst: true,
+    group: 'Model',
+    value: model('positionPlayerScore'),
+    fmt: fmtNum2,
+  },
+  {
+    field: 'pitcherScore',
+    header: 'Pitcher',
+    numeric: true,
+    descFirst: true,
+    group: 'Model',
+    value: model('pitcherScore'),
+    fmt: fmtNum2,
+  },
+  {
+    field: 'battingScoreComponent',
+    header: 'Batting',
+    numeric: true,
+    descFirst: true,
+    group: 'Model',
+    value: model('battingScoreComponent'),
+    fmt: fmtNum2,
+  },
+  {
+    field: 'fieldingScoreComponent',
+    header: 'Fielding',
+    numeric: true,
+    descFirst: true,
+    group: 'Model',
+    value: model('fieldingScoreComponent'),
+    fmt: fmtNum2,
+  },
   BEST_POS_COLUMN,
-  { field: 'runningScoreComponent', header: 'Running', numeric: true, descFirst: true, group: 'Model', value: model('runningScoreComponent'), fmt: fmtNum2 },
-  { field: 'starterComponent', header: 'SP', numeric: true, descFirst: true, group: 'Model', value: model('starterComponent'), fmt: fmtNum2 },
-  { field: 'relieverComponent', header: 'RP', numeric: true, descFirst: true, group: 'Model', value: model('relieverComponent'), fmt: fmtNum2 },
+  {
+    field: 'runningScoreComponent',
+    header: 'Running',
+    numeric: true,
+    descFirst: true,
+    group: 'Model',
+    value: model('runningScoreComponent'),
+    fmt: fmtNum2,
+  },
+  {
+    field: 'starterComponent',
+    header: 'SP',
+    numeric: true,
+    descFirst: true,
+    group: 'Model',
+    value: model('starterComponent'),
+    fmt: fmtNum2,
+  },
+  {
+    field: 'relieverComponent',
+    header: 'RP',
+    numeric: true,
+    descFirst: true,
+    group: 'Model',
+    value: model('relieverComponent'),
+    fmt: fmtNum2,
+  },
   DEMAND_COLUMN,
   ...DRAFT_COLUMNS,
 ];
@@ -222,9 +505,18 @@ const BATTING_COLUMNS: ColumnDef[] = [
 ];
 
 const PITCH_TYPES: [string, string][] = [
-  ['Fastball', 'FB'], ['Slider', 'SL'], ['Curveball', 'CB'], ['Changeup', 'CH'],
-  ['Sinker', 'SI'], ['Splitter', 'SP'], ['Cutter', 'CT'], ['Forkball', 'FK'],
-  ['Circlechange', 'CC'], ['Screwball', 'SC'], ['Knuckleball', 'KN'], ['Knucklecurve', 'KC'],
+  ['Fastball', 'FB'],
+  ['Slider', 'SL'],
+  ['Curveball', 'CB'],
+  ['Changeup', 'CH'],
+  ['Sinker', 'SI'],
+  ['Splitter', 'SP'],
+  ['Cutter', 'CT'],
+  ['Forkball', 'FK'],
+  ['Circlechange', 'CC'],
+  ['Screwball', 'SC'],
+  ['Knuckleball', 'KN'],
+  ['Knucklecurve', 'KC'],
 ];
 
 const PITCHING_COLUMNS: ColumnDef[] = [
@@ -232,20 +524,37 @@ const PITCHING_COLUMNS: ColumnDef[] = [
   gradeCol('pitching.movement', 'MOV', 'Movement', 'Pitching', pitch('movement')),
   gradeCol('pitching.control', 'CTL', 'Control', 'Pitching', pitch('control')),
   gradeCol('pitching.stamina', 'STM', 'Stamina', 'Pitching', pitch('stamina')),
-  { field: 'pitching.velocity', header: 'VELO', title: 'Velocity', numeric: false, descFirst: false, group: 'Pitching', value: pitch('velocity'), fmt: fmtText, wide: true },
-  { field: 'pitching.groundballType', header: 'GB', title: 'Groundball type', numeric: false, descFirst: false, group: 'Pitching', value: pitch('groundballType'), fmt: fmtText },
-  ...PITCH_TYPES.map(
-    ([name, abbr]): ColumnDef => ({
-      field: `pitch.${name}`,
-      header: abbr,
-      title: name,
-      numeric: true,
-      descFirst: true,
-      group: 'Arsenal',
-      value: arsenal(name),
-      fmt: fmtGrade,
-    }),
-  ),
+  {
+    field: 'pitching.velocity',
+    header: 'VELO',
+    title: 'Velocity',
+    numeric: false,
+    descFirst: false,
+    group: 'Pitching',
+    value: pitch('velocity'),
+    fmt: fmtText,
+    wide: true,
+  },
+  {
+    field: 'pitching.groundballType',
+    header: 'GB',
+    title: 'Groundball type',
+    numeric: false,
+    descFirst: false,
+    group: 'Pitching',
+    value: pitch('groundballType'),
+    fmt: fmtText,
+  },
+  ...PITCH_TYPES.map(([name, abbr]): ColumnDef => ({
+    field: `pitch.${name}`,
+    header: abbr,
+    title: name,
+    numeric: true,
+    descFirst: true,
+    group: 'Arsenal',
+    value: arsenal(name),
+    fmt: fmtGrade,
+  })),
   DURABILITY_COLUMN,
   ...PERSONALITY_COLUMNS,
   DEMAND_COLUMN,
@@ -257,12 +566,30 @@ const RATING_LEAD = LEADING_COLUMNS.filter((c) => c.field !== 'type');
 
 const BATTING_LEAD: ColumnDef[] = [
   ...RATING_LEAD,
-  { field: 'positionPlayerScore', header: 'Batter', title: 'Overall batter model score', numeric: true, descFirst: true, group: 'Model', value: model('positionPlayerScore'), fmt: fmtNum2 },
+  {
+    field: 'positionPlayerScore',
+    header: 'Batter',
+    title: 'Overall batter model score',
+    numeric: true,
+    descFirst: true,
+    group: 'Model',
+    value: model('positionPlayerScore'),
+    fmt: fmtNum2,
+  },
 ];
 
 const PITCHING_LEAD: ColumnDef[] = [
   ...RATING_LEAD,
-  { field: 'pitcherScore', header: 'Pitcher', title: 'Overall pitcher model score', numeric: true, descFirst: true, group: 'Model', value: model('pitcherScore'), fmt: fmtNum2 },
+  {
+    field: 'pitcherScore',
+    header: 'Pitcher',
+    title: 'Overall pitcher model score',
+    numeric: true,
+    descFirst: true,
+    group: 'Model',
+    value: model('pitcherScore'),
+    fmt: fmtNum2,
+  },
 ];
 
 export const VIEW_COLUMNS: Record<ClassView, ColumnDef[]> = {
@@ -277,10 +604,7 @@ const DROPPED_IN_LEAGUE = new Set(['demandKey', 'draftedPick', 'draftedTeam', 't
 
 /** Columns for a view in a given context. `'league'` drops the demand / drafted
  *  columns and the player-type tag, and inserts Org / Level right after Pos. */
-export function viewColumns(
-  view: ClassView,
-  context: 'class' | 'league' = 'class',
-): ColumnDef[] {
+export function viewColumns(view: ClassView, context: 'class' | 'league' = 'class'): ColumnDef[] {
   const base = VIEW_COLUMNS[view];
   if (context !== 'league') return base;
   // Drop the drafted/demand columns and the Type tag; Pos stays sticky right
@@ -306,7 +630,11 @@ export const VIEW_OPTIONS: { label: string; value: ClassView }[] = [
  *  still compare with >/< (Very Low = 0 … Very High = 4; Fragile/Normal/Durable
  *  = 0/1/2). */
 const GRADED_TEXT_FIELDS = new Set([
-  'injuryProne', 'workEthic', 'intelligence', 'leadership', 'scoutingAccuracy',
+  'injuryProne',
+  'workEthic',
+  'intelligence',
+  'leadership',
+  'scoutingAccuracy',
 ]);
 
 export interface FilterableField {
