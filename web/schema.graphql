@@ -98,6 +98,8 @@ type LeagueSnapshot {
   leagueId: ID!
   fetchedAt: String
   playerCount: Int!
+  "Ranking methods already scored to disk for this snapshot (subset of overall/potential)."
+  rankedMethods: [String!]!
 }
 
 "A club in the league's org tree. `parentTeamId` is null for a top-level org."

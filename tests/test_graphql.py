@@ -299,14 +299,15 @@ def test_league_snapshot_queries(client):
     lid = made["id"]
     _seed_snapshot(lid)
 
-    snap = gql(
-        client,
-        'query($l: ID!) { leagueSnapshot(leagueId: $l) { leagueId fetchedAt playerCount } }',
-        l=lid,
-    )["leagueSnapshot"]
+    snap_q = (
+        "query($l: ID!) { leagueSnapshot(leagueId: $l) "
+        "{ leagueId fetchedAt playerCount rankedMethods } }"
+    )
+    snap = gql(client, snap_q, l=lid)["leagueSnapshot"]
     assert snap["leagueId"] == lid
     assert snap["playerCount"] == 2
     assert snap["fetchedAt"]
+    assert snap["rankedMethods"] == []  # nothing scored to disk yet
 
     # pickers only offer clubs that actually roster a player in the snapshot
     orgs = gql(client, 'query($l: ID!) { leagueOrgs(leagueId: $l) { id name parentTeamId } }', l=lid)[
@@ -354,6 +355,10 @@ def test_league_snapshot_queries(client):
     # the two methods can order the two players differently or the same; both must score
     assert all(r["modelScore"] is not None for r in whole_potential["rows"])
 
+    # scoring a method writes ranked_players.csv -> it now reports as ready
+    ready = gql(client, snap_q, l=lid)["leagueSnapshot"]["rankedMethods"]
+    assert set(ready) == {"overall", "potential"}
+
     by_org = players("overall", g="ORG", gid="52")
     assert [r["id"] for r in by_org["rows"]] == ["200"]
 
@@ -362,6 +367,26 @@ def test_league_snapshot_queries(client):
 
     empty = players("overall", g="ORG", gid="999")
     assert empty["totalRecords"] == 0
+
+
+def test_league_players_no_selection_is_empty_and_skips_scoring(client):
+    lid = gql(client, 'mutation { createLeague(name: "YFn", leagueUrl: "yfmlb") { id } }')[
+        "createLeague"
+    ]["id"]
+    _seed_snapshot(lid)
+    q = (
+        "query($l: ID!) { leagueSnapshotPlayers(leagueId: $l, method: \"overall\","
+        " groupBy: ORG) { totalRecords rows { id } } }"
+    )
+    page = gql(client, q, l=lid)["leagueSnapshotPlayers"]
+    assert page == {"totalRecords": 0, "rows": []}
+    # and it didn't run the model just to return nothing
+    ready = gql(
+        client,
+        'query($l: ID!) { leagueSnapshot(leagueId: $l) { rankedMethods } }',
+        l=lid,
+    )["leagueSnapshot"]["rankedMethods"]
+    assert ready == []
 
 
 def test_league_snapshot_players_rejects_bad_method(client):

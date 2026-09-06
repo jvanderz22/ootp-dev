@@ -163,6 +163,7 @@ const LEAGUE_SNAPSHOT_FIELDS = gql`
     leagueId
     fetchedAt
     playerCount
+    rankedMethods
   }
 `;
 

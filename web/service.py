@@ -708,6 +708,11 @@ def league_snapshot_payload(league_id: str):
         "league_id": league_id,
         "fetched_at": meta.get("fetched_at"),
         "player_count": meta.get("player_count") or 0,
+        "ranked_methods": [
+            m
+            for m in league_snapshot.LEAGUE_RANKING_METHODS
+            if league_snapshot.ranked_method_is_fresh(ctx, m)
+        ],
     }
 
 
@@ -843,8 +848,10 @@ def _league_built_rows(league_id: str, method: str) -> list:
 
 def _grouped(rows, group_by, group_id):
     gb = (group_by or "LEAGUE").upper()
-    if gb == "LEAGUE" or not group_id:
+    if gb == "LEAGUE":
         return rows
+    if not group_id:
+        return []  # ORG / TEAM view with nothing picked yet
     field = "org_id" if gb == "ORG" else "team_id"
     gid = str(group_id)
     return [r for r in rows if str(r.get(field) or "") == gid]
@@ -866,6 +873,10 @@ def league_snapshot_players_page(
     # refresh) - hand back an empty page rather than erroring the whole query.
     _, ctx = _league_ctx(league_id)
     if not ctx.data_file.exists():
+        return {"rows": [], "total_records": 0}
+    # ORG / TEAM view with nothing selected: skip the (expensive) score+build
+    # entirely - the page shows a "pick one" prompt, not a table.
+    if (group_by or "LEAGUE").upper() in ("ORG", "TEAM") and not group_id:
         return {"rows": [], "total_records": 0}
     rows = _grouped(_league_built_rows(league_id, method), group_by, group_id)
     return _filter_sort_page(rows, filter, sort, page, page_size, all_rows)

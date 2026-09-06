@@ -240,6 +240,12 @@ def _map_row(rat: dict, ply: dict, teams: dict) -> dict:
         or (ply.get("Parent Team ID") if ply else "")
         or (ply.get("Team ID") if ply else "")
     ).strip()
+    # OOTP lists the 16 international sides (Japan, Cuba, China, ...) as top-level
+    # "teams". A player whose org is one of those is in the international pool, not
+    # a member of that club - treat them as unaffiliated so they don't show up as
+    # a bogus org in the by-org view.
+    if _is_national_team(org_id, teams):
+        org_id = ""
     row["ORG"] = _resolve_org_name(org_id, teams)
 
     for col in PITCH_COLUMNS:
@@ -248,11 +254,35 @@ def _map_row(rat: dict, ply: dict, teams: dict) -> dict:
 
     row["ID"] = (rat.get("ID") or "").strip()
     row["Name"] = rat.get("Name") or ""
-    row["snap_team_id"] = (
+
+    team_id = (
         (rat.get("Team") or "").strip() or (ply.get("Team ID") if ply else "") or ""
     ).strip()
+    # A non-MLB player whose "team" is actually a top-level club (an MLB parent,
+    # an independent league, a national team) isn't on a real affiliate roster -
+    # that's the international-complex / org-pool slot. Keep the org, drop the
+    # team so they don't show up on the big-league club in the by-team view.
+    if team_id and level_code != "1" and _is_top_level_team(team_id, teams):
+        team_id = ""
+    row["snap_team_id"] = team_id
     row["snap_org_id"] = org_id
     return row
+
+
+def _is_top_level_team(team_id: str, teams: dict) -> bool:
+    team = teams.get((team_id or "").strip())
+    return bool(team) and (team.get("Parent Team ID") or "").strip() in ("", "0")
+
+
+def _is_national_team(team_id: str, teams: dict) -> bool:
+    """The international sides (Japan, Cuba, ...) are the top-level teams with no
+    nickname - real clubs (incl. the indy-league ones) always carry a nickname."""
+    team = teams.get((team_id or "").strip())
+    return (
+        _is_top_level_team(team_id, teams)
+        and bool(team)
+        and not (team.get("Nickname") or "").strip()
+    )
 
 
 def _resolve_org_name(team_id: str, teams: dict) -> str:
@@ -449,15 +479,28 @@ def _score_and_write_locked(
     return rows
 
 
+def _ranked_file_for(ctx: LeagueSnapshotContext, method: str) -> Path:
+    return ctx.ranked_players_file(get_ranker_for_method(method).__class__.__name__)
+
+
+def ranked_method_is_fresh(ctx: LeagueSnapshotContext, method: str) -> bool:
+    """Whether `ranked_players.csv` for `method` exists and is at least as new as
+    the snapshot data file - i.e. this ranking is ready to serve without a
+    re-score. Drives the "model hasn't run yet" hint on the league page."""
+    try:
+        return (
+            _ranked_file_for(ctx, method).stat().st_mtime
+            >= ctx.data_file.stat().st_mtime
+        )
+    except (FileNotFoundError, ValueError):
+        return False
+
+
 def _disk_rows(ctx: LeagueSnapshotContext, method: str) -> list[dict]:
     """Read the cached `ranked_players.csv` if it is at least as new as the
     snapshot data file, otherwise re-score and rewrite it."""
-    out_file = ctx.ranked_players_file(get_ranker_for_method(method).__class__.__name__)
-    try:
-        fresh = out_file.stat().st_mtime >= ctx.data_file.stat().st_mtime
-    except FileNotFoundError:
-        fresh = False
-    if fresh:
+    out_file = _ranked_file_for(ctx, method)
+    if ranked_method_is_fresh(ctx, method):
         with open(out_file, newline="") as f:
             return list(csv.DictReader(f))
     return _score_and_write(ctx, method, out_file)

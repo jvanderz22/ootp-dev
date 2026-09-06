@@ -171,6 +171,35 @@ def test_org_name_walks_affiliate_to_parent():
     assert rows[0]["snap_org_id"] == "168"
 
 
+def test_international_complex_player_has_no_team():
+    # a non-MLB player whose "Team" is a top-level club (id 46) is on the org's
+    # complex / int'l pool, not the big-league roster - keep the org, drop the team
+    ratings = _csv(RATINGS_HEADER, [
+        _ratings_row(ID="7", Name="Teenage FA", Pos="SS", Team="46", Org="46", LgLvl="0"),
+    ])
+    players = _csv(PLAYERS_HEADER, [_players_row(ID="7", Level="0", **{"Team ID": "46"})])
+    row = join_rows(ratings, players, TEAMS_CSV)[0]
+    assert row["snap_org_id"] == "46"
+    assert row["snap_team_id"] == ""
+    # an actual MLB player on the same club id keeps the team
+    ratings = _csv(RATINGS_HEADER, [_ratings_row(ID="8", Name="Vet", Pos="1B", Team="46", Org="46")])
+    players = _csv(PLAYERS_HEADER, [_players_row(ID="8", Level="1", **{"Team ID": "46"})])
+    assert join_rows(ratings, players, TEAMS_CSV)[0]["snap_team_id"] == "46"
+
+
+def test_national_team_is_not_an_org():
+    # OOTP lists Japan/China/etc. as nickname-less top-level teams; a player parked
+    # on one is international-pool, not a member of that "club"
+    teams = TEAMS_CSV + "765,China,,0\n"
+    ratings = _csv(RATINGS_HEADER, [
+        _ratings_row(ID="5", Name="Intl Amateur", Pos="SS", Team="765", Org="765", LgLvl="0"),
+    ])
+    players = _csv(PLAYERS_HEADER, [_players_row(ID="5", Level="0", **{"Team ID": "765"})])
+    row = join_rows(ratings, players, teams)[0]
+    assert row["snap_org_id"] == "" and row["ORG"] == ""
+    assert row["snap_team_id"] == ""
+
+
 def test_gf_bucketing():
     assert gf_from_gb("20") == "EX FB"
     assert gf_from_gb("45") == "FB"

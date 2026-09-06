@@ -87,6 +87,12 @@ function defaultQuery(): RankedQuery {
         Pulling the whole player pool and ranking it — this takes a minute or two.
       </p>
     }
+    @if (methodNotReady() && !busy()) {
+      <p class="notice">
+        The {{ methodLabel() }} model hasn't been run for this snapshot yet — it'll
+        compute the first time you open it (about a minute).
+      </p>
+    }
     @if (error()) { <p class="error">{{ error() }}</p> }
 
     @if (snapshot()) {
@@ -113,19 +119,20 @@ function defaultQuery(): RankedQuery {
           }
         </div>
 
-        @if (groupBy() === 'ORG') {
-          <select [value]="groupId() ?? ''" [disabled]="loading()"
-            (change)="setGroupId($any($event.target).value)">
+        @if (groupBy() === 'ORG' || groupBy() === 'TEAM') {
+          <select [value]="orgId() ?? ''" [disabled]="loading()"
+            (change)="setOrg($any($event.target).value)">
             <option value="">Pick an org…</option>
             @for (o of orgs(); track o.id) {
               <option [value]="o.id">{{ o.name }}</option>
             }
           </select>
-        } @else if (groupBy() === 'TEAM') {
-          <select [value]="groupId() ?? ''" [disabled]="loading()"
-            (change)="setGroupId($any($event.target).value)">
+        }
+        @if (groupBy() === 'TEAM' && orgId()) {
+          <select [value]="teamId() ?? ''" [disabled]="loading()"
+            (change)="setTeam($any($event.target).value)">
             <option value="">Pick a team…</option>
-            @for (t of teams(); track t.id) {
+            @for (t of orgTeams(); track t.id) {
               <option [value]="t.id">{{ t.name }}</option>
             }
           </select>
@@ -133,7 +140,11 @@ function defaultQuery(): RankedQuery {
       </div>
 
       @if (groupBy() !== 'LEAGUE' && !groupId()) {
-        <p class="muted">Choose {{ groupBy() === 'ORG' ? 'an org' : 'a team' }} to see its players.</p>
+        <p class="muted">
+          @if (groupBy() === 'ORG') { Choose an org to see its players. }
+          @else if (!orgId()) { Choose an org, then a team. }
+          @else { Choose a team. }
+        </p>
       } @else {
         <app-ranked-table
           [rows]="rows()"
@@ -196,13 +207,42 @@ export class LeagueViewPage {
     { initialValue: (this.route.parent ?? this.route).snapshot.paramMap.get('id') ?? '' },
   );
 
-  protected readonly method = signal<Method>('overall');
-  protected readonly groupBy = signal<LeagueGroupBy>('LEAGUE');
-  protected readonly groupId = signal<string | null>(null);
+  protected readonly method = signal<Method>('potential');
+  protected readonly groupBy = signal<LeagueGroupBy>('ORG');
+  protected readonly orgId = signal<string | null>(null);
+  protected readonly teamId = signal<string | null>(null);
+
+  /** What actually goes to the API as `groupId`: the org in ORG mode, the team
+   *  in TEAM mode (which is scoped to a chosen org), nothing for whole-league. */
+  protected readonly groupId = computed(() =>
+    this.groupBy() === 'ORG'
+      ? this.orgId()
+      : this.groupBy() === 'TEAM'
+        ? this.teamId()
+        : null,
+  );
 
   protected readonly snapshot = signal<LeagueSnapshot | null>(null);
   protected readonly orgs = signal<LeagueTeam[]>([]);
   protected readonly teams = signal<LeagueTeam[]>([]);
+
+  /** Teams under the selected org. Affiliates carry their parent club directly
+   *  as `parentTeamId`, so no extra request is needed to scope the picker. */
+  protected readonly orgTeams = computed(() => {
+    const oid = this.orgId();
+    if (!oid) return [];
+    return this.teams().filter((t) => t.id === oid || t.parentTeamId === oid);
+  });
+
+  /** The chosen ranking's model hasn't been scored for this snapshot yet — the
+   *  first open will compute it (a minute or so). */
+  protected readonly methodNotReady = computed(() => {
+    const s = this.snapshot();
+    return !!s && !s.rankedMethods.includes(this.method());
+  });
+  protected readonly methodLabel = computed(
+    () => METHODS.find((m) => m.value === this.method())?.label ?? '',
+  );
 
   protected readonly rows = signal<RankedPlayer[]>([]);
   protected readonly totalRecords = signal(0);
@@ -281,11 +321,11 @@ export class LeagueViewPage {
 
   private hydrateFromUrl(): void {
     const p = this.route.snapshot.queryParamMap;
-    const m = p.get('method');
-    this.method.set(m === 'potential' ? 'potential' : 'overall');
+    this.method.set(p.get('method') === 'overall' ? 'overall' : 'potential');
     const g = p.get('group');
-    this.groupBy.set(g === 'ORG' || g === 'TEAM' ? g : 'LEAGUE');
-    this.groupId.set(p.get('gid') || null);
+    this.groupBy.set(g === 'TEAM' || g === 'LEAGUE' ? g : 'ORG');
+    this.orgId.set(p.get('org') || null);
+    this.teamId.set(p.get('team') || null);
     this.queryState.set(paramsToQuery(p));
     this.hydrated = true;
   }
@@ -293,9 +333,10 @@ export class LeagueViewPage {
   private syncUrl(replace = true): void {
     const params: Record<string, string | null> = {
       ...queryToParams(this.queryState()),
-      method: this.method() === 'overall' ? null : 'potential',
-      group: this.groupBy() === 'LEAGUE' ? null : this.groupBy(),
-      gid: this.groupBy() === 'LEAGUE' ? null : this.groupId() || null,
+      method: this.method() === 'potential' ? null : 'overall',
+      group: this.groupBy() === 'ORG' ? null : this.groupBy(),
+      org: this.orgId() || null,
+      team: this.groupBy() === 'TEAM' ? this.teamId() || null : null,
     };
     void this.router.navigate([], {
       relativeTo: this.route,
@@ -369,6 +410,7 @@ export class LeagueViewPage {
     this.loading.set(true);
     this.error.set(null);
     try {
+      const wasNotReady = this.methodNotReady();
       const batch = await this.api.leagueSnapshotPlayersPage(
         this.leagueId(),
         this.method(),
@@ -380,6 +422,11 @@ export class LeagueViewPage {
       this.rows.set(batch.rows);
       this.totalRecords.set(batch.totalRecords);
       this.resetToken.update((v) => v + 1);
+      if (wasNotReady) {
+        // that fetch just computed the model — refresh the "ready" flags
+        const s = await this.api.leagueSnapshot(this.leagueId()).catch(() => null);
+        if (s) this.snapshot.set(s);
+      }
     } catch (e) {
       this.error.set((e as Error).message);
     } finally {
@@ -423,27 +470,33 @@ export class LeagueViewPage {
     await this.resetAndFetch();
   }
 
+  private clearRows(): void {
+    this.rows.set([]);
+    this.totalRecords.set(0);
+  }
+
   protected async setGroupBy(g: LeagueGroupBy): Promise<void> {
     if (g === this.groupBy()) return;
     this.groupBy.set(g);
-    if (g === 'LEAGUE') this.groupId.set(null);
     this.syncUrl();
-    // LEAGUE needs no pick; ORG/TEAM wait for a groupId before refetching
+    // LEAGUE needs no pick; ORG/TEAM wait for their selection before refetching
     if (g === 'LEAGUE' || this.groupId()) await this.resetAndFetch();
-    else {
-      this.rows.set([]);
-      this.totalRecords.set(0);
-    }
+    else this.clearRows();
   }
 
-  protected async setGroupId(id: string): Promise<void> {
-    this.groupId.set(id || null);
+  protected async setOrg(id: string): Promise<void> {
+    this.orgId.set(id || null);
+    if (this.groupBy() === 'TEAM') this.teamId.set(null); // team list just changed
     this.syncUrl();
     if (this.groupId()) await this.resetAndFetch();
-    else {
-      this.rows.set([]);
-      this.totalRecords.set(0);
-    }
+    else this.clearRows();
+  }
+
+  protected async setTeam(id: string): Promise<void> {
+    this.teamId.set(id || null);
+    this.syncUrl();
+    if (this.groupId()) await this.resetAndFetch();
+    else this.clearRows();
   }
 
   protected async refresh(): Promise<void> {

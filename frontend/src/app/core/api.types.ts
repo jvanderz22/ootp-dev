@@ -36,6 +36,8 @@ export interface LeagueSnapshot {
   leagueId: string;
   fetchedAt: string | null;
   playerCount: number;
+  /** ranking methods already scored to disk for this snapshot */
+  rankedMethods: string[];
 }
 
 export interface LeagueTeam {
