@@ -46,6 +46,14 @@ const NARROW_VIEWPORT_QUERY = '(max-width: 640px)';
  *  infinite-scroll batch fetch. */
 const SCROLL_LOAD_THRESHOLD_PX = 300;
 
+/** The table's own scroll body is sized to reach the bottom of the viewport
+ *  (rather than a fixed fraction of it) so it fills the page. This is the gap
+ *  left below it, and the floor its height is clamped to when the toolbar /
+ *  filters above have pushed it well down the page. Kept a touch above the
+ *  `.content` page padding (20px) so the page itself doesn't gain a scrollbar. */
+const TABLE_BOTTOM_GAP_PX = 24;
+const MIN_TABLE_SCROLL_PX = 320;
+
 /** Hover-intent before the column-header quick filter opens. Deliberately
  *  unhurried — it's a power-user affordance, not something to surprise anyone
  *  brushing past a header. Mouse hover only (see `onColEnter`); touch / pen
@@ -148,6 +156,13 @@ export class RankedTableComponent {
   private colHideTimer: ReturnType<typeof setTimeout> | undefined;
   private readonly dismissColPop = () => this.closeColPop();
 
+  /** Constraints that live in the mobile "Filters" popover's folded block
+   *  (position + hide-drafted) — fed to its badge so they still register when
+   *  the standalone controls are hidden. */
+  protected readonly foldedFilterCount = computed(
+    () => (this.positionSel().length ? 1 : 0) + (this.hideDrafted() ? 1 : 0),
+  );
+
   protected readonly columns = computed<ColumnDef[]>(() =>
     viewColumns(this.view(), this.context()),
   );
@@ -159,6 +174,11 @@ export class RankedTableComponent {
 
   /** Phone-width viewport — abbreviates the Name cell to a first initial. */
   protected readonly isNarrow = signal(false);
+
+  /** Height of the table's own scroll body, sized to reach the bottom of the
+   *  viewport and recomputed on resize / scroll — the table fills the page
+   *  instead of being capped at a fixed slice of it. */
+  protected readonly scrollHeight = signal('70vh');
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly zone = inject(NgZone);
@@ -200,8 +220,9 @@ export class RankedTableComponent {
       untracked(() => this.hydrate());
     });
 
-    // Track the scroll viewport width for the pinned detail row, and bind the
-    // infinite-scroll listener once the scrollable body exists.
+    // Track the scroll viewport width for the pinned detail row, size the scroll
+    // body to fill the rest of the page, and bind the infinite-scroll listener
+    // once the scrollable body exists.
     const measure = () => {
       const el =
         this.host.nativeElement.querySelector<HTMLElement>('.p-datatable-table-container') ??
@@ -209,6 +230,31 @@ export class RankedTableComponent {
       const w = el.clientWidth;
       if (w > 0 && w !== this.viewportWidth()) {
         this.zone.run(() => this.viewportWidth.set(w));
+      }
+      // Size the scroll body to fill the viewport, leaving room for the
+      // "showing N of M" line just below the table.
+      const statusEl = this.host.nativeElement.querySelector<HTMLElement>('.scroll-status');
+      const reserve = TABLE_BOTTOM_GAP_PX + (statusEl?.offsetHeight ?? 0);
+      let fill: number;
+      if (this.isNarrow()) {
+        // Phones: the app + class chrome scrolls off the top of the page and
+        // only the (sticky) filters row stays pinned above the table, so the
+        // body fills whatever the viewport has left under that row. Independent
+        // of scroll position, so the height doesn't jitter as the page moves.
+        const filtersEl = this.host.nativeElement.querySelector<HTMLElement>('.filters');
+        fill = window.innerHeight - (filtersEl?.offsetHeight ?? 0) - reserve;
+      } else {
+        // Desktop: reach from the table's current top edge down to the viewport
+        // bottom, capped at the viewport for once the page is scrolled.
+        const top = el.getBoundingClientRect().top;
+        fill = Math.min(
+          window.innerHeight - reserve,
+          window.innerHeight - top - reserve,
+        );
+      }
+      const h = `${Math.max(MIN_TABLE_SCROLL_PX, Math.round(fill))}px`;
+      if (h !== this.scrollHeight()) {
+        this.zone.run(() => this.scrollHeight.set(h));
       }
       if (el !== this.host.nativeElement && el !== this.scrollEl) {
         this.scrollEl?.removeEventListener('scroll', this.onScroll);
@@ -219,14 +265,35 @@ export class RankedTableComponent {
     const ro = new ResizeObserver(measure);
     ro.observe(this.host.nativeElement);
 
-    // Track phone-width so the Name cell can drop to a first initial.
+    // Page resize / scroll shifts the table's top edge — re-fit the scroll body
+    // to the viewport. Coalesced to one measure per frame.
+    let measureRaf = 0;
+    const scheduleMeasure = () => {
+      if (measureRaf) return;
+      measureRaf = requestAnimationFrame(() => {
+        measureRaf = 0;
+        measure();
+      });
+    };
+    window.addEventListener('resize', scheduleMeasure, { passive: true });
+    window.addEventListener('scroll', scheduleMeasure, { passive: true });
+
+    // Track phone-width — abbreviates the Name cell and switches the scroll-body
+    // sizing to the "chrome scrolls away" mobile mode (see `measure`).
     const mq = window.matchMedia(NARROW_VIEWPORT_QUERY);
     this.isNarrow.set(mq.matches);
-    const onMq = (e: MediaQueryListEvent) => this.zone.run(() => this.isNarrow.set(e.matches));
+    const onMq = (e: MediaQueryListEvent) =>
+      this.zone.run(() => {
+        this.isNarrow.set(e.matches);
+        measure();
+      });
     mq.addEventListener('change', onMq);
 
     inject(DestroyRef).onDestroy(() => {
       ro.disconnect();
+      cancelAnimationFrame(measureRaf);
+      window.removeEventListener('resize', scheduleMeasure);
+      window.removeEventListener('scroll', scheduleMeasure);
       mq.removeEventListener('change', onMq);
       this.scrollEl?.removeEventListener('scroll', this.onScroll);
       clearTimeout(this.colShowTimer);

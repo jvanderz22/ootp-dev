@@ -8,6 +8,54 @@
   flex-wrap: wrap;
   gap: 10px;
 }
+
+/* Phones: let the app topbar + class toolbar scroll off the top of the page and
+   keep just the filters row pinned above the table. The view / position /
+   hide-drafted controls fold into the "Filters" popover (see ranked-table.html)
+   so the strip stays one line: search + Filters + Expand. Full-bleed the opaque
+   strip past the page's 20px side padding so rows don't peek around it while the
+   page scrolls underneath. */
+@media (max-width: 640px) {
+  .filters {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    margin: 0 -20px 10px;
+    padding: 10px 20px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+  }
+  .filters .search {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+/* Controls the caller projects into the "Filters" popover on mobile. The
+   popover is appended to <body>, so these can't be reached via a `.filters`
+   descendant selector — style them flat. */
+.m-fld,
+.m-chk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.m-fld > span {
+  min-width: 3.5rem;
+  color: var(--text-dim);
+}
+.m-fld select {
+  flex: 1 1 auto;
+}
+.m-chk {
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.m-chk input {
+  cursor: pointer;
+}
 .filters .chk {
   gap: 6px;
   font-size: 13px;

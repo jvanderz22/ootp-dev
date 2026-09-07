@@ -47,6 +47,10 @@ const EMIT_DEBOUNCE_MS = 300;
 
     <p-popover #op appendTo="body">
       <div class="panel">
+        <!-- caller-projected controls (mobile: view / position / hide-drafted
+             fold in here so the sticky filters strip stays a single row) -->
+        <div class="slot" [class.on]="extras()"><ng-content /></div>
+
         <div class="facets">
           <app-handedness-filter
             label="Bats"
@@ -150,7 +154,15 @@ const EMIT_DEBOUNCE_MS = 300;
         text-align: center;
         padding: 0 4px;
       }
-      .panel { display: flex; flex-direction: column; gap: 8px; min-width: 22rem; }
+      .panel { display: flex; flex-direction: column; gap: 8px; min-width: 22rem; max-width: min(92vw, 26rem); }
+      .slot { display: none; }
+      .slot.on {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+      }
       .facets { display: flex; flex-direction: column; gap: 8px; }
       .divider { height: 1px; background: var(--border); margin: 2px 0; }
       .empty { margin: 0; font-size: 12px; }
@@ -187,6 +199,13 @@ const EMIT_DEBOUNCE_MS = 300;
 export class NumericFiltersComponent {
   readonly value = input<NumericFilter[]>([]);
   readonly valueChange = output<NumericFilter[]>();
+
+  /** Show the caller-projected controls block at the top of the panel (mobile
+   *  folds the view / position / hide-drafted controls in there). */
+  readonly extras = input(false);
+  /** Count of active constraints living in that projected block, folded into
+   *  the button's badge so hidden filters still register. */
+  readonly extraActive = input(0);
 
   readonly batHands = input<string[]>([]);
   readonly throwHands = input<string[]>([]);
@@ -232,7 +251,8 @@ export class NumericFiltersComponent {
       (this.throwHands().length ? 1 : 0) +
       (this.bestPosSel().length ? 1 : 0) +
       (this.teamSel().length ? 1 : 0) +
-      (this.levelSel().length ? 1 : 0),
+      (this.levelSel().length ? 1 : 0) +
+      this.extraActive(),
   );
 
   private emitTimer: ReturnType<typeof setTimeout> | undefined;
