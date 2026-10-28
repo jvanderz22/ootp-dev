@@ -68,6 +68,12 @@
   flex-direction: column;
   gap: 8px;
 }
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
 .detail-section h4 {
   margin: 0;
   font-size: 12px;
@@ -162,31 +168,35 @@
 ::ng-deep .p-panel { margin-top: 4px; }
 ::ng-deep .p-panel .modifier-group + .modifier-group { margin-top: 8px; }
 
-/* platoon splits: label + combined / vs L / vs R */
-.split-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+/* CUR/POT <-> L/R toggle beside the Batting / Pitching title (live league only) */
+.split-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
 }
-.split-grid + .split-grid { margin-top: 10px; }
-.split {
-  display: grid;
-  grid-template-columns: 1fr repeat(3, 3.2rem);
-  gap: 8px;
-  align-items: baseline;
-  font-size: 12px;
-  border-bottom: 1px dotted var(--border);
-  padding-bottom: 2px;
+.split-toggle button {
+  padding: 0 6px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 10px;
+  line-height: 16px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
 }
-.split > :not(span) { text-align: right; font-variant-numeric: tabular-nums; }
-.split span { color: var(--text-dim); overflow-wrap: anywhere; }
-.split i { color: var(--text-dim); font-style: normal; }
-.split b { font-weight: 500; }
-.split.score b { font-weight: 700; }
-.split b.up { color: var(--ok); }
-.split b.down { color: var(--danger); }
-.split-head { color: var(--text-dim); border-bottom-style: solid; }
-.split-head > * { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 400; color: var(--text-dim); }
+.split-toggle button.on,
+.split-toggle button.on:hover {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+/* fixed, right-aligned number columns so the header and every row line up */
+.rating.lr { grid-template-columns: 1fr repeat(3, 2.25rem); }
+.rating.lr > i, .rating.lr > b { text-align: right; }
+.rating b.up { color: var(--ok); }
+.rating b.down { color: var(--danger); }
+.split-note { font-size: 12px; }
 
 /* trade-list membership + entry editors (live-league only) */
 .trade-lists {

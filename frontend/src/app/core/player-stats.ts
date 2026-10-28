@@ -165,42 +165,36 @@ export function pitchArsenal(p: RankedPlayer) {
 // ------------------------------------------------------- platoon splits
 export interface SplitRow {
   label: string;
+  /** the combined current rating */
   combined: number | null;
   vsL: number | null;
   vsR: number | null;
-  /** a model score (formatted as a decimal) rather than a 20-80 rating */
-  score: boolean;
 }
 
-const BATTING_SPLIT_SPEC: [string, keyof SplitScores, boolean][] = [
-  ['Batter score', 'batterScore', true],
-  ['Batting model', 'battingModel', true],
-  ['Contact', 'contact', false],
-  ['Gap', 'gap', false],
-  ['Power', 'power', false],
-  ['Eye', 'eye', false],
-  ['Avoid K', 'avoidK', false],
+// Same order as battingSkillRows / pitchingSkillRows.
+const BATTING_SPLIT_SPEC: [string, keyof SplitScores][] = [
+  ['Contact', 'contact'],
+  ['Avoid K', 'avoidK'],
+  ['Gap', 'gap'],
+  ['Power', 'power'],
+  ['Eye', 'eye'],
 ];
 
-const PITCHING_SPLIT_SPEC: [string, keyof SplitScores, boolean][] = [
-  ['Pitcher score', 'pitcherScore', true],
-  ['SP model', 'starterScore', true],
-  ['RP model', 'relieverScore', true],
-  ['Stuff', 'stuff', false],
-  ['Movement', 'movement', false],
-  ['Control', 'control', false],
+const PITCHING_SPLIT_SPEC: [string, keyof SplitScores][] = [
+  ['Stuff', 'stuff'],
+  ['Movement', 'movement'],
+  ['Control', 'control'],
 ];
 
-/** Combined / vs-L / vs-R side by side for the batting or pitching block. */
+/** Combined / vs-L / vs-R rows for the batting or pitching rating grid's L/R mode. */
 export function splitRows(s: PlayerSplits | null | undefined, side: 'batting' | 'pitching'): SplitRow[] {
   if (!s) return [];
   const spec = side === 'batting' ? BATTING_SPLIT_SPEC : PITCHING_SPLIT_SPEC;
-  return spec.map(([label, key, score]) => ({
+  return spec.map(([label, key]) => ({
     label,
     combined: s.combined[key],
     vsL: s.vsL[key],
     vsR: s.vsR[key],
-    score,
   }));
 }
 

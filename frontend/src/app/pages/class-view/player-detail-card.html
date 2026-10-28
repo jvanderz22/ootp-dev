@@ -124,15 +124,22 @@
 
       @if (showBatting(p.type) && battingSkillRows(p).length) {
         <section class="detail-section">
-          <h4>Batting</h4>
+          <div class="section-head">
+            <h4>Batting</h4>
+            <ng-container *ngTemplateOutlet="splitToggle" />
+          </div>
           <div class="rating-grid">
-            <div class="rating rating-head"><span></span><i>cur</i><b>pot</b></div>
-            @for (r of battingSkillRows(p); track r.label) {
-              <div class="rating">
-                <span>{{ r.label }}</span>
-                <i>{{ r.current ?? '—' }}</i>
-                <b>{{ r.potential ?? '—' }}</b>
-              </div>
+            <ng-container *ngTemplateOutlet="ratingHead" />
+            @if (splitMode()) {
+              <ng-container *ngTemplateOutlet="splitGrid; context: { $implicit: 'batting' }" />
+            } @else {
+              @for (r of battingSkillRows(p); track r.label) {
+                <div class="rating">
+                  <span>{{ r.label }}</span>
+                  <i>{{ r.current ?? '—' }}</i>
+                  <b>{{ r.potential ?? '—' }}</b>
+                </div>
+              }
             }
           </div>
           <div class="stat-grid tight">
@@ -162,15 +169,22 @@
 
       @if (showPitching(p.type) && pitchingSkillRows(p).length) {
         <section class="detail-section">
-          <h4>Pitching</h4>
+          <div class="section-head">
+            <h4>Pitching</h4>
+            <ng-container *ngTemplateOutlet="splitToggle" />
+          </div>
           <div class="rating-grid">
-            <div class="rating rating-head"><span></span><i>cur</i><b>pot</b></div>
-            @for (r of pitchingSkillRows(p); track r.label) {
-              <div class="rating">
-                <span>{{ r.label }}</span>
-                <i>{{ r.current ?? '—' }}</i>
-                <b>{{ r.potential ?? '—' }}</b>
-              </div>
+            <ng-container *ngTemplateOutlet="ratingHead" />
+            @if (splitMode()) {
+              <ng-container *ngTemplateOutlet="splitGrid; context: { $implicit: 'pitching' }" />
+            } @else {
+              @for (r of pitchingSkillRows(p); track r.label) {
+                <div class="rating">
+                  <span>{{ r.label }}</span>
+                  <i>{{ r.current ?? '—' }}</i>
+                  <b>{{ r.potential ?? '—' }}</b>
+                </div>
+              }
             }
           </div>
           <div class="stat-grid tight">
@@ -312,43 +326,6 @@
           }
         </p-panel>
       }
-
-      @if (p.source.leagueId) {
-        <p-panel
-          header="Platoon splits"
-          [toggleable]="true"
-          [collapsed]="!splitsOpen()"
-          (collapsedChange)="splitsOpen.set(!$event)"
-        >
-          @if (splits() === undefined) {
-            <span class="muted">Loading…</span>
-          } @else if (splits() === null) {
-            <span class="muted">No split ratings in this snapshot — refresh it from StatsPlus.</span>
-          } @else {
-            @for (blk of splitBlocks(); track blk.vs) {
-              <div class="split-grid">
-                <div class="split split-head">
-                  <span>Current</span><i>All</i><b>vs L{{ blk.vs }}</b><b>vs R{{ blk.vs }}</b>
-                </div>
-                @for (r of blk.rows; track r.label) {
-                  <div class="split" [class.score]="r.score">
-                    <span>{{ r.label }}</span>
-                    @if (r.score) {
-                      <i>{{ r.combined | number: '1.1-1' }}</i>
-                      <b [class]="splitTone(r.vsL, r.combined)">{{ r.vsL | number: '1.1-1' }}</b>
-                      <b [class]="splitTone(r.vsR, r.combined)">{{ r.vsR | number: '1.1-1' }}</b>
-                    } @else {
-                      <i>{{ r.combined ?? '—' }}</i>
-                      <b [class]="splitTone(r.vsL, r.combined)">{{ r.vsL ?? '—' }}</b>
-                      <b [class]="splitTone(r.vsR, r.combined)">{{ r.vsR ?? '—' }}</b>
-                    }
-                  </div>
-                }
-              </div>
-            }
-          }
-        </p-panel>
-      }
     </section>
   </div>
 
@@ -364,4 +341,42 @@
       </div>
     </p-panel>
   }
+
+  <!-- live league only: flips the batting / pitching grids between cur/pot and vs L / vs R -->
+  <ng-template #splitToggle>
+    @if (p.source.leagueId) {
+      <span class="split-toggle" role="group" aria-label="Rating columns">
+        <button type="button" [class.on]="!splitMode()" (click)="splitMode.set(false)">CUR/POT</button>
+        <button type="button" [class.on]="splitMode()" (click)="splitMode.set(true)">L/R</button>
+      </span>
+    }
+  </ng-template>
+
+  <ng-template #ratingHead>
+    <div class="rating rating-head" [class.lr]="splitMode()">
+      <span></span>
+      @if (splitMode()) {
+        <i>ovr</i><b>vs L</b><b>vs R</b>
+      } @else {
+        <i>cur</i><b>pot</b>
+      }
+    </div>
+  </ng-template>
+
+  <ng-template #splitGrid let-side>
+    @if (splits() === undefined) {
+      <span class="muted split-note">Loading…</span>
+    } @else if (splits() === null) {
+      <span class="muted split-note">No split ratings in this snapshot — refresh it from StatsPlus.</span>
+    } @else {
+      @for (r of splitRows(splits(), side); track r.label) {
+        <div class="rating lr">
+          <span>{{ r.label }}</span>
+          <i>{{ r.combined ?? '—' }}</i>
+          <b [class]="splitTone(r.vsL, r.combined)">{{ r.vsL ?? '—' }}</b>
+          <b [class]="splitTone(r.vsR, r.combined)">{{ r.vsR ?? '—' }}</b>
+        </div>
+      }
+    }
+  </ng-template>
 </div>

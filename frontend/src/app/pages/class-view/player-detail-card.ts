@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TagModule } from 'primeng/tag';
 import { PanelModule } from 'primeng/panel';
@@ -36,7 +36,7 @@ import {
 /** The expanded-row content: grouped, type-gated scouting + model breakdown. */
 @Component({
   selector: 'app-player-detail-card',
-  imports: [DecimalPipe, FormsModule, TagModule, PanelModule],
+  imports: [DecimalPipe, NgTemplateOutlet, FormsModule, TagModule, PanelModule],
   templateUrl: './player-detail-card.html',
   styleUrl: './player-detail-card.scss',
 })
@@ -121,25 +121,15 @@ export class PlayerDetailCardComponent {
    *  every table row. Null while loading (those sections just stay hidden). */
   protected readonly breakdown = signal<ScoreBreakdown | null>(null);
 
-  /** Platoon splits are live-league only (OOTP's draft export has none) and
-   *  cost a model run, so they're fetched the first time the panel opens.
+  /** Batting / pitching grids show current + potential, or (live league only -
+   *  OOTP's draft export has no splits) the current ratings vs L / vs R. The
+   *  splits cost a model run, so they're fetched the first time L/R is picked.
    *  `undefined` while loading, null when the snapshot has no splits. */
-  protected readonly splitsOpen = signal(false);
+  protected readonly splitMode = signal(false);
   protected readonly splits = signal<PlayerSplits | null | undefined>(undefined);
   private splitsFor: RankedPlayerRow | null = null;
 
-  /** One Combined / vs-L / vs-R table per side the player is judged on; `vs`
-   *  names the opponent: pitchers for a batter, batters for a pitcher. */
-  protected readonly splitBlocks = computed(() => {
-    const s = this.splits();
-    const t = this.player().type;
-    return [
-      ...(showBatting(t) ? [{ vs: 'HP', rows: splitRows(s, 'batting') }] : []),
-      ...(showPitching(t) ? [{ vs: 'HB', rows: splitRows(s, 'pitching') }] : []),
-    ];
-  });
-
-  /** Colour a split cell against the combined value. */
+  /** Colour a split cell against the combined current rating. */
   protected splitTone(v: number | null, combined: number | null): string {
     if (v == null || combined == null || v === combined) return '';
     return v > combined ? 'up' : 'down';
@@ -165,7 +155,7 @@ export class PlayerDetailCardComponent {
     });
     effect(() => {
       const p = this.player();
-      if (!this.splitsOpen() || this.splitsFor === p) return;
+      if (!this.splitMode() || this.splitsFor === p) return;
       this.splitsFor = p;
       this.splits.set(undefined);
       this.api.playerSplits(p.source, p.id).then(
@@ -230,4 +220,5 @@ export class PlayerDetailCardComponent {
   protected readonly hasModifiers = hasModifiers;
   protected readonly modifierGroup = modifierGroup;
   protected readonly otherComponents = otherComponents;
+  protected readonly splitRows = splitRows;
 }
