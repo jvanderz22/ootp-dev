@@ -312,7 +312,7 @@ def calculate_sp_modifiers(player, type="potential"):
         * fourth_pitch_modifier
         * fifth_pitch_modifier
     )
-    write_runtime_component(player.id, "SP Pitcher Pitch Component", sp_pitch_modifiers)
+    write_runtime_component(player.id, "pitching.starter.pitch_mix", sp_pitch_modifiers)
 
     total_sp_value_modifier = stamina_modifier * sp_pitch_modifiers
     # Treat SP as an RP instead
@@ -323,7 +323,7 @@ def calculate_sp_modifiers(player, type="potential"):
 
     home_run_risk_modifier = HomerunRiskModifier.calculate_player_modifier(player)
 
-    write_runtime_component(player.id, "SP HR component", home_run_risk_modifier)
+    write_runtime_component(player.id, "pitching.starter.hr_risk", home_run_risk_modifier)
     modifier *= home_run_risk_modifier
 
     return {
@@ -369,12 +369,8 @@ class PitcherScorer:
             relief_score = self.__finish_rp_score(
                 player, rp_targets[i], rp_base_scores[i]
             )
-            write_runtime_component(
-                player.id, "Starter Score w/Modifiers", starting_score
-            )
-            write_runtime_component(
-                player.id, "Reliever Score w/Modifiers", relief_score
-            )
+            write_runtime_component(player.id, "pitching.starter.score", starting_score)
+            write_runtime_component(player.id, "pitching.reliever.score", relief_score)
             score = starting_score if starting_score > relief_score else relief_score
             score = score if score > 0 else 0
             # Try to fix the batter/pitcher distribution
@@ -392,11 +388,11 @@ class PitcherScorer:
             # boost mid-tier pitcher scoring with an addition
             additive_effect = max(-diff_from_65 / 4, 0)
 
-        write_runtime_component(player.id, "Pre-Pitcher Adj Score", score)
+        write_runtime_component(player.id, "pitching.adjustment.pre_score", score)
         adjusted_score = multiplier * score + additive_effect
-        write_runtime_component(player.id, "Pitcher Adj Multiplier", multiplier)
-        write_runtime_component(player.id, "Pitcher Adj Effect", additive_effect)
-        write_runtime_component(player.id, "Pitcher Adj Score", adjusted_score)
+        write_runtime_component(player.id, "pitching.adjustment.multiplier", multiplier)
+        write_runtime_component(player.id, "pitching.adjustment.effect", additive_effect)
+        write_runtime_component(player.id, "pitching.adjustment.score", adjusted_score)
         return adjusted_score
 
     def __sp_estimate_player(self, player: GamePlayer) -> GamePlayer:
@@ -424,14 +420,14 @@ class PitcherScorer:
 
     def __finish_sp_score(self, player, player_to_estimate, base_score):
         modifiers = calculate_sp_modifiers(player_to_estimate, self.type)
-        write_runtime_component(player.id, "SP Model Score", base_score)
+        write_runtime_component(player.id, "pitching.starter.model", base_score)
         write_runtime_component(
-            player.id, "SP Base Modifier", modifiers["total_modifier"]
+            player.id, "pitching.starter.base_modifier", modifiers["total_modifier"]
         )
         return base_score * modifiers["total_modifier"]
 
     def __finish_rp_score(self, player, player_to_estimate, base_score):
         rp_modifier = calculate_rp_modifier(player_to_estimate, self.type)
-        write_runtime_component(player.id, "RP Model Score", base_score)
-        write_runtime_component(player.id, "RP Base Modifier", rp_modifier)
+        write_runtime_component(player.id, "pitching.reliever.model", base_score)
+        write_runtime_component(player.id, "pitching.reliever.base_modifier", rp_modifier)
         return base_score * rp_modifier * self.rp_modifier

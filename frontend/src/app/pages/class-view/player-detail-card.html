@@ -181,9 +181,9 @@
         }
       </div>
 
-      @if (showBatting(p.type) && battingComponents(p).length) {
+      @if (showBatting(p.type) && battingComponents(breakdown(), p.bestPosition).length) {
         <div class="stat-grid tight subtle">
-          @for (e of battingComponents(p); track e[0]) {
+          @for (e of battingComponents(breakdown(), p.bestPosition); track e[0]) {
             <div class="stat">
               <span>{{ e[0] }}</span
               ><b>{{ e[1] | number: '1.2-2' }}</b>
@@ -192,9 +192,9 @@
         </div>
       }
 
-      @if (showPitching(p.type) && pitchingComponents(p).length) {
+      @if (showPitching(p.type) && pitchingComponents(breakdown()).length) {
         <div class="stat-grid tight subtle">
-          @for (e of pitchingComponents(p); track e[0]) {
+          @for (e of pitchingComponents(breakdown()); track e[0]) {
             <div class="stat">
               <span>{{ e[0] }}</span
               ><b>{{ e[1] | number: '1.2-2' }}</b>
@@ -203,16 +203,16 @@
         </div>
       }
 
-      @if (hasModifiers(p)) {
+      @if (hasModifiers(breakdown())) {
         <div class="modifier-summary">
-          @if (showBatting(p.type) && modifierGroup(p, 'pos'); as g) {
+          @if (showBatting(p.type) && modifierGroup(breakdown(), 'pos'); as g) {
             @if (g.total != null) {
               <div class="mod total">
                 <span>Position modifiers ×</span><b>{{ g.total | number: '1.2-2' }}</b>
               </div>
             }
           }
-          @if (showPitching(p.type) && modifierGroup(p, 'pitcher'); as g) {
+          @if (showPitching(p.type) && modifierGroup(breakdown(), 'pitcher'); as g) {
             @if (g.total != null) {
               <div class="mod total">
                 <span>Pitcher modifiers ×</span><b>{{ g.total | number: '1.2-2' }}</b>
@@ -222,7 +222,7 @@
         </div>
 
         <p-panel header="Modifier breakdown" [toggleable]="true" [collapsed]="true">
-          @if (showBatting(p.type) && modifierGroup(p, 'pos'); as g) {
+          @if (showBatting(p.type) && modifierGroup(breakdown(), 'pos'); as g) {
             <div class="modifier-group">
               <h5>Position modifiers</h5>
               @for (m of g.rows; track m.label) {
@@ -238,7 +238,7 @@
               }
             </div>
           }
-          @if (showPitching(p.type) && modifierGroup(p, 'pitcher'); as g) {
+          @if (showPitching(p.type) && modifierGroup(breakdown(), 'pitcher'); as g) {
             <div class="modifier-group">
               <h5>Pitcher modifiers</h5>
               @for (m of g.rows; track m.label) {
@@ -259,10 +259,10 @@
     </section>
   </div>
 
-  @if (otherComponents(p).length) {
+  @if (otherComponents(breakdown()).length) {
     <p-panel header="Diagnostics" [toggleable]="true" [collapsed]="true">
       <div class="stat-grid tight subtle">
-        @for (e of otherComponents(p); track e[0]) {
+        @for (e of otherComponents(breakdown()); track e[0]) {
           <div class="stat">
             <span>{{ e[0] }}</span
             ><b>{{ e[1] }}</b>

@@ -3,31 +3,13 @@
  * class-view detail panel and the side-by-side compare view both render.
  * Kept free of `this` so components can expose them as plain fields.
  */
-import { PlayerType, RankedPlayer } from './api.types';
+import { PlayerType, RankedPlayer, ScoreBreakdown } from './api.types';
 
 export interface RatingRow {
   label: string;
   potential: number | null;
   current: number | null;
 }
-
-/** Nicer labels for the noisier `components` keys shown in the detail view. */
-const KEY_LABELS: Record<string, string> = {
-  'Pos - Batting Model': 'Batting model (raw)',
-  'Pos - Running Model': 'Running model (raw)',
-  'Pos - Overall Model Score': 'Position model (raw)',
-  'Pos - Utility Bonus': 'Utility bonus',
-  'SP Model Score': 'SP model (raw)',
-  'RP Model Score': 'RP model (raw)',
-  'SP Base Modifier': 'SP modifiers ×',
-  'RP Base Modifier': 'RP modifiers ×',
-  'SP Pitcher Pitch Component': 'SP pitch-mix ×',
-  'SP HR component': 'SP HR-risk ×',
-  'Starter Score w/Modifiers': 'SP score w/ mods',
-  'Reliever Score w/Modifiers': 'RP score w/ mods',
-  'Pre Rank-adj Rank': 'Pre rank-adjust rank',
-  'Pre Rank-adj Score': 'Pre rank-adjust score',
-};
 
 // ---------------------------------------------------------- player typing
 export function classify(p: RankedPlayer): PlayerType {
@@ -180,14 +162,9 @@ export function pitchArsenal(p: RankedPlayer) {
   return p.ratings?.pitching.pitches ?? [];
 }
 
-// ------------------------------------------------------ component grouping
-function pick(p: RankedPlayer, prefixes: string[]): [string, number][] {
-  const c = p.components;
-  if (!c) return [];
-  return Object.entries(c)
-    .filter(([k]) => prefixes.some((pre) => k.startsWith(pre)))
-    .map(([k, v]) => [k, Number(v)] as [string, number]);
-}
+// ------------------------------------------------------- score breakdown
+// The model internals behind a score come from `playerBreakdown` (fetched on
+// demand), already trimmed server-side to the side(s) the player is judged on.
 
 /** "DraftSecondaryPersonalityModifier" -> "Draft secondary personality" */
 function prettyModifier(raw: string): string {
@@ -199,57 +176,69 @@ function prettyModifier(raw: string): string {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : raw;
 }
 
-export function label(key: string): string {
-  const mapped = KEY_LABELS[key];
-  if (mapped) return mapped;
-  const best = key.match(/^Pos - Best Pos Score \((\w+)\)$/);
-  if (best) return `Best position (${best[1]})`;
-  const rankAdj = key.match(/^Rank-adj Modifier (.+)$/);
-  if (rankAdj) return `${prettyModifier(rankAdj[1])} (rank-adj)`;
-  return key;
+function present(rows: [string, number | null][]): [string, number][] {
+  return rows.filter(([, v]) => v != null) as [string, number][];
 }
 
-export function battingComponents(p: RankedPlayer): [string, number][] {
-  return pick(p, ['Pos - ']).map(([k, v]) => [label(k), v]);
+export function battingComponents(
+  b: ScoreBreakdown | null,
+  bestPosition: string | null,
+): [string, number][] {
+  const bat = b?.batting;
+  if (!bat) return [];
+  return present([
+    [bestPosition ? `Best position (${bestPosition})` : 'Best position', bat.bestPositionScore],
+    ['Utility bonus', bat.utilityBonus],
+    ['Batting model (raw)', bat.battingModel],
+    ['Running model (raw)', bat.runningModel],
+    ['Position model (raw)', bat.positionModel],
+  ]);
 }
 
-export function pitchingComponents(p: RankedPlayer): [string, number][] {
-  return pick(p, ['SP ', 'RP ', 'Starter Score', 'Reliever Score']).map(
-    ([k, v]) => [label(k), v],
-  );
+export function pitchingComponents(b: ScoreBreakdown | null): [string, number][] {
+  const pit = b?.pitching;
+  if (!pit) return [];
+  const { starter: sp, reliever: rp } = pit;
+  return present([
+    ['SP pitch-mix ×', sp.pitchMix],
+    ['SP HR-risk ×', sp.hrRisk],
+    ['SP model (raw)', sp.model],
+    ['SP modifiers ×', sp.baseModifier],
+    ['RP model (raw)', rp.model],
+    ['RP modifiers ×', rp.baseModifier],
+    ['SP score w/ mods', sp.score],
+    ['RP score w/ mods', rp.score],
+  ]);
 }
 
 export function modifierGroup(
-  p: RankedPlayer,
+  b: ScoreBreakdown | null,
   kind: 'pos' | 'pitcher',
 ): { rows: { label: string; value: number }[]; total: number | null } | null {
-  const c = p.components;
-  if (!c) return null;
-  const prefix = kind === 'pos' ? 'Pos Modifier ' : 'Pitcher Modifier ';
-  const totalKey = kind === 'pos' ? 'Total Pos Modifier' : 'Total Pitcher Modifier';
-  const rows = Object.entries(c)
-    .filter(([k]) => k.startsWith(prefix))
-    .map(([k, v]) => ({ label: prettyModifier(k.slice(prefix.length)), value: Number(v) }));
+  const group = (kind === 'pos' ? b?.batting : b?.pitching)?.modifiers;
+  const rows = (group?.modifiers ?? [])
+    .filter((m) => m.value != null)
+    .map((m) => ({ label: prettyModifier(m.name), value: m.value as number }));
   if (!rows.length) return null;
-  return { rows, total: c[totalKey] != null ? Number(c[totalKey]) : null };
+  return { rows, total: group?.total ?? null };
 }
 
-/** Whether the player has a relevant modifier group to show (type-scoped). */
-export function hasModifiers(p: { type: PlayerType } & RankedPlayer): boolean {
-  return (
-    (showBatting(p.type) && !!modifierGroup(p, 'pos')) ||
-    (showPitching(p.type) && !!modifierGroup(p, 'pitcher'))
-  );
+/** Whether there's a modifier group to show (sides are already type-scoped). */
+export function hasModifiers(b: ScoreBreakdown | null): boolean {
+  return !!modifierGroup(b, 'pos') || !!modifierGroup(b, 'pitcher');
 }
 
-export function otherComponents(p: RankedPlayer): [string, unknown][] {
-  const c = p.components;
-  if (!c) return [];
-  const skip = [
-    'Pos - ', 'SP ', 'RP ', 'Starter Score', 'Reliever Score',
-    'Pos Modifier ', 'Pitcher Modifier ', 'Total Pos Modifier', 'Total Pitcher Modifier',
+/** The "Diagnostics" panel: rank adjustments plus any older-pipeline values. */
+export function otherComponents(b: ScoreBreakdown | null): [string, unknown][] {
+  if (!b) return [];
+  const adj = b.rankAdjust;
+  const rows: [string, unknown][] = [
+    ...(adj?.modifiers ?? []).map(
+      (m) => [`${prettyModifier(m.name)} (rank-adj)`, m.value] as [string, unknown],
+    ),
+    ['Pre rank-adjust rank', adj?.preRank ?? null],
+    ['Pre rank-adjust score', adj?.preScore ?? null],
+    ...b.legacy.map((m) => [m.name, m.value] as [string, unknown]),
   ];
-  return Object.entries(c)
-    .filter(([k]) => !skip.some((pre) => k.startsWith(pre)))
-    .map(([k, v]) => [label(k), v] as [string, unknown]);
+  return rows.filter(([, v]) => v != null);
 }

@@ -27,17 +27,14 @@ verify against a real in-game scouting report before trusting them):
 """
 import csv
 import io
-import json
-import threading
-from collections import OrderedDict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import db
+import results_store
 from context import default_base_dir
-from io_utils import atomic_write_json
 from models.game_players import PLAYER_FIELDS, GamePlayer
-from ranking_csv import RANKED_PLAYER_FIELDNAMES
 from rankers.base_ranker import DEFAULT_BATCH_SIZE
 from rankers.get_ranker import get_ranker_for_method
 from statsplus_api import (
@@ -261,17 +258,24 @@ def coerce_gf(value) -> str:
 
 
 # ------------------------------------------------------------------- the context
+# `league_snapshots` columns surfaced by `load_meta` (the old meta.json keys)
+_META_COLUMNS = (
+    "league_id", "version", "fetched_at", "last_checked_at", "player_count",
+    "total_row_count", "league_date",
+)
+
+
 @dataclass
 class LeagueSnapshotContext:
-    """Paths for one league's stored snapshot, rooted at
-    ``<base>/league_snapshots/<league_id>/``. Deliberately has none of the
-    draft-class-only concepts (custom order, drafted players, upload file)."""
+    """One league's stored snapshot: its `league_snapshots` row plus the files
+    under ``$DATA_DIR/league_snapshots/<league_id>/``. Deliberately has none of
+    the draft-class-only concepts (custom order, drafted players, upload file)."""
 
     league_id: str
-    base_dir: Path = field(default_factory=default_base_dir)
 
-    def __post_init__(self) -> None:
-        self.base_dir = Path(self.base_dir)
+    @property
+    def base_dir(self) -> Path:
+        return default_base_dir()
 
     @property
     def snapshot_dir(self) -> Path:
@@ -282,21 +286,8 @@ class LeagueSnapshotContext:
         return self.snapshot_dir / "players.csv"
 
     @property
-    def meta_file(self) -> Path:
-        return self.snapshot_dir / "meta.json"
-
-    @property
     def teams_file(self) -> Path:
         return self.snapshot_dir / "teams.csv"
-
-    def ranker_dir(self, ranker) -> Path:
-        name = ranker if isinstance(ranker, str) else ranker.__class__.__name__
-        folder = self.snapshot_dir / name
-        folder.mkdir(parents=True, exist_ok=True)
-        return folder
-
-    def ranked_players_file(self, ranker) -> Path:
-        return self.ranker_dir(ranker) / "ranked_players.csv"
 
     def ensure_dirs(self) -> None:
         self.snapshot_dir.mkdir(parents=True, exist_ok=True)
@@ -305,11 +296,11 @@ class LeagueSnapshotContext:
         return self.data_file.exists()
 
     def load_meta(self) -> dict:
-        try:
-            with open(self.meta_file) as f:
-                return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            return {}
+        row = db.query_one(
+            f"SELECT {', '.join(_META_COLUMNS)} FROM league_snapshots WHERE league_id = ?",
+            (self.league_id,),
+        )
+        return dict(row) if row else {}
 
 
 # --------------------------------------------------------------- join + rename
@@ -461,8 +452,9 @@ def build_snapshot(
     league_date: str = None,
 ) -> LeagueSnapshotContext:
     """Pure transform + write: join the three CSV blobs, write `ctx.data_file`,
-    stash the teams CSV, and write `meta.json`. `league_date` is the in-game date
-    the data was pulled at, kept so a later load can tell the sim has advanced."""
+    stash the teams CSV, and record the snapshot row (bumping its `version`).
+    `league_date` is the in-game date the data was pulled at, kept so a later
+    load can tell the sim has advanced."""
     rows = join_rows(ratings_csv, players_csv, teams_csv)
     ctx.ensure_dirs()
     with open(ctx.data_file, "w", newline="") as f:
@@ -476,16 +468,14 @@ def build_snapshot(
     # / undrafted amateur FAs) are excluded from every ranking, so they don't
     # count as players here either. `total_row_count` keeps the raw snapshot size.
     ranked_pool = sum(1 for r in rows if r.get("is_amateur") != "1")
-    atomic_write_json(
-        ctx.meta_file,
-        {
-            "league_id": ctx.league_id,
-            "fetched_at": now,
-            "last_checked_at": now,
-            "player_count": ranked_pool,
-            "total_row_count": len(rows),
-            "league_date": league_date,
-        },
+    db.execute(
+        "INSERT INTO league_snapshots (league_id, fetched_at, last_checked_at, "
+        "player_count, total_row_count, league_date) VALUES (?, ?, ?, ?, ?, ?) "
+        "ON CONFLICT(league_id) DO UPDATE SET version = version + 1, "
+        "fetched_at = excluded.fetched_at, last_checked_at = excluded.last_checked_at, "
+        "player_count = excluded.player_count, total_row_count = excluded.total_row_count, "
+        "league_date = excluded.league_date",
+        (ctx.league_id, now, now, ranked_pool, len(rows), league_date),
     )
     return ctx
 
@@ -493,13 +483,11 @@ def build_snapshot(
 def touch_checked(ctx: LeagueSnapshotContext, league_date: str = None) -> None:
     """Record that the snapshot was verified current (its `league_date` still
     matches the sim) so the freshness check stays quiet for another day."""
-    meta = ctx.load_meta()
-    if not meta:
-        return
-    meta["last_checked_at"] = datetime.now(timezone.utc).isoformat()
-    if league_date:
-        meta["league_date"] = league_date
-    atomic_write_json(ctx.meta_file, meta)
+    db.execute(
+        "UPDATE league_snapshots SET last_checked_at = ?, "
+        "league_date = COALESCE(?, league_date) WHERE league_id = ?",
+        (datetime.now(timezone.utc).isoformat(), league_date or None, ctx.league_id),
+    )
 
 
 def snapshot_age(ctx: LeagueSnapshotContext):
@@ -519,7 +507,7 @@ def snapshot_age(ctx: LeagueSnapshotContext):
 
 
 def fetch_and_build(
-    league: dict, *, base_dir=None, cookie: str = None, on_phase=None
+    league: dict, *, cookie: str = None, on_phase=None
 ) -> LeagueSnapshotContext:
     """Fetch the four endpoints for `league` (a `web/leagues.py` dict) and build
     the stored snapshot. `cookie` defaults to the league's own StatsPlus cookie.
@@ -551,69 +539,40 @@ def fetch_and_build(
     teams_csv = fetch_teams(league_url, cookie)
     _phase("Building the snapshot…")
 
-    ctx = LeagueSnapshotContext(
-        league["id"], base_dir=base_dir or default_base_dir()
-    )
+    ctx = LeagueSnapshotContext(league["id"])
     return build_snapshot(ctx, ratings_csv, players_csv, teams_csv, league_date=league_date)
 
 
-# ------------------------------------------------------------- ranking + cache
+# ------------------------------------------------------------------- ranking
 #
 # `ranked_rows(ctx, method)` scores the stored snapshot with one of the two
-# league-view rankers and returns rows in `ranking_csv.RANKED_PLAYER_FIELDNAMES`
-# shape, so `web/service._player_payload` consumes a snapshot row exactly like a
+# league-view rankers and returns result rows (see `results_store`), so
+# `web/service._player_payload` consumes a snapshot row exactly like a
 # draft-class row (the `drafted*` / custom-order bits just come back empty).
 #
 # A full-league export is ~15k players and scoring it takes tens of seconds, so
-# the result is cached two ways: on disk as `ctx.ranked_players_file(ranker)`
-# (rebuilt when `players.csv` is newer) and in a small in-process LRU keyed on
-# `(snapshot_dir, method)`. The in-memory entry lives until the snapshot file's
-# mtime changes (a refresh) or it's evicted as least-recently-used - no TTL.
-
-_MAX_CACHED_LEAGUES = 2
-_MAX_RANKED_ENTRIES = _MAX_CACHED_LEAGUES * len(LEAGUE_RANKING_METHODS)
-_ranked_cache: "OrderedDict[tuple, dict]" = OrderedDict()
-_ranked_cache_lock = threading.Lock()
+# the run is stored (`results_store`, scope "league") and reused for as long as
+# it was scored from the current snapshot `version`. The league refresh scores
+# both methods up front; a request only ever re-scores if that failed.
 
 
-def _ranked_row(index: int, s) -> dict:
-    return {
-        "overall_ranking": index,
-        "model_ranking": index,
-        "ranking_difference": 0,
-        "id": s.id,
-        "name": s.name,
-        "position": s.position,
-        "age": s.age,
-        "model_score": round(s.overall_score, 2),
-        "position_player_score": s.position_player_score,
-        "fielding_score_component": s.fielding_score_component,
-        "batting_score_component": s.batting_score_component,
-        "pitcher_score": s.pitcher_score,
-        "starter_component": s.starter_component,
-        "reliever_component": s.reliever_component,
-        "running_score_component": s.running_score_component,
-        "best_position": s.best_position or "",
-        "in_game_overall": s.in_game_overall,
-        "in_game_potential": s.in_game_potential,
-        "demand": s.demand or "",
-        "raw_overall_score": s.raw_overall_score,
-        "components": s.components,
-    }
+def snapshot_version(ctx: LeagueSnapshotContext) -> int:
+    return ctx.load_meta().get("version") or 0
 
 
-def _score_and_write(
-    ctx: LeagueSnapshotContext, method: str, out_file: Path, progress=None
-) -> list[dict]:
-    from scoring.model_cache import HEAVY_SCORING_LOCK
+def ranked_method_is_fresh(ctx: LeagueSnapshotContext, method: str) -> bool:
+    """Whether the stored `method` ranking was scored from the current snapshot -
+    i.e. it is ready to serve without a re-score. Drives the "model hasn't run
+    yet" hint on the league page."""
+    info = results_store.run_info(results_store.LEAGUE, ctx.league_id, method)
+    return (
+        info is not None
+        and ctx.data_file.exists()
+        and info["source_version"] == snapshot_version(ctx)
+    )
 
-    with HEAVY_SCORING_LOCK:
-        return _score_and_write_locked(ctx, method, out_file, progress)
 
-
-def _score_and_write_locked(
-    ctx: LeagueSnapshotContext, method: str, out_file: Path, progress=None
-) -> list[dict]:
+def _score(ctx: LeagueSnapshotContext, method: str, progress=None) -> list[dict]:
     ranker = get_ranker_for_method(method)
 
     # The potential ranking is about players who haven't established themselves in
@@ -640,57 +599,21 @@ def _score_and_write_locked(
                 row["G/F"] = coerce_gf(row.get("G/F"))
                 yield GamePlayer(row)
 
-    scored = ranker.rank(
-        _players(), batch_size=DEFAULT_BATCH_SIZE, progress=progress
-    )
-    rows = [_ranked_row(i, s) for i, s in enumerate(scored)]
-    out_file.parent.mkdir(parents=True, exist_ok=True)
-    with open(out_file, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=RANKED_PLAYER_FIELDNAMES)
-        writer.writeheader()
-        writer.writerows(rows)
-    return rows
-
-
-def _ranked_file_for(ctx: LeagueSnapshotContext, method: str) -> Path:
-    return ctx.ranked_players_file(get_ranker_for_method(method).__class__.__name__)
-
-
-def ranked_method_is_fresh(ctx: LeagueSnapshotContext, method: str) -> bool:
-    """Whether `ranked_players.csv` for `method` exists and is at least as new as
-    the snapshot data file - i.e. this ranking is ready to serve without a
-    re-score. Drives the "model hasn't run yet" hint on the league page."""
-    try:
-        return (
-            _ranked_file_for(ctx, method).stat().st_mtime
-            >= ctx.data_file.stat().st_mtime
-        )
-    except (FileNotFoundError, ValueError):
-        return False
-
-
-def _disk_rows(ctx: LeagueSnapshotContext, method: str, progress=None) -> list[dict]:
-    """Read the cached `ranked_players.csv` if it is at least as new as the
-    snapshot data file, otherwise re-score and rewrite it."""
-    out_file = _ranked_file_for(ctx, method)
-    if ranked_method_is_fresh(ctx, method):
-        with open(out_file, newline="") as f:
-            rows = list(csv.DictReader(f))
-        # A ranked file written before a fieldname was added is "fresh" by mtime
-        # but missing a column - re-score rather than serve the stale shape.
-        if not rows or set(RANKED_PLAYER_FIELDNAMES) <= set(rows[0]):
-            return rows
-    return _score_and_write(ctx, method, out_file, progress)
+    scored = ranker.rank(_players(), batch_size=DEFAULT_BATCH_SIZE, progress=progress)
+    return [results_store.result_from_scored(s) for s in scored]
 
 
 def ranked_rows(
     ctx: LeagueSnapshotContext, ranking_method: str, progress=None
 ) -> list[dict]:
     """Snapshot rows scored + ordered by `ranking_method` ("overall" or
-    "potential"), best-first, served from the process cache when warm.
+    "potential"), best-first - the stored run when it is current, otherwise a
+    fresh score that replaces it.
 
     `progress`, if given, is forwarded to the ranker and called with the running
-    count of players scored - but only on a cache miss that actually re-scores."""
+    count of players scored - but only when it actually re-scores."""
+    from scoring.model_cache import HEAVY_SCORING_LOCK
+
     if ranking_method not in LEAGUE_RANKING_METHODS:
         raise ValueError(
             f"League view supports {LEAGUE_RANKING_METHODS}, not {ranking_method!r}."
@@ -699,31 +622,13 @@ def ranked_rows(
         raise FileNotFoundError(
             f"No league snapshot for {ctx.league_id!r}; refresh it first."
         )
-
-    src_mtime = ctx.data_file.stat().st_mtime
-    key = (str(ctx.snapshot_dir), ranking_method)
-    with _ranked_cache_lock:
-        cached = _ranked_cache.get(key)
-        if cached is not None and cached["src_mtime"] == src_mtime:
-            _ranked_cache.move_to_end(key)  # mark most-recently-used
-            return cached["rows"]
-
-    rows = _disk_rows(ctx, ranking_method, progress)
-
-    with _ranked_cache_lock:
-        _ranked_cache[key] = {"src_mtime": src_mtime, "rows": rows}
-        _ranked_cache.move_to_end(key)
-        while len(_ranked_cache) > _MAX_RANKED_ENTRIES:
-            _ranked_cache.popitem(last=False)
-    return rows
-
-
-def evict_ranked_cache(league_id=None) -> None:
-    """Drop cached ranked rows - all leagues, or one. Call after a refresh."""
-    with _ranked_cache_lock:
-        if league_id is None:
-            _ranked_cache.clear()
-            return
-        marker = f"league_snapshots/{league_id}"
-        for key in [k for k in _ranked_cache if marker in k[0]]:
-            del _ranked_cache[key]
+    if not ranked_method_is_fresh(ctx, ranking_method):
+        with HEAVY_SCORING_LOCK:
+            # re-check: a concurrent caller may have scored it while we waited
+            if not ranked_method_is_fresh(ctx, ranking_method):
+                version = snapshot_version(ctx)
+                results_store.save_run(
+                    results_store.LEAGUE, ctx.league_id, ranking_method, version,
+                    _score(ctx, ranking_method, progress),
+                )
+    return results_store.load_results(results_store.LEAGUE, ctx.league_id, ranking_method)

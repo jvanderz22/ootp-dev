@@ -19,7 +19,7 @@ from league_snapshot import (
     ranked_rows,
 )
 from models.game_players import PLAYER_FIELDS
-from ranking_csv import RANKED_PLAYER_FIELDNAMES
+import results_store
 from rankers.get_ranker import get_ranker_for_method
 
 # --- real captured headers --------------------------------------------------
@@ -127,6 +127,15 @@ def make_snapshot_csvs():
 @pytest.fixture
 def snapshot_csvs():
     return make_snapshot_csvs()
+
+
+def _ctx_for(league_id):
+    """A snapshot context for a freshly created league - a stored snapshot
+    belongs to a league row."""
+    from web import leagues
+
+    assert leagues.create_league(league_id)["id"] == league_id
+    return LeagueSnapshotContext(league_id)
 
 
 def test_header_covers_player_fields(snapshot_csvs):
@@ -272,8 +281,8 @@ def test_rankers_score_snapshot_rows(snapshot_csvs, method):
     assert all(s.overall_score is not None for s in scores)
 
 
-def test_build_snapshot_writes_files(tmp_path, snapshot_csvs):
-    ctx = LeagueSnapshotContext("yfmlb", base_dir=tmp_path)
+def test_build_snapshot_writes_files(data_dir, snapshot_csvs):
+    ctx = _ctx_for("yfmlb")
     build_snapshot(ctx, *snapshot_csvs)
 
     assert ctx.data_file.exists()
@@ -290,12 +299,10 @@ def test_build_snapshot_writes_files(tmp_path, snapshot_csvs):
 
 # --------------------------------------------------------------- ranking layer
 @pytest.fixture
-def built_ctx(tmp_path, snapshot_csvs):
-    league_snapshot.evict_ranked_cache()
-    ctx = LeagueSnapshotContext("yfmlb", base_dir=tmp_path)
+def built_ctx(data_dir, snapshot_csvs):
+    ctx = _ctx_for("yfmlb")
     build_snapshot(ctx, *snapshot_csvs)
-    yield ctx
-    league_snapshot.evict_ranked_cache()
+    return ctx
 
 
 @pytest.mark.parametrize("method", ["overall", "potential"])
@@ -303,30 +310,27 @@ def test_ranked_rows_shape_and_order(built_ctx, method):
     rows = ranked_rows(built_ctx, method)
 
     assert [r["id"] for r in rows] == ["100", "200"] or [r["id"] for r in rows] == ["200", "100"]
-    assert set(rows[0]) == set(RANKED_PLAYER_FIELDNAMES)
-    # best-first: model_score descending, overall_ranking 0..n
+    assert set(rows[0]) == set(results_store._RESULT_KEYS.values())
+    # best-first: model_score descending
     scores = [float(r["model_score"]) for r in rows]
     assert scores == sorted(scores, reverse=True)
-    assert [int(r["overall_ranking"]) for r in rows] == list(range(len(rows)))
     # snapshot has no demand source
     assert all(r["demand"] == "" for r in rows)
 
 
-def test_potential_ranking_excludes_established_mlb_players(tmp_path, snapshot_csvs):
+def test_potential_ranking_excludes_established_mlb_players(data_dir, snapshot_csvs):
     """`mlb_service_years >= 1` drops a player from the potential ranking only -
     the overall ranking still scores everyone."""
-    league_snapshot.evict_ranked_cache()
     ratings, _players, teams = snapshot_csvs
     players = _csv(PLAYERS_HEADER, [
         _players_row(ID="100", Level="1", **{"mlb_service_years": "6"}),   # vet
         _players_row(ID="200", Level="4", **{"mlb_service_years": "0"}),   # rookie
     ])
-    ctx = LeagueSnapshotContext("svc", base_dir=tmp_path)
+    ctx = _ctx_for("svc")
     build_snapshot(ctx, ratings, players, teams)
 
     assert {r["id"] for r in ranked_rows(ctx, "overall")} == {"100", "200"}
     assert [r["id"] for r in ranked_rows(ctx, "potential")] == ["200"]
-    league_snapshot.evict_ranked_cache()
 
 
 def test_amateur_pools_flagged_on_join(snapshot_csvs):
@@ -357,29 +361,27 @@ def test_released_free_agent_is_not_flagged_amateur(snapshot_csvs):
     assert row["is_amateur"] == ""
 
 
-def test_rankings_exclude_amateur_pools(tmp_path, snapshot_csvs):
+def test_rankings_exclude_amateur_pools(data_dir, snapshot_csvs):
     """Draft-class and amateur-FA players are dropped from BOTH rankings."""
-    league_snapshot.evict_ranked_cache()
     ratings, _p, teams = snapshot_csvs
     players = _csv(PLAYERS_HEADER, [
         _players_row(ID="100", Level="0", **{"draft_eligible": "1"}),          # draft class
         _players_row(ID="200", Level="4", **{"last_team_id": "168"}),          # real prospect
     ])
-    ctx = LeagueSnapshotContext("amateurs", base_dir=tmp_path)
+    ctx = _ctx_for("amateurs")
     build_snapshot(ctx, ratings, players, teams)
 
     for method in ("overall", "potential"):
         assert [r["id"] for r in ranked_rows(ctx, method)] == ["200"]
-    league_snapshot.evict_ranked_cache()
 
 
-def test_player_count_excludes_amateurs(tmp_path, snapshot_csvs):
+def test_player_count_excludes_amateurs(data_dir, snapshot_csvs):
     ratings, _p, teams = snapshot_csvs
     players = _csv(PLAYERS_HEADER, [
         _players_row(ID="100", Level="0", **{"draft_eligible": "1"}),   # amateur
         _players_row(ID="200", Level="4", **{"last_team_id": "168"}),   # real player
     ])
-    ctx = LeagueSnapshotContext("count", base_dir=tmp_path)
+    ctx = _ctx_for("count")
     build_snapshot(ctx, ratings, players, teams)
 
     meta = ctx.load_meta()
@@ -424,46 +426,30 @@ def test_ranked_rows_rejects_draft_class_method(built_ctx):
         ranked_rows(built_ctx, "draft_class")
 
 
-def test_ranked_rows_writes_and_reuses_disk_cache(built_ctx):
-    ranker_name = get_ranker_for_method("overall").__class__.__name__
-    out_file = built_ctx.ranked_players_file(ranker_name)
+def test_ranked_rows_reuses_the_stored_run_until_the_snapshot_changes(
+    built_ctx, snapshot_csvs, monkeypatch
+):
+    first = ranked_rows(built_ctx, "overall")
+    run = results_store.run_info(results_store.LEAGUE, "yfmlb", "overall")
+    assert run["source_version"] == league_snapshot.snapshot_version(built_ctx)
+    assert league_snapshot.ranked_method_is_fresh(built_ctx, "overall")
 
+    def no_rescore(*a, **k):
+        raise AssertionError("re-scored a current ranking")
+
+    with monkeypatch.context() as m:
+        m.setattr(league_snapshot, "_score", no_rescore)
+        assert ranked_rows(built_ctx, "overall") == first
+
+    # a refreshed snapshot (new version) makes the stored run stale
+    build_snapshot(built_ctx, *snapshot_csvs)
+    assert not league_snapshot.ranked_method_is_fresh(built_ctx, "overall")
     ranked_rows(built_ctx, "overall")
-    assert out_file.exists()
-    first_mtime = out_file.stat().st_mtime
-
-    league_snapshot.evict_ranked_cache()  # force past the process cache
-    ranked_rows(built_ctx, "overall")
-    assert out_file.stat().st_mtime == first_mtime  # not rewritten
-
-    # a newer snapshot file invalidates the on-disk cache
-    import os, time as _t
-    later = _t.time() + 5
-    os.utime(built_ctx.data_file, (later, later))
-    league_snapshot.evict_ranked_cache()
-    ranked_rows(built_ctx, "overall")
-    assert out_file.stat().st_mtime > first_mtime
+    rescored = results_store.run_info(results_store.LEAGUE, "yfmlb", "overall")
+    assert rescored["source_version"] == run["source_version"] + 1
 
 
-def test_ranked_rows_requires_a_snapshot(tmp_path):
-    ctx = LeagueSnapshotContext("missing", base_dir=tmp_path)
+def test_ranked_rows_requires_a_snapshot(data_dir):
+    ctx = _ctx_for("missing")
     with pytest.raises(FileNotFoundError):
         ranked_rows(ctx, "overall")
-
-
-def test_ranked_cache_evicts_least_recently_used(tmp_path, snapshot_csvs, monkeypatch):
-    monkeypatch.setattr(league_snapshot, "_MAX_RANKED_ENTRIES", 2)
-    league_snapshot.evict_ranked_cache()
-
-    ctxs = []
-    for i in range(3):
-        ctx = LeagueSnapshotContext(f"lg{i}", base_dir=tmp_path)
-        build_snapshot(ctx, *snapshot_csvs)
-        ranked_rows(ctx, "overall")
-        ctxs.append(ctx)
-
-    keys = {k[0] for k in league_snapshot._ranked_cache}
-    assert len(league_snapshot._ranked_cache) == 2
-    assert str(ctxs[0].snapshot_dir) not in keys  # first one evicted
-    assert str(ctxs[2].snapshot_dir) in keys
-    league_snapshot.evict_ranked_cache()

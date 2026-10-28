@@ -1,9 +1,7 @@
 """Operations the GraphQL resolvers call. Keeps resolver functions thin and
-keeps all filesystem / pipeline access in one place."""
-import ast
+keeps all storage / pipeline access in one place."""
 import asyncio
 import csv
-import json
 import os
 import re
 import shutil
@@ -14,28 +12,28 @@ from datetime import datetime, timedelta, timezone
 
 import anyio
 
+import db
 import league_snapshot
 import pipeline
+import results_store
 from context import DraftClassContext, default_base_dir
 from web import class_index, leagues, org_rankings
 from custom_ranking import clear_order, has_custom_order, load_order, resolve_order, save_order
-from draft_class_files import get_ranked_players_file
-from drafted_players import get_drafted_player_ids
+from drafted_players import get_drafted_player_ids, save_picks
 from models.game_players import GamePlayers
+from models.player_type import classify
 from load_draft_class import (
     DatasetFormatError,
     VALID_RANKING_METHODS,
     create_dataset_from_upload,
 )
-from rankers.get_ranker import RANKERS
-from ranking_csv import build_upload_rows, write_upload_file
+from ranking_csv import build_upload_rows
 from statsplus_api import (
     StatsPlusAuthError,
     StatsPlusError,
     fetch_draft_picks,
     fetch_league_date,
     statsplus_player_url,
-    write_drafted_players_file,
 )
 from web.settings import cookie_header
 
@@ -64,10 +62,6 @@ def _ctx(name: str) -> DraftClassContext:
     return ctx
 
 
-def _ranker_name(ctx) -> str:
-    return RANKERS[ctx.ranking_method].__name__
-
-
 def _dataset_ids(ctx) -> set:
     with open(ctx.data_file, newline="") as f:
         return {row["ID"] for row in csv.DictReader(f) if row.get("ID")}
@@ -78,31 +72,9 @@ def _dataset_count(ctx) -> int:
         return sum(1 for _ in csv.DictReader(f))
 
 
-# NumPy >= 2 renders scalars as `np.float64(1.02)` in a dict's repr, which is a
-# call expression, not a literal — `ast.literal_eval` chokes on it. Older CSVs
-# written under such a build have those wrappers baked into the `components`
-# column; strip them so the data stays readable without a re-process.
-_NP_SCALAR_RE = re.compile(r"np\.\w+\(([^()]*)\)")
-
-
-def _parse_components(raw):
-    if not raw:
-        return None
-    for candidate in (raw, _NP_SCALAR_RE.sub(r"\1", raw)):
-        for parser in (json.loads, ast.literal_eval):
-            try:
-                return parser(candidate)
-            except (ValueError, SyntaxError):
-                continue
-    return None
-
-
 def _read_ranked_rows(ctx):
-    path = get_ranked_players_file(_ranker_name(ctx), ctx)
-    if not os.path.exists(path):
-        return None
-    with open(path, newline="") as f:
-        return list(csv.DictReader(f))
+    """The class's current ranking (model order), or None if it isn't scored."""
+    return results_store.class_results(ctx)
 
 
 def _to_number(value):
@@ -200,17 +172,7 @@ def _ratings_payload(gp):
     }
 
 
-def _classify(position_player_score, pitcher_score):
-    """Hitter / Pitcher / Two-way, mirroring printers/draft_prospect_printer.py."""
-    pp = position_player_score or 0
-    pit = pitcher_score or 0
-    hi, lo = max(pp, pit), min(pp, pit)
-    if hi > 0 and lo * 2 > hi:
-        return "Two-way"
-    return "Pitcher" if pit >= pp else "Hitter"
-
-
-def _player_payload(rank, row, drafted_info, game_player=None):
+def _player_payload(rank, row, drafted_info, game_player=None, source=None):
     info = (drafted_info or {}).get(row["id"])
     payload = {
         "rank": rank,
@@ -228,8 +190,10 @@ def _player_payload(rank, row, drafted_info, game_player=None):
         "drafted_pick": _to_int(info.get("overall_selection")) if info else None,
         "drafted_round": _to_int(info.get("round")) if info else None,
         "drafted_round_pick": _to_int(info.get("round_selection")) if info else None,
-        "components": _parse_components(row.get("components")),
         "ratings": _ratings_payload(game_player),
+        # which stored ranking this row came from - the client passes it back
+        # to `playerBreakdown` for the detail view
+        "source": source,
         # the model's best-fit fielding position; nulled for pitchers below
         "best_position": row.get("best_position") or None,
         # populated only for live-league snapshot rows (see _league_built_rows)
@@ -240,7 +204,7 @@ def _player_payload(rank, row, drafted_info, game_player=None):
     }
     for field in _FLOAT_FIELDS:
         payload[field] = _to_number(row.get(field))
-    payload["type"] = _classify(
+    payload["type"] = row.get("player_type") or classify(
         payload["position_player_score"], payload["pitcher_score"]
     )
     if payload["type"] == "Pitcher":
@@ -320,17 +284,9 @@ def draft_class_payload(name: str):
     ctx = DraftClassContext(name)
     if not ctx.exists():
         return None
-    try:
-        ranking_method = ctx.ranking_method
-    except (FileNotFoundError, json.JSONDecodeError):
-        ranking_method = "draft_class"
-
-    ranked_path = get_ranked_players_file(RANKERS.get(ranking_method, RANKERS["draft_class"]).__name__, ctx)
-    last_processed = None
-    if os.path.exists(ranked_path):
-        last_processed = datetime.fromtimestamp(
-            os.path.getmtime(ranked_path), tz=timezone.utc
-        ).isoformat()
+    ranking_method = ctx.ranking_method
+    run = results_store.run_info(results_store.CLASS, name, ranking_method)
+    last_processed = run["scored_at"] if run else None
 
     drafted_ids = get_drafted_player_ids(ctx)
     drafted_count = len(drafted_ids & _dataset_ids(ctx)) if drafted_ids else 0
@@ -424,9 +380,14 @@ def update_league(
 
 def delete_league(id):
     try:
-        return leagues.delete_league(id)
+        deleted = leagues.delete_league(id)
     except ValueError as exc:
         raise InvalidInput(str(exc)) from exc
+    # the snapshot row went with the league; drop its files and caches too
+    results_store.delete_runs(results_store.LEAGUE, id)
+    shutil.rmtree(league_snapshot.LeagueSnapshotContext(id).snapshot_dir, ignore_errors=True)
+    _evict_league_payload_cache(id)
+    return deleted
 
 
 def set_class_league(name, league_id):
@@ -575,6 +536,8 @@ async def _run_pipeline(ctx):
 
 def delete_draft_class(name: str) -> str:
     ctx = _ctx(name)
+    results_store.delete_runs(results_store.CLASS, name)
+    ctx.unregister()
     for path in (ctx.data_file, ctx.processed_dir):
         if path.is_dir():
             shutil.rmtree(path, ignore_errors=True)
@@ -617,9 +580,7 @@ async def set_ranking_method(name: str, ranking_method: str):
     ctx = _ctx(name)
     if ranking_method not in VALID_RANKING_METHODS:
         raise InvalidInput(f"Unknown ranking method {ranking_method!r}.")
-    config = ctx.load_config()
-    config["ranking_method"] = ranking_method
-    ctx.save_config(config)
+    ctx.save_config({"ranking_method": ranking_method})
     await _run_pipeline(ctx)
     class_index.evict(name)
     return draft_class_payload(name)
@@ -639,7 +600,6 @@ def save_custom_order(name: str, order):
         raise InvalidInput(f"Draft class {name!r} has not been processed yet.")
     known = [r["id"] for r in rows]
     save_order(ctx, [str(pid) for pid in order], known_ids=known)
-    write_upload_file(ctx)
     class_index.evict(name)
     return draft_class_payload(name)
 
@@ -662,7 +622,6 @@ def set_player_rank(name: str, player_id, rank):
     target = max(1, min(target, len(order) + 1)) - 1
     order.insert(target, pid)
     save_order(ctx, order, known_ids=order)
-    write_upload_file(ctx)
     class_index.evict(name)
     return draft_class_payload(name)
 
@@ -670,8 +629,6 @@ def set_player_rank(name: str, player_id, rank):
 def clear_custom_order(name: str):
     ctx = _ctx(name)
     clear_order(ctx)
-    if _read_ranked_rows(ctx) is not None:
-        write_upload_file(ctx)
     class_index.evict(name)
     return draft_class_payload(name)
 
@@ -702,9 +659,7 @@ def _refresh_drafted_sync(name: str):
         cookie_header(league),
         league.get("default_lid"),
     )
-    write_drafted_players_file(ctx, picks)
-    if _read_ranked_rows(ctx) is not None:
-        write_upload_file(ctx)
+    save_picks(ctx, picks)
     class_index.evict(name)
 
     dataset_ids = _dataset_ids(ctx)
@@ -933,17 +888,26 @@ def _snapshot_side_tables(ctx):
     return game_players, meta
 
 
+def _league_run_stamp(ctx, method):
+    """What a built-rows cache entry is valid for: the snapshot version plus the
+    stored run it was built from (None while the run is missing or stale)."""
+    if not league_snapshot.ranked_method_is_fresh(ctx, method):
+        return None
+    run = results_store.run_info(results_store.LEAGUE, ctx.league_id, method)
+    return (run["source_version"], run["scored_at"])
+
+
 def _league_built_rows(league_id: str, method: str) -> list:
     lg, ctx = _league_ctx(league_id)
     if not ctx.data_file.exists():
         raise NotFound(
             f"League {league_id!r} has no snapshot yet - refresh it from StatsPlus first."
         )
-    mtime = os.path.getmtime(ctx.data_file)
     key = (league_id, method)
+    stamp = _league_run_stamp(ctx, method)
     with _league_payload_lock:
         hit = _league_payload_cache.get(key)
-        if hit is not None and hit["mtime"] == mtime:
+        if hit is not None and stamp is not None and hit["stamp"] == stamp:
             _league_payload_cache.move_to_end(key)
             return hit["rows"]
 
@@ -951,11 +915,13 @@ def _league_built_rows(league_id: str, method: str) -> list:
         ranked = league_snapshot.ranked_rows(ctx, method)
     except ValueError as exc:  # method not in LEAGUE_RANKING_METHODS
         raise InvalidInput(str(exc)) from exc
+    stamp = _league_run_stamp(ctx, method)
     game_players, meta = _snapshot_side_tables(ctx)
     league_url = lg.get("league_url")
+    source = {"class_name": None, "league_id": league_id, "method": method}
     built = []
     for i, row in enumerate(ranked):
-        payload = _player_payload(i + 1, row, None, game_players.get(row["id"]))
+        payload = _player_payload(i + 1, row, None, game_players.get(row["id"]), source)
         m = meta.get(row["id"], {})
         payload["org_id"] = m.get("org_id", "")
         payload["team_id"] = m.get("team_id", "")
@@ -967,7 +933,7 @@ def _league_built_rows(league_id: str, method: str) -> list:
         built.append(payload)
 
     with _league_payload_lock:
-        _league_payload_cache[key] = {"mtime": mtime, "rows": built}
+        _league_payload_cache[key] = {"stamp": stamp, "rows": built}
         _league_payload_cache.move_to_end(key)
         while len(_league_payload_cache) > _LEAGUE_PAYLOAD_MAX:
             _league_payload_cache.popitem(last=False)
@@ -1068,6 +1034,75 @@ def list_league_game_leagues(league_id: str) -> list:
     return out
 
 
+# ------------------------------------------------------------ score breakdown
+def _named(values) -> list:
+    return [{"name": k, "value": v} for k, v in (values or {}).items()]
+
+
+def _breakdown_payload(player_type: str, b: dict) -> dict:
+    """The stored nested breakdown (scoring/runtime_components.py) in the
+    GraphQL `ScoreBreakdown` shape. A side pruned for the player's type is null."""
+    bat, pit, adj = b.get("batting"), b.get("pitching"), b.get("rank_adjust")
+
+    def role(r):
+        r = r or {}
+        return {k: r.get(k) for k in ("model", "base_modifier", "pitch_mix", "hr_risk", "score")}
+
+    batting = None
+    if bat is not None:
+        model = bat.get("model") or {}
+        batting = {
+            "batting_model": model.get("batting"),
+            "running_model": model.get("running"),
+            "position_model": model.get("overall"),
+            "best_position_score": model.get("best_position_score"),
+            "utility_bonus": model.get("utility_bonus"),
+            "modifiers": {"modifiers": _named(bat.get("modifiers")), "total": bat.get("modifier_total")},
+        }
+    pitching = None
+    if pit is not None:
+        pitching = {
+            "starter": role(pit.get("starter")),
+            "reliever": role(pit.get("reliever")),
+            "modifiers": {"modifiers": _named(pit.get("modifiers")), "total": pit.get("modifier_total")},
+        }
+    rank_adjust = None
+    if adj:
+        pre_rank = adj.get("pre_rank")
+        rank_adjust = {
+            "pre_rank": int(pre_rank) if pre_rank is not None else None,
+            "pre_score": adj.get("pre_score"),
+            "modifiers": _named(adj.get("modifiers")),
+        }
+    legacy = {**(bat or {}).get("legacy", {}), **(pit or {}).get("legacy", {}), **b.get("legacy", {})}
+    return {
+        "player_type": player_type,
+        "batting": batting,
+        "pitching": pitching,
+        "rank_adjust": rank_adjust,
+        "legacy": _named(legacy),
+    }
+
+
+def player_breakdown(source: dict, player_id):
+    """How one player's score was built, from the stored ranking `source` names
+    (a row's `source`: a class, or a league + method)."""
+    source = source or {}
+    method = source.get("method")
+    if source.get("class_name"):
+        ctx = _ctx(source["class_name"])
+        scope, scope_id, method = results_store.CLASS, ctx.name, method or ctx.ranking_method
+    elif source.get("league_id"):
+        _league_ctx(source["league_id"])
+        if method not in league_snapshot.LEAGUE_RANKING_METHODS:
+            raise InvalidInput(f"League rankings are {league_snapshot.LEAGUE_RANKING_METHODS}, not {method!r}.")
+        scope, scope_id = results_store.LEAGUE, source["league_id"]
+    else:
+        raise InvalidInput("A ranking source needs a className or a leagueId.")
+    found = results_store.load_breakdown(scope, scope_id, method, player_id)
+    return _breakdown_payload(*found) if found else None
+
+
 def _evict_league_payload_cache(league_id: str) -> None:
     with _league_payload_lock:
         for key in [k for k in _league_payload_cache if k[0] == league_id]:
@@ -1076,26 +1111,52 @@ def _evict_league_payload_cache(league_id: str) -> None:
 
 # A league refresh (StatsPlus pull + rebuild) takes a minute or two, so it runs
 # on a background daemon thread and the page polls `leagueRefreshStatus`. The
-# job outlives the request that started it, so navigating away and back re-attaches
-# to the same run instead of losing the progress indicator.
-_refresh_jobs: "dict[str, dict]" = {}
+# job's state lives in `refresh_jobs`, so navigating away and back re-attaches to
+# the same run instead of losing the progress indicator.
 _refresh_threads: "dict[str, threading.Thread]" = {}
-_refresh_jobs_lock = threading.Lock()
+_refresh_lock = threading.Lock()
+
+_JOB_COLUMNS = ("state", "started_at", "finished_at", "error", "progress")
 
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-# If a job says "running" but started this long ago, the worker is gone (the
-# machine was stopped / restarted mid-run) - report it as failed so the page can
-# offer a retry instead of spinning forever.
+# Backstop for a worker that is alive but stuck: a job still "running" this long
+# after it started is reported as failed so the page can offer a retry.
 _REFRESH_MAX_AGE = timedelta(minutes=20)
 
 
-def _job_is_stale(job: dict) -> bool:
+def _load_job(league_id: str) -> dict:
+    row = db.query_one(
+        f"SELECT {', '.join(_JOB_COLUMNS)} FROM refresh_jobs WHERE league_id = ?",
+        (league_id,),
+    )
+    return dict(row) if row else {}
+
+
+def _save_job(league_id: str, **fields) -> None:
+    """Upsert the job row; columns not in `fields` keep their stored value (or
+    NULL on insert)."""
+    cols = ["league_id", *fields]
+    db.execute(
+        f"INSERT INTO refresh_jobs ({', '.join(cols)}) VALUES ({', '.join('?' * len(cols))}) "
+        "ON CONFLICT(league_id) DO UPDATE SET "
+        + ", ".join(f"{k} = excluded.{k}" for k in fields),
+        (league_id, *fields.values()),
+    )
+
+
+def _job_is_stale(league_id: str, job: dict) -> bool:
+    """A "running" job whose worker is gone - this process has no live refresh
+    thread for it (the machine was stopped / restarted mid-run) - or that has
+    run implausibly long."""
     if not job or job.get("state") != "running":
         return False
+    thread = _refresh_threads.get(league_id)
+    if thread is None or not thread.is_alive():
+        return True
     started = job.get("started_at")
     if not started:
         return True
@@ -1109,11 +1170,12 @@ def _job_is_stale(job: dict) -> bool:
 
 
 def _refresh_status(league_id: str) -> dict:
-    with _refresh_jobs_lock:
-        job = dict(_refresh_jobs.get(league_id) or {})
+    with _refresh_lock:
+        job = _load_job(league_id)
+        stale = _job_is_stale(league_id, job)
     state = job.get("state", "idle")
     error = job.get("error")
-    if _job_is_stale(job):
+    if stale:
         state = "error"
         error = "The refresh was interrupted before it finished. Try again."
     return {
@@ -1132,10 +1194,10 @@ def _set_refresh_progress(league_id: str, message: str) -> None:
     page can show what the refresh is doing right now, and echo it to stdout so
     the same status shows up in the prod log stream."""
     print(f"[league refresh {league_id}] {message}", flush=True)
-    with _refresh_jobs_lock:
-        job = _refresh_jobs.get(league_id)
-        if job is not None and job.get("state") == "running":
-            job["progress"] = message
+    db.execute(
+        "UPDATE refresh_jobs SET progress = ? WHERE league_id = ? AND state = 'running'",
+        (message, league_id),
+    )
 
 
 def league_refresh_status(league_id: str) -> dict:
@@ -1151,42 +1213,42 @@ def _run_league_refresh_thread(league_id: str) -> None:
     except Exception as exc:  # surface any failure to the poller
         state, error = "error", str(exc)
         print(f"[league refresh {league_id}] error: {exc}", flush=True)
-    with _refresh_jobs_lock:
-        job = _refresh_jobs.get(league_id) or {}
-        job.update(state=state, error=error, finished_at=_now_iso())
-        _refresh_jobs[league_id] = job
-    _refresh_threads.pop(league_id, None)
+    try:
+        _save_job(league_id, state=state, error=error, finished_at=_now_iso())
+    finally:
+        with _refresh_lock:
+            _refresh_threads.pop(league_id, None)
 
 
 def start_league_refresh(league_id: str) -> dict:
     lg, _ = _league_ctx(league_id)
-    with _refresh_jobs_lock:
-        job = _refresh_jobs.get(league_id)
-        if job and job.get("state") == "running" and not _job_is_stale(job):
-            return _refresh_status(league_id)  # already in flight - just report it
-        _refresh_jobs[league_id] = {
-            "state": "running",
-            "started_at": _now_iso(),
-            "finished_at": None,
-            "error": None,
-            "progress": "Contacting StatsPlus…",
-        }
+    with _refresh_lock:
+        job = _load_job(league_id)
+        if job.get("state") == "running" and not _job_is_stale(league_id, job):
+            in_flight = True
+        else:
+            in_flight = False
+            _save_job(
+                league_id, state="running", started_at=_now_iso(), finished_at=None,
+                error=None, progress="Contacting StatsPlus…",
+            )
+            if lg.get("league_url"):
+                thread = threading.Thread(
+                    target=_run_league_refresh_thread, args=(league_id,), daemon=True
+                )
+                _refresh_threads[league_id] = thread
+                thread.start()
+    if in_flight:
+        return _refresh_status(league_id)  # already in flight - just report it
     print(f"[league refresh {league_id}] Contacting StatsPlus…", flush=True)
 
     if not lg.get("league_url"):
-        with _refresh_jobs_lock:
-            _refresh_jobs[league_id].update(
-                state="error",
-                finished_at=_now_iso(),
-                error=f"League {lg['name']!r} has no StatsPlus URL. Add one on the Settings page.",
-            )
-        return _refresh_status(league_id)
-
-    thread = threading.Thread(
-        target=_run_league_refresh_thread, args=(league_id,), daemon=True
-    )
-    _refresh_threads[league_id] = thread
-    thread.start()
+        _save_job(
+            league_id,
+            state="error",
+            finished_at=_now_iso(),
+            error=f"League {lg['name']!r} has no StatsPlus URL. Add one on the Settings page.",
+        )
     return _refresh_status(league_id)
 
 
@@ -1216,12 +1278,10 @@ def _refresh_league_snapshot_sync(league_id: str):
     league_snapshot.fetch_and_build(
         lg, cookie=cookie_header(lg), on_phase=_phase
     )
-    league_snapshot.evict_ranked_cache(league_id)
     _evict_league_payload_cache(league_id)
     total = league_snapshot_payload(league_id).get("player_count") or 0
     # Score both rankings now, inside this background job, so the league overview
-    # only ever reads ranked_players.csv from disk and never blocks a request on
-    # a full model run.
+    # only ever reads a stored run and never blocks a request on a full model run.
     methods = league_snapshot.LEAGUE_RANKING_METHODS
     for i, method in enumerate(methods, 1):
         label = _METHOD_LABELS.get(method, method)

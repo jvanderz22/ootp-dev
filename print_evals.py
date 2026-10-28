@@ -1,22 +1,15 @@
-import csv
 import getopt
-import json
 import sys
 
-from draft_class_files import (
-    get_draft_class_config_file,
-    get_ranked_players_file,
-)
+from draft_class_files import _ctx
 from printers.draft_prospect_printer import DraftProspectPrinter
 from printers.org_player_printer import OrgPlayerPrinter
+from ranking_csv import ranked_csv_rows
 from rankers.get_ranker import get_ranker
 
 
 def get_printer():
-    print_method = None
-    with open(get_draft_class_config_file(), "r") as jsonfile:
-        json_data = json.load(jsonfile)
-        print_method = json_data.get("print_method", "draft_prospects")
+    print_method = _ctx().load_config().get("print_method") or "draft_prospects"
     if print_method == "draft_prospects":
         return DraftProspectPrinter()
     elif print_method == "org_players":
@@ -27,10 +20,6 @@ def get_printer():
 if __name__ == "__main__":
     ranker = get_ranker()
     print(f"Printing evals from ranker: {ranker.__class__.__name__}")
-    with open(get_ranked_players_file(ranker), newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
-        printed_players = 0
-        players = [player for player in reader]
-
-        printer = get_printer()
-        printer.print(players)
+    players = ranked_csv_rows(with_breakdown=True) or []
+    printer = get_printer()
+    printer.print(players)

@@ -1,5 +1,4 @@
 import getopt
-import json
 import sys
 from get_game_players import get_game_players
 
@@ -178,14 +177,14 @@ class OrgPlayerPrinter:
             )
 
         if print_verbose and player["components"] is not None:
-            components = json.loads(player["components"].replace("'", '"'))
+            components = player["components"]
             print("\nPlayer Components:", end="")
 
             def is_pitcher_modifier(k):
-                return "Pitcher" in k
+                return k.startswith("pitching.")
 
             def is_pos_modifier(k):
-                return "Pos" in k
+                return k.startswith("batting.")
 
             keys = components.keys()
             filtered_keys = []

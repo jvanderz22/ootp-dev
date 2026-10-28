@@ -21,11 +21,10 @@ import csv
 import io
 import re
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Optional
 from urllib.parse import urlparse, urlunparse
 
-DRAFTED_FIELDNAMES = ["id", "name", "position", "round", "pick", "overall", "team"]
 
 _STATSPLUS_DOMAIN = "statsplus.net"
 
@@ -306,12 +305,3 @@ def _parse_draft_csv(text: str):
             )
         )
     return picks
-
-
-def write_drafted_players_file(ctx, picks) -> None:
-    ctx.processed_dir.mkdir(parents=True, exist_ok=True)
-    with open(ctx.drafted_players_file, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=DRAFTED_FIELDNAMES)
-        writer.writeheader()
-        for pick in picks:
-            writer.writerow(asdict(pick))

@@ -9,11 +9,13 @@ from web import leagues
 
 
 def _make_class(data_dir, name, config=None):
+    from context import DraftClassContext
+
     (data_dir / "datasets").mkdir(parents=True, exist_ok=True)
     (data_dir / "datasets" / f"{name}.csv").write_text("ID,POS,Name\n1,SS,Test\n")
-    cdir = data_dir / "processed_classes" / name
-    cdir.mkdir(parents=True, exist_ok=True)
-    (cdir / "config.json").write_text(json.dumps(config or {"ranking_method": "draft_class"}))
+    ctx = DraftClassContext(name)
+    ctx.register()
+    ctx.save_config(config or {"ranking_method": "draft_class"})
 
 
 def test_create_list_and_assign(data_dir):
@@ -85,8 +87,8 @@ def test_migrates_legacy_web_config(data_dir):
     # the old app-wide cookie is folded into the seeded league
     assert migrated[0]["sessionid"] == "s"
     assert migrated[0]["csrftoken"] == "c"
-    # persisted, so a second load is a plain read
-    assert (data_dir / "leagues.json").exists()
+    # imported once into the database: a later web_config change is ignored
+    (data_dir / "web_config.json").write_text(json.dumps({"league_url": "https://statsplus.net/x/"}))
     assert leagues.load_leagues() == migrated
 
 
@@ -102,8 +104,6 @@ def test_seeds_legacy_cookie_into_existing_leagues(data_dir):
     seeded = leagues.load_leagues()
     assert seeded[0]["sessionid"] == "leg-s" and seeded[0]["csrftoken"] == "leg-c"
 
-    stored = json.loads((data_dir / "leagues.json").read_text())
-    assert stored["cookies_seeded"] is True
     # a later web_config change is ignored - seeding only runs once
     (data_dir / "web_config.json").write_text(json.dumps({"sessionid": "new"}))
     assert leagues.load_leagues()[0]["sessionid"] == "leg-s"

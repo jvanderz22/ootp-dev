@@ -8,14 +8,14 @@ def rows(ids):
 
 def test_no_file_is_identity(data_dir):
     ctx = DraftClassContext("c")
-    ctx.processed_dir.mkdir(parents=True)
+    ctx.register()
     model = rows(["1", "2", "3"])
     assert [r["id"] for r in resolve_order(ctx, model)] == ["1", "2", "3"]
 
 
 def test_saved_reorder_is_applied(data_dir):
     ctx = DraftClassContext("c")
-    ctx.processed_dir.mkdir(parents=True)
+    ctx.register()
     model = rows(["1", "2", "3", "4"])
     save_order(ctx, ["3", "1", "2", "4"], known_ids=["1", "2", "3", "4"])
     assert [r["id"] for r in resolve_order(ctx, model)] == ["3", "1", "2", "4"]
@@ -24,7 +24,7 @@ def test_saved_reorder_is_applied(data_dir):
 
 def test_removed_id_is_dropped(data_dir):
     ctx = DraftClassContext("c")
-    ctx.processed_dir.mkdir(parents=True)
+    ctx.register()
     save_order(ctx, ["3", "1", "2"], known_ids=["1", "2", "3"])
     model = rows(["1", "2"])  # id 3 no longer in the dataset
     assert [r["id"] for r in resolve_order(ctx, model)] == ["1", "2"]
@@ -32,7 +32,7 @@ def test_removed_id_is_dropped(data_dir):
 
 def test_new_id_is_spliced_at_model_position(data_dir):
     ctx = DraftClassContext("c")
-    ctx.processed_dir.mkdir(parents=True)
+    ctx.register()
     save_order(ctx, ["3", "1"], known_ids=["1", "3"])
     # model now also has "2", which the model ranks between "1" and "3"
     model = rows(["1", "2", "3"])
@@ -45,7 +45,7 @@ def test_new_id_is_spliced_at_model_position(data_dir):
 
 def test_clear(data_dir):
     ctx = DraftClassContext("c")
-    ctx.processed_dir.mkdir(parents=True)
+    ctx.register()
     save_order(ctx, ["1"], known_ids=["1"])
     clear_order(ctx)
     assert not has_custom_order(ctx)

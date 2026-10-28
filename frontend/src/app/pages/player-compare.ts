@@ -1,8 +1,18 @@
-import { Component, computed, input, output } from '@angular/core';
+import {
+  Component,
+  WritableSignal,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { DialogModule } from 'primeng/dialog';
 import { TagModule } from 'primeng/tag';
 
-import { RankedPlayerRow } from '../core/api.types';
+import { ApiService } from '../core/api';
+import { RankedPlayerRow, ScoreBreakdown } from '../core/api.types';
 import {
   RatingRow,
   battingSkillRows,
@@ -125,10 +135,40 @@ export class PlayerCompareComponent {
 
   protected readonly typeSeverity = typeSeverity;
 
+  private readonly api = inject(ApiService);
+  /** Each side's score breakdown, fetched when the pair changes; the model /
+   *  modifier sections fill in once they arrive. */
+  private readonly breakdownA = signal<ScoreBreakdown | null>(null);
+  private readonly breakdownB = signal<ScoreBreakdown | null>(null);
+
+  constructor() {
+    this.fetchBreakdown(this.a, this.breakdownA);
+    this.fetchBreakdown(this.b, this.breakdownB);
+  }
+
+  private fetchBreakdown(
+    player: () => RankedPlayerRow | null,
+    into: WritableSignal<ScoreBreakdown | null>,
+  ): void {
+    effect(() => {
+      const p = player();
+      into.set(null);
+      if (!p) return;
+      this.api.playerBreakdown(p.source, p.id).then(
+        (b) => {
+          if (player() === p) into.set(b);
+        },
+        () => {}, // compare still works on the scores and ratings
+      );
+    });
+  }
+
   protected readonly sections = computed<CompareSection[]>(() => {
     const A = this.a();
     const B = this.b();
     if (!A || !B) return [];
+    const bdA = this.breakdownA();
+    const bdB = this.breakdownB();
 
     const anyBat = showBatting(A.type) || showBatting(B.type);
     const anyPitch = showPitching(A.type) || showPitching(B.type);
@@ -211,10 +251,10 @@ export class PlayerCompareComponent {
 
     // Score multipliers. When a two-way player brings both groups, prefix the
     // per-modifier rows so "Pos" and "Pitcher" entries stay distinguishable.
-    const posA = anyBat ? modifierGroup(A, 'pos') : null;
-    const posB = anyBat ? modifierGroup(B, 'pos') : null;
-    const pitA = anyPitch ? modifierGroup(A, 'pitcher') : null;
-    const pitB = anyPitch ? modifierGroup(B, 'pitcher') : null;
+    const posA = anyBat ? modifierGroup(bdA, 'pos') : null;
+    const posB = anyBat ? modifierGroup(bdB, 'pos') : null;
+    const pitA = anyPitch ? modifierGroup(bdA, 'pitcher') : null;
+    const pitB = anyPitch ? modifierGroup(bdB, 'pitcher') : null;
     const bothGroups = !!(posA || posB) && !!(pitA || pitB);
     const modRows: CompareRow[] = [];
 
@@ -243,7 +283,7 @@ export class PlayerCompareComponent {
 
     // The "Diagnostics" panel from the detail view: raw pipeline internals.
     const diag = dropEmpty(
-      align<unknown>(otherComponents(A), otherComponents(B)).map((r) =>
+      align<unknown>(otherComponents(bdA), otherComponents(bdB)).map((r) =>
         valueRow(r.label, r.a, r.b, false),
       ),
     );

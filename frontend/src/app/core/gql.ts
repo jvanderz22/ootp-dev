@@ -33,8 +33,12 @@ const PLAYER_FIELDS = gql`
     relieverComponent
     runningScoreComponent
     rawOverallScore
-    components
     ratings
+    source {
+      className
+      leagueId
+      method
+    }
   }
 `;
 
@@ -472,3 +476,60 @@ export const REFRESH_DRAFTED = gql`
   }
 `;
 
+
+export const PLAYER_BREAKDOWN = gql`
+  query PlayerBreakdown($source: RankingSourceInput!, $playerId: ID!) {
+    playerBreakdown(source: $source, playerId: $playerId) {
+      playerType
+      batting {
+        battingModel
+        runningModel
+        positionModel
+        bestPositionScore
+        utilityBonus
+        modifiers {
+          modifiers {
+            name
+            value
+          }
+          total
+        }
+      }
+      pitching {
+        starter {
+          model
+          baseModifier
+          pitchMix
+          hrRisk
+          score
+        }
+        reliever {
+          model
+          baseModifier
+          pitchMix
+          hrRisk
+          score
+        }
+        modifiers {
+          modifiers {
+            name
+            value
+          }
+          total
+        }
+      }
+      rankAdjust {
+        preRank
+        preScore
+        modifiers {
+          name
+          value
+        }
+      }
+      legacy {
+        name
+        value
+      }
+    }
+  }
+`;

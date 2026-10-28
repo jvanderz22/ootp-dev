@@ -1,8 +1,8 @@
 """Per-class manual ranking order.
 
 The model produces an order; the user may override it by dragging players around
-in the UI. The override is stored as an explicit list of player ids in
-processed_classes/<class>/custom_ranking.json. It is reconciled against the
+in the UI. The override is stored as an explicit JSON list of player ids in
+`draft_classes.custom_order` (NULL = model order). It is reconciled against the
 current dataset on every read so re-uploads / re-scores never drop or duplicate
 players:
 
@@ -11,23 +11,35 @@ players:
   position the model would give them.
 """
 import json
-import os
-import time
 
-from io_utils import atomic_write_json
+import db
+from context import ClassNotRegistered
+
+
+def _stored(ctx):
+    row = db.query_one("SELECT custom_order FROM draft_classes WHERE name = ?", (ctx.name,))
+    return row["custom_order"] if row else None
 
 
 def has_custom_order(ctx) -> bool:
-    return os.path.exists(ctx.custom_ranking_file)
+    return _stored(ctx) is not None
 
 
 def load_order(ctx):
-    if not has_custom_order(ctx):
+    stored = _stored(ctx)
+    if stored is None:
         return None
-    with open(ctx.custom_ranking_file) as f:
-        data = json.load(f)
-    order = data.get("order")
+    order = json.loads(stored)
     return [str(pid) for pid in order] if isinstance(order, list) else None
+
+
+def _write(ctx, order) -> None:
+    cur = db.execute(
+        "UPDATE draft_classes SET custom_order = ?, revision = revision + 1 WHERE name = ?",
+        (None if order is None else json.dumps(order), ctx.name),
+    )
+    if cur.rowcount == 0:
+        raise ClassNotRegistered(f"Draft class {ctx.name!r} is not registered.")
 
 
 def save_order(ctx, order, known_ids=None):
@@ -41,17 +53,12 @@ def save_order(ctx, order, known_ids=None):
                 seen.add(pid)
                 deduped.append(pid)
         order = deduped
-    atomic_write_json(
-        ctx.custom_ranking_file, {"order": order, "updated_at": time.time()}
-    )
+    _write(ctx, order)
     return order
 
 
 def clear_order(ctx) -> None:
-    try:
-        os.remove(ctx.custom_ranking_file)
-    except FileNotFoundError:
-        pass
+    _write(ctx, None)
 
 
 def resolve_order(ctx, model_ranked_players):

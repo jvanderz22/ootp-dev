@@ -1,11 +1,10 @@
-import csv
 import getopt
 import sys
 from typing import Dict, List
-from draft_class_files import get_ranked_players_file
 from get_game_players import get_game_players
 from models.game_players import GamePlayer
 from printers.org_player_printer import OrgPlayerPrinter
+from ranking_csv import ranked_csv_rows
 from rankers.get_ranker import get_ranker
 from web.org_rankings import ORG_POINTS_MODEL
 
@@ -34,9 +33,7 @@ class OrgSummaryPrinter:
         self.org_player_printer = OrgPlayerPrinter()
         ranker = get_ranker()
         print(f"Printing evals from ranker: {ranker.__class__.__name__}")
-        with open(get_ranked_players_file(ranker), newline="") as csvfile:
-            reader = csv.DictReader(csvfile)
-            self.ranked_players = [player for player in reader]
+        self.ranked_players = ranked_csv_rows(with_breakdown=True) or []
 
     def print(self):
         print_summary = True

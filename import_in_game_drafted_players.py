@@ -2,10 +2,8 @@ import getopt
 import sys
 import pandas as pd
 from bs4 import BeautifulSoup
-import csv
 
-from draft_class_files import get_draft_class_drafted_players_file
-from constants import DRAFT_CLASS_NAME
+from drafted_players import resolve_selection_rows, save_drafted_info
 
 
 def save_drafted_players(file):
@@ -35,22 +33,17 @@ def save_drafted_players(file):
 
     data_frame = pd.DataFrame(data=data, columns=header)
     players = data_frame.to_dict("records")
-    draft_class_file = get_draft_class_drafted_players_file()
-    headers = ["Round", "Pick", "Overall", "Team", "Selection", "Time"]
-    with open(draft_class_file, "w", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=headers)
-        writer.writeheader()
-        for player in players:
-            writer.writerow(
-                {
-                    "Round": player["Round"],
-                    "Overall": player["OA Pick"],
-                    "Pick": player["Pick"],
-                    "Team": player["DrTm"],
-                    "Selection": f"{player['POS']} {player['Name']}",
-                    "Time": "",
-                }
-            )
+    rows = [
+        {
+            "Round": player["Round"],
+            "Overall": player["OA Pick"],
+            "Pick": player["Pick"],
+            "Team": player["DrTm"],
+            "Selection": f"{player['POS']} {player['Name']}",
+        }
+        for player in players
+    ]
+    save_drafted_info(None, resolve_selection_rows(None, rows))
 
 
 if __name__ == "__main__":

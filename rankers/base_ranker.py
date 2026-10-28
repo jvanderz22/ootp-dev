@@ -2,6 +2,7 @@ from abc import ABC
 import gc
 import inspect
 from models.game_players import GamePlayer
+from models.player_type import classify, prune_breakdown
 from models.scored_player import ScoredPlayer
 from modifiers.base_modifier import BaseModifier
 from modifiers.base_rank_modifier import BaseRankModifier
@@ -11,6 +12,7 @@ from scoring.position_player_scorer import (
 from scoring.pitcher_scorer import PitcherScorer
 from scoring.runtime_components import (
     runtime_components_scope,
+    set_path,
     write_runtime_component,
 )
 
@@ -106,7 +108,10 @@ class BaseRanker(ABC):
             results.sort(key=lambda r: r.raw_overall_score, reverse=True)
             for i, result in enumerate(results):
                 result.overall_score = self._apply_rank_adjustment(result, i + 1)
-                result.components = str(result.components)
+                result.player_type = classify(
+                    result.position_player_score, result.pitcher_score
+                )
+                result.breakdown = prune_breakdown(result.breakdown, result.player_type)
             results.sort(key=lambda r: r.overall_score, reverse=True)
             return results
         finally:
@@ -159,29 +164,30 @@ class BaseRanker(ABC):
                     raw_overall_score=self.aggregate_pitcher_batter_scores(
                         position_player_score, pitcher_score
                     ),
-                    components=store.pop(player.id, {}) or {},
+                    breakdown=store.pop(player.id, {}) or {},
                 )
             )
 
     def _apply_rank_adjustment(self, result: ScoredPlayer, rank: int) -> float:
         """Port of `calculate_rank_adjusted_score` for the batched path: the
         player's GamePlayer is long gone, so read what the rank modifiers need
-        off the ScoredPlayer and fold the debug values straight into its
-        `components` dict (same keys/rounding `write_runtime_component` would use).
+        off the ScoredPlayer and fold the values straight into its `breakdown`
+        (same paths/rounding `write_runtime_component` would use).
         """
         score = result.raw_overall_score
         for modifier in self.rank_adjusted_modifiers:
             mod_val = modifier.calculate_modified_score(result, rank)
             if float(mod_val) != 1.0:
-                result.components[f"Rank-adj Modifier {modifier.__name__}"] = round(
-                    float(mod_val), 2
+                set_path(
+                    result.breakdown,
+                    f"rank_adjust.modifiers.{modifier.__name__}",
+                    round(float(mod_val), 2),
                 )
             score *= mod_val
-        result.components["Pre Rank-adj Rank"] = rank
-        if result.raw_overall_score > 0:
-            result.components["Pre Rank-adj Score"] = round(
-                float(result.raw_overall_score), 2
-            )
+        set_path(result.breakdown, "rank_adjust.pre_rank", rank)
+        set_path(
+            result.breakdown, "rank_adjust.pre_score", round(float(result.raw_overall_score), 2)
+        )
         return score
 
     def calculate_position_player_score(self, player: GamePlayer) -> list:
@@ -220,10 +226,10 @@ class BaseRanker(ABC):
                 else modifier.__class__.__name__
             )
 
-            write_runtime_component(player.id, f"Pos Modifier {modifier_name}", mod_val)
+            write_runtime_component(player.id, f"batting.modifiers.{modifier_name}", mod_val)
             modifier_val *= mod_val
 
-        write_runtime_component(player.id, f"Total Pos Modifier", modifier_val)
+        write_runtime_component(player.id, "batting.modifier_total", modifier_val)
         return modifier_val
 
     def calculate_pitcher_score(self, player: GamePlayer) -> float:
@@ -245,10 +251,10 @@ class BaseRanker(ABC):
         for modifier in self.shared_modifiers + self.pitcher_modifiers:
             mod_val = modifier.calculate_player_modifier(player, model_score)
             write_runtime_component(
-                player.id, f"Pitcher Modifier {modifier.__name__}", mod_val
+                player.id, f"pitching.modifiers.{modifier.__name__}", mod_val
             )
             modifier_val *= mod_val
-        write_runtime_component(player.id, f"Total Pitcher Modifier", modifier_val)
+        write_runtime_component(player.id, "pitching.modifier_total", modifier_val)
         return modifier_val
 
     def calculate_rank_adjusted_score(self, player, raw_score, rank) -> float:
@@ -257,12 +263,12 @@ class BaseRanker(ABC):
             mod_val = modifier.calculate_modified_score(player, rank)
             if float(mod_val) != float(1):
                 write_runtime_component(
-                    player.id, f"Rank-adj Modifier {modifier.__name__}", mod_val
+                    player.id, f"rank_adjust.modifiers.{modifier.__name__}", mod_val
                 )
             score *= mod_val
 
-        write_runtime_component(player.id, f"Pre Rank-adj Rank", rank)
-        write_runtime_component(player.id, f"Pre Rank-adj Score", raw_score)
+        write_runtime_component(player.id, "rank_adjust.pre_rank", rank)
+        write_runtime_component(player.id, "rank_adjust.pre_score", raw_score)
         return score
 
     def aggregate_pitcher_batter_scores(self, batter_score, pitcher_score) -> float:

@@ -75,8 +75,86 @@ type RankedPlayer {
   relieverComponent: Float
   runningScoreComponent: Float
   rawOverallScore: Float
-  components: JSON
   ratings: JSON
+  "Which stored ranking this row came from - pass it to `playerBreakdown`."
+  source: RankingSource!
+}
+
+"A stored ranking: a draft class (its current method), or a league snapshot + method."
+type RankingSource {
+  className: String
+  leagueId: ID
+  method: String!
+}
+
+input RankingSourceInput {
+  className: String
+  leagueId: ID
+  "required for a league; defaults to the class's current method"
+  method: String
+}
+
+"A named model value - modifier names vary by ranking method."
+type NamedValue {
+  name: String!
+  value: Float
+}
+
+type ModifierBreakdown {
+  modifiers: [NamedValue!]!
+  "product of the modifiers"
+  total: Float
+}
+
+"How the position-player side of a score was built."
+type BattingBreakdown {
+  battingModel: Float
+  runningModel: Float
+  "weighted batting / fielding / running model score, before modifiers"
+  positionModel: Float
+  "fielding model score at the best position (see RankedPlayer.bestPosition)"
+  bestPositionScore: Float
+  utilityBonus: Float
+  modifiers: ModifierBreakdown!
+}
+
+"One pitching role's model score and the multipliers applied to it."
+type PitchingRoleBreakdown {
+  model: Float
+  baseModifier: Float
+  "starters only: pitch-mix multiplier"
+  pitchMix: Float
+  "starters only: home-run-risk multiplier"
+  hrRisk: Float
+  "role score after its modifiers"
+  score: Float
+}
+
+"How the pitching side of a score was built."
+type PitchingBreakdown {
+  starter: PitchingRoleBreakdown!
+  reliever: PitchingRoleBreakdown!
+  modifiers: ModifierBreakdown!
+}
+
+"Draft-class rank adjustments applied after the raw scores were ranked."
+type RankAdjustBreakdown {
+  preRank: Int
+  preScore: Float
+  modifiers: [NamedValue!]!
+}
+
+"""
+How a player's model score was built. Only the side(s) his `playerType` is
+judged on are present: `pitching` is null for a Hitter, `batting` for a Pitcher.
+"""
+type ScoreBreakdown {
+  playerType: String!
+  batting: BattingBreakdown
+  pitching: PitchingBreakdown
+  rankAdjust: RankAdjustBreakdown
+  "values from an older scoring pipeline with no place above (imported rankings only)"
+  legacy: [NamedValue!]!
 }
 
 input RankedPlayerFilter {
@@ -232,6 +310,8 @@ type Query {
   leagueGameLeagues(leagueId: ID!): [GameLeagueOption!]!
   "Status of the in-flight (or last) background refresh for this league."
   leagueRefreshStatus(leagueId: ID!): LeagueRefreshStatus!
+  "How one player's score was built in a stored ranking (a row's `source`)."
+  playerBreakdown(source: RankingSourceInput!, playerId: ID!): ScoreBreakdown
 }
 
 type Mutation {

@@ -17,6 +17,7 @@ import {
   LEAGUE_SNAPSHOT_PLAYERS,
   LEAGUE_VIEW_DETAIL,
   LEAGUES,
+  PLAYER_BREAKDOWN,
   RANKED_PAGE,
   REFRESH_DRAFTED,
   REFRESH_LEAGUE_SNAPSHOT,
@@ -44,6 +45,8 @@ import {
   RankedPlayer,
   RankedPlayerPage,
   RankedQuery,
+  RankingSource,
+  ScoreBreakdown,
 } from './api.types';
 
 type ReorderPlayer = Pick<
@@ -363,6 +366,31 @@ export class ApiService {
         levels: res.data!.leagueLevels,
         page: res.data!.leagueSnapshotPlayers,
       };
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  /** How one player's score was built in the ranking `source` (a row's own
+   *  `source`). Fetched when a detail / compare view opens rather than shipped
+   *  with every table row. */
+  async playerBreakdown(source: RankingSource, playerId: string): Promise<ScoreBreakdown | null> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.query<{ playerBreakdown: ScoreBreakdown | null }>({
+          query: PLAYER_BREAKDOWN,
+          variables: {
+            source: {
+              className: source.className,
+              leagueId: source.leagueId,
+              method: source.method,
+            },
+            playerId,
+          },
+          fetchPolicy: 'network-only',
+        }),
+      );
+      return res.data!.playerBreakdown;
     } catch (e) {
       unwrap(e);
     }

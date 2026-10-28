@@ -1,34 +1,28 @@
-"""Leagues stored as leagues.json under DATA_DIR.
+"""Leagues - the `leagues` table.
 
 A *league* is a StatsPlus association: it owns the league's StatsPlus home URL,
 (optionally) a default `lid`, and its own StatsPlus auth cookie (`sessionid` /
-`csrftoken`). Every draft class is assigned to at most one league; that
-assignment is persisted as `league_id` inside the class's own
-`processed_classes/<name>/config.json`. "Refresh drafted" for a class hits its
-league's URL with that league's cookie.
+`csrftoken`). Every draft class is assigned to at most one league
+(`draft_classes.league_id`). "Refresh drafted" for a class hits its league's URL
+with that league's cookie.
 
 The cookie values are secret: they live on the (private) data volume and are
 never returned to clients - the API exposes only `has_sessionid` /
-`has_csrftoken` (see `public_league`).
+`has_csrftoken` (see `public_league`). Installs that predate the database had
+their leagues in leagues.json / web_config.json; `db_import` folds those in.
 """
 import json
 import re
 
-from context import DraftClassContext, default_base_dir
-from io_utils import atomic_write_json
+import db
 from statsplus_api import normalize_league_url
 from web.settings import clean_cookie_value
 
-_FILENAME = "leagues.json"
 _FIELDS = (
     "id", "name", "league_url", "default_lid", "sessionid", "csrftoken",
     "game_league_ids",
 )
 _COOKIE_KEYS = ("sessionid", "csrftoken")
-
-
-def _path():
-    return default_base_dir() / _FILENAME
 
 
 def _slugify(name: str) -> str:
@@ -101,113 +95,50 @@ def public_league(league: dict) -> dict:
 
 
 # --------------------------------------------------------------------- storage
-def _write(leagues) -> None:
-    atomic_write_json(
-        _path(),
-        {"leagues": [_clean(x) for x in leagues], "cookies_seeded": True},
+def _from_row(row) -> dict:
+    league = dict(row)
+    league["game_league_ids"] = json.loads(league.get("game_league_ids") or "[]")
+    return _clean(league)
+
+
+def _save(league: dict) -> None:
+    """Insert or replace one league (stored in its `_clean` projection)."""
+    league = _clean(league)
+    values = [league[k] for k in _FIELDS]
+    values[_FIELDS.index("game_league_ids")] = json.dumps(league["game_league_ids"])
+    db.execute(
+        f"INSERT INTO leagues ({', '.join(_FIELDS)}) VALUES ({', '.join('?' * len(_FIELDS))}) "
+        "ON CONFLICT(id) DO UPDATE SET "
+        + ", ".join(f"{k} = excluded.{k}" for k in _FIELDS if k != "id"),
+        values,
     )
 
 
 def load_leagues() -> list:
-    try:
-        with open(_path()) as f:
-            data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return _migrate_from_legacy()
-    leagues = [_clean(x) for x in data.get("leagues", []) if x.get("id")]
-    if not data.get("cookies_seeded"):
-        leagues = _seed_legacy_cookies(leagues)
-    return leagues
-
-
-def _seed_legacy_cookies(leagues: list) -> list:
-    """One-time upgrade for installs that predate per-league cookies: fold the
-    old app-wide `sessionid` / `csrftoken` into every league that has none, then
-    stamp `cookies_seeded` so this never runs again."""
-    from web.settings import legacy_cookie
-
-    cookie = legacy_cookie()
-    if cookie:
-        for lg in leagues:
-            if not lg.get("sessionid") and not lg.get("csrftoken"):
-                lg["sessionid"] = cookie.get("sessionid", "")
-                lg["csrftoken"] = cookie.get("csrftoken", "")
-    _write(leagues)
-    return leagues
-
-
-def _migrate_from_legacy() -> list:
-    """First run after the leagues upgrade: fold the old single app-wide
-    `league_url` / `default_lid` / cookie (web_config.json) into one league."""
-    from web.settings import legacy_cookie, legacy_league_config
-
-    legacy = legacy_league_config()
-    url = legacy.get("league_url") or ""
-    if not url:
-        _write([])
-        return []
-    name = ""
-    m = re.search(r"/([^/]+)/?$", url.rstrip("/"))
-    if m:
-        name = m.group(1)
-    cookie = legacy_cookie()
-    league = _clean(
-        {
-            "id": _slugify(name) if name else "default",
-            "name": name or "Default",
-            "league_url": url,
-            "default_lid": legacy.get("default_lid"),
-            "sessionid": cookie.get("sessionid", ""),
-            "csrftoken": cookie.get("csrftoken", ""),
-        }
-    )
-    _write([league])
-    return [league]
+    # rowid order = creation order, which is what the old leagues.json list kept
+    return [_from_row(r) for r in db.query("SELECT * FROM leagues ORDER BY rowid")]
 
 
 def get_league(league_id: str):
     if not league_id:
         return None
-    for league in load_leagues():
-        if league["id"] == league_id:
-            return league
-    return None
+    row = db.query_one("SELECT * FROM leagues WHERE id = ?", (league_id,))
+    return _from_row(row) if row else None
 
 
 # -------------------------------------------------------------- class <-> league
-def _load_class_config(name: str) -> dict:
-    ctx = DraftClassContext(name)
-    try:
-        return ctx.load_config()
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
-
-
-def _save_class_league_id(name: str, league_id) -> None:
-    ctx = DraftClassContext(name)
-    config = _load_class_config(name)
-    if league_id:
-        config["league_id"] = league_id
-    else:
-        config.pop("league_id", None)
-    ctx.processed_dir.mkdir(parents=True, exist_ok=True)
-    ctx.save_config(config)
-
-
 def explicit_class_league_id(name: str):
-    return _load_class_config(name).get("league_id") or None
+    row = db.query_one("SELECT league_id FROM draft_classes WHERE name = ?", (name,))
+    return (row["league_id"] if row else None) or None
 
 
 def league_for_class(name: str):
     """The league a class belongs to: its explicit `league_id`, or - when the
     class has none - the sole league if exactly one is configured."""
-    leagues = load_leagues()
     explicit = explicit_class_league_id(name)
     if explicit:
-        for league in leagues:
-            if league["id"] == explicit:
-                return league
-        return None
+        return get_league(explicit)
+    leagues = load_leagues()
     return leagues[0] if len(leagues) == 1 else None
 
 
@@ -215,17 +146,24 @@ def class_names_for_league(league_id: str) -> list:
     """Classes *explicitly* pinned to `league_id`. The single-league fallback in
     `league_for_class` is deliberately not applied here: an unpinned class counts
     as unmapped for listing / assignment purposes (see the Settings page)."""
-    return sorted(
-        name
-        for name in DraftClassContext.list_classes()
-        if explicit_class_league_id(name) == league_id
+    rows = db.query(
+        "SELECT name FROM draft_classes WHERE league_id = ? ORDER BY name", (league_id,)
+    )
+    return [r["name"] for r in rows]
+
+
+def _set_league_id(conn, names, league_id) -> None:
+    conn.executemany(
+        "UPDATE draft_classes SET league_id = ?, revision = revision + 1 WHERE name = ?",
+        [(league_id, n) for n in names],
     )
 
 
 def set_class_league(name: str, league_id):
     if league_id and get_league(league_id) is None:
         raise ValueError(f"Unknown league {league_id!r}.")
-    _save_class_league_id(name, league_id)
+    with db.transaction() as conn:
+        _set_league_id(conn, [name], league_id or None)
 
 
 def assign_classes(league_id: str, class_names) -> None:
@@ -234,11 +172,10 @@ def assign_classes(league_id: str, class_names) -> None:
     if class_names is None:
         return
     wanted = set(class_names)
-    for name in DraftClassContext.list_classes():
-        if name in wanted:
-            _save_class_league_id(name, league_id)
-        elif explicit_class_league_id(name) == league_id:
-            _save_class_league_id(name, None)
+    with db.transaction() as conn:
+        dropped = [n for n in class_names_for_league(league_id) if n not in wanted]
+        _set_league_id(conn, dropped, None)
+        _set_league_id(conn, sorted(wanted), league_id)
 
 
 # --------------------------------------------------------------------- mutations
@@ -266,9 +203,9 @@ def create_league(
             "game_league_ids": _clean_league_ids(game_league_ids),
         }
     )
-    leagues.append(league)
-    _write(leagues)
-    assign_classes(league["id"], class_names)
+    with db.transaction():
+        _save(league)
+        assign_classes(league["id"], class_names)
     return league
 
 
@@ -282,8 +219,7 @@ def update_league(
     csrftoken=None,
     game_league_ids=None,
 ) -> dict:
-    leagues = load_leagues()
-    target = next((x for x in leagues if x["id"] == league_id), None)
+    target = get_league(league_id)
     if target is None:
         raise ValueError(f"Unknown league {league_id!r}.")
     if name is not None and name.strip():
@@ -301,17 +237,16 @@ def update_league(
         target["sessionid"] = clean_cookie_value(sessionid, "sessionid")
     if csrftoken is not None and csrftoken.strip():
         target["csrftoken"] = clean_cookie_value(csrftoken, "csrftoken")
-    _write(leagues)
-    assign_classes(league_id, class_names)
+    with db.transaction():
+        _save(target)
+        assign_classes(league_id, class_names)
     return _clean(target)
 
 
 def delete_league(league_id: str) -> str:
-    leagues = load_leagues()
-    if not any(x["id"] == league_id for x in leagues):
-        raise ValueError(f"Unknown league {league_id!r}.")
-    _write([x for x in leagues if x["id"] != league_id])
-    for name in DraftClassContext.list_classes():
-        if explicit_class_league_id(name) == league_id:
-            _save_class_league_id(name, None)
+    """Delete the league. Its classes become unassigned and its snapshot / refresh
+    rows go with it (foreign keys)."""
+    with db.transaction() as conn:
+        if conn.execute("DELETE FROM leagues WHERE id = ?", (league_id,)).rowcount == 0:
+            raise ValueError(f"Unknown league {league_id!r}.")
     return league_id

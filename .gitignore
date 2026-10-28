@@ -4,7 +4,9 @@
 env
 .env
 
-# user data (filesystem-as-DB)
+# user data (app.db + the datasets / snapshots it points at)
+app.db
+app.db-*
 datasets/**/*.csv
 processed_data/*.csv
 processed_classes/**/*.csv

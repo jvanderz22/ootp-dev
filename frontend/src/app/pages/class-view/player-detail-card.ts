@@ -1,10 +1,11 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TagModule } from 'primeng/tag';
 import { PanelModule } from 'primeng/panel';
 
-import { RankedPlayerRow } from '../../core/api.types';
+import { ApiService } from '../../core/api';
+import { RankedPlayerRow, ScoreBreakdown } from '../../core/api.types';
 import {
   battingComponents,
   battingSkillRows,
@@ -43,6 +44,24 @@ export class PlayerDetailCardComponent {
 
   protected readonly editing = signal(false);
   protected readonly draftRank = signal<number | null>(null);
+
+  private readonly api = inject(ApiService);
+  /** How the score was built — fetched when the card opens, not shipped with
+   *  every table row. Null while loading (those sections just stay hidden). */
+  protected readonly breakdown = signal<ScoreBreakdown | null>(null);
+
+  constructor() {
+    effect(() => {
+      const p = this.player();
+      this.breakdown.set(null);
+      this.api.playerBreakdown(p.source, p.id).then(
+        (b) => {
+          if (this.player() === p) this.breakdown.set(b);
+        },
+        () => {}, // the card still shows the scores and ratings without it
+      );
+    });
+  }
 
   protected readonly rankMax = computed(() => this.totalRanked() || null);
 

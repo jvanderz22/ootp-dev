@@ -1,10 +1,9 @@
-import csv
 import getopt
 import sys
 
-from constants import RANKED_PLAYERS_FILE_PATH
 from get_game_players import get_game_players
 from drafted_players import get_drafted_player_ids, get_drafted_players_info
+from ranking_csv import ranked_csv_rows
 
 
 def print_player(player):
@@ -35,19 +34,17 @@ if __name__ == "__main__":
             org = arg
 
     drafted_players = get_drafted_player_ids()
-    with open(RANKED_PLAYERS_FILE_PATH, newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
-        printed_players = 0
-        players = [game_players.get_player(player["id"]) for player in reader]
-        players = sorted(players, key=lambda player: player.potential, reverse=True)
-        for i, player in enumerate(players):
-            is_drafted = False
-            if printed_players >= print_count:
-                break
-            if player.id in drafted_players:
-                if position is not None:
-                    if position != player.position:
-                        continue
-                if player.potential > maximum_potential:
+    printed_players = 0
+    players = [game_players.get_player(player["id"]) for player in ranked_csv_rows() or []]
+    players = sorted(players, key=lambda player: player.potential, reverse=True)
+    for i, player in enumerate(players):
+        is_drafted = False
+        if printed_players >= print_count:
+            break
+        if player.id in drafted_players:
+            if position is not None:
+                if position != player.position:
                     continue
-                print_player(player)
+            if player.potential > maximum_potential:
+                continue
+            print_player(player)

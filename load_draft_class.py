@@ -7,9 +7,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 
 from context import DraftClassContext
-from io_utils import atomic_write_json
 
-DEFAULT_CONFIG = {"ranking_method": "draft_class", "print_method": "draft_prospects"}
 VALID_RANKING_METHODS = ("draft_class", "potential", "overall")
 
 # Columns without which the ranking pipeline can't produce anything meaningful.
@@ -99,13 +97,13 @@ def _validate_headers(data_file) -> None:
         )
 
 
-def create_dataset_from_upload(name, upload_path, ranking_method="draft_class", base_dir=None):
-    """Build datasets/<name>.csv + processed_classes/<name>/config.json from an
+def create_dataset_from_upload(name, upload_path, ranking_method="draft_class"):
+    """Build datasets/<name>.csv + the class's `draft_classes` row from an
     uploaded file - either an OOTP HTML report or an already-converted CSV."""
     if ranking_method not in VALID_RANKING_METHODS:
         raise ValueError(f"Unknown ranking_method: {ranking_method!r}")
 
-    ctx = DraftClassContext(name, base_dir=base_dir) if base_dir else DraftClassContext(name)
+    ctx = DraftClassContext(name)
     ctx.ensure_dirs()
 
     # write to a staging file first so a bad upload never leaves a half-made class
@@ -131,14 +129,7 @@ def create_dataset_from_upload(name, upload_path, ranking_method="draft_class", 
         if staged.exists():
             staged.unlink()
 
-    config = dict(DEFAULT_CONFIG)
-    if ctx.config_file.exists():
-        try:
-            config.update(ctx.load_config())
-        except Exception:
-            pass
-    config["ranking_method"] = ranking_method
-    atomic_write_json(ctx.config_file, config)
+    ctx.register(ranking_method)
     return ctx
 
 
@@ -146,14 +137,12 @@ def create_dataset(file_path, class_name):
     """Legacy CLI helper: HTML file -> dataset + default config."""
     ctx = DraftClassContext(class_name)
     ctx.ensure_dirs()
+    existed = ctx.exists()
     create_csv(file_path, str(ctx.data_file))
-    if not ctx.config_file.exists():
-        atomic_write_json(ctx.config_file, dict(DEFAULT_CONFIG))
-        print(f'Created class at {ctx.data_file}.')
-    else:
-        print(f'Updated class at {ctx.data_file}.')
+    ctx.register()
+    print(f"{'Updated' if existed else 'Created'} class at {ctx.data_file}.")
     print(f"Set DRAFT_CLASS_NAME = {class_name!r} in constants.py to process it.")
-    print(f"Settings can be updated in {ctx.config_file}.")
+    print("Change its ranking method with update_config.py -r <method>.")
 
 
 if __name__ == "__main__":

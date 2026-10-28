@@ -30,4 +30,8 @@ class ScoredPlayer:
     # pitchers / anyone with no positive fielding score)
     best_position: str = None
     overall_score: float = None
-    components: dict = field(default_factory=dict)
+    # Hitter / Pitcher / Two-way (models/player_type.py)
+    player_type: str = None
+    # nested score breakdown (scoring/runtime_components.py), pruned to the
+    # side(s) `player_type` is judged on
+    breakdown: dict = field(default_factory=dict)

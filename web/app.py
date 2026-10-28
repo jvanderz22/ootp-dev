@@ -91,6 +91,17 @@ if _FRONTEND_DIST.is_dir():
     routes.append(Mount("/", app=SPAStaticFiles(directory=_FRONTEND_DIST, html=True)))
 
 
+async def _open_database():
+    # Runs pending migrations before the first request - on an install that
+    # predates the database that includes the one-time import of its files,
+    # which takes a while on a big volume.
+    import anyio
+
+    import db
+
+    await anyio.to_thread.run_sync(db.connect)
+
+
 async def _warm_models():
     try:
         from scoring.model_cache import warm
@@ -100,7 +111,7 @@ async def _warm_models():
         print(f"[startup] model warm-up skipped: {exc}")
 
 
-app = Starlette(debug=DEV, routes=routes, on_startup=[_warm_models])
+app = Starlette(debug=DEV, routes=routes, on_startup=[_open_database, _warm_models])
 app.add_middleware(BasicAuthMiddleware)
 
 if DEV:

@@ -117,3 +117,8 @@ async def resolve_league_game_leagues(_, __, league_id):
 @query.field("leagueRefreshStatus")
 async def resolve_league_refresh_status(_, __, league_id):
     return await _off_loop(service.league_refresh_status, league_id)
+
+
+@query.field("playerBreakdown")
+async def resolve_player_breakdown(_, __, source, player_id):
+    return await _off_loop(service.player_breakdown, source, player_id)

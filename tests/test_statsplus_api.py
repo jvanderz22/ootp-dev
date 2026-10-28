@@ -1,7 +1,13 @@
 import pytest
 
 from context import DraftClassContext
-from drafted_players import get_drafted_player_ids, get_drafted_players_info
+from drafted_players import (
+    get_drafted_player_ids,
+    get_drafted_players_info,
+    resolve_selection_rows,
+    save_drafted_info,
+    save_picks,
+)
 import pytest as _pytest
 
 import statsplus_api
@@ -16,7 +22,6 @@ from statsplus_api import (
     normalize_league_url,
     poll_ratings_export,
     start_ratings_job,
-    write_drafted_players_file,
 )
 
 
@@ -170,7 +175,7 @@ def test_fetch_requires_cookie():
 
 def test_write_and_read_exact_id_match(sample_class):
     ctx = DraftClassContext(sample_class)
-    write_drafted_players_file(ctx, _parse_draft_csv(DRAFTV2_CSV))
+    save_picks(ctx, _parse_draft_csv(DRAFTV2_CSV))
 
     info = get_drafted_players_info(ctx)
     assert "76230" in info                       # id present in the dataset
@@ -178,10 +183,10 @@ def test_write_and_read_exact_id_match(sample_class):
     assert get_drafted_player_ids(ctx) == {"76230", "999999"}
 
 
-def test_legacy_selection_format_still_reads(sample_class):
+def test_legacy_selection_format_resolves_to_ids(sample_class):
     ctx = DraftClassContext(sample_class)
-    ctx.drafted_players_file.write_text(
-        "Round,Pick,Overall,Team,Selection,Time\n1,1,1,Montreal,SP Pat Calhoon,\n"
-    )
+    rows = [{"Round": "1", "Pick": "1", "Overall": "1", "Team": "Montreal",
+             "Selection": "SP Pat Calhoon"}]
+    save_drafted_info(ctx, resolve_selection_rows(ctx, rows))
     ids = get_drafted_player_ids(ctx)
     assert "76230" in ids  # matched by name+position against the dataset

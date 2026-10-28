@@ -76,7 +76,7 @@ if __name__ == "__main__":
         print("Using existing list of all drafted players. (use -d to refresh.)")
 
     if rerank_players:
-        ranking_csv.create_ranking_csv()
+        ranking_csv.write_upload_file()
         print("Built new preference list. Use -i to ignore next time.")
     else:
         print("Using existing preference list")

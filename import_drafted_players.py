@@ -6,7 +6,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
-from draft_class_files import get_draft_class_drafted_players_file
+from drafted_players import resolve_selection_rows, save_drafted_info
 from constants import DRAFT_CLASS_NAME, STATS_PLUS_URL
 
 
@@ -52,10 +52,9 @@ def save_drafted_players(driver):
         if empty_row:
             break
         round += 1
-    draft_class_file = get_draft_class_drafted_players_file()
     headers = ["Round", "Pick", "Overall", "Team", "Selection", "Time"]
-    data_frame = pd.DataFrame(data=data, columns=headers)
-    data_frame.to_csv(draft_class_file, index=False)
+    rows = pd.DataFrame(data=data, columns=headers).to_dict("records")
+    save_drafted_info(None, resolve_selection_rows(None, rows))
 
 
 def build_drafted_players_list():

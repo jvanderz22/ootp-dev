@@ -56,16 +56,14 @@ class PositionPlayerScorer:
             )
             batting_score = batting_scores[i]
             running_score = running_scores[i]
-            write_runtime_component(player.id, f"Pos - Batting Model", batting_score)
-            write_runtime_component(player.id, f"Pos - Running Model", running_score)
+            write_runtime_component(player.id, "batting.model.batting", batting_score)
+            write_runtime_component(player.id, "batting.model.running", running_score)
             overall_score = (
                 (batting_score * 0.73)
                 + (fielding_score * 0.22)
                 + (running_score * 0.05)
             )
-            write_runtime_component(
-                player.id, f"Pos - Overall Model Score", overall_score
-            )
+            write_runtime_component(player.id, "batting.model.overall", overall_score)
             results.append(
                 [
                     overall_score,
@@ -83,10 +81,8 @@ class PositionPlayerScorer:
         )
         utility_bonus = self.__calculate_utility_bonuses(position_scores)
         overall_score = best_score + utility_bonus
-        write_runtime_component(
-            player.id, f"Pos - Best Pos Score ({best_position})", best_score
-        )
-        write_runtime_component(player.id, "Pos - Utility Bonus", utility_bonus)
+        write_runtime_component(player.id, "batting.model.best_position_score", best_score)
+        write_runtime_component(player.id, "batting.model.utility_bonus", utility_bonus)
         return [overall_score, best_score, utility_bonus, best_position]
 
     def __calculate_best_position_score(self, position_scores):

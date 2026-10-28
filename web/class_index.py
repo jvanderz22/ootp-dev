@@ -3,8 +3,8 @@
 Building a class's rows means reading the rankings CSV, resolving any custom
 order, joining the raw scouting grid, and turning each player into the payload
 the GraphQL layer serves. That work happens once here and is reused for every
-subsequent filter / sort / page request until one of the class's source files
-changes on disk or the entry ages out.
+subsequent filter / sort / page request until the class changes (a new stored
+ranking, its dataset on disk, or its `revision`) or the entry ages out.
 """
 import os
 import threading
@@ -12,13 +12,9 @@ import time
 from collections import OrderedDict
 from dataclasses import dataclass
 
+import results_store
 from custom_ranking import resolve_order
 from drafted_players import get_drafted_players_info
-from draft_class_files import (
-    get_draft_class_drafted_players_file,
-    get_ranked_players_file,
-)
-from rankers.get_ranker import RANKERS
 
 _MAX_CLASSES = 8
 _TTL_SECONDS = 1800  # 30 minutes
@@ -56,16 +52,12 @@ def _mtime(path):
         return None
 
 
-def _ranker_name(ctx) -> str:
-    return RANKERS.get(ctx.ranking_method, RANKERS["draft_class"]).__name__
-
-
 def _source_mtimes(ctx) -> tuple:
+    run = results_store.run_info(results_store.CLASS, ctx.name, ctx.ranking_method)
     return (
-        _mtime(get_ranked_players_file(_ranker_name(ctx), ctx)),
+        run and (run["scored_at"], run["source_version"]),
         _mtime(ctx.data_file),
-        _mtime(get_draft_class_drafted_players_file(ctx)),
-        _mtime(ctx.custom_ranking_file),
+        ctx.revision,  # custom order, drafted picks, config
     )
 
 
@@ -85,8 +77,11 @@ def _build_index(ctx) -> ClassIndex:
         ordered = resolve_order(ctx, rows)
         drafted_info = get_drafted_players_info(ctx)
         game_players = service._game_players_by_id(ctx)
+        source = {"class_name": ctx.name, "league_id": None, "method": ctx.ranking_method}
         payloads = [
-            service._player_payload(i + 1, row, drafted_info, game_players.get(row["id"]))
+            service._player_payload(
+                i + 1, row, drafted_info, game_players.get(row["id"]), source
+            )
             for i, row in enumerate(ordered)
         ]
     return ClassIndex(

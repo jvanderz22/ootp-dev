@@ -1,11 +1,10 @@
 import getopt
-import os
 import sys
-import json
 import pyautogui
 import time
 import ScriptingBridge
 from AppKit import NSWorkspace, NSApplicationActivateIgnoringOtherApps
+from context import DraftClassContext
 from load_draft_class import create_csv
 
 
@@ -107,27 +106,15 @@ def load_data_into_file(file_path, num_pages, page_has_option_bar):
 
 
 def create_dataset(dataset_name, num_pages, page_has_option_bar):
-    dataset_path = f"datasets/{dataset_name}.csv"
-    data_directory = f"processed_classes/{dataset_name}"
-    load_data_into_file(dataset_path, num_pages, page_has_option_bar)
-    if not os.path.exists(data_directory):
-        os.makedirs(data_directory)
-    dataset_config = {
-        "ranking_method": "draft_class",
-    }
-    config_file_path = f"{data_directory}/config.json"
-    if not os.path.exists(config_file_path):
-        with open(config_file_path, "w") as config_file:
-            config_file.write(json.dumps(dataset_config, indent=4))
-        print(
-            f'Created class at {dataset_path}. Set "{dataset_name}" to be the active dataset in constants.py to process it.'
-        )
-    else:
-        print(
-            f'Updated class at {dataset_path}. Set "{dataset_name}" to be the active dataset in constants.py to process it.'
-        )
-    print(f"Settings can be updated in processed_classes/{dataset_name}/config.json.")
-
+    ctx = DraftClassContext(dataset_name)
+    ctx.ensure_dirs()
+    existed = ctx.exists()
+    load_data_into_file(str(ctx.data_file), num_pages, page_has_option_bar)
+    ctx.register()
+    print(
+        f'{"Updated" if existed else "Created"} class at {ctx.data_file}. Set "{dataset_name}" to be the active dataset in constants.py to process it.'
+    )
+    print("Change its ranking method with update_config.py -r <method>.")
 
 if __name__ == "__main__":
     dataset_name = None

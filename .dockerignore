@@ -15,6 +15,10 @@ frontend/dist/
 frontend/.angular/
 .env
 web_config.json
+leagues.json
+league_snapshots/
+app.db
+app.db-*
 *.md
 !README.md
 .DS_Store

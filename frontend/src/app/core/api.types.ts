@@ -137,8 +137,67 @@ export interface RankedPlayer {
   relieverComponent: number | null;
   runningScoreComponent: number | null;
   rawOverallScore: number | null;
-  components: Record<string, unknown> | null;
   ratings: PlayerRatings | null;
+  /** which stored ranking this row came from — pass it to `playerBreakdown` */
+  source: RankingSource;
+}
+
+/** A stored ranking: a draft class (its current method), or a league + method. */
+export interface RankingSource {
+  className: string | null;
+  leagueId: string | null;
+  method: string;
+}
+
+/** A named model value — modifier names vary by ranking method. */
+export interface NamedValue {
+  name: string;
+  value: number | null;
+}
+
+export interface ModifierBreakdown {
+  modifiers: NamedValue[];
+  /** product of the modifiers */
+  total: number | null;
+}
+
+export interface PitchingRoleBreakdown {
+  model: number | null;
+  baseModifier: number | null;
+  /** starters only */
+  pitchMix: number | null;
+  /** starters only */
+  hrRisk: number | null;
+  score: number | null;
+}
+
+/**
+ * How a player's model score was built, fetched on demand for the detail and
+ * compare views. Only the side(s) `playerType` is judged on are present:
+ * `pitching` is null for a Hitter, `batting` for a Pitcher.
+ */
+export interface ScoreBreakdown {
+  playerType: PlayerType;
+  batting: {
+    battingModel: number | null;
+    runningModel: number | null;
+    positionModel: number | null;
+    bestPositionScore: number | null;
+    utilityBonus: number | null;
+    modifiers: ModifierBreakdown;
+  } | null;
+  pitching: {
+    starter: PitchingRoleBreakdown;
+    reliever: PitchingRoleBreakdown;
+    modifiers: ModifierBreakdown;
+  } | null;
+  rankAdjust: {
+    preRank: number | null;
+    preScore: number | null;
+    modifiers: NamedValue[];
+  } | null;
+  /** values from an older scoring pipeline (imported rankings only) */
+  legacy: NamedValue[];
 }
 
 export interface PitchRating {

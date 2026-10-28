@@ -1,8 +1,7 @@
 import getopt
-import json
 import sys
 
-from draft_class_files import get_draft_class_config_file
+from draft_class_files import _ctx
 
 
 if __name__ == "__main__":
@@ -16,8 +15,4 @@ if __name__ == "__main__":
         if opt == "-r":
             ranker_override = arg
     if ranker_override is not None:
-        with open(get_draft_class_config_file(), "r") as jsonfile:
-            class_config = json.load(jsonfile)
-        class_config["ranking_method"] = ranker_override
-        with open(get_draft_class_config_file(), "w") as f:
-            json.dump(class_config, f)
+        _ctx().save_config({"ranking_method": ranker_override})

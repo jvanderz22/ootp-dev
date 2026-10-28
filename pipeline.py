@@ -3,38 +3,15 @@
     process_class(ctx)
       -> normalise the dataset CSV headers
       -> load GamePlayer rows
-      -> rank + write <Ranker>/eval_model.csv
-      -> write <Ranker>/ranked_players.csv + upload_ranked_players.csv
+      -> rank with the class's method and store the run (results_store)
 """
 import csv
 
-import ranking_csv
+import results_store
 from context import DraftClassContext
-from draft_class_files import get_draft_class_data_file, get_draft_class_eval_model_file
+from draft_class_files import get_draft_class_data_file
 from models.game_players import GamePlayer
 from rankers.get_ranker import get_ranker
-
-EVAL_MODEL_FIELDNAMES = [
-    "ranking",
-    "id",
-    "name",
-    "position",
-    "age",
-    "position_player_score",
-    "fielding_score_component",
-    "batting_score_component",
-    "pitcher_score",
-    "starter_component",
-    "reliever_component",
-    "running_score_component",
-    "best_position",
-    "overall_score",
-    "in_game_overall",
-    "in_game_potential",
-    "demand",
-    "raw_overall_score",
-    "components",
-]
 
 
 # The pitching-control columns collide with the batting "CON" / "CON P" headers
@@ -102,35 +79,14 @@ def write_player_scores(ctx, players) -> None:
 
 
 def _write_player_scores(ctx, players) -> None:
-    ranker = get_ranker(ctx)
-    scored = ranker.rank(players)
-    with open(get_draft_class_eval_model_file(ranker, ctx), "w", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=EVAL_MODEL_FIELDNAMES)
-        writer.writeheader()
-        for i, s in enumerate(scored):
-            writer.writerow(
-                {
-                    "ranking": i,
-                    "id": s.id,
-                    "name": s.name,
-                    "position": s.position,
-                    "age": s.age,
-                    "position_player_score": s.position_player_score,
-                    "fielding_score_component": s.fielding_score_component,
-                    "batting_score_component": s.batting_score_component,
-                    "pitcher_score": s.pitcher_score,
-                    "starter_component": s.starter_component,
-                    "reliever_component": s.reliever_component,
-                    "running_score_component": s.running_score_component,
-                    "best_position": s.best_position or "",
-                    "overall_score": round(s.overall_score, 2),
-                    "in_game_overall": s.in_game_overall,
-                    "in_game_potential": s.in_game_potential,
-                    "demand": s.demand,
-                    "raw_overall_score": s.raw_overall_score,
-                    "components": s.components,
-                }
-            )
+    scored = get_ranker(ctx).rank(players)
+    results_store.save_run(
+        results_store.CLASS,
+        ctx.name,
+        ctx.ranking_method,
+        ctx.data_version,
+        [results_store.result_from_scored(s) for s in scored],
+    )
 
 
 def process_class(ctx) -> None:
@@ -138,7 +94,6 @@ def process_class(ctx) -> None:
     normalise_dataset(ctx)
     players = load_player_data(ctx)
     write_player_scores(ctx, players)
-    ranking_csv.create_ranking_csv(ctx)
 
 
 if __name__ == "__main__":

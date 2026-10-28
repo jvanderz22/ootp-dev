@@ -134,7 +134,8 @@ def test_handedness_filters(client):
 
 def test_draft_pick_columns_and_team_filter(client):
     from context import DraftClassContext
-    from statsplus_api import _parse_draft_csv, write_drafted_players_file
+    from drafted_players import save_picks
+    from statsplus_api import _parse_draft_csv
     from tests.conftest import SAMPLE_DATASET
     from tests.test_statsplus_api import DRAFTV2_CSV
 
@@ -155,7 +156,7 @@ def test_draft_pick_columns_and_team_filter(client):
     assert "errors" not in resp.json(), resp.json()
 
     # Mark a player that's known to be in the sample dataset as drafted.
-    write_drafted_players_file(DraftClassContext("d"), _parse_draft_csv(DRAFTV2_CSV))
+    save_picks(DraftClassContext("d"), _parse_draft_csv(DRAFTV2_CSV))
 
     assert gql(client, 'query { draftTeams(name: "d") }')["draftTeams"] == ["Expos"]
 
@@ -583,7 +584,7 @@ def test_refresh_league_snapshot(client, monkeypatch):
 
     calls = {}
 
-    def fake_fetch_and_build(league, *, base_dir=None, cookie=None, on_phase=None):
+    def fake_fetch_and_build(league, *, cookie=None, on_phase=None):
         calls["league_id"] = league["id"]
         calls["cookie"] = cookie
         ctx = league_snapshot.LeagueSnapshotContext(league["id"])
@@ -629,8 +630,6 @@ def test_league_refresh_status_idle_then_error(client, monkeypatch):
 
 
 def test_check_league_snapshot_freshness(client, monkeypatch):
-    import json as _json
-
     import league_snapshot
     from web import service
 
@@ -652,11 +651,13 @@ def test_check_league_snapshot_freshness(client, monkeypatch):
     monkeypatch.setattr(service, "fetch_league_date", lambda *a, **k: next(dates))
 
     def age_snapshot(league_date):
-        meta = ctx.load_meta()
-        meta["fetched_at"] = "2000-01-01T00:00:00+00:00"
-        meta["last_checked_at"] = "2000-01-01T00:00:00+00:00"
-        meta["league_date"] = league_date
-        ctx.meta_file.write_text(_json.dumps(meta))
+        import db
+
+        db.execute(
+            "UPDATE league_snapshots SET fetched_at = ?, last_checked_at = ?, "
+            "league_date = ? WHERE league_id = ?",
+            ("2000-01-01T00:00:00+00:00", "2000-01-01T00:00:00+00:00", league_date, lid),
+        )
 
     # 2. old snapshot, sim date unchanged -> checked, not stale, and the check
     #    stamps last_checked_at so it goes quiet again
