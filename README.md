@@ -23,15 +23,16 @@ Angular 22 SPA  --POST /graphql/-->  Ariadne GraphQL (Python, ASGI)  -->  rankin
   `league_snapshots/<league>/`.
 - The database holds the leagues (name + StatsPlus URL + optional `lid` + that
   league's `sessionid` / `csrftoken`), each class's settings / custom order /
-  drafted picks, snapshot metadata, refresh-job status, and the latest scored
+  drafted picks, snapshot metadata, refresh-job status, each league's trade
+  lists (`web/trade_lists.py`), and the latest scored
   ranking per class or league + method (`results_store.py`) with each player's
   score breakdown trimmed to the side he's judged on (Hitter / Pitcher /
   Two-way). The cookie values live only on the (private) data volume and are
   never returned to the client — the API exposes only `hasSessionid` /
   `hasCsrftoken`.
 - An install from before the database (leagues.json, `processed_classes/…`
-  config / ranked CSVs, snapshot `meta.json`) is imported into `app.db` the first
-  time the app starts (`db_import.py`); the old files are left in place.
+  config / ranked CSVs, snapshot `meta.json`, trade_lists.json) is imported into
+  `app.db` the first time the app starts (`db_import.py`); the old files are left in place.
 - Whole app is behind HTTP Basic auth when `APP_PASSWORD` is set.
 
 ### StatsPlus configuration

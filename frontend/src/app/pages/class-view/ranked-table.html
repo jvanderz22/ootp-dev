@@ -117,7 +117,7 @@
   }
 </div>
 
-<div class="ranked-table">
+<div class="ranked-table" [class.with-star]="!!tradeStore()">
   <p-table
     #dt
     [value]="rows()"
@@ -180,6 +180,15 @@
             (click)="$event.stopPropagation()"
             title="Add to compare"
           />
+          @if (tradeStore()) {
+            <button
+              type="button"
+              class="star-btn"
+              [class.on]="isListed(p)"
+              [title]="isListed(p) ? 'On a trade list' : 'Add to a trade list'"
+              (click)="onStarClick(p); starPop.toggle($event)"
+            >{{ isListed(p) ? '★' : '☆' }}</button>
+          }
         </td>
         @for (c of columns(); track c.field) {
           @if (c.tag) {
@@ -210,6 +219,8 @@
               [player]="p"
               [totalRanked]="totalRecords()"
               [canEditRank]="context() === 'class'"
+              [tradeStore]="tradeStore()"
+              [tradeListId]="tradeListId()"
               (setRank)="onSetRank(p, $event)"
             />
           </div>
@@ -243,6 +254,44 @@
   [visible]="compareOpen()"
   (closed)="compareOpen.set(false)"
 />
+
+<!-- trade-list "labels" popover: a checkbox per league list + an inline new-list
+     input. Anchored to the row's star button; content reads `starRow()`. -->
+<p-popover #starPop appendTo="body" (onHide)="starRow.set(null)">
+  @if (starRow(); as p) {
+    <div class="star-panel">
+      <div class="sp-title">Trade lists · {{ p.name }}</div>
+      @if (tradeStore()?.lists()?.length) {
+        @for (l of tradeStore()!.lists(); track l.id) {
+          <label class="sp-row">
+            <input
+              type="checkbox"
+              [checked]="rowOnList(l.id, p.id)"
+              [disabled]="starBusy()"
+              (change)="toggleOnList(l.id, p, $any($event.target).checked)"
+            />
+            <span>{{ l.name }}</span>
+          </label>
+        }
+      } @else {
+        <p class="sp-empty muted">No lists yet.</p>
+      }
+      <form class="sp-new" (submit)="$event.preventDefault(); createListWithPlayer(p)">
+        <input
+          type="text"
+          placeholder="New list…"
+          [ngModel]="newListName()"
+          (ngModelChange)="newListName.set($event)"
+          [ngModelOptions]="{ standalone: true }"
+          [disabled]="starBusy()"
+        />
+        <button type="submit" class="sm" [disabled]="starBusy() || !newListName().trim()">
+          Add
+        </button>
+      </form>
+    </div>
+  }
+</p-popover>
 
 <!-- column-header quick filter: one fixed panel, re-anchored per header on hover,
      preferring the space above the header and flipping below only when cramped -->

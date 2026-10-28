@@ -9,9 +9,11 @@ Before the database every piece of state was a file under $DATA_DIR:
     processed_classes/<class>/<Ranker>/ranked_players.csv     the scored ranking
     league_snapshots/<league>/meta.json            fetch / check times, counts, in-game date
     league_snapshots/<league>/<Ranker>/ranked_players.csv     the scored rankings
+    trade_lists.json                               per-league trade-target lists
 
-`db._migration_1` calls `import_legacy_files` exactly once, inside the migration
-transaction, so a partial import never commits. The files are left where they
+`db._migration_1` calls `import_legacy_files` and `db._migration_2` calls
+`import_trade_lists`, each exactly once inside its migration transaction, so a
+partial import never commits. The files are left where they
 are; the datasets and snapshot CSVs are still read from disk.
 
 The ranked CSVs come in as stored runs (`results_store`), their stringified
@@ -192,6 +194,43 @@ def _import_snapshots(base_dir: Path) -> None:
                 meta.get("player_count"), meta.get("total_row_count"), meta.get("league_date"),
             ),
         )
+
+
+# ----------------------------------------------------------- trade lists
+def import_trade_lists(base_dir) -> None:
+    """trade_lists.json - `{league_id: [{id, name, createdAt, entries: [...]}]}` -
+    into the trade-list tables (`db._migration_2`). Lists of a league that no
+    longer exists are dropped, as deleting the league would have done."""
+    data = _read_json(Path(base_dir) / "trade_lists.json")
+    if not isinstance(data, dict):
+        return
+    known = {r["id"] for r in db.query("SELECT id FROM leagues")}
+    with db.transaction() as conn:
+        for league_id, lists in data.items():
+            if league_id not in known or not isinstance(lists, list):
+                continue
+            for lst in lists:
+                if not isinstance(lst, dict) or not lst.get("id"):
+                    continue
+                conn.execute(
+                    "INSERT OR IGNORE INTO trade_lists (league_id, id, name, created_at) "
+                    "VALUES (?, ?, ?, ?)",
+                    (league_id, lst["id"], lst.get("name") or lst["id"], lst.get("createdAt")),
+                )
+                for e in lst.get("entries") or []:
+                    if not isinstance(e, dict) or not e.get("playerId"):
+                        continue
+                    # the file's first entry for a player is the one the app used
+                    conn.execute(
+                        "INSERT OR IGNORE INTO trade_list_entries (league_id, list_id, "
+                        "player_id, priority, note, added_at, name, position, org) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        (
+                            league_id, lst["id"], str(e["playerId"]), e.get("priority"),
+                            e.get("note") or "", e.get("addedAt"), e.get("name") or "",
+                            e.get("position") or "", e.get("org") or "",
+                        ),
+                    )
 
 
 # ------------------------------------------------------------- rankings

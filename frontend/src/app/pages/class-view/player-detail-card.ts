@@ -1,11 +1,12 @@
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TagModule } from 'primeng/tag';
 import { PanelModule } from 'primeng/panel';
 
 import { ApiService } from '../../core/api';
-import { RankedPlayerRow, ScoreBreakdown } from '../../core/api.types';
+import { RankedPlayerRow, ScoreBreakdown, TRADE_PRIORITIES, TradePriority } from '../../core/api.types';
+import { TradeListStore } from '../../core/trade-list-store';
 import {
   battingComponents,
   battingSkillRows,
@@ -42,6 +43,69 @@ export class PlayerDetailCardComponent {
   /** New 1-based rank the user committed for this player. */
   readonly setRank = output<number>();
 
+  /** Live-league only: the league's trade-list store. When set, a "Trade lists"
+   *  block is shown (which lists the player is on, add / remove). */
+  readonly tradeStore = input<TradeListStore | null>(null);
+  /** Trade Targets page only: the list currently being viewed, so the priority
+   *  / note editors know which entry to patch. */
+  readonly tradeListId = input<string | null>(null);
+
+  protected readonly onLists = computed(
+    () => this.tradeStore()?.listsWith(this.player().id) ?? [],
+  );
+  protected readonly allLists = computed(() => this.tradeStore()?.lists() ?? []);
+  protected readonly priorities = TRADE_PRIORITIES;
+  protected readonly newListName = signal('');
+  protected readonly tlBusy = signal(false);
+
+  /** Local, editable copies of the viewed entry's priority / note — seeded from
+   *  the row (which carries them only when loaded via `tradeListPlayers`). */
+  protected readonly priorityDraft = signal<TradePriority>('MEDIUM');
+  protected readonly noteDraft = signal('');
+
+  protected isOnList(listId: string): boolean {
+    return this.allLists().find((l) => l.id === listId)?.entryIds.includes(this.player().id)
+      ?? false;
+  }
+
+  protected async toggleList(listId: string, on: boolean): Promise<void> {
+    const store = this.tradeStore();
+    if (!store || this.tlBusy()) return;
+    this.tlBusy.set(true);
+    try {
+      if (on) await store.addPlayer(listId, this.player().id);
+      else await store.removePlayer(listId, this.player().id);
+    } finally {
+      this.tlBusy.set(false);
+    }
+  }
+
+  protected async addNewList(): Promise<void> {
+    const store = this.tradeStore();
+    const name = this.newListName().trim();
+    if (!store || !name || this.tlBusy()) return;
+    this.tlBusy.set(true);
+    try {
+      const made = await store.create(name);
+      await store.addPlayer(made.id, this.player().id);
+      this.newListName.set('');
+    } finally {
+      this.tlBusy.set(false);
+    }
+  }
+
+  /** Commit the priority / note editors — only meaningful with a `tradeListId`
+   *  in context (the Trade Targets page). */
+  protected async commitEntry(): Promise<void> {
+    const store = this.tradeStore();
+    const listId = this.tradeListId();
+    if (!store || !listId) return;
+    await store.setEntry(listId, this.player().id, {
+      priority: this.priorityDraft(),
+      note: this.noteDraft(),
+    });
+  }
+
   protected readonly editing = signal(false);
   protected readonly draftRank = signal<number | null>(null);
 
@@ -51,6 +115,13 @@ export class PlayerDetailCardComponent {
   protected readonly breakdown = signal<ScoreBreakdown | null>(null);
 
   constructor() {
+    effect(() => {
+      const p = this.player();
+      untracked(() => {
+        this.priorityDraft.set((p.priority as TradePriority) ?? 'MEDIUM');
+        this.noteDraft.set(p.note ?? '');
+      });
+    });
     effect(() => {
       const p = this.player();
       this.breakdown.set(null);

@@ -43,6 +43,11 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'targets',
+            loadComponent: () =>
+              import('./pages/trade-targets/trade-targets').then((m) => m.TradeTargetsPage),
+          },
+          {
             path: 'classes',
             loadComponent: () =>
               import('./pages/league-classes').then((m) => m.LeagueClassesPage),

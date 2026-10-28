@@ -3,11 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Apollo } from 'apollo-angular';
 import { firstValueFrom } from 'rxjs';
 import {
+  ADD_TO_TRADE_LIST,
   CLASS_DETAIL,
   CLEAR_CUSTOM_ORDER,
   CREATE_LEAGUE,
+  CREATE_TRADE_LIST,
   DELETE_DRAFT_CLASS,
   DELETE_LEAGUE,
+  DELETE_TRADE_LIST,
   CHECK_LEAGUE_SNAPSHOT_FRESHNESS,
   DRAFT_CLASSES,
   LEAGUE_GAME_LEAGUES,
@@ -21,12 +24,17 @@ import {
   RANKED_PAGE,
   REFRESH_DRAFTED,
   REFRESH_LEAGUE_SNAPSHOT,
+  REMOVE_FROM_TRADE_LIST,
+  RENAME_TRADE_LIST,
   REORDER_PLAYERS,
   REPROCESS_DRAFT_CLASS,
   SAVE_CUSTOM_ORDER,
   SET_CLASS_LEAGUE,
   SET_PLAYER_RANK,
   SET_RANKING_METHOD,
+  SET_TRADE_LIST_ENTRY,
+  TRADE_LIST_PLAYERS,
+  TRADE_LISTS,
   UPDATE_LEAGUE,
   UPLOAD_DRAFT_CLASS,
 } from './gql';
@@ -47,6 +55,8 @@ import {
   RankedQuery,
   RankingSource,
   ScoreBreakdown,
+  TradeList,
+  TradePriority,
 } from './api.types';
 
 type ReorderPlayer = Pick<
@@ -581,6 +591,143 @@ export class ApiService {
         }),
       );
       return res.data!.setClassLeague;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  // --- custom trade lists ------------------------------------------------
+  async tradeLists(leagueId: string): Promise<TradeList[]> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.query<{ tradeLists: TradeList[] }>({
+          query: TRADE_LISTS,
+          variables: { leagueId },
+          fetchPolicy: 'network-only',
+        }),
+      );
+      return res.data!.tradeLists;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  /** A list's entries resolved against the current snapshot for live scores /
+   *  ratings, plus each entry's `note` / `priority` / `stale`. */
+  async tradeListPlayers(leagueId: string, listId: string): Promise<RankedPlayerPage> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.query<{ tradeListPlayers: RankedPlayerPage }>({
+          query: TRADE_LIST_PLAYERS,
+          variables: { leagueId, listId },
+          fetchPolicy: 'network-only',
+        }),
+      );
+      return res.data!.tradeListPlayers;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  async createTradeList(leagueId: string, name: string): Promise<TradeList> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.mutate<{ createTradeList: TradeList }>({
+          mutation: CREATE_TRADE_LIST,
+          variables: { leagueId, name },
+        }),
+      );
+      return res.data!.createTradeList;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  async renameTradeList(leagueId: string, listId: string, name: string): Promise<TradeList> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.mutate<{ renameTradeList: TradeList }>({
+          mutation: RENAME_TRADE_LIST,
+          variables: { leagueId, listId, name },
+        }),
+      );
+      return res.data!.renameTradeList;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  async deleteTradeList(leagueId: string, listId: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.apollo.mutate({
+          mutation: DELETE_TRADE_LIST,
+          variables: { leagueId, listId },
+        }),
+      );
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  async addToTradeList(
+    leagueId: string,
+    listId: string,
+    playerId: string,
+    priority?: TradePriority | null,
+    note?: string | null,
+  ): Promise<TradeList> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.mutate<{ addToTradeList: TradeList }>({
+          mutation: ADD_TO_TRADE_LIST,
+          variables: { leagueId, listId, playerId, priority: priority ?? null, note: note ?? null },
+        }),
+      );
+      return res.data!.addToTradeList;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  async removeFromTradeList(
+    leagueId: string,
+    listId: string,
+    playerId: string,
+  ): Promise<TradeList> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.mutate<{ removeFromTradeList: TradeList }>({
+          mutation: REMOVE_FROM_TRADE_LIST,
+          variables: { leagueId, listId, playerId },
+        }),
+      );
+      return res.data!.removeFromTradeList;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  async setTradeListEntry(
+    leagueId: string,
+    listId: string,
+    playerId: string,
+    patch: { priority?: TradePriority | null; note?: string | null },
+  ): Promise<TradeList> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.mutate<{ setTradeListEntry: TradeList }>({
+          mutation: SET_TRADE_LIST_ENTRY,
+          variables: {
+            leagueId,
+            listId,
+            playerId,
+            priority: patch.priority ?? null,
+            note: patch.note ?? null,
+          },
+        }),
+      );
+      return res.data!.setTradeListEntry;
     } catch (e) {
       unwrap(e);
     }

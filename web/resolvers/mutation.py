@@ -102,3 +102,33 @@ async def resolve_refresh_league_snapshot(_, __, league_id):
 @mutation.field("checkLeagueSnapshotFreshness")
 async def resolve_check_league_snapshot_freshness(_, __, league_id):
     return await service.check_league_snapshot_freshness(league_id)
+
+
+@mutation.field("createTradeList")
+def resolve_create_trade_list(_, __, league_id, name):
+    return service.create_trade_list(league_id, name)
+
+
+@mutation.field("renameTradeList")
+def resolve_rename_trade_list(_, __, league_id, list_id, name):
+    return service.rename_trade_list(league_id, list_id, name)
+
+
+@mutation.field("deleteTradeList")
+def resolve_delete_trade_list(_, __, league_id, list_id):
+    return service.delete_trade_list(league_id, list_id)
+
+
+@mutation.field("addToTradeList")
+def resolve_add_to_trade_list(_, __, league_id, list_id, player_id, priority=None, note=None):
+    return service.add_to_trade_list(league_id, list_id, player_id, priority, note)
+
+
+@mutation.field("removeFromTradeList")
+def resolve_remove_from_trade_list(_, __, league_id, list_id, player_id):
+    return service.remove_from_trade_list(league_id, list_id, player_id)
+
+
+@mutation.field("setTradeListEntry")
+def resolve_set_trade_list_entry(_, __, league_id, list_id, player_id, priority=None, note=None):
+    return service.set_trade_list_entry(league_id, list_id, player_id, priority, note)

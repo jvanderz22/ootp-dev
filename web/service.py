@@ -17,7 +17,7 @@ import league_snapshot
 import pipeline
 import results_store
 from context import DraftClassContext, default_base_dir
-from web import class_index, leagues, org_rankings
+from web import class_index, leagues, org_rankings, trade_lists
 from custom_ranking import clear_order, has_custom_order, load_order, resolve_order, save_order
 from drafted_players import get_drafted_player_ids, save_picks
 from models.game_players import GamePlayers
@@ -1101,6 +1101,182 @@ def player_breakdown(source: dict, player_id):
         raise InvalidInput("A ranking source needs a className or a leagueId.")
     found = results_store.load_breakdown(scope, scope_id, method, player_id)
     return _breakdown_payload(*found) if found else None
+
+
+# --------------------------------------------------------- custom trade lists
+#
+# Named, per-league lists of trade targets. `web/trade_lists.py` is plain table
+# CRUD; the one call that does real work is `trade_list_players`, which resolves
+# each entry against the current league snapshot for live model scores / ratings
+# and falls back to the entry's add-time denormalized fields when a player has
+# left the snapshot.
+
+# Established veterans are only in the `overall` ranking (the `potential` ranking
+# is rookies-only), so an entry is resolved against both and whichever hits wins;
+# `potential` is preferred for a rookie-eligible target.
+_TRADE_LIST_METHODS = ("potential", "overall")
+
+
+def _trade_list_payload(lst: dict) -> dict:
+    entries = lst.get("entries") or []
+    return {
+        "id": lst.get("id"),
+        "name": lst.get("name"),
+        "entry_count": len(entries),
+        "entry_ids": [e["playerId"] for e in entries],
+        "created_at": lst.get("createdAt"),
+    }
+
+
+def _entry_denorm(ctx, player_id: str) -> dict:
+    """Add-time snapshot capture (name / position / org) stored on an entry so it
+    still renders after the player leaves the snapshot. Empty when the player is
+    not in the current snapshot (or there is no snapshot)."""
+    if not ctx.data_file.exists():
+        return {}
+    team_names = _team_display_names(ctx)
+    pid = str(player_id)
+    try:
+        with open(ctx.data_file, newline="") as f:
+            for r in csv.DictReader(f):
+                if r.get("ID") != pid:
+                    continue
+                org_id = (r.get("snap_org_id") or "").strip()
+                return {
+                    "name": (r.get("Name") or "").strip(),
+                    "position": (r.get("POS") or "").strip(),
+                    "org": team_names.get(org_id)
+                    or (r.get("ORG") or "").strip()
+                    or None,
+                }
+    except FileNotFoundError:
+        pass
+    return {}
+
+
+def list_trade_lists(league_id: str) -> list:
+    _league_ctx(league_id)  # 404 for an unknown league
+    return [_trade_list_payload(x) for x in trade_lists.lists_for_league(league_id)]
+
+
+def create_trade_list(league_id: str, name: str) -> dict:
+    _league_ctx(league_id)
+    try:
+        return _trade_list_payload(trade_lists.create_list(league_id, name))
+    except ValueError as exc:
+        raise InvalidInput(str(exc)) from exc
+
+
+def rename_trade_list(league_id: str, list_id: str, name: str) -> dict:
+    _league_ctx(league_id)
+    try:
+        return _trade_list_payload(trade_lists.rename_list(league_id, list_id, name))
+    except ValueError as exc:
+        raise InvalidInput(str(exc)) from exc
+
+
+def delete_trade_list(league_id: str, list_id: str) -> str:
+    _league_ctx(league_id)
+    try:
+        return trade_lists.delete_list(league_id, list_id)
+    except ValueError as exc:
+        raise InvalidInput(str(exc)) from exc
+
+
+def add_to_trade_list(
+    league_id: str, list_id: str, player_id: str, priority=None, note=None
+) -> dict:
+    _, ctx = _league_ctx(league_id)
+    try:
+        lst = trade_lists.add_entry(
+            league_id,
+            list_id,
+            player_id,
+            priority=priority,
+            note=note,
+            denorm=_entry_denorm(ctx, player_id),
+        )
+    except ValueError as exc:
+        raise InvalidInput(str(exc)) from exc
+    return _trade_list_payload(lst)
+
+
+def remove_from_trade_list(league_id: str, list_id: str, player_id: str) -> dict:
+    _league_ctx(league_id)
+    try:
+        lst = trade_lists.remove_entry(league_id, list_id, player_id)
+    except ValueError as exc:
+        raise InvalidInput(str(exc)) from exc
+    return _trade_list_payload(lst)
+
+
+def set_trade_list_entry(
+    league_id: str, list_id: str, player_id: str, priority=None, note=None
+) -> dict:
+    _league_ctx(league_id)
+    try:
+        lst = trade_lists.set_entry(
+            league_id, list_id, player_id, priority=priority, note=note
+        )
+    except ValueError as exc:
+        raise InvalidInput(str(exc)) from exc
+    return _trade_list_payload(lst)
+
+
+def _stale_entry_payload(league_id: str, entry: dict) -> dict:
+    """A RankedPlayer-shaped row for an entry whose player is no longer in the
+    snapshot: identity from the denormalized fields, every score / rating null.
+    Its `source` points at the league's overall ranking, where `playerBreakdown`
+    finds nothing for it."""
+    row = {
+        "id": entry["playerId"],
+        "name": entry.get("name") or f"Player {entry['playerId']}",
+        "position": entry.get("position") or "",
+    }
+    source = {"class_name": None, "league_id": league_id, "method": "overall"}
+    payload = _player_payload(0, row, None, None, source)
+    payload["org"] = entry.get("org") or None
+    return payload
+
+
+def trade_list_players(league_id: str, list_id: str) -> dict:
+    """Resolve a trade list's entries against the current league snapshot. Rows
+    carry live model scores / ratings plus the per-entry `note` / `priority`;
+    `stale: true` marks a player who has left the snapshot (rendered from the
+    add-time denormalized fields). Sorted by priority, then model score desc."""
+    lst = trade_lists.get_list(league_id, list_id)
+    if lst is None:
+        raise NotFound(f"Trade list {list_id!r} not found.")
+    _, ctx = _league_ctx(league_id)
+    entries = lst.get("entries") or []
+
+    built = {}
+    if ctx.data_file.exists():
+        for method in _TRADE_LIST_METHODS:
+            for row in _league_built_rows(league_id, method):
+                built.setdefault(row["id"], row)
+
+    rows = []
+    for entry in entries:
+        pid = entry["playerId"]
+        hit = built.get(pid)
+        if hit is not None:
+            payload = dict(hit)
+            payload["stale"] = False
+        else:
+            payload = _stale_entry_payload(league_id, entry)
+            payload["stale"] = True
+        payload["note"] = entry.get("note") or ""
+        payload["priority"] = entry.get("priority")
+        rows.append(payload)
+
+    rows.sort(
+        key=lambda p: (
+            trade_lists.priority_rank(p.get("priority")),
+            -(p.get("model_score") or 0),
+        )
+    )
+    return {"rows": rows, "total_records": len(rows)}
 
 
 def _evict_league_payload_cache(league_id: str) -> None:

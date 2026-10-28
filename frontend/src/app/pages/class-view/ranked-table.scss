@@ -202,6 +202,51 @@
   }
   ::ng-deep td.cmp-col input { cursor: pointer; }
 
+  /* live-league trade lists: the compare cell also carries a star toggle, so it
+     widens and every frozen column after it shifts right by the same delta */
+  &.with-star {
+    ::ng-deep td.cmp-col,
+    ::ng-deep th.cmp-col {
+      width: 46px;
+    }
+    ::ng-deep td.cmp-col {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+    }
+    ::ng-deep th.sticky-rank,
+    ::ng-deep td.sticky-rank {
+      left: 46px;
+    }
+    ::ng-deep th.sticky-name,
+    ::ng-deep td.sticky-name {
+      left: 90px;
+    }
+    ::ng-deep th.sticky-pos,
+    ::ng-deep td.sticky-pos {
+      left: 250px;
+    }
+    @media (max-width: 640px) {
+      ::ng-deep th.sticky-pos,
+      ::ng-deep td.sticky-pos {
+        left: 186px;
+      }
+    }
+  }
+  ::ng-deep .star-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1;
+    color: var(--text-dim);
+  }
+  ::ng-deep .star-btn.on {
+    color: var(--accent);
+  }
+
   /* Keep the whole header above the sticky (z-index: 2) body cells while the
      table body scrolls — otherwise the frozen leading columns of scrolled-past
      rows paint over the pinned header. PrimeNG only gives the thead z-index: 2,
@@ -293,6 +338,46 @@
      gold amber for the middling one — both kept clear of the drafted red */
   ::ng-deep td.tone-danger { color: var(--tone-weak); font-weight: 700; }
   ::ng-deep td.tone-warn { color: var(--tone-mid); font-weight: 600; }
+}
+
+/* trade-list "labels" popover — p-popover content is appended to <body>, so
+   these selectors sit outside the `.ranked-table` block */
+.star-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 12rem;
+}
+.star-panel .sp-title {
+  font-weight: 600;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+.star-panel .sp-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.star-panel .sp-empty {
+  margin: 2px 0;
+  font-size: 12px;
+}
+.star-panel .sp-new {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+.star-panel .sp-new input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.star-panel .sp-new button.sm {
+  font-size: 12px;
+  padding: 2px 8px;
 }
 
 /* column-header quick-filter panel — fixed-positioned from JS (prefers the

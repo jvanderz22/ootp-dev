@@ -12,6 +12,7 @@ import { map } from 'rxjs';
 
 import { ApiService } from '../../core/api';
 import { LeagueSnapshotStore } from '../../core/league-snapshot-store';
+import { TradeListStore } from '../../core/trade-list-store';
 import {
   LeagueGroupBy,
   LeagueTeam,
@@ -142,6 +143,7 @@ function defaultQuery(): RankedQuery {
           [resetToken]="resetToken()"
           [classKey]="tableKey()"
           [initialQuery]="queryState()"
+          [tradeStore]="tradeStore"
           (queryChange)="onQueryChange($event)"
           (loadMore)="onLoadMore()"
         />
@@ -176,6 +178,7 @@ export class LeagueViewPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   protected readonly store = inject(LeagueSnapshotStore);
+  protected readonly tradeStore = inject(TradeListStore);
 
   protected readonly methods = METHODS;
   protected readonly groupings = GROUPINGS;

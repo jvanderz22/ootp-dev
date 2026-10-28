@@ -1,0 +1,605 @@
+{
+ "add_errors": [
+  {
+   "code": "InvalidInput",
+   "message": "Unknown priority 'URGENT'; expected one of HIGH, MEDIUM, LOW."
+  },
+  {
+   "code": "InvalidInput",
+   "message": "Trade list 'nope' not found."
+  },
+  {
+   "code": "InvalidInput",
+   "message": "Player id is required."
+  }
+ ],
+ "adds": [
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 1,
+   "entryIds": [
+    "1009"
+   ],
+   "id": "top-targets",
+   "name": "Top Targets"
+  },
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 2,
+   "entryIds": [
+    "1009",
+    "1000"
+   ],
+   "id": "top-targets",
+   "name": "Top Targets"
+  },
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 3,
+   "entryIds": [
+    "1009",
+    "1000",
+    "1002"
+   ],
+   "id": "top-targets",
+   "name": "Top Targets"
+  },
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 4,
+   "entryIds": [
+    "1009",
+    "1000",
+    "1002",
+    "1104"
+   ],
+   "id": "top-targets",
+   "name": "Top Targets"
+  },
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 5,
+   "entryIds": [
+    "1009",
+    "1000",
+    "1002",
+    "1104",
+    "9999"
+   ],
+   "id": "top-targets",
+   "name": "Top Targets"
+  },
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 5,
+   "entryIds": [
+    "1009",
+    "1000",
+    "1002",
+    "1104",
+    "9999"
+   ],
+   "id": "top-targets",
+   "name": "Top Targets"
+  },
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 1,
+   "entryIds": [
+    "1011"
+   ],
+   "id": "top-targets-2",
+   "name": "Top Targets"
+  }
+ ],
+ "after_league_recreate": [],
+ "bench_bats": {
+  "rows": [
+   {
+    "age": 25,
+    "batHand": "Right",
+    "battingScoreComponent": 61.8,
+    "bestPosition": "LF",
+    "demand": null,
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "fieldingScoreComponent": 21.73,
+    "id": "1011",
+    "inGameOverall": 35,
+    "inGamePotential": 65,
+    "level": "AAA",
+    "modelScore": 45.49,
+    "name": "Logan Quimby",
+    "note": "",
+    "org": "Milwaukee Brewers",
+    "pitcherScore": 0.0,
+    "position": "CF",
+    "positionPlayerScore": 45.49,
+    "priority": "MEDIUM",
+    "rank": 26,
+    "ratings": {
+     "batHand": "Right",
+     "batting": {
+      "avoidK": 65,
+      "avoidKCur": 55,
+      "contact": 65,
+      "contactCur": 60,
+      "eye": 60,
+      "eyeCur": 40,
+      "gap": 45,
+      "gapCur": 45,
+      "power": 55,
+      "powerCur": 40,
+      "running": 35,
+      "speed": 60,
+      "steal": 50
+     },
+     "fielding": {
+      "cArm": 30,
+      "cBlocking": 20,
+      "cFraming": 55,
+      "ifArm": 45,
+      "ifError": 40,
+      "ifRange": 45,
+      "ofArm": 50,
+      "ofError": 60,
+      "ofRange": 55,
+      "turnDp": 35
+     },
+     "injuryProne": "Normal",
+     "intelligence": "N",
+     "leadership": "N",
+     "pitching": {
+      "armSlot": "Normal",
+      "control": 20,
+      "controlCur": 20,
+      "groundballType": "NEU",
+      "movement": 30,
+      "movementCur": 30,
+      "pitches": [],
+      "stamina": 25,
+      "stuff": 25,
+      "stuffCur": 20,
+      "velocity": "84-86"
+     },
+     "scoutingAccuracy": "Low",
+     "throwHand": "Right",
+     "workEthic": "N"
+    },
+    "rawOverallScore": 45.49243233013901,
+    "relieverComponent": 0.0,
+    "rule5Eligible": false,
+    "runningScoreComponent": 39.56,
+    "stale": false,
+    "starterComponent": 0.0,
+    "statsPlusUrl": "https://statsplus.net/goldenfx/player/1011",
+    "team": "Milwaukee Triple Brewers Triple",
+    "throwHand": "Right",
+    "type": "Hitter"
+   }
+  ],
+  "totalRecords": 1
+ },
+ "create_after_rename": [
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 0,
+   "entryIds": [],
+   "id": "bench-bats",
+   "name": "Bench Bats"
+  }
+ ],
+ "create_blank": {
+  "code": "InvalidInput",
+  "message": "List name is required."
+ },
+ "created": [
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 0,
+   "entryIds": [],
+   "id": "top-targets",
+   "name": "Top Targets"
+  },
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 0,
+   "entryIds": [],
+   "id": "top-targets-2",
+   "name": "Top Targets"
+  },
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 0,
+   "entryIds": [],
+   "id": "bullpen",
+   "name": "Bullpen!"
+  }
+ ],
+ "delete_again": {
+  "code": "InvalidInput",
+  "message": "Trade list 'bullpen' not found."
+ },
+ "deleted": "bullpen",
+ "empty": [],
+ "final_lists": [
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 4,
+   "entryIds": [
+    "1009",
+    "1000",
+    "1104",
+    "9999"
+   ],
+   "id": "top-targets",
+   "name": "Top Targets"
+  },
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 1,
+   "entryIds": [
+    "1011"
+   ],
+   "id": "top-targets-2",
+   "name": "Bench Bats"
+  },
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 0,
+   "entryIds": [],
+   "id": "bench-bats",
+   "name": "Bench Bats"
+  }
+ ],
+ "remove_again": {
+  "code": "InvalidInput",
+  "message": "Player '1002' is not on list 'top-targets'."
+ },
+ "removed": [
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 4,
+   "entryIds": [
+    "1009",
+    "1000",
+    "1104",
+    "9999"
+   ],
+   "id": "top-targets",
+   "name": "Top Targets"
+  }
+ ],
+ "rename_errors": [
+  {
+   "code": "InvalidInput",
+   "message": "List name is required."
+  },
+  {
+   "code": "InvalidInput",
+   "message": "Trade list 'nope' not found."
+  }
+ ],
+ "renamed": [
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 1,
+   "entryIds": [
+    "1011"
+   ],
+   "id": "top-targets-2",
+   "name": "Bench Bats"
+  }
+ ],
+ "set_errors": [
+  {
+   "code": "InvalidInput",
+   "message": "Player '1010' is not on list 'top-targets'."
+  },
+  {
+   "code": "InvalidInput",
+   "message": "Unknown priority 'MEH'; expected one of HIGH, MEDIUM, LOW."
+  }
+ ],
+ "sets": [
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 5,
+   "entryIds": [
+    "1009",
+    "1000",
+    "1002",
+    "1104",
+    "9999"
+   ],
+   "id": "top-targets",
+   "name": "Top Targets"
+  },
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 5,
+   "entryIds": [
+    "1009",
+    "1000",
+    "1002",
+    "1104",
+    "9999"
+   ],
+   "id": "top-targets",
+   "name": "Top Targets"
+  },
+  {
+   "createdAt": "<timestamp>",
+   "entryCount": 5,
+   "entryIds": [
+    "1009",
+    "1000",
+    "1002",
+    "1104",
+    "9999"
+   ],
+   "id": "top-targets",
+   "name": "Top Targets"
+  }
+ ],
+ "top_targets": {
+  "rows": [
+   {
+    "age": 22,
+    "batHand": "Right",
+    "battingScoreComponent": 55.8,
+    "bestPosition": "C",
+    "demand": null,
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "fieldingScoreComponent": 37.62,
+    "id": "1009",
+    "inGameOverall": 30,
+    "inGamePotential": 55,
+    "level": "AAA",
+    "modelScore": 41.72,
+    "name": "Jordan Hollis",
+    "note": "Bat speed",
+    "org": "Milwaukee Brewers",
+    "pitcherScore": 0.0,
+    "position": "2B",
+    "positionPlayerScore": 41.72,
+    "priority": "HIGH",
+    "rank": 30,
+    "ratings": {
+     "batHand": "Right",
+     "batting": {
+      "avoidK": 55,
+      "avoidKCur": 50,
+      "contact": 60,
+      "contactCur": 55,
+      "eye": 45,
+      "eyeCur": 25,
+      "gap": 45,
+      "gapCur": 25,
+      "power": 65,
+      "powerCur": 40,
+      "running": 35,
+      "speed": 40,
+      "steal": 40
+     },
+     "fielding": {
+      "cArm": 50,
+      "cBlocking": 60,
+      "cFraming": 50,
+      "ifArm": 45,
+      "ifError": 45,
+      "ifRange": 50,
+      "ofArm": 20,
+      "ofError": 25,
+      "ofRange": 35,
+      "turnDp": 20
+     },
+     "injuryProne": "Normal",
+     "intelligence": "N",
+     "leadership": "L",
+     "pitching": {
+      "armSlot": "Normal",
+      "control": 30,
+      "controlCur": 20,
+      "groundballType": "NEU",
+      "movement": 25,
+      "movementCur": 20,
+      "pitches": [],
+      "stamina": 40,
+      "stuff": 20,
+      "stuffCur": 20,
+      "velocity": "94-96"
+     },
+     "scoutingAccuracy": "Low",
+     "throwHand": "Right",
+     "workEthic": "N"
+    },
+    "rawOverallScore": 41.71894389361598,
+    "relieverComponent": 0.0,
+    "rule5Eligible": false,
+    "runningScoreComponent": 12.28,
+    "stale": false,
+    "starterComponent": 0.0,
+    "statsPlusUrl": "https://statsplus.net/goldenfx/player/1009",
+    "team": "Milwaukee Triple Brewers Triple",
+    "throwHand": "Right",
+    "type": "Hitter"
+   },
+   {
+    "age": null,
+    "batHand": null,
+    "battingScoreComponent": null,
+    "bestPosition": null,
+    "demand": null,
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "fieldingScoreComponent": null,
+    "id": "1104",
+    "inGameOverall": null,
+    "inGamePotential": null,
+    "level": null,
+    "modelScore": null,
+    "name": "Emery Radley",
+    "note": "",
+    "org": null,
+    "pitcherScore": null,
+    "position": "RP",
+    "positionPlayerScore": null,
+    "priority": "MEDIUM",
+    "rank": 0,
+    "ratings": null,
+    "rawOverallScore": null,
+    "relieverComponent": null,
+    "rule5Eligible": null,
+    "runningScoreComponent": null,
+    "stale": true,
+    "starterComponent": null,
+    "statsPlusUrl": null,
+    "team": null,
+    "throwHand": null,
+    "type": "Pitcher"
+   },
+   {
+    "age": null,
+    "batHand": null,
+    "battingScoreComponent": null,
+    "bestPosition": null,
+    "demand": null,
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "fieldingScoreComponent": null,
+    "id": "9999",
+    "inGameOverall": null,
+    "inGamePotential": null,
+    "level": null,
+    "modelScore": null,
+    "name": "Player 9999",
+    "note": "not in the league",
+    "org": null,
+    "pitcherScore": null,
+    "position": "",
+    "positionPlayerScore": null,
+    "priority": "MEDIUM",
+    "rank": 0,
+    "ratings": null,
+    "rawOverallScore": null,
+    "relieverComponent": null,
+    "rule5Eligible": null,
+    "runningScoreComponent": null,
+    "stale": true,
+    "starterComponent": null,
+    "statsPlusUrl": null,
+    "team": null,
+    "throwHand": null,
+    "type": "Pitcher"
+   },
+   {
+    "age": 32,
+    "batHand": "Left",
+    "battingScoreComponent": 26.19,
+    "bestPosition": "1B",
+    "demand": null,
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "fieldingScoreComponent": 7.92,
+    "id": "1000",
+    "inGameOverall": 65,
+    "inGamePotential": 55,
+    "level": "MLB",
+    "modelScore": 22.64,
+    "name": "Avery Thorne",
+    "note": "",
+    "org": "Milwaukee Brewers",
+    "pitcherScore": 0.0,
+    "position": "SS",
+    "positionPlayerScore": 22.64,
+    "priority": "LOW",
+    "rank": 23,
+    "ratings": {
+     "batHand": "Left",
+     "batting": {
+      "avoidK": 75,
+      "avoidKCur": 65,
+      "contact": 65,
+      "contactCur": 50,
+      "eye": 40,
+      "eyeCur": 40,
+      "gap": 40,
+      "gapCur": 25,
+      "power": 35,
+      "powerCur": 35,
+      "running": 40,
+      "speed": 40,
+      "steal": 25
+     },
+     "fielding": {
+      "cArm": 40,
+      "cBlocking": 60,
+      "cFraming": 20,
+      "ifArm": 60,
+      "ifError": 50,
+      "ifRange": 40,
+      "ofArm": 35,
+      "ofError": 45,
+      "ofRange": 40,
+      "turnDp": 25
+     },
+     "injuryProne": "Normal",
+     "intelligence": "N",
+     "leadership": "N",
+     "pitching": {
+      "armSlot": "Normal",
+      "control": 25,
+      "controlCur": 20,
+      "groundballType": "FB",
+      "movement": 30,
+      "movementCur": 20,
+      "pitches": [],
+      "stamina": 30,
+      "stuff": 20,
+      "stuffCur": 20,
+      "velocity": "84-86"
+     },
+     "scoutingAccuracy": "Very High",
+     "throwHand": "Left",
+     "workEthic": "L"
+    },
+    "rawOverallScore": 22.63694185416412,
+    "relieverComponent": 0.0,
+    "rule5Eligible": false,
+    "runningScoreComponent": 22.46,
+    "stale": false,
+    "starterComponent": 0.0,
+    "statsPlusUrl": "https://statsplus.net/goldenfx/player/1000",
+    "team": "Milwaukee Brewers",
+    "throwHand": "Left",
+    "type": "Hitter"
+   }
+  ],
+  "totalRecords": 4
+ },
+ "unknown_league": {
+  "code": "NotFound",
+  "message": "League 'no-such-league' not found."
+ },
+ "unknown_list": {
+  "code": "NotFound",
+  "message": "Trade list 'nope' not found."
+ }
+}

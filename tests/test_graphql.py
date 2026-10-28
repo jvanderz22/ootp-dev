@@ -686,6 +686,136 @@ def test_check_freshness_no_snapshot(client):
     assert out == {"stale": False, "checked": False, "snapshot": None}
 
 
+def test_trade_lists_crud_and_resolution(client):
+    lid = gql(client, 'mutation { createLeague(name: "TL", leagueUrl: "yfmlb") { id } }')[
+        "createLeague"
+    ]["id"]
+    _seed_snapshot(lid)
+
+    assert gql(client, "query($l: ID!) { tradeLists(leagueId: $l) { id } }", l=lid)[
+        "tradeLists"
+    ] == []
+
+    made = gql(
+        client,
+        'mutation($l: ID!) { createTradeList(leagueId: $l, name: "SP Targets") '
+        "{ id name entryCount createdAt } }",
+        l=lid,
+    )["createTradeList"]
+    assert made["id"] == "sp-targets" and made["name"] == "SP Targets"
+    assert made["entryCount"] == 0 and made["createdAt"]
+    tl = made["id"]
+
+    add_q = (
+        "mutation($l: ID!, $t: ID!, $p: ID!, $pr: String, $n: String) {"
+        " addToTradeList(leagueId: $l, listId: $t, playerId: $p, priority: $pr, note: $n)"
+        " { entryCount } }"
+    )
+    gql(client, add_q, l=lid, t=tl, p="100", pr="HIGH", n="ace, would move Keller")
+    added = gql(client, add_q, l=lid, t=tl, p="200", pr="LOW", n=None)
+    assert added["addToTradeList"]["entryCount"] == 2
+
+    # re-adding a player upserts rather than duplicating
+    again = gql(client, add_q, l=lid, t=tl, p="100", pr="MEDIUM", n=None)
+    assert again["addToTradeList"]["entryCount"] == 2
+
+    # entryIds backs the row "on a list" marker, no row resolution needed
+    ids = gql(client, "query($l: ID!) { tradeLists(leagueId: $l) { entryIds } }", l=lid)[
+        "tradeLists"
+    ][0]["entryIds"]
+    assert ids == ["100", "200"]
+
+    players_q = (
+        "query($l: ID!, $t: ID!) { tradeListPlayers(leagueId: $l, listId: $t) {"
+        " totalRecords rows { id name priority note stale modelScore org ratings } } }"
+    )
+    page = gql(client, players_q, l=lid, t=tl)["tradeListPlayers"]
+    assert page["totalRecords"] == 2
+    by_id = {r["id"]: r for r in page["rows"]}
+    # 100 is MEDIUM now, 200 is LOW -> 100 sorts first
+    assert [r["id"] for r in page["rows"]] == ["100", "200"]
+    assert by_id["100"]["priority"] == "MEDIUM"
+    assert by_id["100"]["note"] == "ace, would move Keller"
+    assert by_id["100"]["stale"] is False
+    assert by_id["100"]["modelScore"] is not None
+    assert by_id["100"]["org"] == "Milwaukee Brewers"
+    assert by_id["200"]["note"] == ""
+
+    # patch an entry's priority / note in place
+    set_q = (
+        "mutation($l: ID!, $t: ID!, $p: ID!) { setTradeListEntry(leagueId: $l,"
+        ' listId: $t, playerId: $p, priority: "HIGH", note: "bumped") { entryCount } }'
+    )
+    gql(client, set_q, l=lid, t=tl, p="200")
+    after = {r["id"]: r for r in gql(client, players_q, l=lid, t=tl)["tradeListPlayers"]["rows"]}
+    assert after["200"]["priority"] == "HIGH" and after["200"]["note"] == "bumped"
+
+    gql(
+        client,
+        "mutation($l: ID!, $t: ID!, $p: ID!) { removeFromTradeList(leagueId: $l,"
+        " listId: $t, playerId: $p) { entryCount } }",
+        l=lid,
+        t=tl,
+        p="100",
+    )
+    renamed = gql(
+        client,
+        'mutation($l: ID!, $t: ID!) { renameTradeList(leagueId: $l, listId: $t, '
+        'name: "Deadline") { id name entryCount } }',
+        l=lid,
+        t=tl,
+    )["renameTradeList"]
+    assert renamed == {"id": "sp-targets", "name": "Deadline", "entryCount": 1}
+
+    gql(
+        client,
+        "mutation($l: ID!, $t: ID!) { deleteTradeList(leagueId: $l, listId: $t) }",
+        l=lid,
+        t=tl,
+    )
+    assert gql(client, "query($l: ID!) { tradeLists(leagueId: $l) { id } }", l=lid)[
+        "tradeLists"
+    ] == []
+
+
+def test_delete_league_drops_its_trade_lists(client):
+    from web import trade_lists
+
+    lid = gql(client, 'mutation { createLeague(name: "TLd", leagueUrl: "yfmlb") { id } }')[
+        "createLeague"
+    ]["id"]
+    gql(
+        client,
+        'mutation($l: ID!) { createTradeList(leagueId: $l, name: "x") { id } }',
+        l=lid,
+    )
+    assert trade_lists.lists_for_league(lid)
+    gql(client, f'mutation {{ deleteLeague(id: "{lid}") }}')
+    assert trade_lists.lists_for_league(lid) == []
+
+
+def test_trade_list_bad_priority_is_an_error(client):
+    lid = gql(client, 'mutation { createLeague(name: "TLp", leagueUrl: "yfmlb") { id } }')[
+        "createLeague"
+    ]["id"]
+    tl = gql(
+        client,
+        'mutation($l: ID!) { createTradeList(leagueId: $l, name: "x") { id } }',
+        l=lid,
+    )["createTradeList"]["id"]
+    resp = client.post(
+        "/graphql",
+        json={
+            "query": "mutation($l: ID!, $t: ID!) { addToTradeList(leagueId: $l,"
+            ' listId: $t, playerId: "1", priority: "URGENT") { id } }',
+            "variables": {"l": lid, "t": tl},
+        },
+    )
+    body = resp.json()
+    assert "errors" in body
+    assert "URGENT" in body["errors"][0]["message"]
+
+
 def test_league_accepts_bare_slug_and_alt_host(client):
     out = gql(
         client,

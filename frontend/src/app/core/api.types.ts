@@ -140,6 +140,12 @@ export interface RankedPlayer {
   ratings: PlayerRatings | null;
   /** which stored ranking this row came from — pass it to `playerBreakdown` */
   source: RankingSource;
+  /** trade-list view only: the entry's free-text note */
+  note?: string | null;
+  /** trade-list view only: HIGH | MEDIUM | LOW */
+  priority?: TradePriority | null;
+  /** trade-list view only: player is no longer in the current snapshot */
+  stale?: boolean | null;
 }
 
 /** A stored ranking: a draft class (its current method), or a league + method. */
@@ -198,6 +204,21 @@ export interface ScoreBreakdown {
   } | null;
   /** values from an older scoring pipeline (imported rankings only) */
   legacy: NamedValue[];
+}
+
+/** Priority tier on a trade-list entry. Sorts HIGH → MEDIUM → LOW. */
+export type TradePriority = 'HIGH' | 'MEDIUM' | 'LOW';
+export const TRADE_PRIORITIES: TradePriority[] = ['HIGH', 'MEDIUM', 'LOW'];
+
+/** A named, per-league list of trade targets. Entry-level detail (per-player
+ *  note / priority) is fetched separately via `tradeListPlayers`. */
+export interface TradeList {
+  id: string;
+  name: string;
+  entryCount: number;
+  /** OOTP player ids on the list, in add order */
+  entryIds: string[];
+  createdAt: string | null;
 }
 
 export interface PitchRating {

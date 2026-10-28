@@ -122,3 +122,14 @@ async def resolve_league_refresh_status(_, __, league_id):
 @query.field("playerBreakdown")
 async def resolve_player_breakdown(_, __, source, player_id):
     return await _off_loop(service.player_breakdown, source, player_id)
+
+
+@query.field("tradeLists")
+async def resolve_trade_lists(_, __, league_id):
+    return await _off_loop(service.list_trade_lists, league_id)
+
+
+@query.field("tradeListPlayers")
+async def resolve_trade_list_players(_, __, league_id, list_id):
+    # can lazily compute a model over the whole snapshot - keep it off the loop
+    return await _off_loop(service.trade_list_players, league_id, list_id)

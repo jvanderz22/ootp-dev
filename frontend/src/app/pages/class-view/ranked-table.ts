@@ -15,8 +15,10 @@ import { FormsModule } from '@angular/forms';
 import { TagModule } from 'primeng/tag';
 import { TableModule } from 'primeng/table';
 import { SelectButtonModule } from 'primeng/selectbutton';
+import { PopoverModule } from 'primeng/popover';
 
 import { ClassView, NumericFilter, RankedPlayerRow, RankedQuery } from '../../core/api.types';
+import { TradeListStore } from '../../core/trade-list-store';
 import {
   ColumnDef,
   DEFAULT_SORT,
@@ -72,6 +74,7 @@ const COL_POP_MARGIN = 8;
     TableModule,
     TagModule,
     SelectButtonModule,
+    PopoverModule,
     PlayerDetailCardComponent,
     PositionFilterComponent,
     HandednessFilterComponent,
@@ -111,6 +114,12 @@ export class RankedTableComponent {
   /** Bumped by the container whenever `rows` was replaced from scratch rather
    *  than appended to — collapses expanded rows and scrolls back to the top. */
   readonly resetToken = input(0);
+  /** Live-league only: the league's trade-list store. When set, each row gets a
+   *  star toggle opening a "which lists is this player on" popover. */
+  readonly tradeStore = input<TradeListStore | null>(null);
+  /** Trade Targets page only: the list being viewed, threaded to the detail
+   *  card so its priority / note editors know which entry to patch. */
+  readonly tradeListId = input<string | null>(null);
 
   readonly queryChange = output<RankedQuery>();
   readonly loadMore = output<void>();
@@ -140,6 +149,12 @@ export class RankedTableComponent {
 
   protected readonly compareSel = signal<RankedPlayerRow[]>([]);
   protected readonly compareOpen = signal(false);
+
+  /** Row whose trade-list popover is open (set just before the popover toggles). */
+  protected readonly starRow = signal<RankedPlayerRow | null>(null);
+  /** Inline "new list" name being typed in the star popover. */
+  protected readonly newListName = signal('');
+  protected readonly starBusy = signal(false);
 
   // -------------------------------------------------- column-header quick filter
   private readonly filterableFields = new Set(FILTERABLE_FIELDS.map((f) => f.field));
@@ -470,6 +485,48 @@ export class RankedTableComponent {
   protected clearCompare(): void {
     this.compareSel.set([]);
     this.compareOpen.set(false);
+  }
+
+  // ------------------------------------------------------------- trade lists
+  /** Whether this player sits on at least one of the league's trade lists. */
+  protected isListed(p: RankedPlayerRow): boolean {
+    return this.tradeStore()?.listedIds().has(p.id) ?? false;
+  }
+
+  protected onStarClick(p: RankedPlayerRow): void {
+    this.starRow.set(p);
+    this.newListName.set('');
+  }
+
+  protected rowOnList(listId: string, playerId: string): boolean {
+    return this.tradeStore()?.lists().find((l) => l.id === listId)?.entryIds.includes(playerId)
+      ?? false;
+  }
+
+  protected async toggleOnList(listId: string, p: RankedPlayerRow, on: boolean): Promise<void> {
+    const store = this.tradeStore();
+    if (!store || this.starBusy()) return;
+    this.starBusy.set(true);
+    try {
+      if (on) await store.addPlayer(listId, p.id);
+      else await store.removePlayer(listId, p.id);
+    } finally {
+      this.starBusy.set(false);
+    }
+  }
+
+  protected async createListWithPlayer(p: RankedPlayerRow): Promise<void> {
+    const store = this.tradeStore();
+    const name = this.newListName().trim();
+    if (!store || !name || this.starBusy()) return;
+    this.starBusy.set(true);
+    try {
+      const made = await store.create(name);
+      await store.addPlayer(made.id, p.id);
+      this.newListName.set('');
+    } finally {
+      this.starBusy.set(false);
+    }
   }
 
   // ---------------------------------------------------- column-header quick filter

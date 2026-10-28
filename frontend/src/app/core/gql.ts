@@ -533,3 +533,114 @@ export const PLAYER_BREAKDOWN = gql`
     }
   }
 `;
+
+// --- custom trade lists ----------------------------------------------------
+const TRADE_LIST_FIELDS = gql`
+  fragment TradeListFields on TradeList {
+    id
+    name
+    entryCount
+    entryIds
+    createdAt
+  }
+`;
+
+export const TRADE_LISTS = gql`
+  ${TRADE_LIST_FIELDS}
+  query TradeLists($leagueId: ID!) {
+    tradeLists(leagueId: $leagueId) {
+      ...TradeListFields
+    }
+  }
+`;
+
+export const TRADE_LIST_PLAYERS = gql`
+  ${PLAYER_FIELDS}
+  query TradeListPlayers($leagueId: ID!, $listId: ID!) {
+    tradeListPlayers(leagueId: $leagueId, listId: $listId) {
+      totalRecords
+      rows {
+        ...PlayerFields
+        note
+        priority
+        stale
+      }
+    }
+  }
+`;
+
+export const CREATE_TRADE_LIST = gql`
+  ${TRADE_LIST_FIELDS}
+  mutation CreateTradeList($leagueId: ID!, $name: String!) {
+    createTradeList(leagueId: $leagueId, name: $name) {
+      ...TradeListFields
+    }
+  }
+`;
+
+export const RENAME_TRADE_LIST = gql`
+  ${TRADE_LIST_FIELDS}
+  mutation RenameTradeList($leagueId: ID!, $listId: ID!, $name: String!) {
+    renameTradeList(leagueId: $leagueId, listId: $listId, name: $name) {
+      ...TradeListFields
+    }
+  }
+`;
+
+export const DELETE_TRADE_LIST = gql`
+  mutation DeleteTradeList($leagueId: ID!, $listId: ID!) {
+    deleteTradeList(leagueId: $leagueId, listId: $listId)
+  }
+`;
+
+export const ADD_TO_TRADE_LIST = gql`
+  ${TRADE_LIST_FIELDS}
+  mutation AddToTradeList(
+    $leagueId: ID!
+    $listId: ID!
+    $playerId: ID!
+    $priority: String
+    $note: String
+  ) {
+    addToTradeList(
+      leagueId: $leagueId
+      listId: $listId
+      playerId: $playerId
+      priority: $priority
+      note: $note
+    ) {
+      ...TradeListFields
+    }
+  }
+`;
+
+export const REMOVE_FROM_TRADE_LIST = gql`
+  ${TRADE_LIST_FIELDS}
+  mutation RemoveFromTradeList($leagueId: ID!, $listId: ID!, $playerId: ID!) {
+    removeFromTradeList(leagueId: $leagueId, listId: $listId, playerId: $playerId) {
+      ...TradeListFields
+    }
+  }
+`;
+
+export const SET_TRADE_LIST_ENTRY = gql`
+  ${TRADE_LIST_FIELDS}
+  mutation SetTradeListEntry(
+    $leagueId: ID!
+    $listId: ID!
+    $playerId: ID!
+    $priority: String
+    $note: String
+  ) {
+    setTradeListEntry(
+      leagueId: $leagueId
+      listId: $listId
+      playerId: $playerId
+      priority: $priority
+      note: $note
+    ) {
+      ...TradeListFields
+    }
+  }
+`;
+

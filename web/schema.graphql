@@ -78,6 +78,12 @@ type RankedPlayer {
   ratings: JSON
   "Which stored ranking this row came from - pass it to `playerBreakdown`."
   source: RankingSource!
+  "trade-list query only: the entry's free-text note"
+  note: String
+  "trade-list query only: HIGH | MEDIUM | LOW"
+  priority: String
+  "trade-list query only: true when the player is no longer in the current snapshot"
+  stale: Boolean
 }
 
 "A stored ranking: a draft class (its current method), or a league snapshot + method."
@@ -155,6 +161,16 @@ type ScoreBreakdown {
   rankAdjust: RankAdjustBreakdown
   "values from an older scoring pipeline with no place above (imported rankings only)"
   legacy: [NamedValue!]!
+}
+
+"A named, per-league list of trade targets."
+type TradeList {
+  id: ID!
+  name: String!
+  entryCount: Int!
+  "OOTP player ids on this list, in add order - backs the row 'on a list' marker."
+  entryIds: [ID!]!
+  createdAt: String
 }
 
 input RankedPlayerFilter {
@@ -312,6 +328,10 @@ type Query {
   leagueRefreshStatus(leagueId: ID!): LeagueRefreshStatus!
   "How one player's score was built in a stored ranking (a row's `source`)."
   playerBreakdown(source: RankingSourceInput!, playerId: ID!): ScoreBreakdown
+  "Trade-target lists for a league (no entries; use tradeListPlayers for those)."
+  tradeLists(leagueId: ID!): [TradeList!]!
+  "A trade list's entries resolved against the current snapshot for live scores."
+  tradeListPlayers(leagueId: ID!, listId: ID!): RankedPlayerPage!
 }
 
 type Mutation {
@@ -348,4 +368,22 @@ type Mutation {
   "Start a background snapshot refresh; returns immediately with `state: running`."
   refreshLeagueSnapshot(leagueId: ID!): LeagueRefreshStatus!
   checkLeagueSnapshotFreshness(leagueId: ID!): LeagueFreshness!
+  createTradeList(leagueId: ID!, name: String!): TradeList!
+  renameTradeList(leagueId: ID!, listId: ID!, name: String!): TradeList!
+  deleteTradeList(leagueId: ID!, listId: ID!): String!
+  addToTradeList(
+    leagueId: ID!
+    listId: ID!
+    playerId: ID!
+    priority: String
+    note: String
+  ): TradeList!
+  removeFromTradeList(leagueId: ID!, listId: ID!, playerId: ID!): TradeList!
+  setTradeListEntry(
+    leagueId: ID!
+    listId: ID!
+    playerId: ID!
+    priority: String
+    note: String
+  ): TradeList!
 }

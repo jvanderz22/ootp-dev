@@ -7,7 +7,7 @@ per database path (tests point DATA_DIR at a fresh directory each time).
 
 Writes go through `transaction()`; reads can use `query` / `query_one` directly.
 The schema is versioned with `PRAGMA user_version`; the first connection to a
-database runs any pending migrations, and migration 1 also imports the files a
+database runs any pending migrations. Migrations 1 and 2 also import the files a
 pre-SQLite install left under $DATA_DIR (see `db_import.py`).
 """
 import sqlite3
@@ -118,6 +118,35 @@ CREATE TABLE run_results (
 CREATE INDEX run_results_order ON run_results (scope, scope_id, method, model_rank);
 """
 
+# Trade lists and their entries list in insertion (rowid) order; an upsert or a
+# rename updates in place, so it keeps its spot. The name / position / org on an
+# entry are captured when the player is added, so the entry still renders once
+# the player has left the league's snapshot.
+_SCHEMA_V2 = """
+CREATE TABLE trade_lists (
+  league_id TEXT NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
+  id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  created_at TEXT,
+  PRIMARY KEY (league_id, id)
+);
+
+CREATE TABLE trade_list_entries (
+  league_id TEXT NOT NULL,
+  list_id TEXT NOT NULL,
+  player_id TEXT NOT NULL,
+  priority TEXT,
+  note TEXT NOT NULL DEFAULT '',
+  added_at TEXT,
+  name TEXT NOT NULL DEFAULT '',
+  position TEXT NOT NULL DEFAULT '',
+  org TEXT NOT NULL DEFAULT '',
+  PRIMARY KEY (league_id, list_id, player_id),
+  FOREIGN KEY (league_id, list_id)
+    REFERENCES trade_lists (league_id, id) ON DELETE CASCADE
+);
+"""
+
 
 def _run_script(conn, script):
     # Not `executescript`: it COMMITs any open transaction first, which would
@@ -134,8 +163,15 @@ def _migration_1(conn):
     db_import.import_legacy_files(_path_of(conn).parent)
 
 
+def _migration_2(conn):
+    _run_script(conn, _SCHEMA_V2)
+    import db_import
+
+    db_import.import_trade_lists(_path_of(conn).parent)
+
+
 # index i holds the step that takes the schema from version i to i + 1
-_MIGRATIONS = [_migration_1]
+_MIGRATIONS = [_migration_1, _migration_2]
 
 _conns: "dict[tuple, sqlite3.Connection]" = {}
 _conns_lock = threading.Lock()

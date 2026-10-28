@@ -46,6 +46,62 @@
     </span>
   </div>
 
+  @if (tradeStore()) {
+    <div class="trade-lists" (click)="$event.stopPropagation()">
+      <span class="tl-label">Trade lists</span>
+      <div class="tl-lists">
+        @for (l of allLists(); track l.id) {
+          <label class="tl-chip" [class.on]="isOnList(l.id)">
+            <input
+              type="checkbox"
+              [checked]="isOnList(l.id)"
+              [disabled]="tlBusy()"
+              (change)="toggleList(l.id, $any($event.target).checked)"
+            />
+            <span>{{ l.name }}</span>
+          </label>
+        }
+        <form class="tl-new" (submit)="$event.preventDefault(); addNewList()">
+          <input
+            type="text"
+            placeholder="New list…"
+            [ngModel]="newListName()"
+            (ngModelChange)="newListName.set($event)"
+            [ngModelOptions]="{ standalone: true }"
+            [disabled]="tlBusy()"
+          />
+        </form>
+      </div>
+
+      @if (tradeListId() && isOnList(tradeListId()!)) {
+        <div class="tl-entry">
+          <label>
+            <span class="muted">Priority</span>
+            <select
+              [ngModel]="priorityDraft()"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="priorityDraft.set($event); commitEntry()"
+            >
+              @for (pr of priorities; track pr) {
+                <option [value]="pr">{{ pr }}</option>
+              }
+            </select>
+          </label>
+          <label class="tl-note">
+            <span class="muted">Note</span>
+            <textarea
+              rows="2"
+              [ngModel]="noteDraft()"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="noteDraft.set($event)"
+              (blur)="commitEntry()"
+            ></textarea>
+          </label>
+        </div>
+      }
+    </div>
+  }
+
   <div class="detail-sections">
     <div class="ingame-grid">
       <section class="detail-section">

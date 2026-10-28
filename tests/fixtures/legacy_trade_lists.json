@@ -1,0 +1,105 @@
+{
+  "golden-fixture-league": [
+    {
+      "id": "deadline-targets",
+      "name": "Deadline Targets",
+      "createdAt": "2026-09-08T01:12:44Z",
+      "entries": [
+        {
+          "playerId": "1001",
+          "priority": "LOW",
+          "note": "Only if the price drops",
+          "addedAt": "2026-09-08T01:13:02Z",
+          "name": "Blake Merritt",
+          "position": "SP",
+          "org": "Milwaukee"
+        },
+        {
+          "playerId": "1009",
+          "priority": "HIGH",
+          "note": "",
+          "addedAt": "2026-09-08T01:13:40Z",
+          "name": "Jordan Hollis",
+          "position": "2B",
+          "org": "Milwaukee"
+        },
+        {
+          "playerId": "9999",
+          "priority": "HIGH",
+          "note": "Released - check FA",
+          "addedAt": "2026-09-09T17:20:11Z",
+          "name": "Gone Player",
+          "position": "CF",
+          "org": "Chicago"
+        },
+        {
+          "playerId": "1002",
+          "priority": "MEDIUM",
+          "note": "Lefty specialist",
+          "addedAt": "2026-09-10T02:00:00Z",
+          "name": "Casey Abbott",
+          "position": "RP",
+          "org": "Milwaukee"
+        },
+        {
+          "playerId": "1104",
+          "priority": "MEDIUM",
+          "note": "",
+          "addedAt": "2026-09-10T02:01:00Z",
+          "name": "Emery Radley",
+          "position": "RP",
+          "org": ""
+        }
+      ]
+    },
+    {
+      "id": "deadline-targets-2",
+      "name": "Deadline Targets",
+      "createdAt": "2026-09-12T04:00:00Z",
+      "entries": []
+    },
+    {
+      "id": "prospects",
+      "name": "Prospects",
+      "createdAt": "2026-10-26T05:51:03Z",
+      "entries": [
+        {
+          "playerId": "1011",
+          "priority": "LOW",
+          "note": "Watch the hit tool",
+          "addedAt": "2026-10-26T05:51:20Z",
+          "name": "Logan Quimby",
+          "position": "CF",
+          "org": "Milwaukee"
+        },
+        {
+          "playerId": "1008",
+          "priority": "LOW",
+          "note": "",
+          "addedAt": "2026-10-26T05:51:30Z",
+          "name": "Indy Calder",
+          "position": "SP",
+          "org": "Milwaukee"
+        }
+      ]
+    }
+  ],
+  "league-deleted-long-ago": [
+    {
+      "id": "orphan",
+      "name": "Orphan",
+      "createdAt": "2026-09-08T00:00:00Z",
+      "entries": [
+        {
+          "playerId": "1000",
+          "priority": "HIGH",
+          "note": "",
+          "addedAt": "2026-09-08T00:00:01Z",
+          "name": "Avery Thorne",
+          "position": "SS",
+          "org": "Milwaukee"
+        }
+      ]
+    }
+  ]
+}

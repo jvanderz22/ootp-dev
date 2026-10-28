@@ -13,11 +13,12 @@ import { filter, map, startWith } from 'rxjs';
 
 import { LeagueStore } from '../core/league-store';
 import { LeagueSnapshotStore } from '../core/league-snapshot-store';
+import { TradeListStore } from '../core/trade-list-store';
 
 @Component({
   selector: 'app-league-shell',
   imports: [RouterLink, RouterLinkActive, RouterOutlet, DatePipe],
-  providers: [LeagueSnapshotStore],
+  providers: [LeagueSnapshotStore, TradeListStore],
   template: `
     <header class="shell-head">
       <h1>{{ league()?.name ?? id() }}</h1>
@@ -29,6 +30,9 @@ import { LeagueSnapshotStore } from '../core/league-snapshot-store';
         >Current League</a>
         <a [routerLink]="['/league', id(), 'system']" routerLinkActive="active"
           >System</a
+        >
+        <a [routerLink]="['/league', id(), 'targets']" routerLinkActive="active"
+          >Trade Targets</a
         >
         <a [routerLink]="['/league', id(), 'classes']" routerLinkActive="active"
           >Draft Classes</a
@@ -137,6 +141,7 @@ export class LeagueShellPage {
   private readonly router = inject(Router);
   private readonly leagues = inject(LeagueStore);
   protected readonly store = inject(LeagueSnapshotStore);
+  private readonly tradeLists = inject(TradeListStore);
 
   protected readonly id = toSignal(
     this.route.paramMap.pipe(map((p) => p.get('id') ?? '')),
@@ -163,7 +168,11 @@ export class LeagueShellPage {
   constructor() {
     effect(() => {
       const id = this.id();
-      if (id) untracked(() => void this.store.init(id));
+      if (id)
+        untracked(() => {
+          void this.store.init(id);
+          void this.tradeLists.init(id);
+        });
     });
   }
 }
