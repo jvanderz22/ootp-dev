@@ -21,6 +21,7 @@ import {
   LEAGUE_VIEW_DETAIL,
   LEAGUES,
   PLAYER_BREAKDOWN,
+  PLAYER_SPLITS,
   RANKED_PAGE,
   REFRESH_DRAFTED,
   REFRESH_LEAGUE_SNAPSHOT,
@@ -53,6 +54,7 @@ import {
   RankedPlayer,
   RankedPlayerPage,
   RankedQuery,
+  PlayerSplits,
   RankingSource,
   ScoreBreakdown,
   TradeList,
@@ -401,6 +403,30 @@ export class ApiService {
         }),
       );
       return res.data!.playerBreakdown;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  /** vs-L / vs-R overalls for a live-league player; null for a draft class or
+   *  a snapshot pulled before splits were kept. */
+  async playerSplits(source: RankingSource, playerId: string): Promise<PlayerSplits | null> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.query<{ playerSplits: PlayerSplits | null }>({
+          query: PLAYER_SPLITS,
+          variables: {
+            source: {
+              className: source.className,
+              leagueId: source.leagueId,
+              method: source.method,
+            },
+            playerId,
+          },
+          fetchPolicy: 'network-only',
+        }),
+      );
+      return res.data!.playerSplits;
     } catch (e) {
       unwrap(e);
     }

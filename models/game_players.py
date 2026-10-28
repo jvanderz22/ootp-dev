@@ -91,6 +91,25 @@ PLAYER_FIELDS = {
     "knucklecurve_ovr": "KC",
 }
 
+# Platoon splits of the current ratings - only live-league snapshots carry them
+# (StatsPlus exports them; OOTP's scouting CSV doesn't). A batter's split is vs
+# left- / right-handed pitching, a pitcher's vs left- / right-handed batters.
+# Each split column is the combined column's header plus the side: "CON vL".
+SPLIT_SIDES = ("vL", "vR")
+SPLIT_RATING_FIELDS = (
+    "contact_ovr", "gap_ovr", "power_ovr", "eye_ovr", "avoid_k_ovr",
+    "stuff_ovr", "movement_ovr", "control_ovr",
+)
+
+
+def split_header(field: str, side: str) -> str:
+    return f"{PLAYER_FIELDS[field]} {side}"
+
+
+SPLIT_HEADERS = [
+    split_header(field, side) for side in SPLIT_SIDES for field in SPLIT_RATING_FIELDS
+]
+
 
 class GamePlayers:
     def __init__(self, player_dicts):
@@ -146,6 +165,20 @@ class GamePlayer:
         # A shallow copy is enough: every value is an immutable str / int /
         # None and the only callers reassign whole top-level keys.
         return dict(self._dict)
+
+    def with_split(self, side: str):
+        """This player with each current rating swapped for its `side` platoon
+        split ("vL" / "vR"), or None when the row carries no splits."""
+        attrs = self.attrs()
+        splits = {
+            PLAYER_FIELDS[field]: attrs.get(split_header(field, side))
+            for field in SPLIT_RATING_FIELDS
+        }
+        splits = {k: v for k, v in splits.items() if v not in (None, "")}
+        if not splits:
+            return None
+        attrs.update(splits)
+        return GamePlayer(attrs)
 
     @property
     def id(self):

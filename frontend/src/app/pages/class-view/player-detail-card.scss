@@ -162,6 +162,32 @@
 ::ng-deep .p-panel { margin-top: 4px; }
 ::ng-deep .p-panel .modifier-group + .modifier-group { margin-top: 8px; }
 
+/* platoon splits: label + combined / vs L / vs R */
+.split-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.split-grid + .split-grid { margin-top: 10px; }
+.split {
+  display: grid;
+  grid-template-columns: 1fr repeat(3, 3.2rem);
+  gap: 8px;
+  align-items: baseline;
+  font-size: 12px;
+  border-bottom: 1px dotted var(--border);
+  padding-bottom: 2px;
+}
+.split > :not(span) { text-align: right; font-variant-numeric: tabular-nums; }
+.split span { color: var(--text-dim); overflow-wrap: anywhere; }
+.split i { color: var(--text-dim); font-style: normal; }
+.split b { font-weight: 500; }
+.split.score b { font-weight: 700; }
+.split b.up { color: var(--ok); }
+.split b.down { color: var(--danger); }
+.split-head { color: var(--text-dim); border-bottom-style: solid; }
+.split-head > * { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 400; color: var(--text-dim); }
+
 /* trade-list membership + entry editors (live-league only) */
 .trade-lists {
   display: flex;

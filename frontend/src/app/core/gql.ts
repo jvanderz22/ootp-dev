@@ -534,6 +534,41 @@ export const PLAYER_BREAKDOWN = gql`
   }
 `;
 
+const SPLIT_SCORES_FIELDS = gql`
+  fragment SplitScoresFields on SplitScores {
+    batterScore
+    battingModel
+    pitcherScore
+    starterScore
+    relieverScore
+    contact
+    gap
+    power
+    eye
+    avoidK
+    stuff
+    movement
+    control
+  }
+`;
+
+export const PLAYER_SPLITS = gql`
+  ${SPLIT_SCORES_FIELDS}
+  query PlayerSplits($source: RankingSourceInput!, $playerId: ID!) {
+    playerSplits(source: $source, playerId: $playerId) {
+      combined {
+        ...SplitScoresFields
+      }
+      vsL {
+        ...SplitScoresFields
+      }
+      vsR {
+        ...SplitScoresFields
+      }
+    }
+  }
+`;
+
 // --- custom trade lists ----------------------------------------------------
 const TRADE_LIST_FIELDS = gql`
   fragment TradeListFields on TradeList {

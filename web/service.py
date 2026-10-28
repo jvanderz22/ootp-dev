@@ -20,7 +20,7 @@ from context import DraftClassContext, default_base_dir
 from web import class_index, leagues, org_rankings, trade_lists
 from custom_ranking import clear_order, has_custom_order, load_order, resolve_order, save_order
 from drafted_players import get_drafted_player_ids, save_picks
-from models.game_players import GamePlayers
+from models.game_players import GamePlayer, GamePlayers
 from models.player_type import classify
 from load_draft_class import (
     DatasetFormatError,
@@ -28,6 +28,7 @@ from load_draft_class import (
     create_dataset_from_upload,
 )
 from ranking_csv import build_upload_rows
+from scoring.splits import score_splits
 from statsplus_api import (
     StatsPlusAuthError,
     StatsPlusError,
@@ -1084,6 +1085,35 @@ def _breakdown_payload(player_type: str, b: dict) -> dict:
     }
 
 
+def _snapshot_row(ctx, player_id):
+    """One player's raw row from the stored snapshot CSV (a linear scan - for
+    single-player lookups, not bulk use), or None."""
+    pid = str(player_id)
+    try:
+        with open(ctx.data_file, newline="") as f:
+            return next((r for r in csv.DictReader(f) if r.get("ID") == pid), None)
+    except FileNotFoundError:
+        return None
+
+
+def player_splits(source: dict, player_id):
+    """vs-L / vs-R overalls for one live-league player (see `scoring/splits.py`).
+    None for a draft class (OOTP's export has no splits), a player not in the
+    snapshot, or a snapshot pulled before splits were stored."""
+    league_id = (source or {}).get("league_id")
+    if not league_id:
+        return None
+    _, ctx = _league_ctx(league_id)
+    row = _snapshot_row(ctx, player_id)
+    if row is None:
+        return None
+    row["G/F"] = league_snapshot.coerce_gf(row.get("G/F"))
+    scored = score_splits(GamePlayer(row))
+    if scored is None:
+        return None
+    return {"combined": scored["combined"], "vs_l": scored["vL"], "vs_r": scored["vR"]}
+
+
 def player_breakdown(source: dict, player_id):
     """How one player's score was built, from the stored ranking `source` names
     (a row's `source`: a class, or a league + method)."""
@@ -1132,26 +1162,17 @@ def _entry_denorm(ctx, player_id: str) -> dict:
     """Add-time snapshot capture (name / position / org) stored on an entry so it
     still renders after the player leaves the snapshot. Empty when the player is
     not in the current snapshot (or there is no snapshot)."""
-    if not ctx.data_file.exists():
+    r = _snapshot_row(ctx, player_id)
+    if r is None:
         return {}
-    team_names = _team_display_names(ctx)
-    pid = str(player_id)
-    try:
-        with open(ctx.data_file, newline="") as f:
-            for r in csv.DictReader(f):
-                if r.get("ID") != pid:
-                    continue
-                org_id = (r.get("snap_org_id") or "").strip()
-                return {
-                    "name": (r.get("Name") or "").strip(),
-                    "position": (r.get("POS") or "").strip(),
-                    "org": team_names.get(org_id)
-                    or (r.get("ORG") or "").strip()
-                    or None,
-                }
-    except FileNotFoundError:
-        pass
-    return {}
+    org_id = (r.get("snap_org_id") or "").strip()
+    return {
+        "name": (r.get("Name") or "").strip(),
+        "position": (r.get("POS") or "").strip(),
+        "org": _team_display_names(ctx).get(org_id)
+        or (r.get("ORG") or "").strip()
+        or None,
+    }
 
 
 def list_trade_lists(league_id: str) -> list:

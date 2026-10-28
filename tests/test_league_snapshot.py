@@ -453,3 +453,50 @@ def test_ranked_rows_requires_a_snapshot(data_dir):
     ctx = _ctx_for("missing")
     with pytest.raises(FileNotFoundError):
         ranked_rows(ctx, "overall")
+
+
+# ------------------------------------------------------------ platoon splits
+def _split_csvs():
+    """One hitter who mashes lefties (+15 on every vs-L tool) and is weak vs
+    righties (-10); the fixture pitcher's splits are left at the default."""
+    ratings, players, teams = make_snapshot_csvs()
+    rows = list(csv.DictReader(io.StringIO(ratings)))
+    hitter = next(r for r in rows if r["ID"] == "200")
+    for col in ("Cntct", "Gap", "Pow", "Eye", "Ks"):
+        hitter[f"{col}_L"] = str(int(hitter[col]) + 15)
+        hitter[f"{col}_R"] = str(int(hitter[col]) - 10)
+    return _csv(RATINGS_HEADER, rows), players, teams
+
+
+def test_split_ratings_mapped():
+    rows = {r["ID"]: r for r in join_rows(*_split_csvs())}
+    assert rows["200"]["CON vL"] == "70" and rows["200"]["CON vR"] == "45"
+    assert rows["200"]["K's vL"] == "65"
+    assert rows["100"]["STU vL"] == "40" and rows["100"]["CONT vR"] == "40"
+
+
+def test_player_splits_scores_each_side(data_dir):
+    from web import service
+
+    ctx = _ctx_for("yfmlb")
+    build_snapshot(ctx, *_split_csvs())
+    s = service.player_splits({"league_id": "yfmlb"}, "200")
+
+    assert s["vs_l"]["contact"] == 70 and s["vs_r"]["contact"] == 45
+    assert s["combined"]["contact"] == 55
+    assert s["vs_l"]["batter_score"] > s["combined"]["batter_score"] > s["vs_r"]["batter_score"]
+
+
+def test_player_splits_unavailable(data_dir):
+    from web import service
+
+    ctx = _ctx_for("yfmlb")
+    ratings, players, teams = make_snapshot_csvs()
+    # a snapshot written before splits were kept has no split columns at all
+    rows = list(csv.DictReader(io.StringIO(ratings)))
+    header = [h for h in RATINGS_HEADER if not h.endswith(("_L", "_R"))]
+    build_snapshot(ctx, _csv(header, [{h: r[h] for h in header} for r in rows]), players, teams)
+
+    assert service.player_splits({"league_id": "yfmlb"}, "200") is None
+    assert service.player_splits({"league_id": "yfmlb"}, "999") is None
+    assert service.player_splits({"class_name": "anything"}, "200") is None

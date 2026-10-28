@@ -163,6 +163,34 @@ type ScoreBreakdown {
   legacy: [NamedValue!]!
 }
 
+"""
+The current-ratings model on one side of a platoon split. A batter's split is vs
+left- / right-handed pitching, a pitcher's vs left- / right-handed batters. The
+ratings are the ones scored (the split's, or the combined current ratings).
+"""
+type SplitScores {
+  batterScore: Float!
+  battingModel: Float!
+  pitcherScore: Float!
+  starterScore: Float!
+  relieverScore: Float!
+  contact: Int
+  gap: Int
+  power: Int
+  eye: Int
+  avoidK: Int
+  stuff: Int
+  movement: Int
+  control: Int
+}
+
+"vs-L / vs-R overalls, plus `combined` scored the same way for comparison."
+type PlayerSplits {
+  combined: SplitScores!
+  vsL: SplitScores!
+  vsR: SplitScores!
+}
+
 "A named, per-league list of trade targets."
 type TradeList {
   id: ID!
@@ -328,6 +356,11 @@ type Query {
   leagueRefreshStatus(leagueId: ID!): LeagueRefreshStatus!
   "How one player's score was built in a stored ranking (a row's `source`)."
   playerBreakdown(source: RankingSourceInput!, playerId: ID!): ScoreBreakdown
+  """
+  Live-league players only: the current-ratings model re-run on the vs-L / vs-R
+  split ratings. Null for a draft class or a snapshot pulled before splits were kept.
+  """
+  playerSplits(source: RankingSourceInput!, playerId: ID!): PlayerSplits
   "Trade-target lists for a league (no entries; use tradeListPlayers for those)."
   tradeLists(leagueId: ID!): [TradeList!]!
   "A trade list's entries resolved against the current snapshot for live scores."

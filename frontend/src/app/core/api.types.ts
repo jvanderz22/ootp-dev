@@ -206,6 +206,32 @@ export interface ScoreBreakdown {
   legacy: NamedValue[];
 }
 
+/** The current-ratings model on one side of a platoon split, plus the
+ *  ratings it scored. A batter's split is vs LHP / RHP, a pitcher's vs LHB / RHB. */
+export interface SplitScores {
+  batterScore: number;
+  battingModel: number;
+  pitcherScore: number;
+  starterScore: number;
+  relieverScore: number;
+  contact: number | null;
+  gap: number | null;
+  power: number | null;
+  eye: number | null;
+  avoidK: number | null;
+  stuff: number | null;
+  movement: number | null;
+  control: number | null;
+}
+
+/** vs-L / vs-R overalls (live-league players only), with `combined` scored the
+ *  same way for comparison. */
+export interface PlayerSplits {
+  combined: SplitScores;
+  vsL: SplitScores;
+  vsR: SplitScores;
+}
+
 /** Priority tier on a trade-list entry. Sorts HIGH → MEDIUM → LOW. */
 export type TradePriority = 'HIGH' | 'MEDIUM' | 'LOW';
 export const TRADE_PRIORITIES: TradePriority[] = ['HIGH', 'MEDIUM', 'LOW'];

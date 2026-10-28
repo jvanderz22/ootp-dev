@@ -828,3 +828,24 @@ def test_league_accepts_bare_slug_and_alt_host(client):
         'mutation { createLeague(name: "b", leagueUrl: "atl-01.statsplus.net/wbf") { leagueUrl } }',
     )["createLeague"]
     assert out["leagueUrl"] == "https://atl-01.statsplus.net/wbf/"
+
+
+def test_player_splits_query(client):
+    from league_snapshot import LeagueSnapshotContext, build_snapshot
+    from tests.test_league_snapshot import _split_csvs
+
+    lid = gql(client, 'mutation { createLeague(name: "YF", leagueUrl: "yfmlb") { id } }')[
+        "createLeague"
+    ]["id"]
+    build_snapshot(LeagueSnapshotContext(lid), *_split_csvs())
+
+    q = (
+        "query($s: RankingSourceInput!, $p: ID!) { playerSplits(source: $s, playerId: $p) "
+        "{ combined { contact batterScore } vsL { contact batterScore } vsR { contact batterScore } } }"
+    )
+    splits = gql(client, q, s={"leagueId": lid, "method": "overall"}, p="200")["playerSplits"]
+    assert [splits[k]["contact"] for k in ("combined", "vsL", "vsR")] == [55, 70, 45]
+    assert splits["vsL"]["batterScore"] > splits["vsR"]["batterScore"]
+
+    draft = gql(client, q, s={"className": "nope", "method": "overall"}, p="200")
+    assert draft["playerSplits"] is None

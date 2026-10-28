@@ -34,7 +34,9 @@ from pathlib import Path
 import db
 import results_store
 from context import default_base_dir
-from models.game_players import PLAYER_FIELDS, GamePlayer
+from models.game_players import (
+    PLAYER_FIELDS, SPLIT_HEADERS, SPLIT_SIDES, GamePlayer, split_header,
+)
 from rankers.base_ranker import DEFAULT_BATCH_SIZE
 from rankers.get_ranker import get_ranker_for_method
 from statsplus_api import (
@@ -75,7 +77,7 @@ SNAPSHOT_META_FIELDS = [
     "snap_team_id", "snap_org_id", "snap_league_id", "mlb_service_years",
     "is_amateur", "rule_5_eligible",
 ]
-SNAPSHOT_FIELDNAMES = OUTPUT_FIELDNAMES + SNAPSHOT_META_FIELDS
+SNAPSHOT_FIELDNAMES = OUTPUT_FIELDNAMES + SPLIT_HEADERS + SNAPSHOT_META_FIELDS
 
 
 # --------------------------------------------------------------- column mapping
@@ -112,6 +114,20 @@ RATINGS_COLUMN_MAP = {
     "Int": "INT", "WrkEthic": "WE", "Greed": "FIN", "Loy": "LOY", "Lead": "LEA",
     "Prone": "Prone", "Ovr": "OVR", "Pot": "POT",
 }
+
+# Platoon splits of the current ratings: `<col>_L` / `<col>_R` (vs left / right -
+# handed pitchers for a batter, batters for a pitcher) -> "CON vL" etc.
+_SPLIT_SOURCES = {
+    "contact_ovr": "Cntct", "gap_ovr": "Gap", "power_ovr": "Pow", "eye_ovr": "Eye",
+    "avoid_k_ovr": "Ks", "stuff_ovr": "Stf", "movement_ovr": "Mov", "control_ovr": "Ctrl",
+}
+RATINGS_COLUMN_MAP.update(
+    {
+        f"{src}_{side[1]}": split_header(field, side)
+        for field, src in _SPLIT_SOURCES.items()
+        for side in SPLIT_SIDES
+    }
+)
 
 # --- value maps for the columns that are codes rather than words --------------
 HAND_NAMES = {"R": "Right", "L": "Left", "S": "Switch", "B": "Switch"}

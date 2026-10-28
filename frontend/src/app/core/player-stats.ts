@@ -3,7 +3,7 @@
  * class-view detail panel and the side-by-side compare view both render.
  * Kept free of `this` so components can expose them as plain fields.
  */
-import { PlayerType, RankedPlayer, ScoreBreakdown } from './api.types';
+import { PlayerSplits, PlayerType, RankedPlayer, ScoreBreakdown, SplitScores } from './api.types';
 
 export interface RatingRow {
   label: string;
@@ -160,6 +160,48 @@ export function pitchingMiscRows(p: RankedPlayer): [string, string][] {
 
 export function pitchArsenal(p: RankedPlayer) {
   return p.ratings?.pitching.pitches ?? [];
+}
+
+// ------------------------------------------------------- platoon splits
+export interface SplitRow {
+  label: string;
+  combined: number | null;
+  vsL: number | null;
+  vsR: number | null;
+  /** a model score (formatted as a decimal) rather than a 20-80 rating */
+  score: boolean;
+}
+
+const BATTING_SPLIT_SPEC: [string, keyof SplitScores, boolean][] = [
+  ['Batter score', 'batterScore', true],
+  ['Batting model', 'battingModel', true],
+  ['Contact', 'contact', false],
+  ['Gap', 'gap', false],
+  ['Power', 'power', false],
+  ['Eye', 'eye', false],
+  ['Avoid K', 'avoidK', false],
+];
+
+const PITCHING_SPLIT_SPEC: [string, keyof SplitScores, boolean][] = [
+  ['Pitcher score', 'pitcherScore', true],
+  ['SP model', 'starterScore', true],
+  ['RP model', 'relieverScore', true],
+  ['Stuff', 'stuff', false],
+  ['Movement', 'movement', false],
+  ['Control', 'control', false],
+];
+
+/** Combined / vs-L / vs-R side by side for the batting or pitching block. */
+export function splitRows(s: PlayerSplits | null | undefined, side: 'batting' | 'pitching'): SplitRow[] {
+  if (!s) return [];
+  const spec = side === 'batting' ? BATTING_SPLIT_SPEC : PITCHING_SPLIT_SPEC;
+  return spec.map(([label, key, score]) => ({
+    label,
+    combined: s.combined[key],
+    vsL: s.vsL[key],
+    vsR: s.vsR[key],
+    score,
+  }));
 }
 
 // ------------------------------------------------------- score breakdown

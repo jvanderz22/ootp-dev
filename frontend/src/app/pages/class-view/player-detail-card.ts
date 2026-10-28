@@ -5,7 +5,13 @@ import { TagModule } from 'primeng/tag';
 import { PanelModule } from 'primeng/panel';
 
 import { ApiService } from '../../core/api';
-import { RankedPlayerRow, ScoreBreakdown, TRADE_PRIORITIES, TradePriority } from '../../core/api.types';
+import {
+  PlayerSplits,
+  RankedPlayerRow,
+  ScoreBreakdown,
+  TRADE_PRIORITIES,
+  TradePriority,
+} from '../../core/api.types';
 import { TradeListStore } from '../../core/trade-list-store';
 import {
   battingComponents,
@@ -23,6 +29,7 @@ import {
   showBatting,
   showPitching,
   speedRows,
+  splitRows,
   typeSeverity,
 } from '../../core/player-stats';
 
@@ -114,6 +121,30 @@ export class PlayerDetailCardComponent {
    *  every table row. Null while loading (those sections just stay hidden). */
   protected readonly breakdown = signal<ScoreBreakdown | null>(null);
 
+  /** Platoon splits are live-league only (OOTP's draft export has none) and
+   *  cost a model run, so they're fetched the first time the panel opens.
+   *  `undefined` while loading, null when the snapshot has no splits. */
+  protected readonly splitsOpen = signal(false);
+  protected readonly splits = signal<PlayerSplits | null | undefined>(undefined);
+  private splitsFor: RankedPlayerRow | null = null;
+
+  /** One Combined / vs-L / vs-R table per side the player is judged on; `vs`
+   *  names the opponent: pitchers for a batter, batters for a pitcher. */
+  protected readonly splitBlocks = computed(() => {
+    const s = this.splits();
+    const t = this.player().type;
+    return [
+      ...(showBatting(t) ? [{ vs: 'HP', rows: splitRows(s, 'batting') }] : []),
+      ...(showPitching(t) ? [{ vs: 'HB', rows: splitRows(s, 'pitching') }] : []),
+    ];
+  });
+
+  /** Colour a split cell against the combined value. */
+  protected splitTone(v: number | null, combined: number | null): string {
+    if (v == null || combined == null || v === combined) return '';
+    return v > combined ? 'up' : 'down';
+  }
+
   constructor() {
     effect(() => {
       const p = this.player();
@@ -130,6 +161,20 @@ export class PlayerDetailCardComponent {
           if (this.player() === p) this.breakdown.set(b);
         },
         () => {}, // the card still shows the scores and ratings without it
+      );
+    });
+    effect(() => {
+      const p = this.player();
+      if (!this.splitsOpen() || this.splitsFor === p) return;
+      this.splitsFor = p;
+      this.splits.set(undefined);
+      this.api.playerSplits(p.source, p.id).then(
+        (s) => {
+          if (this.player() === p) this.splits.set(s);
+        },
+        () => {
+          if (this.player() === p) this.splits.set(null);
+        },
       );
     });
   }

@@ -124,6 +124,11 @@ async def resolve_player_breakdown(_, __, source, player_id):
     return await _off_loop(service.player_breakdown, source, player_id)
 
 
+@query.field("playerSplits")
+async def resolve_player_splits(_, __, source, player_id):
+    return await _off_loop(service.player_splits, source, player_id)
+
+
 @query.field("tradeLists")
 async def resolve_trade_lists(_, __, league_id):
     return await _off_loop(service.list_trade_lists, league_id)

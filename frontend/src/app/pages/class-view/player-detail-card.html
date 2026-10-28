@@ -312,6 +312,43 @@
           }
         </p-panel>
       }
+
+      @if (p.source.leagueId) {
+        <p-panel
+          header="Platoon splits"
+          [toggleable]="true"
+          [collapsed]="!splitsOpen()"
+          (collapsedChange)="splitsOpen.set(!$event)"
+        >
+          @if (splits() === undefined) {
+            <span class="muted">Loading…</span>
+          } @else if (splits() === null) {
+            <span class="muted">No split ratings in this snapshot — refresh it from StatsPlus.</span>
+          } @else {
+            @for (blk of splitBlocks(); track blk.vs) {
+              <div class="split-grid">
+                <div class="split split-head">
+                  <span>Current</span><i>All</i><b>vs L{{ blk.vs }}</b><b>vs R{{ blk.vs }}</b>
+                </div>
+                @for (r of blk.rows; track r.label) {
+                  <div class="split" [class.score]="r.score">
+                    <span>{{ r.label }}</span>
+                    @if (r.score) {
+                      <i>{{ r.combined | number: '1.1-1' }}</i>
+                      <b [class]="splitTone(r.vsL, r.combined)">{{ r.vsL | number: '1.1-1' }}</b>
+                      <b [class]="splitTone(r.vsR, r.combined)">{{ r.vsR | number: '1.1-1' }}</b>
+                    } @else {
+                      <i>{{ r.combined ?? '—' }}</i>
+                      <b [class]="splitTone(r.vsL, r.combined)">{{ r.vsL ?? '—' }}</b>
+                      <b [class]="splitTone(r.vsR, r.combined)">{{ r.vsR ?? '—' }}</b>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          }
+        </p-panel>
+      }
     </section>
   </div>
 
