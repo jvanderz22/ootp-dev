@@ -40,7 +40,7 @@ PLAYERS_HEADER = [
     "ID", "First Name", "Last Name", "Team ID", "Parent Team ID", "Level", "Pos",
     "Role", "Age", "Organization ID", "League ID", "bats", "throws",
     "mlb_service_years", "pro_service_years", "pro_service_days", "last_team_id",
-    "draft_eligible",
+    "draft_eligible", "is_on_secondary", "years_protected_from_rule_5",
 ]
 
 # `League ID` is negative for a player in the international complex (see
@@ -105,8 +105,16 @@ def make_snapshot_csvs():
         Steal="45", Run="50", Ovr="55", Pot="65",
     )
     players = [
-        _players_row(ID="100", Level="1", **{"Team ID": "46", "Parent Team ID": "46", "Organization ID": "46"}),
-        _players_row(ID="200", Level="4", **{"Team ID": "168", "Parent Team ID": "52", "Organization ID": "52"}),
+        # 100: big leaguer on the 40-man; 200: A-ball, off the 40-man, Rule 5 eligible
+        _players_row(ID="100", Level="1", **{
+            "Team ID": "46", "Parent Team ID": "46", "Organization ID": "46",
+            "is_on_secondary": "1", "years_protected_from_rule_5": "4",
+            "pro_service_years": "6",
+        }),
+        _players_row(ID="200", Level="4", **{
+            "Team ID": "168", "Parent Team ID": "52", "Organization ID": "52",
+            "years_protected_from_rule_5": "4", "pro_service_years": "3",
+        }),
         # note: no players row for a would-be id "300" -> join must tolerate it
     ]
     return (
@@ -377,6 +385,38 @@ def test_player_count_excludes_amateurs(tmp_path, snapshot_csvs):
     meta = ctx.load_meta()
     assert meta["player_count"] == 1        # the amateur doesn't count
     assert meta["total_row_count"] == 2     # raw snapshot size still recorded
+
+
+@pytest.mark.parametrize(
+    "fields, org_id, expected",
+    [
+        # signed at 19+ (window 4): eligible in his 4th Rule 5 draft, i.e. with 3
+        # pro seasons credited - the season in progress isn't counted yet
+        ({"years_protected_from_rule_5": "4", "pro_service_years": "3"}, "52", True),
+        ({"years_protected_from_rule_5": "4", "pro_service_years": "2"}, "52", False),
+        # signed at 18 or younger (window 5): one more year of protection
+        ({"years_protected_from_rule_5": "5", "pro_service_years": "3"}, "52", False),
+        ({"years_protected_from_rule_5": "5", "pro_service_years": "4"}, "52", True),
+        # long past the window
+        ({"years_protected_from_rule_5": "4", "pro_service_years": "9"}, "52", True),
+        # protected by the 40-man roster
+        ({"years_protected_from_rule_5": "4", "pro_service_years": "9",
+          "is_on_secondary": "1"}, "52", False),
+        # not in an org (free agent) -> nothing to be drafted from
+        ({"years_protected_from_rule_5": "4", "pro_service_years": "9"}, "", False),
+        # blank fields (no players row data) -> not eligible
+        ({"years_protected_from_rule_5": "", "pro_service_years": ""}, "52", False),
+    ],
+)
+def test_is_rule5_eligible(fields, org_id, expected):
+    ply = {"is_on_secondary": "0", **fields}
+    assert league_snapshot._is_rule5_eligible(ply, org_id) is expected
+
+
+def test_rule5_eligibility_written_on_join(snapshot_csvs):
+    rows = {r["ID"]: r for r in join_rows(*snapshot_csvs)}
+    assert rows["100"]["rule_5_eligible"] == ""   # on the 40-man
+    assert rows["200"]["rule_5_eligible"] == "1"
 
 
 def test_ranked_rows_rejects_draft_class_method(built_ctx):

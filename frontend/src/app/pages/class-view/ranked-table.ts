@@ -130,6 +130,7 @@ export class RankedTableComponent {
   protected readonly teamSel = signal<string[]>([]);
   protected readonly levelSel = signal<string[]>([]);
   protected readonly hideDrafted = signal(false);
+  protected readonly rule5Only = signal(false);
   protected readonly numericFilters = signal<NumericFilter[]>([]);
   protected readonly sortField = signal<string>(DEFAULT_SORT.modeled.field);
   protected readonly sortOrder = signal<1 | -1>(DEFAULT_SORT.modeled.order);
@@ -396,6 +397,11 @@ export class RankedTableComponent {
     this.emitQuery();
   }
 
+  protected onRule5Only(value: boolean): void {
+    this.rule5Only.set(value);
+    this.emitQuery();
+  }
+
   protected onNumericFilters(value: NumericFilter[]): void {
     this.numericFilters.set(value);
     this.emitQuery();
@@ -639,6 +645,7 @@ export class RankedTableComponent {
       teams: this.teamSel(),
       levels: this.levelSel(),
       hideDrafted: this.hideDrafted(),
+      rule5Only: this.rule5Only(),
       numericFilters: this.numericFilters(),
       sortField: this.sortField(),
       sortOrder: this.sortOrder(),
@@ -663,6 +670,7 @@ export class RankedTableComponent {
     this.teamSel.set(q.teams);
     this.levelSel.set(q.levels);
     this.hideDrafted.set(q.hideDrafted);
+    this.rule5Only.set(q.rule5Only);
     this.numericFilters.set(q.numericFilters);
     this.sortField.set(q.sortField ?? DEFAULT_SORT[q.view].field);
     this.sortOrder.set(q.sortOrder);
@@ -682,6 +690,7 @@ export class RankedTableComponent {
     this.teamSel.set([]);
     this.levelSel.set([]);
     this.hideDrafted.set(false);
+    this.rule5Only.set(false);
     this.numericFilters.set([]);
     this.sortField.set(DEFAULT_SORT.modeled.field);
     this.sortOrder.set(DEFAULT_SORT.modeled.order);

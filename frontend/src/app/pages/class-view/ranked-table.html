@@ -40,12 +40,15 @@
     [showTeams]="context() !== 'league' && view() === 'modeled'"
     [levels]="context() === 'league' ? levels() : []"
     [levelSel]="levelSel()"
+    [showRule5]="context() === 'league'"
+    [rule5Only]="rule5Only()"
     (valueChange)="onNumericFilters($event)"
     (batHandsChange)="onBatHands($event)"
     (throwHandsChange)="onThrowHands($event)"
     (bestPosChange)="onBestPositions($event)"
     (teamsChange)="onTeams($event)"
     (levelsChange)="onLevels($event)"
+    (rule5OnlyChange)="onRule5Only($event)"
   >
     @if (isNarrow()) {
       <label class="m-fld">

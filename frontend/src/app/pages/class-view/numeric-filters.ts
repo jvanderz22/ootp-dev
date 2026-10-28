@@ -23,7 +23,7 @@ const EMIT_DEBOUNCE_MS = 300;
 
 /**
  * "Filters" dropdown: batting / throwing handedness, best position, drafting
- * team and playing level, plus any
+ * team, playing level and Rule 5 eligibility, plus any
  * number of greater-than / less-than bounds on the table's sortable columns
  * (numeric ratings & scores, plus the graded-text and demand columns, compared
  * on their tier ordinal). Everything is AND-combined; the button shows how many
@@ -86,6 +86,17 @@ const EMIT_DEBOUNCE_MS = 300;
               [value]="levelSel()"
               (valueChange)="levelsChange.emit($event)"
             />
+          }
+          @if (showRule5()) {
+            <label class="chk" title="Off the 40-man and past the Rule 5 protection window">
+              <span class="lbl">Rule 5</span>
+              <input
+                type="checkbox"
+                [ngModel]="rule5Only()"
+                (ngModelChange)="rule5OnlyChange.emit($event)"
+              />
+              <span>Eligible only</span>
+            </label>
           }
         </div>
         <div class="divider"></div>
@@ -164,6 +175,8 @@ const EMIT_DEBOUNCE_MS = 300;
         border-bottom: 1px solid var(--border);
       }
       .facets { display: flex; flex-direction: column; gap: 8px; }
+      .chk { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; }
+      .chk .lbl { color: var(--text-dim); min-width: 3rem; }
       .divider { height: 1px; background: var(--border); margin: 2px 0; }
       .empty { margin: 0; font-size: 12px; }
       .frow { display: flex; align-items: center; gap: 6px; }
@@ -232,6 +245,11 @@ export class NumericFiltersComponent {
   readonly levelSel = input<string[]>([]);
   readonly levelsChange = output<string[]>();
 
+  /** Rule 5 "eligible only" toggle (live-league view only). */
+  readonly showRule5 = input(false);
+  readonly rule5Only = input(false);
+  readonly rule5OnlyChange = output<boolean>();
+
   protected readonly rows = signal<NumericFilter[]>([]);
 
   protected readonly groups = computed(() => {
@@ -252,6 +270,7 @@ export class NumericFiltersComponent {
       (this.bestPosSel().length ? 1 : 0) +
       (this.teamSel().length ? 1 : 0) +
       (this.levelSel().length ? 1 : 0) +
+      (this.rule5Only() ? 1 : 0) +
       this.extraActive(),
   );
 

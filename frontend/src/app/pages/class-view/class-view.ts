@@ -24,6 +24,7 @@ function defaultQuery(): RankedQuery {
     teams: [],
     levels: [],
     hideDrafted: false,
+    rule5Only: false,
     numericFilters: [],
     sortField: DEFAULT_SORT.modeled.field,
     sortOrder: DEFAULT_SORT.modeled.order,

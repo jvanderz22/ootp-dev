@@ -118,6 +118,8 @@ export interface RankedPlayer {
   level: string | null;
   /** live-league snapshot only: link to the player's StatsPlus page */
   statsPlusUrl: string | null;
+  /** live-league snapshot only: exposed in the upcoming Rule 5 draft */
+  rule5Eligible: boolean | null;
   modelScore: number | null;
   inGameOverall: number | null;
   inGamePotential: number | null;
@@ -208,6 +210,8 @@ export interface RankedQuery {
   /** live-league view only: keep only these playing levels (MLB, AAA, …) */
   levels: string[];
   hideDrafted: boolean;
+  /** live-league view only: keep only Rule 5 eligible players */
+  rule5Only: boolean;
   numericFilters: NumericFilter[];
   sortField: string | null;
   sortOrder: 1 | -1;

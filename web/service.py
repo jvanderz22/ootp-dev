@@ -484,9 +484,10 @@ def _filter_sort_page(rows, filter=None, sort=None, page=0, page_size=50, all_ro
     team_set = set(f.get("teams") or [])
     level_set = set(f.get("levels") or [])
     hide_drafted = bool(f.get("hide_drafted"))
+    rule_5 = f.get("rule_5_eligible")
     if (
         search or pos_set or best_pos_set or bat_set or throw_set
-        or team_set or level_set or hide_drafted
+        or team_set or level_set or hide_drafted or rule_5 is not None
     ):
         rows = [
             r
@@ -499,6 +500,7 @@ def _filter_sort_page(rows, filter=None, sort=None, page=0, page_size=50, all_ro
             and (not team_set or r["drafted_team"] in team_set)
             and (not level_set or r.get("level") in level_set)
             and (not hide_drafted or not r["drafted"])
+            and (rule_5 is None or bool(r.get("rule_5_eligible")) == rule_5)
         ]
 
     for nf in f.get("numeric") or []:
@@ -926,6 +928,7 @@ def _snapshot_side_tables(ctx):
             "org": team_names.get(org_id) or r.get("ORG") or None,
             "team": team_names.get(team_id) or None,
             "level": r.get("Lev") or None,
+            "rule_5_eligible": r.get("rule_5_eligible") == "1",
         }
     return game_players, meta
 
@@ -959,6 +962,7 @@ def _league_built_rows(league_id: str, method: str) -> list:
         payload["org"] = m.get("org")
         payload["team"] = m.get("team")
         payload["level"] = m.get("level")
+        payload["rule_5_eligible"] = m.get("rule_5_eligible", False)
         payload["stats_plus_url"] = statsplus_player_url(league_url, row["id"])
         built.append(payload)
 

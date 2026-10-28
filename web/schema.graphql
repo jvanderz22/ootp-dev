@@ -56,6 +56,8 @@ type RankedPlayer {
   level: String
   "live-league snapshot only: link to the player's StatsPlus page"
   statsPlusUrl: String
+  "live-league snapshot only: exposed in the upcoming Rule 5 draft (null for a draft class)"
+  rule5Eligible: Boolean
   modelScore: Float
   inGameOverall: Int
   inGamePotential: Int
@@ -87,6 +89,8 @@ input RankedPlayerFilter {
   "live-league snapshot only: keep only these playing levels (MLB, AAA, ...)"
   levels: [String!]
   hideDrafted: Boolean
+  "live-league snapshot only: true keeps only Rule 5 eligible players, false only protected ones"
+  rule5Eligible: Boolean
   numeric: [NumericFilter!]
 }
 

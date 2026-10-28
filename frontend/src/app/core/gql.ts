@@ -15,6 +15,7 @@ const PLAYER_FIELDS = gql`
     team
     level
     statsPlusUrl
+    rule5Eligible
     modelScore
     inGameOverall
     inGamePotential

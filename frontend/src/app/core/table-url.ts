@@ -15,6 +15,7 @@
  *   team      comma-separated drafting teams
  *   lvl       comma-separated playing levels (live-league view only)
  *   undrafted 1  — "hide drafted" is on
+ *   r5        1  — "Rule 5 eligible" only (live-league view only)
  *   sort      field, `-` prefix for descending (omitted at the view default)
  *   f         numeric filters: `field~min~max`, comma-separated, blank side = open
  */
@@ -36,6 +37,7 @@ export function queryToParams(q: RankedQuery): Params {
   if (q.teams.length) p['team'] = q.teams.join(',');
   if (q.levels.length) p['lvl'] = q.levels.join(',');
   if (q.hideDrafted) p['undrafted'] = '1';
+  if (q.rule5Only) p['r5'] = '1';
 
   const dflt = DEFAULT_SORT[q.view];
   if (q.sortField && !(q.sortField === dflt.field && q.sortOrder === dflt.order)) {
@@ -92,6 +94,7 @@ export function paramsToQuery(pm: Readable): RankedQuery {
     teams: (pm.get('team') ?? '').split(',').filter(Boolean),
     levels: (pm.get('lvl') ?? '').split(',').filter(Boolean),
     hideDrafted: pm.get('undrafted') === '1',
+    rule5Only: pm.get('r5') === '1',
     numericFilters,
     sortField,
     sortOrder,

@@ -72,9 +72,11 @@ UNSOURCED_FIELDS = {"DEM", "Sign", "AD"}
 #   is_amateur ("1" / "")       - the amateur draft class + international /
 #                                 undrafted amateur FA pool; excluded from BOTH
 #                                 rankings (see `_is_amateur`)
+#   rule_5_eligible ("1" / "")  - exposed in the upcoming Rule 5 draft (see
+#                                 `_is_rule5_eligible`)
 SNAPSHOT_META_FIELDS = [
     "snap_team_id", "snap_org_id", "snap_league_id", "mlb_service_years",
-    "is_amateur",
+    "is_amateur", "rule_5_eligible",
 ]
 SNAPSHOT_FIELDNAMES = OUTPUT_FIELDNAMES + SNAPSHOT_META_FIELDS
 
@@ -195,6 +197,32 @@ def _is_amateur(ply: dict, level_code: str) -> bool:
     )
     no_last_team = (ply.get("last_team_id") or "").strip() in ("", "0")
     return never_pro and no_last_team
+
+
+def _is_rule5_eligible(ply: dict, org_id: str) -> bool:
+    """Whether an org's player is exposed in the upcoming Rule 5 draft. StatsPlus
+    has no eligibility flag, so derive it from `/api/players/`:
+
+    - `is_on_secondary` - on the 40-man roster, i.e. protected
+    - `years_protected_from_rule_5` - OOTP's protection window, fixed at signing
+      (5 if signed at 18 or younger, 4 if 19+; 0 for a few veterans). It does
+      NOT count down.
+    - `pro_service_years` - pro seasons served, counting the signing year but
+      not the current season until the new-season rollover (a 2039 draftee
+      shows 3 in Nov 2042). Hence the `+ 1` for the season in progress, which
+      holds year-round: verified against `yfmlb` in Nov 2042, where a 2039
+      college draftee (window 4, 3 years) is eligible and a 2039 HS draftee
+      (window 5, 3 years) becomes eligible the following year.
+    """
+    if not ply or not org_id:
+        return False
+    if (ply.get("is_on_secondary") or "").strip() == "1":
+        return False
+    protected = _int(ply.get("years_protected_from_rule_5"))
+    served = _int(ply.get("pro_service_years"))
+    if protected is None or served is None:
+        return False
+    return served + 1 >= protected
 
 
 def _is_intl_complex(rat: dict, ply: dict) -> bool:
@@ -367,6 +395,9 @@ def _map_row(rat: dict, ply: dict, teams: dict) -> dict:
         (ply.get("mlb_service_years") if ply else "") or ""
     ).strip()
     row["is_amateur"] = "1" if _is_amateur(ply, level_code) else ""
+    row["rule_5_eligible"] = (
+        "1" if not row["is_amateur"] and _is_rule5_eligible(ply, org_id) else ""
+    )
     return row
 
 

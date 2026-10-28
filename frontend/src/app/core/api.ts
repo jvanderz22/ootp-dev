@@ -68,6 +68,7 @@ function queryVars(name: string, q: RankedQuery, page: number, pageSize: number)
       teams: q.teams.length ? q.teams : null,
       levels: q.levels.length ? q.levels : null,
       hideDrafted: q.hideDrafted,
+      rule5Eligible: q.rule5Only ? true : null,
       numeric: numeric.length ? numeric : null,
     },
     sort: q.sortField ? { field: q.sortField, order: q.sortOrder } : null,

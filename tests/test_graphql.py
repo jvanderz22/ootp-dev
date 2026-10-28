@@ -404,6 +404,20 @@ def test_league_snapshot_queries(client):
     both = gql(client, lvl_q, l=lid, lv=["MLB", "A"])["leagueSnapshotPlayers"]
     assert {r["id"] for r in both["rows"]} == {"100", "200"}
 
+    # Rule 5 filter: 200 is off the 40-man and past his protection window
+    r5_q = (
+        "query($l: ID!, $m: String!, $r5: Boolean) { leagueSnapshotPlayers(leagueId: $l,"
+        " method: $m, groupBy: LEAGUE, filter: { rule5Eligible: $r5 }, allRows: true)"
+        " { totalRecords rows { id rule5Eligible } } }"
+    )
+    for method in ("overall", "potential"):
+        eligible = gql(client, r5_q, l=lid, m=method, r5=True)["leagueSnapshotPlayers"]
+        assert eligible["rows"] == [{"id": "200", "rule5Eligible": True}]
+        protected = gql(client, r5_q, l=lid, m=method, r5=False)["leagueSnapshotPlayers"]
+        assert protected["rows"] == [{"id": "100", "rule5Eligible": False}]
+        unfiltered = gql(client, r5_q, l=lid, m=method, r5=None)["leagueSnapshotPlayers"]
+        assert unfiltered["totalRecords"] == 2
+
 
 def test_league_players_no_selection_is_empty_and_skips_scoring(client):
     lid = gql(client, 'mutation { createLeague(name: "YFn", leagueUrl: "yfmlb") { id } }')[
