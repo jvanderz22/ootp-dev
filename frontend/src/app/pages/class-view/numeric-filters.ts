@@ -23,7 +23,8 @@ const EMIT_DEBOUNCE_MS = 300;
 
 /**
  * "Filters" dropdown: batting / throwing handedness, best position, drafting
- * team, playing level and Rule 5 eligibility, plus any
+ * team, playing level (with a "free agents only" shortcut) and Rule 5
+ * eligibility, plus any
  * number of greater-than / less-than bounds on the table's sortable columns
  * (numeric ratings & scores, plus the graded-text and demand columns, compared
  * on their tier ordinal). Everything is AND-combined; the button shows how many
@@ -96,6 +97,17 @@ const EMIT_DEBOUNCE_MS = 300;
                 (ngModelChange)="rule5OnlyChange.emit($event)"
               />
               <span>Eligible only</span>
+            </label>
+          }
+          @if (levels().includes(FREE_AGENT_LEVEL)) {
+            <label class="chk" title="Unsigned pros — shorthand for Level = FA">
+              <span class="lbl">FA</span>
+              <input
+                type="checkbox"
+                [ngModel]="freeAgentsOnly()"
+                (ngModelChange)="levelsChange.emit($event ? [FREE_AGENT_LEVEL] : [])"
+              />
+              <span>Free agents only</span>
             </label>
           }
         </div>
@@ -244,6 +256,12 @@ export class NumericFiltersComponent {
   readonly levels = input<string[]>([]);
   readonly levelSel = input<string[]>([]);
   readonly levelsChange = output<string[]>();
+
+  /** "Free agents only" toggle: a shortcut for a level selection of just `FA`. */
+  protected readonly FREE_AGENT_LEVEL = 'FA';
+  protected readonly freeAgentsOnly = computed(
+    () => this.levelSel().length === 1 && this.levelSel()[0] === this.FREE_AGENT_LEVEL,
+  );
 
   /** Rule 5 "eligible only" toggle (live-league view only). */
   readonly showRule5 = input(false);
