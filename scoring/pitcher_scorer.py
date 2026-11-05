@@ -266,6 +266,28 @@ class HomerunRiskModifier(BasePitcherModifier):
         return home_run_risk_modifier
 
 
+# Pitch grades track Stuff almost one-for-one (OOTP builds Stuff from them: the
+# best pitch runs ~Stuff+10, the 2nd ~Stuff+5, the 3rd ~Stuff), and the SP model
+# already scores Stuff. So for a below-average-Stuff arm the SP pitch maps grade
+# each pitch as if he had this much Stuff - otherwise a low-Stuff command pitcher
+# with an ordinary mix for his Stuff is docked for it a second time. Above the
+# anchor grades are left as-is: they cap at 80, so a high-Stuff arm's pitches
+# can't sit above his Stuff the way the curve implies, and shifting them down
+# would strip the bonus an elite arsenal earns.
+#
+# Current ratings only: for a prospect each of Stuff / pitch grades / pitch count /
+# velo is its own read on how the arm develops, so the potential (and draft class)
+# scoring keeps the raw grades. `SP_PITCH_GRADE_STUFF_LIFT` is the share of the
+# gap to the anchor that's given back (1 = all of it).
+SP_PITCH_GRADE_STUFF_ANCHOR = 50
+SP_PITCH_GRADE_STUFF_LIFT = 1
+
+
+def _stuff_relative_grade(grade, stuff):
+    shifted = grade + SP_PITCH_GRADE_STUFF_LIFT * max(SP_PITCH_GRADE_STUFF_ANCHOR - stuff, 0)
+    return min(max(int(round(shifted / 5)) * 5, 20), 80)
+
+
 def calculate_sp_modifiers(player, type="potential"):
     modifier = 1
 
@@ -279,31 +301,26 @@ def calculate_sp_modifiers(player, type="potential"):
     pitches = player.get_pitches() if type == "potential" else player.get_ovr_pitches()
     if len(pitches) < 1:
         return {"total_modifier": 0}
-    first_pitch_modifier = sp_best_pitch_value_modifier_map[getattr(player, pitches[0])]
+    grades = [getattr(player, p) for p in pitches]
+    if type == "overall":
+        grades = [_stuff_relative_grade(g, player.stuff_ovr) for g in grades]
+    first_pitch_modifier = sp_best_pitch_value_modifier_map[grades[0]]
     second_pitch_modifier = 0.8
     if len(pitches) > 2:
-        second_pitch_modifier = sp_second_pitch_value_modifier_map[
-            getattr(player, pitches[1])
-        ]
+        second_pitch_modifier = sp_second_pitch_value_modifier_map[grades[1]]
     third_pitch_modifier = 1
     if len(pitches) < 3:
         third_pitch_modifier = 0.35
     else:
-        third_pitch_modifier = sp_third_pitch_value_modifier_map[
-            getattr(player, pitches[2])
-        ]
+        third_pitch_modifier = sp_third_pitch_value_modifier_map[grades[2]]
 
     fourth_pitch_modifier = 0.92
     if len(pitches) >= 4:
-        fourth_pitch_modifier = sp_fourth_pitch_value_modifier_map[
-            getattr(player, pitches[3])
-        ]
+        fourth_pitch_modifier = sp_fourth_pitch_value_modifier_map[grades[3]]
 
     fifth_pitch_modifier = 1
     if len(pitches) >= 5:
-        fifth_pitch_modifier = sp_fifth_pitch_value_modifier_map[
-            getattr(player, pitches[4])
-        ]
+        fifth_pitch_modifier = sp_fifth_pitch_value_modifier_map[grades[4]]
 
     sp_pitch_modifiers = (
         first_pitch_modifier

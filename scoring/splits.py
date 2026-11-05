@@ -8,13 +8,15 @@ modifiers are the current ranking's (`OverallRanker`) minus
 measures. `combined` is scored the same way so the three are comparable.
 """
 from models.game_players import SPLIT_SIDES, GamePlayer
-from modifiers.batter_hit_profile_modifier import BatterHitProfileModifier
-from modifiers.pitcher_velocity_modifier import PitcherVelocityModifier
+from modifiers.batter_handedness_modifier import BatterHandednessModifier
+from rankers.overall_ranker import OverallRanker
 from scoring.model_cache import get_pitcher_scorer, get_position_player_scorer
 from scoring.runtime_components import runtime_components_scope
 
-_BATTER_MODIFIERS = (BatterHitProfileModifier(True),)
-_PITCHER_MODIFIERS = (PitcherVelocityModifier,)
+_BATTER_MODIFIERS = tuple(
+    m for m in OverallRanker.position_player_modifiers if m is not BatterHandednessModifier
+)
+_PITCHER_MODIFIERS = tuple(OverallRanker.pitcher_modifiers)
 
 
 def _modifier(modifiers, player, score) -> float:

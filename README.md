@@ -126,10 +126,9 @@ pytest            # the "slow" ones train the models
 `tests/test_e2e_golden.py` drives the whole app (GraphQL, the CSV download, the
 CLI scripts) over seeded fixture data and compares every response to
 `tests/golden/`. Regenerate with `UPDATE_GOLDEN=1 pytest tests/test_e2e_golden.py`
-only for an intended output change. The `*_components.json` goldens and
-`tests/fixtures/legacy_data_dir.tar.gz` were recorded from the pre-SQLite app and
-are never regenerated: they prove the database import and the typed breakdown
-match what the file-based app served.
+only for an intended output change. `tests/fixtures/legacy_data_dir.tar.gz` was
+recorded from the pre-SQLite app and is never regenerated: it proves the database
+import serves what the file-based app did.
 
 ## CLI (original workflow)
 

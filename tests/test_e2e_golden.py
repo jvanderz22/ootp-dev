@@ -11,14 +11,11 @@ intended) with:
 Floats compare with a small tolerance (XGBoost sums can differ in the last bits
 between thread counts); timestamps are masked.
 
-The `*_components.json` files are different: they hold every player's old flat
-`components` dict, recorded from the pre-SQLite app (commit b6179fa), and are
-never regenerated. `check_breakdowns` proves the typed `playerBreakdown` that
-replaced it carries the same values for the side(s) the player is judged on.
+`check_breakdown_invariants` also checks every typed `playerBreakdown` is pruned
+to the side(s) the player is judged on.
 """
 import json
 import os
-import re
 import runpy
 import sys
 import time
@@ -202,71 +199,9 @@ def class_breakdowns(client, name=CLASS):
     return breakdowns_by_id(client, ranked(client, "id source { className leagueId method }", name=name, all=True))
 
 
-# old flat `components` key -> where the typed breakdown keeps that value
-_OLD_KEY_PATHS = {
-    "Pos - Batting Model": ("batting", "battingModel"),
-    "Pos - Running Model": ("batting", "runningModel"),
-    "Pos - Overall Model Score": ("batting", "positionModel"),
-    "Pos - Best Pos Score (*)": ("batting", "bestPositionScore"),
-    "Pos - Utility Bonus": ("batting", "utilityBonus"),
-    "Total Pos Modifier": ("batting", "modifiers", "total"),
-    "SP Model Score": ("pitching", "starter", "model"),
-    "SP Base Modifier": ("pitching", "starter", "baseModifier"),
-    "SP Pitcher Pitch Component": ("pitching", "starter", "pitchMix"),
-    "SP HR component": ("pitching", "starter", "hrRisk"),
-    "Starter Score w/Modifiers": ("pitching", "starter", "score"),
-    "RP Model Score": ("pitching", "reliever", "model"),
-    "RP Base Modifier": ("pitching", "reliever", "baseModifier"),
-    "Reliever Score w/Modifiers": ("pitching", "reliever", "score"),
-    "Total Pitcher Modifier": ("pitching", "modifiers", "total"),
-    "Pre Rank-adj Rank": ("rankAdjust", "preRank"),
-    "Pre Rank-adj Score": ("rankAdjust", "preScore"),
-}
-_OLD_PREFIXES = (
-    ("Pos Modifier ", ("batting", "modifiers", "modifiers")),
-    ("Pitcher Modifier ", ("pitching", "modifiers", "modifiers")),
-    ("Rank-adj Modifier ", ("rankAdjust", "modifiers")),
-)
-
-
-def _as_old_keys(b):
-    """A typed breakdown flattened back to old-style `components` keys."""
-    out = {}
-
-    def dig(path):
-        node = b
-        for key in path:
-            node = (node or {}).get(key)
-        return node
-
-    for key, path in _OLD_KEY_PATHS.items():
-        if dig(path) is not None:
-            out[key] = dig(path)
-    for prefix, path in _OLD_PREFIXES:
-        for item in dig(path) or []:
-            if item["value"] is not None:
-                out[prefix + item["name"]] = item["value"]
-    return out
-
-
-def _side(old_key):
-    if old_key.startswith(("Pos", "Total Pos")):
-        return "batting"
-    if old_key.startswith(
-        ("SP ", "RP ", "Starter", "Reliever", "Pitcher", "Pre-Pitcher", "Total Pitcher")
-    ):
-        return "pitching"
-    return "rank"
-
-
-def check_breakdowns(golden_name, section, breakdowns, types):
-    """Every player's typed breakdown against the old `components` recorded in
-    `golden_name` (pre-change, read-only):
-      * the side the player isn't judged on is gone,
-      * every old value on a relevant side is still there, at its new place,
-      * anything new is a value the old code silently dropped (<= 0)."""
-    old_all = json.loads((GOLDEN_DIR / f"{golden_name}.json").read_text())[section]
-    assert set(breakdowns) == set(old_all), f"{section}: player set changed"
+def check_breakdown_invariants(section, breakdowns, types):
+    """Every player's typed breakdown is pruned to the side(s) the player is judged on and
+    agrees with his row's `type`. Values are pinned by the `*_breakdowns` goldens."""
     problems = []
     for pid, b in breakdowns.items():
         ptype = types[pid]
@@ -276,22 +211,6 @@ def check_breakdowns(golden_name, section, breakdowns, types):
             problems.append(f"{pid}: Hitter still has a pitching breakdown")
         if ptype == "Pitcher" and b["batting"] is not None:
             problems.append(f"{pid}: Pitcher still has a batting breakdown")
-        relevant = {"rank"} | (
-            {"batting"} if ptype in ("Hitter", "Two-way") else set()
-        ) | ({"pitching"} if ptype in ("Pitcher", "Two-way") else set())
-        old = {
-            re.sub(r"\(\w+\)$", "(*)", k): v for k, v in (old_all[pid] or {}).items()
-            if _side(k) in relevant
-        }
-        new = _as_old_keys(b)
-        for key, value in old.items():
-            if key not in new:
-                problems.append(f"{pid}: {key!r} lost (was {value})")
-            elif _diff(value, new[key]):
-                problems.append(f"{pid}: {key!r} {new[key]} != {value}")
-        for key, value in new.items():
-            if key not in old and value > 0:
-                problems.append(f"{pid}: new {key!r} = {value} (only <= 0 values were dropped)")
     assert not problems, f"{section}: {len(problems)} problem(s):\n" + "\n".join(problems[:40])
 
 
@@ -406,7 +325,7 @@ def test_draft_class_flow(client, tmp_path, monkeypatch):
 
     check_golden("draft_class_flow", out)
     for section in breakdowns:
-        check_breakdowns("draft_class_components", section, breakdowns[section], types[section])
+        check_breakdown_invariants(section, breakdowns[section], types[section])
     check_golden("draft_class_breakdowns", breakdowns)
 
 
@@ -545,7 +464,7 @@ def test_league_flow(client, fake_statsplus, monkeypatch):
 
     check_golden("league_flow", out)
     for section in breakdowns:
-        check_breakdowns("league_components", section, breakdowns[section], types[section])
+        check_breakdown_invariants(section, breakdowns[section], types[section])
     check_golden("league_breakdowns", breakdowns)
 
 
@@ -610,9 +529,7 @@ def test_legacy_data_dir(client, data_dir):
     check_golden("legacy_data_dir", out)
     for section, by_id in breakdowns.items():
         rows = out[f"{section}_rows" if not section.startswith("league_") else section]["rows"]
-        check_breakdowns(
-            "legacy_data_dir_components", section, by_id, {r["id"]: r["type"] for r in rows}
-        )
+        check_breakdown_invariants(section, by_id, {r["id"]: r["type"] for r in rows})
         assert all(not b["legacy"] for b in by_id.values())
     check_golden("legacy_data_dir_breakdowns", breakdowns)
 
