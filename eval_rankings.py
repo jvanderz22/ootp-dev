@@ -1,4 +1,4 @@
-"""Measure the ranking models against outcomes (see ranking-architecture-plan.md).
+"""Measure the ranking models against outcomes (see plans/ranking-architecture-plan.md).
 
     python eval_rankings.py                          # both profiles, legacy engine
     python eval_rankings.py --profile draft
