@@ -111,7 +111,19 @@ async def _warm_models():
         print(f"[startup] model warm-up skipped: {exc}")
 
 
-app = Starlette(debug=DEV, routes=routes, on_startup=[_open_database, _warm_models])
+async def _collect_season_snapshots():
+    # The machine sleeps when idle, so waking up is when a season's ratings
+    # snapshot gets taken (see web.service.collect_season_snapshots).
+    from web.service import start_season_snapshot_collection
+
+    start_season_snapshot_collection()
+
+
+app = Starlette(
+    debug=DEV,
+    routes=routes,
+    on_startup=[_open_database, _warm_models, _collect_season_snapshots],
+)
 app.add_middleware(BasicAuthMiddleware)
 
 if DEV:

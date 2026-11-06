@@ -64,6 +64,16 @@ when "Refresh drafted" reports an auth error, re-paste a fresh one. Everything
 else in the app works without it — it's only needed to auto-populate the drafted
 list.
 
+### Python environment
+
+Python 3.11, matching the `Dockerfile`. The venv lives in `activate/`:
+
+```bash
+pyenv install 3.11.16
+"$(pyenv root)/versions/3.11.16/bin/python3.11" -m venv activate
+activate/bin/pip install -r requirements.txt pytest
+```
+
 ### Run locally
 
 Backend (port 8000):

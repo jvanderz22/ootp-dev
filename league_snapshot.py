@@ -28,6 +28,7 @@ verify against a real in-game scouting report before trusting them):
 import csv
 import gzip
 import io
+import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -313,9 +314,11 @@ class LeagueSnapshotContext:
     def archive_dir(self) -> Path:
         return self.snapshot_dir / "archive"
 
-    def archive_file(self, league_date: str) -> Path:
-        """Where the snapshot for `league_date`'s in-game month is kept."""
-        return self.archive_dir / f"{league_date[:7]}.csv.gz"
+    def season_snapshot_file(self, season: int) -> Path:
+        return self.archive_dir / f"{season}.csv.gz"
+
+    def has_season_snapshot(self, season: int) -> bool:
+        return self.season_snapshot_file(season).exists()
 
     def ensure_dirs(self) -> None:
         self.snapshot_dir.mkdir(parents=True, exist_ok=True)
@@ -490,7 +493,7 @@ def build_snapshot(
         writer.writeheader()
         writer.writerows(rows)
     ctx.teams_file.write_text(teams_csv)
-    _archive(ctx, league_date)
+    archive_season_snapshot(ctx, league_date)
     now = datetime.now(timezone.utc).isoformat()
     # `player_count` is the number the league page shows and is the count the
     # rankings actually work from: the amateur pools (draft class + international
@@ -509,16 +512,42 @@ def build_snapshot(
     return ctx
 
 
-def _archive(ctx: LeagueSnapshotContext, league_date: str = None) -> None:
-    """Keep a gzipped copy of the snapshot just written, one per in-game month
-    (a later refresh in the same month replaces it). StatsPlus only serves
-    current ratings, so this is the ratings history the ranking models are fit
-    on - pairing ratings with season stats, and how prospects develop."""
-    if not league_date:
-        return
+# One stored ratings snapshot per league per season, taken on or after this
+# in-game date (about opening day). StatsPlus only serves current ratings, so
+# these are the ratings history the ranking models are fit on - each season's
+# ratings paired with that season's stats, and how prospects develop.
+SEASON_SNAPSHOT_FROM = "04-08"
+
+
+def season_snapshot_due(league_date: str):
+    """The season whose snapshot `league_date` is past the start date for, or
+    None before it (or for a missing / malformed date)."""
+    if not league_date or len(league_date) < 10:
+        return None
+    season, month_day = league_date[:4], league_date[5:10]
+    if not season.isdigit() or month_day < SEASON_SNAPSHOT_FROM:
+        return None
+    return int(season)
+
+
+def archive_season_snapshot(ctx: LeagueSnapshotContext, league_date: str = None) -> bool:
+    """Keep the stored snapshot as its season's snapshot if it was taken on or
+    after the start date and the season has none yet - the first one wins.
+    Writes `archive/<season>.csv.gz` plus `<season>.json` with the in-game date
+    it was taken. Returns whether it archived."""
+    season = season_snapshot_due(league_date)
+    if season is None or ctx.has_season_snapshot(season) or not ctx.data_file.exists():
+        return False
     ctx.archive_dir.mkdir(parents=True, exist_ok=True)
-    with open(ctx.data_file, "rb") as src, gzip.open(ctx.archive_file(league_date), "wb") as dst:
+    target = ctx.season_snapshot_file(season)
+    tmp = target.with_suffix(".tmp")
+    with open(ctx.data_file, "rb") as src, gzip.open(tmp, "wb") as dst:
         dst.write(src.read())
+    tmp.replace(target)
+    (ctx.archive_dir / f"{season}.json").write_text(
+        json.dumps({"league_date": league_date, "archived_at": datetime.now(timezone.utc).isoformat()})
+    )
+    return True
 
 
 def touch_checked(ctx: LeagueSnapshotContext, league_date: str = None) -> None:

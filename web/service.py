@@ -1498,6 +1498,51 @@ def _refresh_league_snapshot_sync(league_id: str):
     return league_snapshot_payload(league_id)
 
 
+def collect_season_snapshots() -> dict:
+    """Make sure every league has this season's ratings snapshot (see
+    `league_snapshot.archive_season_snapshot`). Runs when the app wakes up:
+    the stored snapshot is archived if it already qualifies; otherwise, once
+    the league's in-game date is past the season start date, the normal
+    refresh is started, and it archives as it builds. Returns
+    `{league_id: [what happened, ...]}`."""
+    out = {}
+    for lg in leagues.load_leagues():
+        league_id = lg["id"]
+        ctx = league_snapshot.LeagueSnapshotContext(league_id)
+        notes = out.setdefault(league_id, [])
+        stored = (ctx.load_meta() or {}).get("league_date")
+        if league_snapshot.archive_season_snapshot(ctx, stored):
+            notes.append(f"archived the stored {stored} snapshot")
+        if not lg.get("league_url") or not cookie_header(lg):
+            notes.append("no StatsPlus login")
+            continue
+        try:
+            current = fetch_league_date(lg["league_url"], cookie_header(lg))
+        except (StatsPlusError, StatsPlusAuthError) as exc:
+            notes.append(f"couldn't check the in-game date: {exc}")
+            continue
+        season = league_snapshot.season_snapshot_due(current)
+        if season is None or ctx.has_season_snapshot(season):
+            continue
+        start_league_refresh(league_id)
+        notes.append(f"refreshing for the {season} season snapshot ({current})")
+    return out
+
+
+def _collect_season_snapshots_logged() -> None:
+    try:
+        for league_id, notes in collect_season_snapshots().items():
+            for note in notes:
+                print(f"[season snapshot {league_id}] {note}", flush=True)
+    except Exception as exc:  # best effort - never take the app down over it
+        print(f"[season snapshot] skipped: {exc}", flush=True)
+
+
+def start_season_snapshot_collection() -> None:
+    """Run `collect_season_snapshots` on a background thread (app startup)."""
+    threading.Thread(target=_collect_season_snapshots_logged, daemon=True).start()
+
+
 async def check_league_snapshot_freshness(league_id: str):
     return await anyio.to_thread.run_sync(_check_league_snapshot_freshness_sync, league_id)
 

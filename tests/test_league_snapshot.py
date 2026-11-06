@@ -298,23 +298,36 @@ def test_build_snapshot_writes_files(data_dir, snapshot_csvs):
     assert not ctx.archive_dir.exists()   # no league date -> nothing archived
 
 
-def test_build_snapshot_archives_one_per_in_game_month(data_dir, snapshot_csvs):
+def test_build_snapshot_keeps_the_first_snapshot_from_the_season_start(data_dir, snapshot_csvs):
     import gzip
+    import json
 
     ctx = _ctx_for("yfmlb")
-    build_snapshot(ctx, *snapshot_csvs, league_date="2042-05-03")
+    build_snapshot(ctx, *snapshot_csvs, league_date="2042-03-30")    # before 4/8
+    assert not ctx.archive_dir.exists()
+
+    build_snapshot(ctx, *snapshot_csvs, league_date="2042-04-09")
     ratings, players, teams = snapshot_csvs
     rows = list(csv.DictReader(io.StringIO(ratings)))
     later = _csv(RATINGS_HEADER, [r for r in rows if r["ID"] == "100"])
-    build_snapshot(ctx, later, players, teams, league_date="2042-05-28")
-    build_snapshot(ctx, *snapshot_csvs, league_date="2042-06-02")
+    build_snapshot(ctx, later, players, teams, league_date="2042-07-01")  # same season
+    build_snapshot(ctx, later, players, teams, league_date="2043-04-08")
 
     assert sorted(p.name for p in ctx.archive_dir.iterdir()) == [
-        "2042-05.csv.gz", "2042-06.csv.gz",
+        "2042.csv.gz", "2042.json", "2043.csv.gz", "2043.json",
     ]
-    with gzip.open(ctx.archive_file("2042-05-01"), "rt", newline="") as f:
-        may = list(csv.DictReader(f))
-    assert [r["ID"] for r in may] == ["100"]   # the month's latest refresh wins
+    with gzip.open(ctx.season_snapshot_file(2042), "rt", newline="") as f:
+        assert [r["ID"] for r in csv.DictReader(f)] == ["100", "200"]   # first one wins
+    assert json.loads((ctx.archive_dir / "2042.json").read_text())["league_date"] == "2042-04-09"
+
+
+@pytest.mark.parametrize(
+    "league_date, season",
+    [("2042-04-08", 2042), ("2042-11-07", 2042), ("2042-04-07", None),
+     ("2043-01-15", None), ("", None), (None, None)],
+)
+def test_season_snapshot_due(league_date, season):
+    assert league_snapshot.season_snapshot_due(league_date) == season
 
 
 # --------------------------------------------------------------- ranking layer

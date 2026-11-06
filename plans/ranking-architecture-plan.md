@@ -1,8 +1,9 @@
 # Plan: Ranking redesign
 
 Replace the stack of hand-tuned multipliers with layered models in one unit
-(WAR). Each layer answers one question with one stated method. Your tuned values
-stay as starting points (priors). Every step's contribution is recorded so a
+(WAR). Each layer answers one question with one stated method. The models are
+fit from data, held to the general rules your grids encode. Every step's
+contribution is recorded so a
 ranking explains itself. It's built in parallel to the current code (engine `v2`
 next to `legacy`) and judged by `eval_rankings.py` at every step.
 
@@ -13,7 +14,8 @@ next to `legacy`) and judged by `eval_rankings.py` at every step.
 | 2026-11-04 | **Unit is WAR.** Every layer outputs WAR or a WAR distribution. |
 | 2026-11-04 | **Ranking rule: expected value, with upside favored at equal EV** (see "Uncertainty and the ranking rule"). |
 | 2026-11-05 | **The decision layer is your existing demand modifier, applied as the very last step.** It already handles signability the way you want. Every draft run records each player's value both before and after it. No slot amounts or budget modelling (this replaces the 2026-11-04 slot-based design). |
-| 2026-11-04 | **Your tuned values are priors and may stay.** They push things the direction you want. Fitted layers start from them, and explicit judgment adjustments remain as their own visible step. |
+| 2026-11-05 | **The scoring models are fit from data instead of your handcrafted grids, but the same general rules apply.** The grids' rules (skill floors, power needs contact, all three pitching ratings need a floor, ...) become constraints and a rules suite every fitted model must pass. Details and the draft rule list are in `ranking-v2-technical-plan.md`. |
+| 2026-11-04 | **Your tuned values are priors and may stay** (superseded for the attribute grids on 2026-11-05; still holds for the modifier tables). They push things the direction you want. Fitted layers start from them, and explicit judgment adjustments remain as their own visible step. |
 | 2026-11-04 | **Build in parallel** (engine `v2`) and compare side by side before switching. |
 | 2026-11-04 | **Current scoring is judged on performance stats**, with OVR as the fallback and the watchlist as a sanity check. **Draft scoring is judged on holding potential**: OVR from age 25, POT now before; gone from the league = bust; baseline = draft-day POT order. |
 | 2026-11-04 | **Batting inputs are OOTP's base ratings** (BABIP, Avoid K, Gap, Power, Eye), not Contact. Contact ≈ ½ BABIP + ½ Avoid K. |
@@ -53,7 +55,7 @@ next to `legacy`) and judged by `eval_rankings.py` at every step.
 
 | Layer | Question it answers | Method | Replaces |
 |---|---|---|---|
-| **1. Talent** | ratings → expected rate stats (hitters: runs per PA from BABIP / Avoid K / Gap / Power / Eye; pitchers: runs per 9 innings from base components; fielding runs by position) | regression fit to StatsPlus season stats against ratings, weighted by PA / IP, monotone in each rating, the 2023 grids as priors | the attribute grids, SP / RP pitch mix, velo, HR risk, hit profile, handedness |
+| **1. Talent** | ratings → expected rate stats (hitters: runs per PA from BABIP / Avoid K / Gap / Power / Eye; pitchers: runs per 9 innings from base components; fielding runs by position) | regression fit to StatsPlus season stats against ratings, weighted by PA / IP, monotone in each rating, held to the rules suite from your grids | the attribute grids, SP / RP pitch mix, velo, HR risk, hit profile, handedness |
 | **2. Value** | rates → WAR for a season | expected playing time (role, stamina, injury proneness as expected games lost) + positional adjustment + replacement level | RP ×0.82, the 0.73 / 0.22 / 0.05 weights, injury multipliers, two-way bonus |
 | **3. Development** | a prospect → distribution of peak WAR | fit on past classes + archived snapshots: rating growth given age, POT, work ethic, intelligence, scouting accuracy | age, personality, secondary personality, scouting accuracy, the draft overall / Stuff modifiers |
 | **4. Decision** | draft board: how does signability change it? | your `DraftDemandModifier`, unchanged, run last on the pre-demand order (see "Draft decision layer") | nothing: it moves to the end |
@@ -65,10 +67,11 @@ plan, now one config per profile.
 
 ### Fitting
 
-- **Priors:** with about 10 classes and a few seasons, data is thin. Each
-  fitted layer starts from your values (the grids, the modifier tables) and
-  moves away only as far as the data supports. A setting controls how strong
-  each prior is.
+- **Rules, not labels:** the models are fit from data. Your grids' general
+  rules (skill floors, interactions, archetype balance) become constraints
+  and a rules suite every fitted model must pass. Data is thin at first
+  (about one clean season of ratings ↔ stats), so the rules do most of the
+  shaping until the archive grows.
 - **Judgment adjustments:** your tuned values that should stay as opinion,
   not just as priors, live in their own step with their own line in the
   record, so it's always visible how much of a score is fit and how much is
@@ -136,10 +139,10 @@ What we have:
 - **`drafted_picks`.**
 
 To start collecting, because history doesn't backfill:
-- **A ratings snapshot archive.** Today each refresh overwrites the last one.
-  Keep at least one per season (end of season), versioned. Pairing ratings
-  with stats and learning development both need ratings history, and
-  StatsPlus only serves current ratings.
+- **A ratings snapshot archive:** one per league per season, taken on or
+  after in-game April 8 (see phase 1). Pairing ratings with stats and
+  learning development both need ratings history, and StatsPlus only serves
+  current ratings.
 - **Season stats:** player batting / pitching / fielding by year with L/R
   splits. These are listed in the StatsPlus API (via StatsPlus-MCP's docs)
   but not tried yet. Check whether past seasons and WAR are included.
@@ -203,9 +206,17 @@ watchlist.
   - The export view had no HRA / PBABIP columns. If OOTP offers them, add
     them and confirm their headers; until then draft-class pitchers have no
     Movement components.
-- ✅ **Snapshot archive:** every refresh with an in-game date writes
-  `league_snapshots/<league>/archive/<YYYY-MM>.csv.gz`, keeping the latest
-  per in-game month. It starts collecting once deployed.
+- ✅ **Season snapshots** (your spec, 2026-11-05: keep it simple, one per
+  season per league from about in-game 4/8):
+  - The first snapshot built on or after April 8 of a season is kept as
+    `league_snapshots/<league>/archive/<season>.csv.gz`, plus `<season>.json`
+    with the in-game date it was taken. It's never overwritten.
+  - **When the app wakes up** (startup), `collect_season_snapshots` checks
+    each league. If the stored snapshot already qualifies, it's archived with
+    no StatsPlus call. Otherwise, once the in-game date is past April 8 and
+    the season has none, the normal refresh starts and archives as it builds.
+  - League-page refreshes during a session archive the same way.
+  - It starts collecting once deployed.
 - ✅ **Season stats:** `league_stats.py <league> <years>` writes
   `league_stats/<league>/{bat,pitch,field}/<year>.csv`, every level and
   split. What StatsPlus serves (checked 2026-11-05):
@@ -231,11 +242,10 @@ watchlist.
 
 **3. Talent layer, hitters first**
 - Use BABIP / Avoid K / Gap / Power / Eye.
-- Convert the 2023 grid with BABIP ≈ 2·Contact − Avoid K and mark the rows
-  whose separate Avoid K penalty needs your review. That converted grid is
-  the prior.
-- Fit to season stats once pulled; until then, prior only. The output is
-  runs per PA. Classes without BABIP keep the legacy talent stage.
+- Fit to season stats (runs per PA), monotone, held to the rules suite. Your
+  confirmed rule list comes first.
+- Classes without BABIP keep the legacy talent stage, and so does the
+  whole stage if the fitted model doesn't beat legacy in the eval yet.
 
 **4. Talent layer, pitchers**
 - First, fit how Movement (and Stuff) is built from its parts.
