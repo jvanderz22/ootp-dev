@@ -48,8 +48,23 @@ ranking/
   artifacts/           (phase 3+) fitted parameters, JSON, committed
 ```
 
-`ranking/profiles.py` and `ranking/ledger.py` exist as uncommitted drafts from
-the start of phase 2. They match this plan, but read them as drafts.
+**Status (2026-11-05): step 2a is built** (`profiles`, `ledger`, `state`,
+`results`, `manifest`, `stages/{base,legacy,demand}`, `ranker`;
+`eval_rankings.ENGINES["v2"]`; `tests/test_ranking_parity.py`). The parity
+gate passes:
+- **Unit tests:** every profile, 3 seeded classes plus the snapshot fixture,
+  a batch size that splits the class, all fields identical. Dropping one
+  modifier from a profile makes all 160 rows differ, so the test does detect
+  a change.
+- **Live `fly_data`:** 31,629 rankings (the snapshot under `overall` and
+  `potential`, plus all ten `yfmlb` classes 2033–2042), 0 rows differing in
+  any field, breakdowns included. Ledger totals match scores within 3e-14.
+- **Memory:** a full 10.9k-player league peaks at 360 MB on v2 vs 340 MB on
+  legacy (local macOS). Re-measure on the production machine before the
+  switch.
+- **Known coarseness:** the legacy pitcher scorer applies pitch mix,
+  stamina, GB and HR risk internally, so the ledger shows them as one "SP /
+  RP role adjustments" line until phase 4 replaces that stage.
 
 ## Core data model
 
@@ -379,7 +394,7 @@ Fielding (from the position grids):
 
 | Step | Work | Gate |
 |---|---|---|
-| **2a** | `profiles`, `ledger`, `state`, `results`, `manifest`, `stages/legacy`, `stages/demand`, `ranker`; `ENGINES["v2"]`; parity tests | v2 = legacy on every field, unit and real data; ledger totals exact |
+| **2a** ✅ | `profiles`, `ledger`, `state`, `results`, `manifest`, `stages/legacy`, `stages/demand`, `ranker`; `ENGINES["v2"]`; parity tests | v2 = legacy on every field, unit and real data; ledger totals exact |
 | **2b** | `--parity`, `--explain`, `--signals` (+ `reads` on legacy modifiers) | report only |
 | **2c** | schema v3 + `results_store` fields; GraphQL ledger / pre-demand fields; card waterfall (behind v2) | goldens unchanged (legacy rows write NULLs) |
 | **3** | `RatingsView`; `fitting/datasets.py`; rules suite; hitter talent stage (BABIP / Avoid K / Gap / Power / Eye, fit to stats, monotone) with per-player legacy fallback when BABIP is missing | rules suite passes; eval vs legacy: hitter residuals by rating flatten; watchlist; draft metrics no worse |

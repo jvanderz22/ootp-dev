@@ -232,13 +232,24 @@ watchlist.
   modifier stays as the decision layer (2026-11-05).
 
 **2. `v2` skeleton, built in parallel (no score changes)**
-- A `ranking/` package with profiles, the four layers as stages, typed
-  results, the ledger and the run manifest.
-- Today's logic is moved into the stages unchanged, as "legacy" layer
-  implementations, and registered as engine `v2`.
-- **Gate:** `v2` matches `legacy` exactly. The ledger shows up in the
-  breakdown and player card.
-- Add the signal inventory report. Delete the dead code in `v2` only.
+
+Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
+- ✅ **2a, the engine:** a `ranking/` package with a profile per ranking
+  method, typed results, the ledger and the run manifest. Today's logic
+  runs as "legacy" stages, unchanged, and the demand step runs last with
+  pre- and post-demand scores and ranks kept. Registered as engine `v2`
+  (`eval_rankings.py --engine v2`).
+  - **Gate passed (2026-11-05):** `v2` matches `legacy` on every field,
+    breakdowns included, in unit tests and on 31,629 live rankings (the
+    snapshot under both profiles plus all ten `yfmlb` classes). Every
+    ledger sums to its score.
+  - Pitching shows as one "SP / RP role adjustments" ledger line until
+    phase 4 replaces the legacy pitcher scorer.
+- **2b, eval reports:** `--parity`, `--explain <player>` and the signal
+  inventory (`--signals`).
+- **2c, the app:** store the ledger and pre-demand fields, show the ledger
+  on the player card, and add the engine toggle (default `v2`).
+- Delete the dead code in `v2` only.
 
 **3. Talent layer, hitters first**
 - Use BABIP / Avoid K / Gap / Power / Eye.
@@ -275,8 +286,8 @@ watchlist.
 
 ## Open questions
 
-- **Replacement level and WAR:** StatsPlus's stats include WAR. Use it as the
-  target directly, or compute our own from the counting stats so the value
-  layer's pieces (positional adjustment, replacement level) are explicit?
-- **Web app:** show `v2` and `legacy` side by side (a toggle), or is the eval
-  report enough?
+- ~~**Replacement level and WAR:** StatsPlus's WAR directly, or our own?~~
+  Our own from the counting stats, so positional adjustment and replacement
+  level are explicit, calibrated against StatsPlus's WAR (2026-11-05).
+- ~~**Web app:** a toggle or the eval report?~~ A toggle, defaulting to `v2`
+  (2026-11-05).

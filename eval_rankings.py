@@ -141,7 +141,27 @@ def _legacy_scores(profiles, pool, classes):
     return out
 
 
-ENGINES = {"legacy": _legacy_scores}
+def _v2_scores(profiles, pool, classes):
+    from league_snapshot import coerce_gf
+    from models.game_players import GamePlayer
+    from ranking import get_ranker
+
+    out = {}
+    if "current" in profiles:
+        players = [GamePlayer({**r, "G/F": coerce_gf(r.get("G/F"))}) for r in pool]
+        scored = get_ranker("overall").rank(players, batch_size=max(len(players), 1))
+        out["current"] = {s.id: s.overall_score for s in scored}
+    if "draft" in profiles:
+        out["draft"] = {}
+        for name, rows in classes.items():
+            scored = get_ranker("draft_class").rank(
+                [GamePlayer(r) for r in rows], batch_size=max(len(rows), 1)
+            )
+            out["draft"][name] = {s.id: s.pre_demand_score for s in scored}
+    return out
+
+
+ENGINES = {"legacy": _legacy_scores, "v2": _v2_scores}
 
 
 def score(engine, profiles, pool, classes):
