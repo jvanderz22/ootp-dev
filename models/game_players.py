@@ -42,7 +42,8 @@ PLAYER_FIELDS = {
     # OOTP's base ratings under the Contact / Movement composites (Contact ~
     # 1/2 BABIP + 1/2 Avoid K). Only live-league snapshots and newer OOTP
     # exports carry them; their properties are None when a dataset doesn't.
-    "babip": "BABIP P",
+    # OOTP's export labels potential BABIP "HT P" (current is "BABIP").
+    "babip": "HT P",
     "babip_ovr": "BABIP",
     "hr_allowed": "HRA P",
     "hr_allowed_ovr": "HRA",

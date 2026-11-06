@@ -12,7 +12,7 @@ next to `legacy`) and judged by `eval_rankings.py` at every step.
 |---|---|
 | 2026-11-04 | **Unit is WAR.** Every layer outputs WAR or a WAR distribution. |
 | 2026-11-04 | **Ranking rule: expected value, with upside favored at equal EV** (see "Uncertainty and the ranking rule"). |
-| 2026-11-04 | **Draft cost is relative to slot.** Each pick has a slot amount you can always offer. Over-slot only works with budget, which you often don't have. |
+| 2026-11-05 | **The decision layer is your existing demand modifier, applied as the very last step.** It already handles signability the way you want. Every draft run records each player's value both before and after it. No slot amounts or budget modelling (this replaces the 2026-11-04 slot-based design). |
 | 2026-11-04 | **Your tuned values are priors and may stay.** They push things the direction you want. Fitted layers start from them, and explicit judgment adjustments remain as their own visible step. |
 | 2026-11-04 | **Build in parallel** (engine `v2`) and compare side by side before switching. |
 | 2026-11-04 | **Current scoring is judged on performance stats**, with OVR as the fallback and the watchlist as a sanity check. **Draft scoring is judged on holding potential**: OVR from age 25, POT now before; gone from the league = bust; baseline = draft-day POT order. |
@@ -35,9 +35,10 @@ next to `legacy`) and judged by `eval_rankings.py` at every step.
   are counted again: pitch mix and velo on top of Stuff (fixed for current
   ratings in 0ce9a72), and Avoid K on top of Contact. Draft pitchers still
   have Stuff in five places (Aliff takes ×0.93 twice).
-- **Ranking and value are mixed together.** "Is he worth his demand at the
-  pick where I'd take him" is a decision, but it's implemented as a
-  rank-banded distortion of the talent score.
+- **Signability is folded into the talent score.** The demand modifier does
+  the job you want, but its output replaces the score. The pre-demand value
+  only survives as a breakdown entry, so you can't easily see or rank by
+  either one.
 - **Settings live in five places.** `type ==` branches in scorers, ranker
   subclasses, constructor args, a `splits.py` copy (fixed), and
   `model_cache.warm()`.
@@ -55,7 +56,7 @@ next to `legacy`) and judged by `eval_rankings.py` at every step.
 | **1. Talent** | ratings → expected rate stats (hitters: runs per PA from BABIP / Avoid K / Gap / Power / Eye; pitchers: runs per 9 innings from base components; fielding runs by position) | regression fit to StatsPlus season stats against ratings, weighted by PA / IP, monotone in each rating, the 2023 grids as priors | the attribute grids, SP / RP pitch mix, velo, HR risk, hit profile, handedness |
 | **2. Value** | rates → WAR for a season | expected playing time (role, stamina, injury proneness as expected games lost) + positional adjustment + replacement level | RP ×0.82, the 0.73 / 0.22 / 0.05 weights, injury multipliers, two-way bonus |
 | **3. Development** | a prospect → distribution of peak WAR | fit on past classes + archived snapshots: rating growth given age, POT, work ethic, intelligence, scouting accuracy | age, personality, secondary personality, scouting accuracy, the draft overall / Stuff modifiers |
-| **4. Decision** | draft board: worth taking at my pick? | surplus value at your next pick (see "Draft decision layer") | `DraftDemandModifier`'s rank bands |
+| **4. Decision** | draft board: how does signability change it? | your `DraftDemandModifier`, unchanged, run last on the pre-demand order (see "Draft decision layer") | nothing: it moves to the end |
 
 Each **profile** (current, potential, draft) is one declared config: which
 ratings to read (current / potential / vs L / vs R), which layers run, and
@@ -98,16 +99,18 @@ plan, now one config per profile.
 
 ### Draft decision layer
 
-- **Cost:** a player demanding at or under slot costs nothing extra. Over slot,
-  the overage counts against this draft's over-slot budget (a setting per
-  class). If it's over the budget, he's unsignable at that pick and flagged
-  as such. "Impossible" means unsignable.
-- **Availability:** the chance he's still there at your next pick, estimated
-  from past drafts (draft position vs draft-day ratings, from `drafted_picks`
-  / StatsPlus `draftv2`).
-- **Board:** order by surplus value at your next pick, and show the overall
-  value order alongside. This replaces the rank bands: rank matters only
-  through "would I be picking him here".
+- **The demand modifier stays, as the very last step.** It's applied after
+  every other layer, to the order those layers produce. It reads rank, so
+  it has to see the finished pre-demand ranking.
+- **Before and after:** every draft run stores both the pre-demand value and
+  rank and the post-demand value and rank, as first-class outputs (not just
+  a breakdown entry), so the board can show either and the eval tool can
+  compare either. The eval's draft metrics already use the pre-demand order.
+- **Ledger line:** in WAR, the demand step's contribution is
+  value × (factor − 1).
+- **Not planned:** slot amounts, over-slot budget, and the chance a player is
+  still there at your pick. Revisit only if the demand modifier stops doing
+  the job.
 
 ### Step-by-step record (ledger) and run manifest
 
@@ -140,7 +143,6 @@ To start collecting, because history doesn't backfill:
 - **Season stats:** player batting / pitching / fielding by year with L/R
   splits. These are listed in the StatsPlus API (via StatsPlus-MCP's docs)
   but not tried yet. Check whether past seasons and WAR are included.
-- **Slot amounts per pick**, and your over-slot budget per draft.
 - **BABIP in OOTP draft exports** (current + potential). You're adding it to
   the export view going forward.
 
@@ -190,13 +192,17 @@ watchlist.
 
 **1. Data**
 - ✅ **BABIP, HRA and PBABIP** (current, potential, vs L/R) map into the
-  snapshot as `BABIP` / `BABIP P`, `HRA` / `HRA P`, `PBABIP` / `PBABIP P`
+  snapshot as `BABIP` / `HT P`, `HRA` / `HRA P`, `PBABIP` / `PBABIP P`
   (splits `"BABIP vL"` and so on). They're on `GamePlayer` as
   `babip(_ovr)`, `hr_allowed(_ovr)` and `pbabip(_ovr)`, and read None when a
   dataset lacks them. Production fills them on its next refresh after deploy.
-  The OOTP export headers for these columns are still to confirm once you've
-  added them to the export view; the draft-class CSVs must use the same
-  names.
+  - **OOTP export headers, confirmed 2026-11-05** from an OOTP 27 export:
+    current BABIP is `BABIP` and potential is **`HT P`** (height is the
+    separate `HT` column). Checked by fit: potential Contact ≈ 0.55·`HT P`
+    + 0.49·`K P`, matching StatsPlus. The snapshot uses the same names.
+  - The export view had no HRA / PBABIP columns. If OOTP offers them, add
+    them and confirm their headers; until then draft-class pitchers have no
+    Movement components.
 - ✅ **Snapshot archive:** every refresh with an in-game date writes
   `league_snapshots/<league>/archive/<YYYY-MM>.csv.gz`, keeping the latest
   per in-game month. It starts collecting once deployed.
@@ -211,7 +217,8 @@ watchlist.
     with full counting stats and `ubr`. Fielding has `zr`, `framing` and `arm`.
     2042 MLB WAR sums to 1,037 (hitting 584, pitching 453).
   - Backfilled 2030–2042 for `yfmlb` into `fly_data/league_stats/`.
-- ☐ Slot amounts and the over-slot budget setting (see open questions).
+- ~~Slot amounts and the over-slot budget~~: not needed. The demand
+  modifier stays as the decision layer (2026-11-05).
 
 **2. `v2` skeleton, built in parallel (no score changes)**
 - A `ranking/` package with profiles, the four layers as stages, typed
@@ -249,8 +256,8 @@ watchlist.
   ratings per profile).
 
 **7. Decision layer**
-- The slot / budget / availability board, the E[v] ranking and the upside
-  dial.
+- The demand modifier as the last stage, with pre- and post-demand values and
+  ranks stored and shown. Ranking by E[v] plus the upside dial.
 
 **8. Switch the app to `v2`**
 - Change `get_ranker_for_method`, regenerate the goldens deliberately, and
@@ -258,9 +265,6 @@ watchlist.
 
 ## Open questions
 
-- **Slot amounts:** where do they come from? A StatsPlus endpoint, the OOTP
-  export, or entered per draft?
-- **Over-slot budget:** one number per draft class, entered in the app?
 - **Replacement level and WAR:** StatsPlus's stats include WAR. Use it as the
   target directly, or compute our own from the counting stats so the value
   layer's pieces (positional adjustment, replacement level) are explicit?

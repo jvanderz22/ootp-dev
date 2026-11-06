@@ -94,7 +94,7 @@ RATINGS_COLUMN_MAP = {
     "BABIP": "BABIP",
     # batting - potential
     "PotCntct": "CON P", "PotGap": "GAP P", "PotPow": "POW P",
-    "PotEye": "EYE P", "PotKs": "K P", "PotBABIP": "BABIP P",
+    "PotEye": "EYE P", "PotKs": "K P", "PotBABIP": "HT P",
     # infield / outfield / catcher defense
     "IFR": "IF RNG", "IFE": "IF ERR", "IFA": "IF ARM", "TDP": "TDP",
     "OFR": "OF RNG", "OFE": "OF ERR", "OFA": "OF ARM",
