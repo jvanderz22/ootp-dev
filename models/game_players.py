@@ -39,6 +39,15 @@ PLAYER_FIELDS = {
     "power_ovr": "POW",
     "eye_ovr": "EYE",
     "avoid_k_ovr": "K's",
+    # OOTP's base ratings under the Contact / Movement composites (Contact ~
+    # 1/2 BABIP + 1/2 Avoid K). Only live-league snapshots and newer OOTP
+    # exports carry them; their properties are None when a dataset doesn't.
+    "babip": "BABIP P",
+    "babip_ovr": "BABIP",
+    "hr_allowed": "HRA P",
+    "hr_allowed_ovr": "HRA",
+    "pbabip": "PBABIP P",
+    "pbabip_ovr": "PBABIP",
     "batted_ball_profile": "BBT",
     "gb_tendency": "GBT",
     "fb_tendency": "FBT",
@@ -97,8 +106,8 @@ PLAYER_FIELDS = {
 # Each split column is the combined column's header plus the side: "CON vL".
 SPLIT_SIDES = ("vL", "vR")
 SPLIT_RATING_FIELDS = (
-    "contact_ovr", "gap_ovr", "power_ovr", "eye_ovr", "avoid_k_ovr",
-    "stuff_ovr", "movement_ovr", "control_ovr",
+    "contact_ovr", "gap_ovr", "power_ovr", "eye_ovr", "avoid_k_ovr", "babip_ovr",
+    "stuff_ovr", "movement_ovr", "control_ovr", "hr_allowed_ovr", "pbabip_ovr",
 )
 
 
@@ -306,6 +315,30 @@ class GamePlayer:
     @property
     def avoid_k_ovr(self):
         return _int(self._avoid_k_ovr)
+
+    @property
+    def babip(self):
+        return _int(self._babip, None)
+
+    @property
+    def babip_ovr(self):
+        return _int(self._babip_ovr, None)
+
+    @property
+    def hr_allowed(self):
+        return _int(self._hr_allowed, None)
+
+    @property
+    def hr_allowed_ovr(self):
+        return _int(self._hr_allowed_ovr, None)
+
+    @property
+    def pbabip(self):
+        return _int(self._pbabip, None)
+
+    @property
+    def pbabip_ovr(self):
+        return _int(self._pbabip_ovr, None)
 
     @property
     def batted_ball_profile(self):

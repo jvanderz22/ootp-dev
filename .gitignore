@@ -13,6 +13,7 @@ processed_classes/**/*.csv
 processed_classes/**/*
 league_snapshots/
 fly_data/
+league_stats/
 web_config.json
 leagues.json
 

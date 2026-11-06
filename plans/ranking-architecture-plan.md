@@ -189,11 +189,29 @@ watchlist.
 **0. Evaluation harness: done** (3fcff0d).
 
 **1. Data**
-- Map BABIP, HRA and PBABIP (current, potential, L/R) into the snapshot.
-- Archive snapshots per season.
-- Build a StatsPlus season-stats pull, after trying the endpoints and
-  checking whether past seasons and WAR are included.
-- Get slot amounts and the over-slot budget setting.
+- ✅ **BABIP, HRA and PBABIP** (current, potential, vs L/R) map into the
+  snapshot as `BABIP` / `BABIP P`, `HRA` / `HRA P`, `PBABIP` / `PBABIP P`
+  (splits `"BABIP vL"` and so on). They're on `GamePlayer` as
+  `babip(_ovr)`, `hr_allowed(_ovr)` and `pbabip(_ovr)`, and read None when a
+  dataset lacks them. Production fills them on its next refresh after deploy.
+  The OOTP export headers for these columns are still to confirm once you've
+  added them to the export view; the draft-class CSVs must use the same
+  names.
+- ✅ **Snapshot archive:** every refresh with an in-game date writes
+  `league_snapshots/<league>/archive/<YYYY-MM>.csv.gz`, keeping the latest
+  per in-game month. It starts collecting once deployed.
+- ✅ **Season stats:** `league_stats.py <league> <years>` writes
+  `league_stats/<league>/{bat,pitch,field}/<year>.csv`, every level and
+  split. What StatsPlus serves (checked 2026-11-05):
+  - `/api/playerbatstatsv2/`, `playerpitchstatsv2`, `playerfieldstatsv2`
+    with `year`, `lid` and `split`. Without `lid` it's MLB only; each
+    `/api/lgdata/` league id (18 in `yfmlb`, levels 1–6) gives the minors.
+  - Past seasons are served (2034 checked). One row per player-team stint.
+  - **WAR is included** (`war` for batting and pitching, plus `ra9war`), along
+    with full counting stats and `ubr`. Fielding has `zr`, `framing` and `arm`.
+    2042 MLB WAR sums to 1,037 (hitting 584, pitching 453).
+  - Backfilled 2030–2042 for `yfmlb` into `fly_data/league_stats/`.
+- ☐ Slot amounts and the over-slot budget setting (see open questions).
 
 **2. `v2` skeleton, built in parallel (no score changes)**
 - A `ranking/` package with profiles, the four layers as stages, typed
@@ -243,7 +261,8 @@ watchlist.
 - **Slot amounts:** where do they come from? A StatsPlus endpoint, the OOTP
   export, or entered per draft?
 - **Over-slot budget:** one number per draft class, entered in the app?
-- **Replacement level and WAR:** use StatsPlus's WAR if the stats include it,
-  or compute it ourselves for the league?
+- **Replacement level and WAR:** StatsPlus's stats include WAR. Use it as the
+  target directly, or compute our own from the counting stats so the value
+  layer's pieces (positional adjustment, replacement level) are explicit?
 - **Web app:** show `v2` and `legacy` side by side (a toggle), or is the eval
   report enough?

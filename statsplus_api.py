@@ -19,6 +19,7 @@ Cookies) into the app settings as `sessionid=<v>; csrftoken=<v>`.
 """
 import csv
 import io
+import json
 import re
 import time
 from dataclasses import dataclass
@@ -283,6 +284,37 @@ def fetch_league_date(league_url: str, cookie: str, timeout: float = 30.0) -> st
 def fetch_teams(league_url: str, cookie: str, timeout: float = 60.0) -> str:
     """Raw CSV text from `GET /api/teams/` (id -> name for teams/orgs/leagues)."""
     return _get_api_text(_api_url(league_url, "teams"), cookie, timeout=timeout)
+
+
+def fetch_league_data(league_url: str, cookie: str, timeout: float = 60.0) -> dict:
+    """`GET /api/lgdata/` -> `{leagues, subleagues, divisions, teams, standings}`.
+    `leagues[]` is the only place league names / levels are exposed:
+    `league_id, name, abbr, level, parent_league_id`."""
+    return json.loads(_get_api_text(_api_url(league_url, "lgdata"), cookie, timeout=timeout))
+
+
+# Season stats: one row per player-team stint at a level, `split_id` 1 overall /
+# 2 vs L / 3 vs R (all three unless `split` is passed), with `war` on batting and
+# pitching. Without `lid` StatsPlus answers for the major league only - pass each
+# `/api/lgdata/` league id for the minors. Past seasons are served too; during
+# the preseason the upcoming year comes back empty.
+PLAYER_STAT_ENDPOINTS = {
+    "bat": "playerbatstatsv2",
+    "pitch": "playerpitchstatsv2",
+    "field": "playerfieldstatsv2",
+}
+
+
+def fetch_player_stats(
+    league_url: str, cookie: str, kind: str, year: int, lid=None, timeout: float = 60.0
+) -> str:
+    """Raw CSV text of one season of `kind` ("bat" / "pitch" / "field") stats."""
+    params = {"year": year}
+    if lid is not None:
+        params["lid"] = lid
+    return _get_api_text(
+        _api_url(league_url, PLAYER_STAT_ENDPOINTS[kind]), cookie, params=params, timeout=timeout
+    )
 
 
 def _parse_draft_csv(text: str):

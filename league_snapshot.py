@@ -26,6 +26,7 @@ verify against a real in-game scouting report before trusting them):
   * ``C ABI`` is taken from ``CBlk`` (catcher blocking).
 """
 import csv
+import gzip
 import io
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -90,9 +91,10 @@ RATINGS_COLUMN_MAP = {
     "Age": "Age",
     # batting - current
     "Cntct": "CON", "Gap": "GAP", "Pow": "POW", "Eye": "EYE", "Ks": "K's",
+    "BABIP": "BABIP",
     # batting - potential
     "PotCntct": "CON P", "PotGap": "GAP P", "PotPow": "POW P",
-    "PotEye": "EYE P", "PotKs": "K P",
+    "PotEye": "EYE P", "PotKs": "K P", "PotBABIP": "BABIP P",
     # infield / outfield / catcher defense
     "IFR": "IF RNG", "IFE": "IF ERR", "IFA": "IF ARM", "TDP": "TDP",
     "OFR": "OF RNG", "OFE": "OF ERR", "OFA": "OF ARM",
@@ -100,8 +102,9 @@ RATINGS_COLUMN_MAP = {
     # speed / baserunning
     "Speed": "SPE", "Steal": "STE", "Run": "RUN",
     # pitching - current / potential
-    "Stf": "STU", "Mov": "MOV", "Ctrl": "CONT",
+    "Stf": "STU", "Mov": "MOV", "Ctrl": "CONT", "HRA": "HRA", "PBABIP": "PBABIP",
     "PotStf": "STU P", "PotMov": "MOV P", "PotCtrl": "CONT P",
+    "PotHRA": "HRA P", "PotPBABIP": "PBABIP P",
     "Stm": "STM", "Vel": "VT", "ArmSlot": "Slot",
     # individual pitches - current
     "Fst": "FB", "Snk": "SI", "Cutt": "CT", "Crv": "CB", "Sld": "SL", "Chg": "CH",
@@ -119,7 +122,8 @@ RATINGS_COLUMN_MAP = {
 # handed pitchers for a batter, batters for a pitcher) -> "CON vL" etc.
 _SPLIT_SOURCES = {
     "contact_ovr": "Cntct", "gap_ovr": "Gap", "power_ovr": "Pow", "eye_ovr": "Eye",
-    "avoid_k_ovr": "Ks", "stuff_ovr": "Stf", "movement_ovr": "Mov", "control_ovr": "Ctrl",
+    "avoid_k_ovr": "Ks", "babip_ovr": "BABIP", "stuff_ovr": "Stf", "movement_ovr": "Mov",
+    "control_ovr": "Ctrl", "hr_allowed_ovr": "HRA", "pbabip_ovr": "PBABIP",
 }
 RATINGS_COLUMN_MAP.update(
     {
@@ -305,6 +309,14 @@ class LeagueSnapshotContext:
     def teams_file(self) -> Path:
         return self.snapshot_dir / "teams.csv"
 
+    @property
+    def archive_dir(self) -> Path:
+        return self.snapshot_dir / "archive"
+
+    def archive_file(self, league_date: str) -> Path:
+        """Where the snapshot for `league_date`'s in-game month is kept."""
+        return self.archive_dir / f"{league_date[:7]}.csv.gz"
+
     def ensure_dirs(self) -> None:
         self.snapshot_dir.mkdir(parents=True, exist_ok=True)
 
@@ -478,6 +490,7 @@ def build_snapshot(
         writer.writeheader()
         writer.writerows(rows)
     ctx.teams_file.write_text(teams_csv)
+    _archive(ctx, league_date)
     now = datetime.now(timezone.utc).isoformat()
     # `player_count` is the number the league page shows and is the count the
     # rankings actually work from: the amateur pools (draft class + international
@@ -494,6 +507,18 @@ def build_snapshot(
         (ctx.league_id, now, now, ranked_pool, len(rows), league_date),
     )
     return ctx
+
+
+def _archive(ctx: LeagueSnapshotContext, league_date: str = None) -> None:
+    """Keep a gzipped copy of the snapshot just written, one per in-game month
+    (a later refresh in the same month replaces it). StatsPlus only serves
+    current ratings, so this is the ratings history the ranking models are fit
+    on - pairing ratings with season stats, and how prospects develop."""
+    if not league_date:
+        return
+    ctx.archive_dir.mkdir(parents=True, exist_ok=True)
+    with open(ctx.data_file, "rb") as src, gzip.open(ctx.archive_file(league_date), "wb") as dst:
+        dst.write(src.read())
 
 
 def touch_checked(ctx: LeagueSnapshotContext, league_date: str = None) -> None:

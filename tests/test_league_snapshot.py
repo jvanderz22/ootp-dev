@@ -18,7 +18,7 @@ from league_snapshot import (
     join_rows,
     ranked_rows,
 )
-from models.game_players import PLAYER_FIELDS
+from models.game_players import PLAYER_FIELDS, GamePlayer
 import results_store
 from rankers.get_ranker import get_ranker_for_method
 
@@ -295,6 +295,26 @@ def test_build_snapshot_writes_files(data_dir, snapshot_csvs):
     assert meta["player_count"] == 2
     assert "fetched_at" in meta
     assert ctx.teams_file.exists()
+    assert not ctx.archive_dir.exists()   # no league date -> nothing archived
+
+
+def test_build_snapshot_archives_one_per_in_game_month(data_dir, snapshot_csvs):
+    import gzip
+
+    ctx = _ctx_for("yfmlb")
+    build_snapshot(ctx, *snapshot_csvs, league_date="2042-05-03")
+    ratings, players, teams = snapshot_csvs
+    rows = list(csv.DictReader(io.StringIO(ratings)))
+    later = _csv(RATINGS_HEADER, [r for r in rows if r["ID"] == "100"])
+    build_snapshot(ctx, later, players, teams, league_date="2042-05-28")
+    build_snapshot(ctx, *snapshot_csvs, league_date="2042-06-02")
+
+    assert sorted(p.name for p in ctx.archive_dir.iterdir()) == [
+        "2042-05.csv.gz", "2042-06.csv.gz",
+    ]
+    with gzip.open(ctx.archive_file("2042-05-01"), "rt", newline="") as f:
+        may = list(csv.DictReader(f))
+    assert [r["ID"] for r in may] == ["100"]   # the month's latest refresh wins
 
 
 # --------------------------------------------------------------- ranking layer
@@ -473,6 +493,27 @@ def test_split_ratings_mapped():
     assert rows["200"]["CON vL"] == "70" and rows["200"]["CON vR"] == "45"
     assert rows["200"]["K's vL"] == "65"
     assert rows["100"]["STU vL"] == "40" and rows["100"]["CONT vR"] == "40"
+
+
+def test_base_ratings_mapped():
+    """BABIP (under Contact) and HRA / PBABIP (under Movement) come through
+    combined, potential and per split, and read back off a GamePlayer."""
+    ratings, players, teams = make_snapshot_csvs()
+    rows = list(csv.DictReader(io.StringIO(ratings)))
+    hitter = next(r for r in rows if r["ID"] == "200")
+    hitter.update(BABIP="60", PotBABIP="65", BABIP_L="70", BABIP_R="55")
+    pitcher = next(r for r in rows if r["ID"] == "100")
+    pitcher.update(HRA="55", PBABIP="50", PotHRA="60", PotPBABIP="55", HRA_L="45")
+    joined = {r["ID"]: r for r in join_rows(_csv(RATINGS_HEADER, rows), players, teams)}
+
+    h, p = GamePlayer(joined["200"]), GamePlayer(joined["100"])
+    assert (h.babip_ovr, h.babip) == (60, 65)
+    assert (p.hr_allowed_ovr, p.pbabip_ovr, p.hr_allowed, p.pbabip) == (55, 50, 60, 55)
+    assert h.with_split("vL").babip_ovr == 70 and h.with_split("vR").babip_ovr == 55
+    assert p.with_split("vL").hr_allowed_ovr == 45
+
+    # an OOTP export without the columns reads None, not 0
+    assert GamePlayer({"ID": "1"}).babip_ovr is None
 
 
 def test_player_splits_scores_each_side(data_dir):
