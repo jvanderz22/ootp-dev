@@ -227,12 +227,6 @@
     ::ng-deep td.sticky-pos {
       left: 250px;
     }
-    @media (max-width: 640px) {
-      ::ng-deep th.sticky-pos,
-      ::ng-deep td.sticky-pos {
-        left: 186px;
-      }
-    }
   }
   ::ng-deep .star-btn {
     border: none;
@@ -303,10 +297,20 @@
     min-width: 44px;
     box-shadow: inset -1px 0 0 var(--border);
   }
-  /* phones: the Name cell is abbreviated to "J. Smith" (see ranked-table.ts),
-     so the frozen Name column can give a chunk of its width back and the Pos
-     column slides left to meet it */
+  /* phones: frozen, the leading columns took most of the screen - they scroll
+     with the rest instead. The Name cell is abbreviated to "J. Smith" (see
+     ranked-table.ts), so its column narrows too. */
   @media (max-width: 640px) {
+    ::ng-deep th.cmp-col,
+    ::ng-deep td.cmp-col,
+    ::ng-deep th.sticky-rank,
+    ::ng-deep td.sticky-rank,
+    ::ng-deep th.sticky-name,
+    ::ng-deep td.sticky-name,
+    ::ng-deep th.sticky-pos,
+    ::ng-deep td.sticky-pos {
+      position: static;
+    }
     ::ng-deep th.sticky-name,
     ::ng-deep td.sticky-name {
       width: 96px;
@@ -315,7 +319,7 @@
     }
     ::ng-deep th.sticky-pos,
     ::ng-deep td.sticky-pos {
-      left: 168px;
+      box-shadow: none;
     }
   }
 
