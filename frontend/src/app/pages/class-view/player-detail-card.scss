@@ -256,3 +256,58 @@
   resize: vertical;
   font: inherit;
 }
+
+/* v2 score ledger: each counted line as a bar from the running total before
+   it to the one after (a waterfall), grouped by pipeline stage */
+.ledger {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ledger h5 {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.ledger h5 .muted { font-weight: 400; margin-left: 4px; }
+.ledger-stage {
+  margin-top: 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+.ledger-row {
+  display: grid;
+  grid-template-columns: minmax(0, 9rem) minmax(40px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.lg-label { color: var(--text-dim); overflow-wrap: anywhere; }
+.ledger-row b { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+.lg-bar {
+  position: relative;
+  height: 8px;
+  background: var(--bg-elev-2);
+  border-radius: 2px;
+}
+.lg-bar i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  min-width: 1px;
+  border-radius: 2px;
+  background: var(--ok);
+}
+.lg-bar i.neg { background: var(--danger); }
+.ledger-row.total {
+  margin-top: 2px;
+  border-top: 1px solid var(--border);
+  padding-top: 2px;
+}
+.ledger-row.total .lg-label, .ledger-row.total b { color: var(--text); font-weight: 600; }
+.ledger-row.total .lg-bar { background: none; }
+.lg-note { font-size: 11px; }

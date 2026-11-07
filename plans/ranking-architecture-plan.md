@@ -272,8 +272,10 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
 - ✅ **2b, eval reports:** `--parity`, `--explain <player>` and the signal
   inventory (`--signals`). Live parity: 11 of 11 pools identical. The
   inventory's findings are under "Findings so far".
-- **2c, the app:** store the ledger and pre-demand fields, show the ledger
-  on the player card, and add the engine toggle (default `v2`).
+- ✅ **2c, the app:** runs are stored per engine with the ledger and
+  pre-demand fields; the player card shows the ledger as a waterfall; the
+  draft table has pre-demand columns; a top-bar toggle switches engines
+  (default `v2`). Needs a deploy to take effect (schema migration 3).
 - Delete the dead code in `v2` only.
 
 **3. Talent layer, hitters first**

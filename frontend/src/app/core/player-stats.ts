@@ -3,7 +3,14 @@
  * class-view detail panel and the side-by-side compare view both render.
  * Kept free of `this` so components can expose them as plain fields.
  */
-import { PlayerSplits, PlayerType, RankedPlayer, ScoreBreakdown, SplitScores } from './api.types';
+import {
+  LedgerLine,
+  PlayerSplits,
+  PlayerType,
+  RankedPlayer,
+  ScoreBreakdown,
+  SplitScores,
+} from './api.types';
 
 export interface RatingRow {
   label: string;
@@ -277,4 +284,81 @@ export function otherComponents(b: ScoreBreakdown | null): [string, unknown][] {
     ...b.legacy.map((m) => [m.name, m.value] as [string, unknown]),
   ];
   return rows.filter(([, v]) => v != null);
+}
+
+/** One counted ledger line placed on the waterfall: its bar runs from the
+ *  running total before it to the one after, as a % of the widest total. */
+export interface LedgerStep {
+  label: string;
+  delta: number;
+  left: number;
+  width: number;
+}
+
+export interface LedgerStage {
+  stage: string;
+  title: string;
+  steps: LedgerStep[];
+}
+
+export interface LedgerWaterfall {
+  stages: LedgerStage[];
+  total: number;
+  /** lines that move the score by less than this aren't drawn */
+  hidden: number;
+  /** the side the player isn't judged on — listed, not counted */
+  other: { label: string; delta: number }[];
+}
+
+const LEDGER_STAGE_TITLES: Record<string, string> = {
+  model: 'Model',
+  modifiers: 'Modifiers',
+  'two-way': 'Two-way',
+  demand: 'Demand',
+};
+const LEDGER_MIN_DELTA = 0.005;
+
+function ledgerLabel(line: LedgerLine): string {
+  return line.stage === 'modifiers' || line.stage === 'demand'
+    ? prettyModifier(line.label)
+    : line.label;
+}
+
+/** The v2 ledger as a waterfall, grouped by stage in pipeline order. Null when
+ *  there's no ledger (the legacy engine). */
+export function ledgerWaterfall(b: ScoreBreakdown | null): LedgerWaterfall | null {
+  if (!b?.ledger?.length) return null;
+  const counted = b.ledger.filter((l) => l.counted);
+  let running = 0;
+  let peak = 0;
+  const placed = counted.map((line) => {
+    const start = running;
+    running += line.delta;
+    peak = Math.max(peak, start, running);
+    return { line, start, end: running };
+  });
+  const scale = peak || 1;
+  const stages: LedgerStage[] = [];
+  let hidden = 0;
+  for (const { line, start, end } of placed) {
+    if (Math.abs(line.delta) < LEDGER_MIN_DELTA) {
+      hidden++;
+      continue;
+    }
+    let stage = stages[stages.length - 1];
+    if (stage?.stage !== line.stage) {
+      stage = { stage: line.stage, title: LEDGER_STAGE_TITLES[line.stage] ?? line.stage, steps: [] };
+      stages.push(stage);
+    }
+    stage.steps.push({
+      label: ledgerLabel(line),
+      delta: line.delta,
+      left: (Math.min(start, end) / scale) * 100,
+      width: (Math.abs(line.delta) / scale) * 100,
+    });
+  }
+  const other = b.ledger
+    .filter((l) => !l.counted && Math.abs(l.delta) >= LEDGER_MIN_DELTA)
+    .map((l) => ({ label: ledgerLabel(l), delta: l.delta }));
+  return { stages, total: running, hidden, other };
 }

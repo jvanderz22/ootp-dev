@@ -422,6 +422,28 @@ const BEST_POS_COLUMN: ColumnDef = {
 };
 
 const MODELED_COLUMNS: ColumnDef[] = [
+  // v2 engine only (blank under legacy): the score and rank before the draft
+  // demand step, so a pick's talent order and its signable order sit side by side
+  {
+    field: 'preDemandScore',
+    header: 'Pre-dem',
+    title: 'Score before the demand step',
+    numeric: true,
+    descFirst: true,
+    group: 'Model',
+    value: model('preDemandScore'),
+    fmt: fmtNum2,
+  },
+  {
+    field: 'preDemandRank',
+    header: 'Pre-dem #',
+    title: 'Rank before the demand step',
+    numeric: true,
+    descFirst: false,
+    group: 'Model',
+    value: model('preDemandRank'),
+    fmt: fmtInt,
+  },
   {
     field: 'positionPlayerScore',
     header: 'Batter',
@@ -605,8 +627,15 @@ export const VIEW_COLUMNS: Record<ClassView, ColumnDef[]> = {
 };
 
 /** Columns with no meaning for a live-league snapshot: the drafted/demand
- *  columns and the draft-class player-type tag. */
-const DROPPED_IN_LEAGUE = new Set(['demandKey', 'draftedPick', 'draftedTeam', 'type']);
+ *  columns (pre-demand included) and the draft-class player-type tag. */
+const DROPPED_IN_LEAGUE = new Set([
+  'demandKey',
+  'draftedPick',
+  'draftedTeam',
+  'type',
+  'preDemandScore',
+  'preDemandRank',
+]);
 
 /** Columns for a view in a given context. `'league'` drops the demand / drafted
  *  columns and the player-type tag, and inserts Org / Level right after Pos. */

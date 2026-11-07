@@ -12,6 +12,7 @@ import time
 from collections import OrderedDict
 from dataclasses import dataclass
 
+import ranking_engine
 import results_store
 from custom_ranking import resolve_order
 from drafted_players import get_drafted_players_info
@@ -77,7 +78,7 @@ def _build_index(ctx) -> ClassIndex:
         ordered = resolve_order(ctx, rows)
         drafted_info = get_drafted_players_info(ctx)
         game_players = service._game_players_by_id(ctx)
-        source = {"class_name": ctx.name, "league_id": None, "method": ctx.ranking_method}
+        source = service._source(ctx.name, None, ctx.ranking_method)
         payloads = [
             service._player_payload(
                 i + 1, row, drafted_info, game_players.get(row["id"]), source
@@ -96,8 +97,9 @@ def _build_index(ctx) -> ClassIndex:
 
 
 def get_index(ctx) -> ClassIndex:
-    """Return the (possibly cached) built index for `ctx`, rebuilding if stale."""
-    key = f"{ctx.name}:{ctx.ranking_method}"
+    """Return the (possibly cached) built index for `ctx` under the current
+    engine, rebuilding if stale."""
+    key = f"{ctx.name}:{ctx.ranking_method}:{ranking_engine.current()}"
     with _lock:
         cached = _cache.get(key)
         if cached is not None and not cached.is_stale(ctx):
@@ -112,7 +114,8 @@ def get_index(ctx) -> ClassIndex:
 
 
 def evict(name: str) -> None:
-    """Drop every cached index for a class (any ranking method). Call after writes."""
+    """Drop every cached index for a class (any ranking method or engine). Call
+    after writes."""
     prefix = f"{name}:"
     with _lock:
         for key in [k for k in _cache if k.startswith(prefix)]:

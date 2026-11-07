@@ -75,6 +75,9 @@ type RankedPlayer {
   relieverComponent: Float
   runningScoreComponent: Float
   rawOverallScore: Float
+  "v2 engine only: the score and rank before the draft demand step (null for legacy)"
+  preDemandScore: Float
+  preDemandRank: Int
   ratings: JSON
   "Which stored ranking this row came from - pass it to `playerBreakdown`."
   source: RankingSource!
@@ -86,11 +89,16 @@ type RankedPlayer {
   stale: Boolean
 }
 
-"A stored ranking: a draft class (its current method), or a league snapshot + method."
+"""
+A stored ranking: a draft class (its current method), or a league snapshot +
+method, as scored by one engine.
+"""
 type RankingSource {
   className: String
   leagueId: ID
   method: String!
+  "v2 | legacy - the engine the request was served by (its X-Ranking-Engine header)"
+  engine: String!
 }
 
 input RankingSourceInput {
@@ -98,6 +106,8 @@ input RankingSourceInput {
   leagueId: ID
   "required for a league; defaults to the class's current method"
   method: String
+  "defaults to the request's engine"
+  engine: String
 }
 
 "A named model value - modifier names vary by ranking method."
@@ -151,11 +161,30 @@ type RankAdjustBreakdown {
 }
 
 """
+One step of a v2 score: a stage's contribution, in the run's unit. The lines
+with `counted` true sum to the model score; the rest are the side the player
+isn't judged on.
+"""
+type LedgerLine {
+  stage: String!
+  label: String!
+  delta: Float!
+  "batting | pitching, or null for a line that applies to the whole player"
+  side: String
+  counted: Boolean!
+}
+
+"""
 How a player's model score was built. Only the side(s) his `playerType` is
 judged on are present: `pitching` is null for a Hitter, `batting` for a Pitcher.
 """
 type ScoreBreakdown {
   playerType: String!
+  engine: String!
+  "the ledger's unit (points until the v2 value layer, then WAR); null for legacy"
+  unit: String
+  "the score step by step (v2 only; empty for legacy)"
+  ledger: [LedgerLine!]!
   batting: BattingBreakdown
   pitching: PitchingBreakdown
   rankAdjust: RankAdjustBreakdown

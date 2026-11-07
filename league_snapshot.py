@@ -40,7 +40,7 @@ from models.game_players import (
     PLAYER_FIELDS, SPLIT_HEADERS, SPLIT_SIDES, GamePlayer, split_header,
 )
 from rankers.base_ranker import DEFAULT_BATCH_SIZE
-from rankers.get_ranker import get_ranker_for_method
+import ranking_engine
 from statsplus_api import (
     StatsPlusError,
     fetch_league_date,
@@ -631,9 +631,9 @@ def snapshot_version(ctx: LeagueSnapshotContext) -> int:
 
 
 def ranked_method_is_fresh(ctx: LeagueSnapshotContext, method: str) -> bool:
-    """Whether the stored `method` ranking was scored from the current snapshot -
-    i.e. it is ready to serve without a re-score. Drives the "model hasn't run
-    yet" hint on the league page."""
+    """Whether the stored `method` ranking under the current engine was scored
+    from the current snapshot - i.e. it is ready to serve without a re-score.
+    Drives the "model hasn't run yet" hint on the league page."""
     info = results_store.run_info(results_store.LEAGUE, ctx.league_id, method)
     return (
         info is not None
@@ -642,9 +642,7 @@ def ranked_method_is_fresh(ctx: LeagueSnapshotContext, method: str) -> bool:
     )
 
 
-def _score(ctx: LeagueSnapshotContext, method: str, progress=None) -> list[dict]:
-    ranker = get_ranker_for_method(method)
-
+def _score(ctx: LeagueSnapshotContext, ranker, method: str, progress=None) -> list[dict]:
     # The potential ranking is about players who haven't established themselves in
     # the majors yet, so it only scores players with under a year of MLB service
     # time (an OOTP service year is 172 days; `mlb_service_years` is already the
@@ -677,8 +675,8 @@ def ranked_rows(
     ctx: LeagueSnapshotContext, ranking_method: str, progress=None
 ) -> list[dict]:
     """Snapshot rows scored + ordered by `ranking_method` ("overall" or
-    "potential"), best-first - the stored run when it is current, otherwise a
-    fresh score that replaces it.
+    "potential") under the current engine, best-first - the stored run when it
+    is current, otherwise a fresh score that replaces it.
 
     `progress`, if given, is forwarded to the ranker and called with the running
     count of players scored - but only when it actually re-scores."""
@@ -697,8 +695,10 @@ def ranked_rows(
             # re-check: a concurrent caller may have scored it while we waited
             if not ranked_method_is_fresh(ctx, ranking_method):
                 version = snapshot_version(ctx)
+                ranker = ranking_engine.get_ranker(ranking_method)
                 results_store.save_run(
                     results_store.LEAGUE, ctx.league_id, ranking_method, version,
-                    _score(ctx, ranking_method, progress),
+                    _score(ctx, ranker, ranking_method, progress),
+                    manifest=ranker.manifest(version) if hasattr(ranker, "manifest") else None,
                 )
     return results_store.load_results(results_store.LEAGUE, ctx.league_id, ranking_method)

@@ -11,6 +11,13 @@
 
     <span class="spacer"></span>
     @if (store.loading()) { <span class="muted">syncing…</span> }
+    <span class="engine-toggle" role="group" aria-label="Ranking engine">
+      <span class="muted">Engine</span>
+      @for (e of engines; track e) {
+        <button type="button" [class.active]="engine() === e" [attr.aria-pressed]="engine() === e"
+          (click)="setEngine(e)">{{ e }}</button>
+      }
+    </span>
     <button (click)="logout()">Log out</button>
   </header>
 }

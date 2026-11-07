@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Apollo } from 'apollo-angular';
 import { firstValueFrom } from 'rxjs';
+import { ENGINE_HEADER, EngineService } from './engine';
 import {
   ADD_TO_TRADE_LIST,
   CLASS_DETAIL,
@@ -125,6 +126,7 @@ function unwrap(err: unknown): never {
 export class ApiService {
   private readonly apollo = inject(Apollo);
   private readonly http = inject(HttpClient);
+  private readonly engine = inject(EngineService);
 
   async draftClasses(): Promise<DraftClass[]> {
     try {
@@ -396,6 +398,7 @@ export class ApiService {
               className: source.className,
               leagueId: source.leagueId,
               method: source.method,
+              engine: source.engine,
             },
             playerId,
           },
@@ -763,6 +766,7 @@ export class ApiService {
     const blob = await firstValueFrom(
       this.http.get(`/download/${encodeURIComponent(name)}/upload.csv`, {
         responseType: 'blob',
+        headers: { [ENGINE_HEADER]: this.engine.engine() },
       }),
     );
     const url = URL.createObjectURL(blob);

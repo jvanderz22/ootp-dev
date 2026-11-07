@@ -15,6 +15,7 @@ import anyio
 import db
 import league_snapshot
 import pipeline
+import ranking_engine
 import results_store
 from context import DraftClassContext, default_base_dir
 from web import class_index, leagues, org_rankings, trade_lists
@@ -44,6 +45,7 @@ _FLOAT_FIELDS = (
     "model_score", "position_player_score", "fielding_score_component",
     "batting_score_component", "pitcher_score", "starter_component",
     "reliever_component", "running_score_component", "raw_overall_score",
+    "pre_demand_score",
 )
 
 
@@ -63,6 +65,12 @@ def _ctx(name: str) -> DraftClassContext:
     return ctx
 
 
+def _engines_first():
+    """Every engine, the current one first."""
+    current = ranking_engine.current()
+    return [current] + [e for e in ranking_engine.ENGINES if e != current]
+
+
 def _dataset_ids(ctx) -> set:
     with open(ctx.data_file, newline="") as f:
         return {row["ID"] for row in csv.DictReader(f) if row.get("ID")}
@@ -74,8 +82,9 @@ def _dataset_count(ctx) -> int:
 
 
 def _read_ranked_rows(ctx):
-    """The class's current ranking (model order), or None if it isn't scored."""
-    return results_store.class_results(ctx)
+    """The class's current ranking (model order) under the request's engine, or
+    None if it isn't scored."""
+    return pipeline.class_results(ctx)
 
 
 def _to_number(value):
@@ -173,6 +182,17 @@ def _ratings_payload(gp):
     }
 
 
+def _source(class_name, league_id, method) -> dict:
+    """Which stored ranking a row came from, engine included (GraphQL
+    `RankingSource`)."""
+    return {
+        "class_name": class_name,
+        "league_id": league_id,
+        "method": method,
+        "engine": ranking_engine.current(),
+    }
+
+
 def _player_payload(rank, row, drafted_info, game_player=None, source=None):
     info = (drafted_info or {}).get(row["id"])
     payload = {
@@ -205,6 +225,7 @@ def _player_payload(rank, row, drafted_info, game_player=None, source=None):
     }
     for field in _FLOAT_FIELDS:
         payload[field] = _to_number(row.get(field))
+    payload["pre_demand_rank"] = _to_int(row.get("pre_demand_rank"))
     payload["type"] = row.get("player_type") or classify(
         payload["position_player_score"], payload["pitcher_score"]
     )
@@ -286,7 +307,10 @@ def draft_class_payload(name: str):
     if not ctx.exists():
         return None
     ranking_method = ctx.ranking_method
-    run = results_store.run_info(results_store.CLASS, name, ranking_method)
+    # a class processed before the current engine existed is scored under it
+    # when its rows are first read, so any engine's run counts as processed
+    runs = (results_store.run_info(results_store.CLASS, name, ranking_method, e) for e in _engines_first())
+    run = next((r for r in runs if r), None)
     last_processed = run["scored_at"] if run else None
 
     drafted_ids = get_drafted_player_ids(ctx)
@@ -904,7 +928,7 @@ def _league_built_rows(league_id: str, method: str) -> list:
         raise NotFound(
             f"League {league_id!r} has no snapshot yet - refresh it from StatsPlus first."
         )
-    key = (league_id, method)
+    key = (league_id, method, ranking_engine.current())
     stamp = _league_run_stamp(ctx, method)
     with _league_payload_lock:
         hit = _league_payload_cache.get(key)
@@ -919,7 +943,7 @@ def _league_built_rows(league_id: str, method: str) -> list:
     stamp = _league_run_stamp(ctx, method)
     game_players, meta = _snapshot_side_tables(ctx)
     league_url = lg.get("league_url")
-    source = {"class_name": None, "league_id": league_id, "method": method}
+    source = _source(None, league_id, method)
     built = []
     for i, row in enumerate(ranked):
         payload = _player_payload(i + 1, row, None, game_players.get(row["id"]), source)
@@ -1116,9 +1140,14 @@ def player_splits(source: dict, player_id):
 
 def player_breakdown(source: dict, player_id):
     """How one player's score was built, from the stored ranking `source` names
-    (a row's `source`: a class, or a league + method)."""
+    (a row's `source`: a class, or a league + method, and the engine - the
+    request's when it doesn't say)."""
     source = source or {}
     method = source.get("method")
+    try:
+        engine = ranking_engine.validate(source.get("engine") or ranking_engine.current())
+    except ValueError as exc:
+        raise InvalidInput(str(exc)) from exc
     if source.get("class_name"):
         ctx = _ctx(source["class_name"])
         scope, scope_id, method = results_store.CLASS, ctx.name, method or ctx.ranking_method
@@ -1129,8 +1158,30 @@ def player_breakdown(source: dict, player_id):
         scope, scope_id = results_store.LEAGUE, source["league_id"]
     else:
         raise InvalidInput("A ranking source needs a className or a leagueId.")
-    found = results_store.load_breakdown(scope, scope_id, method, player_id)
-    return _breakdown_payload(*found) if found else None
+    found = results_store.load_breakdown(scope, scope_id, method, player_id, engine)
+    if not found:
+        return None
+    player_type, breakdown, ledger = found
+    info = results_store.run_info(scope, scope_id, method, engine) or {}
+    return {
+        **_breakdown_payload(player_type, breakdown),
+        "engine": engine,
+        "unit": (info.get("manifest") or {}).get("unit"),
+        "ledger": _ledger_payload(ledger),
+    }
+
+
+def _ledger_payload(ledger) -> list:
+    """A stored ledger as GraphQL `LedgerLine`s; `counted` is whether the line
+    adds to the score (combined lines, and the side the player is judged on)."""
+    if not ledger:
+        return []
+    side = ledger.get("side")
+    return [
+        {"stage": stage, "label": label, "delta": delta, "side": line_side,
+         "counted": line_side is None or line_side == side}
+        for stage, label, delta, line_side in ledger.get("lines") or []
+    ]
 
 
 # --------------------------------------------------------- custom trade lists
@@ -1254,7 +1305,7 @@ def _stale_entry_payload(league_id: str, entry: dict) -> dict:
         "name": entry.get("name") or f"Player {entry['playerId']}",
         "position": entry.get("position") or "",
     }
-    source = {"class_name": None, "league_id": league_id, "method": "overall"}
+    source = _source(None, league_id, "overall")
     payload = _player_payload(0, row, None, None, source)
     payload["org"] = entry.get("org") or None
     return payload

@@ -4,6 +4,7 @@
 """
 import os
 from pathlib import Path
+from urllib.parse import parse_qs
 
 from ariadne import format_error
 from ariadne.asgi import GraphQL
@@ -13,6 +14,7 @@ from starlette.responses import JSONResponse, RedirectResponse, Response
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
+import ranking_engine
 from statsplus_api import StatsPlusAuthError, StatsPlusError
 from web.auth import BasicAuthMiddleware
 from web.schema import schema
@@ -39,6 +41,31 @@ def _error_formatter(error, debug=False):
 
 
 graphql_app = GraphQL(schema, debug=DEV, error_formatter=_error_formatter)
+
+
+class RankingEngineScope:
+    """Serve each request with the ranking engine it names - the app's engine
+    toggle sends an `X-Ranking-Engine` header; a download link can say
+    `?engine=`. Anything else gets the default (see ranking_engine.py)."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        engine = _requested_engine(scope) if scope["type"] == "http" else None
+        if engine is None:
+            await self.app(scope, receive, send)
+            return
+        with ranking_engine.using(engine):
+            await self.app(scope, receive, send)
+
+
+def _requested_engine(scope):
+    header = ranking_engine.HEADER.encode()
+    named = next((v.decode() for k, v in scope.get("headers", []) if k == header), None)
+    if named is None:
+        named = parse_qs(scope.get("query_string", b"").decode()).get("engine", [None])[0]
+    return named if named in ranking_engine.ENGINES else None
 
 
 async def download_upload_csv(request):
@@ -124,6 +151,7 @@ app = Starlette(
     routes=routes,
     on_startup=[_open_database, _warm_models, _collect_season_snapshots],
 )
+app.add_middleware(RankingEngineScope)
 app.add_middleware(BasicAuthMiddleware)
 
 if DEV:

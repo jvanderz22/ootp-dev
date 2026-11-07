@@ -137,6 +137,9 @@ export interface RankedPlayer {
   relieverComponent: number | null;
   runningScoreComponent: number | null;
   rawOverallScore: number | null;
+  /** v2 engine only: the score and rank before the draft demand step */
+  preDemandScore: number | null;
+  preDemandRank: number | null;
   ratings: PlayerRatings | null;
   /** which stored ranking this row came from — pass it to `playerBreakdown` */
   source: RankingSource;
@@ -148,11 +151,25 @@ export interface RankedPlayer {
   stale?: boolean | null;
 }
 
-/** A stored ranking: a draft class (its current method), or a league + method. */
+/** A stored ranking: a draft class (its current method), or a league + method,
+ *  as scored by one engine. */
 export interface RankingSource {
   className: string | null;
   leagueId: string | null;
   method: string;
+  /** v2 | legacy — the engine the row was served by */
+  engine: string;
+}
+
+/** One step of a v2 score. The `counted` lines sum to the model score; the
+ *  rest are the side the player isn't judged on. */
+export interface LedgerLine {
+  stage: string;
+  label: string;
+  delta: number;
+  /** batting | pitching, or null for a whole-player line */
+  side: string | null;
+  counted: boolean;
 }
 
 /** A named model value — modifier names vary by ranking method. */
@@ -184,6 +201,11 @@ export interface PitchingRoleBreakdown {
  */
 export interface ScoreBreakdown {
   playerType: PlayerType;
+  engine: string;
+  /** the ledger's unit ("points" until the v2 value layer); null for legacy */
+  unit: string | null;
+  /** the score step by step — v2 only, empty for legacy */
+  ledger: LedgerLine[];
   batting: {
     battingModel: number | null;
     runningModel: number | null;

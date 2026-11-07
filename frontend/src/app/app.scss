@@ -33,3 +33,29 @@ nav.row a:hover {
   max-width: 1200px;
   margin: 0 auto;
 }
+
+/* ranking engine toggle: a two-button segmented control */
+.engine-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+.engine-toggle .muted {
+  margin-right: 6px;
+}
+.engine-toggle button {
+  border-radius: 0;
+  padding: 3px 10px;
+}
+.engine-toggle button:first-of-type {
+  border-radius: 6px 0 0 6px;
+}
+.engine-toggle button:last-of-type {
+  border-radius: 0 6px 6px 0;
+  margin-left: -1px;
+}
+.engine-toggle button.active {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
+}

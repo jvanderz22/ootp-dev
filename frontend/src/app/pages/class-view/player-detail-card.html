@@ -224,6 +224,12 @@
         <div class="stat">
           <span>Raw overall</span><b>{{ p.rawOverallScore | number: '1.2-2' }}</b>
         </div>
+        @if (p.source.className && p.preDemandScore != null) {
+          <div class="stat" title="The model's score and rank before the demand step">
+            <span>Pre-demand</span
+            ><b>{{ p.preDemandScore | number: '1.2-2' }} · #{{ p.preDemandRank }}</b>
+          </div>
+        }
         <div class="stat">
           <span>Batter score</span><b>{{ p.positionPlayerScore | number: '1.2-2' }}</b>
         </div>
@@ -325,6 +331,45 @@
             </div>
           }
         </p-panel>
+      }
+
+      @if (ledger(); as lw) {
+        <div class="ledger">
+          <h5>
+            Score ledger
+            <span class="muted">{{ breakdown()?.engine }} · {{ breakdown()?.unit }}</span>
+          </h5>
+          @for (st of lw.stages; track st.stage) {
+            <div class="ledger-stage">{{ st.title }}</div>
+            @for (s of st.steps; track $index) {
+              <div class="ledger-row">
+                <span class="lg-label">{{ s.label }}</span>
+                <span class="lg-bar"
+                  ><i [class.neg]="s.delta < 0" [style.left.%]="s.left" [style.width.%]="s.width"></i
+                ></span>
+                <b>{{ s.delta > 0 ? '+' : '' }}{{ s.delta | number: '1.2-2' }}</b>
+              </div>
+            }
+          }
+          <div class="ledger-row total">
+            <span class="lg-label">Score</span>
+            <span class="lg-bar"></span>
+            <b>{{ lw.total | number: '1.2-2' }}</b>
+          </div>
+          @if (lw.hidden) {
+            <div class="muted lg-note">{{ lw.hidden }} line(s) with no effect not shown</div>
+          }
+          @if (lw.other.length) {
+            <p-panel header="Other side (not counted)" [toggleable]="true" [collapsed]="true">
+              @for (o of lw.other; track $index) {
+                <div class="mod">
+                  <span>{{ o.label }}</span
+                  ><b>{{ o.delta > 0 ? '+' : '' }}{{ o.delta | number: '1.2-2' }}</b>
+                </div>
+              }
+            </p-panel>
+          }
+        </div>
       }
     </section>
   </div>

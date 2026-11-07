@@ -85,6 +85,38 @@ gate passes:
   isn't seen, so it runs on whole pools (about 25 s for the ten classes).
   The `reads` attributes are gone from `stages/base.py`.
 
+**Status (2026-11-06): step 2c is built.** The app keeps runs per engine and
+has a v2 / legacy toggle, defaulting to v2. Where it differs from the sections
+below:
+- **The engine travels as a request header, not a query argument.** The
+  top-bar toggle sends `X-Ranking-Engine` on every GraphQL request (and the
+  CSV download); `web/app.py`'s `RankingEngineScope` scopes it to the request
+  (`ranking_engine.using`), and storage, the class index and the league rows
+  cache read it from there. No resolver signature changed. `RankingSource`
+  reports the engine a row came from, and `RankingSourceInput.engine` can
+  override it. Switching reloads the page (table state is in the URL), so
+  two tabs can show the two engines side by side.
+- **Scoring:** processing a draft class scores it under both engines (a class
+  is small). A league refresh scores only the default engine; the other is
+  scored the first time it's viewed, through the existing freshness check.
+  A class processed before 2c (legacy runs only) is scored under v2 the first
+  time its rows are read (`pipeline.class_results`).
+- **Migration 3** (`db._runs_by_engine`) rebuilds the run tables with
+  `engine` in both keys and tags existing runs `legacy`. It's idempotent, and
+  migration 1 applies it before importing a pre-SQLite install. On a copy
+  built with HEAD's code (two league methods + two classes, 23,679 rows) it
+  ran in 0.3 s with every row identical and integrity / foreign keys clean.
+- **Ledger storage:** `{"side", "lines": [[stage, label, delta, side]]}`,
+  deltas to 4 places, both sides kept (the card lists the uncounted side
+  separately). About 410 bytes a player: 4.5 MB per league method.
+- **Card:** a "Score ledger" waterfall under the model section (bars from
+  the running total, grouped by stage, no-effect lines counted but hidden),
+  the uncounted side in a collapsed panel, and the pre-demand score and rank
+  for draft-class rows. **Draft table:** "Pre-dem" and "Pre-dem #" columns,
+  sortable, in place of a separate sort toggle (dropped in the league view).
+- The `rankingRun(source)` manifest query wasn't added; the manifest is
+  stored on `model_runs` and its `unit` is on `ScoreBreakdown`.
+
 ## Core data model
 
 ### `ScoringProfile` (`profiles.py`)
@@ -423,7 +455,7 @@ Fielding (from the position grids):
 |---|---|---|
 | **2a** ✅ | `profiles`, `ledger`, `state`, `results`, `manifest`, `stages/legacy`, `stages/demand`, `ranker`; `ENGINES["v2"]`; parity tests | v2 = legacy on every field, unit and real data; ledger totals exact |
 | **2b** ✅ | `--parity`, `--explain`, `--signals` (reads traced, not declared) | report only |
-| **2c** | schema v3 + `results_store` fields; GraphQL ledger / pre-demand fields; card waterfall (behind v2) | goldens unchanged (legacy rows write NULLs) |
+| **2c** ✅ | schema v3 + `results_store` fields; GraphQL ledger / pre-demand fields; card waterfall (behind v2) | goldens unchanged (legacy rows write NULLs) |
 | **3** | `RatingsView`; `fitting/datasets.py`; rules suite; hitter talent stage (BABIP / Avoid K / Gap / Power / Eye, fit to stats, monotone) with per-player legacy fallback when BABIP is missing | rules suite passes; eval vs legacy: hitter residuals by rating flatten; watchlist; draft metrics no worse |
 | **4** | Movement / Stuff composition fit; pitcher talent stage | same, pitchers |
 | **5** | value stage (WAR); retire RP multiplier, batting weights, two-way bonus | calibration vs StatsPlus WAR; ranking metrics |

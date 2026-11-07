@@ -17,6 +17,7 @@ import isExtractableFile from 'extract-files/isExtractableFile.mjs';
 
 import { routes } from './app.routes';
 import { authInterceptor, AuthService } from './core/auth';
+import { ENGINE_HEADER, EngineService } from './core/engine';
 import { KeepaliveService } from './core/keepalive';
 import { PRIMENG_LICENSE_KEY } from './core/primeng-license';
 
@@ -40,9 +41,13 @@ export const appConfig: ApplicationConfig = {
     provideApollo(() => {
       const httpLink = inject(HttpLink);
       const auth = inject(AuthService);
+      const engine = inject(EngineService);
       const authLink = setContext(() => {
         const token = auth.header();
-        return token ? { headers: { Authorization: token } } : {};
+        // the ranking engine the rows / breakdowns are served by (top-bar toggle)
+        const headers: Record<string, string> = { [ENGINE_HEADER]: engine.engine() };
+        if (token) headers['Authorization'] = token;
+        return { headers };
       });
       return {
         cache: new InMemoryCache({

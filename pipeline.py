@@ -3,15 +3,16 @@
     process_class(ctx)
       -> normalise the dataset CSV headers
       -> load GamePlayer rows
-      -> rank with the class's method and store the run (results_store)
+      -> rank with the class's method under every engine and store the runs
+         (results_store; see ranking_engine.py)
 """
 import csv
 
+import ranking_engine
 import results_store
 from context import DraftClassContext
 from draft_class_files import get_draft_class_data_file
 from models.game_players import GamePlayer
-from rankers.get_ranker import get_ranker
 
 
 # The pitching-control columns collide with the batting "CON" / "CON P" headers
@@ -71,29 +72,60 @@ def load_player_data(ctx):
     return (GamePlayer(row) for row in rows)
 
 
-def write_player_scores(ctx, players) -> None:
+def write_player_scores(ctx, players, engine=None) -> None:
     from scoring.model_cache import HEAVY_SCORING_LOCK
 
     with HEAVY_SCORING_LOCK:
-        _write_player_scores(ctx, players)
+        _write_player_scores(ctx, players, engine or ranking_engine.current())
 
 
-def _write_player_scores(ctx, players) -> None:
-    scored = get_ranker(ctx).rank(players)
+def _write_player_scores(ctx, players, engine) -> None:
+    print(f"Ranking using ranking method {ctx.ranking_method} ({engine})")
+    ranker = ranking_engine.get_ranker(ctx.ranking_method, engine)
+    scored = ranker.rank(players)
     results_store.save_run(
         results_store.CLASS,
         ctx.name,
         ctx.ranking_method,
         ctx.data_version,
         [results_store.result_from_scored(s) for s in scored],
+        engine=engine,
+        manifest=ranker.manifest(ctx.data_version) if hasattr(ranker, "manifest") else None,
     )
 
 
+def _has_current_run(ctx, engine) -> bool:
+    info = results_store.run_info(results_store.CLASS, ctx.name, ctx.ranking_method, engine)
+    return info is not None and info["source_version"] == ctx.data_version
+
+
+def class_results(ctx, with_breakdown=False):
+    """The class's ranking under the current engine (`results_store.class_results`),
+    scored now if the class is processed but not under this engine yet - say,
+    it was processed before the engine existed. None if it isn't processed."""
+    from scoring.model_cache import HEAVY_SCORING_LOCK
+
+    engine = ranking_engine.current()
+    results = results_store.class_results(ctx, with_breakdown, engine)
+    if results is not None:
+        return results
+    others = [e for e in ranking_engine.ENGINES if e != engine]
+    if not any(_has_current_run(ctx, e) for e in others):
+        return None
+    with HEAVY_SCORING_LOCK:
+        # re-check: a concurrent request may have scored it while we waited
+        if not _has_current_run(ctx, engine):
+            _write_player_scores(ctx, load_player_data(ctx), engine)
+    return results_store.class_results(ctx, with_breakdown, engine)
+
+
 def process_class(ctx) -> None:
+    """Score the class under every engine - a class is small, and this keeps
+    the engine toggle instant."""
     ctx.ensure_dirs()
     normalise_dataset(ctx)
-    players = load_player_data(ctx)
-    write_player_scores(ctx, players)
+    for engine in ranking_engine.ENGINES:
+        write_player_scores(ctx, load_player_data(ctx), engine)
 
 
 if __name__ == "__main__":

@@ -148,6 +148,94 @@ CREATE TABLE trade_list_entries (
 """
 
 
+# Runs are kept per ranking engine (ranking_engine.py), so `engine` joins both
+# tables' keys. v2 rows also carry the score and rank before the demand step and
+# the ledger (compact JSON: {"side", "lines": [[stage, label, delta, side]]});
+# legacy rows leave them NULL.
+_RUNS_BY_ENGINE = """
+ALTER TABLE run_results RENAME TO run_results_v2;
+ALTER TABLE model_runs RENAME TO model_runs_v2;
+DROP INDEX run_results_order;
+
+CREATE TABLE model_runs (
+  scope TEXT NOT NULL CHECK (scope IN ('class', 'league')),
+  scope_id TEXT NOT NULL,
+  method TEXT NOT NULL,
+  engine TEXT NOT NULL,
+  source_version INTEGER NOT NULL,
+  scored_at TEXT NOT NULL,
+  player_count INTEGER NOT NULL,
+  manifest TEXT,
+  PRIMARY KEY (scope, scope_id, method, engine)
+);
+
+CREATE TABLE run_results (
+  scope TEXT NOT NULL,
+  scope_id TEXT NOT NULL,
+  method TEXT NOT NULL,
+  engine TEXT NOT NULL,
+  player_id TEXT NOT NULL,
+  model_rank INTEGER NOT NULL,
+  name TEXT,
+  position TEXT,
+  age,
+  player_type TEXT NOT NULL,
+  model_score,
+  raw_overall_score,
+  position_player_score,
+  batting_score,
+  fielding_score,
+  running_score,
+  best_position TEXT,
+  pitcher_score,
+  starter_score,
+  reliever_score,
+  in_game_overall,
+  in_game_potential,
+  demand TEXT,
+  breakdown TEXT NOT NULL,
+  pre_demand_score,
+  pre_demand_rank INTEGER,
+  ledger TEXT,
+  PRIMARY KEY (scope, scope_id, method, engine, player_id),
+  FOREIGN KEY (scope, scope_id, method, engine)
+    REFERENCES model_runs (scope, scope_id, method, engine) ON DELETE CASCADE
+);
+
+CREATE INDEX run_results_order ON run_results (scope, scope_id, method, engine, model_rank);
+
+INSERT INTO model_runs (scope, scope_id, method, engine, source_version, scored_at, player_count)
+  SELECT scope, scope_id, method, 'legacy', source_version, scored_at, player_count
+  FROM model_runs_v2;
+
+INSERT INTO run_results (
+  scope, scope_id, method, engine, player_id, model_rank, name, position, age,
+  player_type, model_score, raw_overall_score, position_player_score,
+  batting_score, fielding_score, running_score, best_position, pitcher_score,
+  starter_score, reliever_score, in_game_overall, in_game_potential, demand,
+  breakdown
+) SELECT
+  scope, scope_id, method, 'legacy', player_id, model_rank, name, position, age,
+  player_type, model_score, raw_overall_score, position_player_score,
+  batting_score, fielding_score, running_score, best_position, pitcher_score,
+  starter_score, reliever_score, in_game_overall, in_game_potential, demand,
+  breakdown
+FROM run_results_v2;
+
+DROP TABLE run_results_v2;
+DROP TABLE model_runs_v2
+"""
+
+
+def _runs_by_engine(conn):
+    """Rebuild the run tables keyed by engine; runs already stored were scored
+    by the legacy rankers. A no-op once done - migration 1 applies it before
+    importing a pre-SQLite install's rankings, which then land in this shape."""
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(model_runs)")}
+    if "engine" not in columns:
+        _run_script(conn, _RUNS_BY_ENGINE)
+
+
 def _run_script(conn, script):
     # Not `executescript`: it COMMITs any open transaction first, which would
     # break the all-or-nothing migration.
@@ -158,6 +246,7 @@ def _run_script(conn, script):
 
 def _migration_1(conn):
     _run_script(conn, _SCHEMA_V1)
+    _runs_by_engine(conn)
     import db_import
 
     db_import.import_legacy_files(_path_of(conn).parent)
@@ -170,8 +259,12 @@ def _migration_2(conn):
     db_import.import_trade_lists(_path_of(conn).parent)
 
 
+def _migration_3(conn):
+    _runs_by_engine(conn)
+
+
 # index i holds the step that takes the schema from version i to i + 1
-_MIGRATIONS = [_migration_1, _migration_2]
+_MIGRATIONS = [_migration_1, _migration_2, _migration_3]
 
 _conns: "dict[tuple, sqlite3.Connection]" = {}
 _conns_lock = threading.Lock()

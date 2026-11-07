@@ -10,6 +10,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 
 import { AuthService } from './core/auth';
+import { EngineService, RANKING_ENGINES, RankingEngine } from './core/engine';
 import { ClassStore } from './core/class-store';
 import { LeagueStore } from './core/league-store';
 
@@ -24,6 +25,9 @@ export class App {
   private readonly router = inject(Router);
   protected readonly store = inject(ClassStore);
   private readonly leagueStore = inject(LeagueStore);
+  protected readonly engines = RANKING_ENGINES;
+  private readonly engineService = inject(EngineService);
+  protected readonly engine = this.engineService.engine;
 
   protected readonly authorized = this.auth.authorized;
 
@@ -57,6 +61,10 @@ export class App {
         this.leagueStore.reload();
       }
     });
+  }
+
+  setEngine(engine: RankingEngine): void {
+    this.engineService.set(engine);
   }
 
   logout(): void {

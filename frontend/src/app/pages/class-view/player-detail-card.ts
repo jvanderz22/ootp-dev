@@ -19,6 +19,7 @@ import {
   fieldingRows,
   gradeTone,
   hasModifiers,
+  ledgerWaterfall,
   makeupRows,
   modifierGroup,
   otherComponents,
@@ -170,6 +171,9 @@ export class PlayerDetailCardComponent {
   }
 
   protected readonly rankMax = computed(() => this.totalRanked() || null);
+
+  /** The v2 score ledger as a waterfall (null under the legacy engine). */
+  protected readonly ledger = computed(() => ledgerWaterfall(this.breakdown()));
 
   /** "Org · Team · Level" for live-league rows; empty in the draft-class view. */
   protected readonly orgLine = computed(() => {

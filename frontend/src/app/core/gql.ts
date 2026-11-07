@@ -33,11 +33,14 @@ const PLAYER_FIELDS = gql`
     relieverComponent
     runningScoreComponent
     rawOverallScore
+    preDemandScore
+    preDemandRank
     ratings
     source {
       className
       leagueId
       method
+      engine
     }
   }
 `;
@@ -481,6 +484,15 @@ export const PLAYER_BREAKDOWN = gql`
   query PlayerBreakdown($source: RankingSourceInput!, $playerId: ID!) {
     playerBreakdown(source: $source, playerId: $playerId) {
       playerType
+      engine
+      unit
+      ledger {
+        stage
+        label
+        delta
+        side
+        counted
+      }
       batting {
         battingModel
         runningModel

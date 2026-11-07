@@ -7,6 +7,7 @@ processed_classes/<class>/upload_ranked_players.csv for upload_drafted_players.p
 """
 import csv
 
+import pipeline
 import results_store
 from custom_ranking import resolve_order
 from draft_class_files import _ctx
@@ -20,7 +21,7 @@ def ranked_csv_rows(ctx=None, with_breakdown=False):
     """The class's ranking in model order, in the string form the old
     ranked_players.csv had (see `results_store.as_csv_rows`) - what the CLI
     printers read. None if the class hasn't been scored."""
-    results = results_store.class_results(_ctx(ctx), with_breakdown)
+    results = pipeline.class_results(_ctx(ctx), with_breakdown)
     return None if results is None else results_store.as_csv_rows(results)
 
 
