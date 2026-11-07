@@ -22,3 +22,6 @@ app.db-*
 *.md
 !README.md
 .DS_Store
+activate-py39.bak/
+fly_data/
+.claude/
