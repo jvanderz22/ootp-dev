@@ -28,3 +28,6 @@ activate/
 frontend/node_modules/
 frontend/dist/
 frontend/.angular/
+
+# run skill driver
+.claude/skills/*/node_modules/
