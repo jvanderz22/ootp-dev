@@ -1,13 +1,16 @@
 """Ranking engine v2 - see plans/ranking-v2-technical-plan.md."""
 from ranking.profiles import PROFILES, ScoringProfile
-from ranking.ranker import Ranker
+from ranking.ranker import PIPELINES, Ranker
 
 
-def get_ranker(ranking_method: str) -> Ranker:
+def get_ranker(ranking_method: str, pipeline: str = "v2") -> Ranker:
+    """Engine v2 for `ranking_method`; `pipeline="legacy"` runs today's scoring
+    as v2 stages instead, which matches the legacy rankers and has a ledger."""
     try:
-        return Ranker(PROFILES[ranking_method])
+        profile = PROFILES[ranking_method]
     except KeyError:
         raise ValueError(f"Invalid ranking method: {ranking_method!r}")
+    return Ranker(profile, pipeline)
 
 
-__all__ = ["PROFILES", "Ranker", "ScoringProfile", "get_ranker"]
+__all__ = ["PIPELINES", "PROFILES", "Ranker", "ScoringProfile", "get_ranker"]

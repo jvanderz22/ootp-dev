@@ -17,9 +17,10 @@ def _hash_dir(path: str) -> str:
     return digest.hexdigest()[:12]
 
 
-def build_manifest(engine: str, profile, unit: str, source_version=None) -> dict:
+def build_manifest(engine: str, pipeline: str, profile, unit: str, source_version=None) -> dict:
     return {
         "engine": engine,
+        "pipeline": pipeline,
         "profile": profile.name,
         "config_hash": profile.config_hash(),
         "unit": unit,

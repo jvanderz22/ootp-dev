@@ -33,6 +33,7 @@ ranking/
   ledger.py            Ledger, LedgerLine
   results.py           RankedResult (ScoredPlayer's fields + v2 fields)
   manifest.py          RunManifest: engine, config hash, data / artifact hashes
+  signals.py           the signal inventory: reads traced per model / modifier
   ranker.py            Ranker: batching, running stages, sorting, results
   stages/
     base.py            BatchStage / PoolStage interfaces
@@ -65,6 +66,24 @@ gate passes:
 - **Known coarseness:** the legacy pitcher scorer applies pitch mix,
   stamina, GB and HR risk internally, so the ledger shows them as one "SP /
   RP role adjustments" line until phase 4 replaces that stage.
+
+**Status (2026-11-06): step 2b is built.** `eval_rankings.py` has
+`--parity`, `--explain` and `--signals` (see "Evaluation and reporting").
+- **Pipelines:** `Ranker(profile, pipeline)` takes `"v2"` (the default, what
+  later phases change) or `"legacy"` (today's scoring as stages, kept for
+  good). The parity tests hold both to the legacy rankers. `--explain` uses
+  the legacy pipeline to give a legacy score its ledger. The manifest records
+  the pipeline.
+- **`--parity` on live `fly_data`:** 11 of 11 pools identical (the current
+  pool plus the ten classes), every field with breakdowns leaf by leaf, and
+  the order.
+- **`reads` are measured, not declared:** the plan had each stage declare a
+  `reads` set. Instead `ranking/signals.py` traces every rating read off a
+  `GamePlayer` (and the result fields demand reads) and attributes it to the
+  model, scorer or modifier whose code read it. Declared sets would drift
+  from the code; traced ones can't. The cost: a branch the data never reaches
+  isn't seen, so it runs on whole pools (about 25 s for the ten classes).
+  The `reads` attributes are gone from `stages/base.py`.
 
 ## Core data model
 
@@ -129,7 +148,8 @@ Two kinds, because demand needs the whole pool's ranking:
 
 Every stage:
 - adds ledger lines for what it changed;
-- declares `reads` (the ratings it uses), for the signal inventory report;
+- has its reads measured by the signal inventory (`ranking/signals.py`),
+  rather than declaring them;
 - reads ratings only through `RatingsView` (new stages) or the legacy
   scorers (legacy stages).
 
@@ -246,14 +266,21 @@ then v2 is identical to legacy anyway.
 
 - **Engine registration:** `ENGINES["v2"]` builds a `Ranker(PROFILES[...])`.
   Current uses the final score; draft uses `pre_demand_score`.
-- **`--parity`:** compare *every* field (scores, components, best position,
-  type, breakdown, order) between two engines and list any difference.
-- **`--explain ID`:** print a player's ledger under both engines side by
-  side, so you can see which stage moved them.
-- **`--signals`:** the signal inventory, i.e. for each profile, which stages
-  read each rating, with ratings read in several places marked. Report only,
-  never a failure. Needs `reads` on the legacy modifiers (a class attribute
-  added to each; harmless to legacy) and on each stage.
+- **`--parity`** (with `--against-engine`): compare *every* field (scores,
+  components, best position, type, breakdown leaf by leaf, order) between
+  two engines, per pool, with counts and examples of each difference. ✅
+- **`--explain ID[,ID…]`:** IDs or names. A player's ledger under each engine
+  side by side, with a change column, the score, the pre-demand score and the
+  pre-demand → final rank. Lines for the side the player isn't judged on are
+  listed separately. A legacy score's ledger comes from the legacy pipeline,
+  with a warning if it doesn't reproduce the score. ✅
+- **`--signals`:** the signal inventory. For each profile (current, potential,
+  draft class) and side, which readers read each rating, flagged when a
+  rating has several readers on a side, when a composite and its part are
+  both read (Contact = BABIP + Avoid K, Movement = PBABIP + HRA), when OVR /
+  POT is read, or when a current profile reads a potential rating. Alternative
+  models (fielding positions, SP / RP) count as one reader, and the SP / RP
+  Stuff-shift copies aren't reads. Report only, never a failure. ✅
 - **Later:** calibration (predicted vs actual WAR by decile) once the value
   layer exists.
 
@@ -395,7 +422,7 @@ Fielding (from the position grids):
 | Step | Work | Gate |
 |---|---|---|
 | **2a** ✅ | `profiles`, `ledger`, `state`, `results`, `manifest`, `stages/legacy`, `stages/demand`, `ranker`; `ENGINES["v2"]`; parity tests | v2 = legacy on every field, unit and real data; ledger totals exact |
-| **2b** | `--parity`, `--explain`, `--signals` (+ `reads` on legacy modifiers) | report only |
+| **2b** ✅ | `--parity`, `--explain`, `--signals` (reads traced, not declared) | report only |
 | **2c** | schema v3 + `results_store` fields; GraphQL ledger / pre-demand fields; card waterfall (behind v2) | goldens unchanged (legacy rows write NULLs) |
 | **3** | `RatingsView`; `fitting/datasets.py`; rules suite; hitter talent stage (BABIP / Avoid K / Gap / Power / Eye, fit to stats, monotone) with per-player legacy fallback when BABIP is missing | rules suite passes; eval vs legacy: hitter residuals by rating flatten; watchlist; draft metrics no worse |
 | **4** | Movement / Stuff composition fit; pitcher talent stage | same, pitchers |

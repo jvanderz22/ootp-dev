@@ -5,6 +5,9 @@
     python eval_rankings.py --against HEAD~1         # side by side with another commit
     python eval_rankings.py --against-engine legacy  # side by side with another engine
     python eval_rankings.py --data-dir fly_data      # data pulled from the deployed app
+    python eval_rankings.py --engine v2 --against-engine legacy --parity
+    python eval_rankings.py --engine v2 --against-engine legacy --explain "Curtis McDonald"
+    python eval_rankings.py --signals                # which parts read each rating
 
 current: the overall (current-ratings) ranking of a league snapshot's MLB / AAA
   players against in-game OVR - no performance stats are pulled yet. Residuals
@@ -118,55 +121,73 @@ def scored_rows(pool, snapshot):
 
 
 # ------------------------------------------------------------------ engines
-def _legacy_scores(profiles, pool, classes):
+# The ranking methods each profile runs.
+METHODS = {"current": "overall", "draft": "draft_class"}
+
+
+def _current_players(pool):
     from league_snapshot import coerce_gf
     from models.game_players import GamePlayer
 
+    return [GamePlayer({**r, "G/F": coerce_gf(r.get("G/F"))}) for r in pool]
+
+
+def _class_players(rows):
+    from models.game_players import GamePlayer
+
+    return [GamePlayer(r) for r in rows]
+
+
+def _run(rank, profiles, pool, classes):
+    """`rank(method, players)` over the current pool and every class:
+    {"current": results, "draft": {class: results}}."""
     out = {}
     if "current" in profiles:
-        from rankers.overall_ranker import OverallRanker
-
-        players = [GamePlayer({**r, "G/F": coerce_gf(r.get("G/F"))}) for r in pool]
-        scored = OverallRanker().rank(players, batch_size=max(len(players), 1))
-        out["current"] = {s.id: s.overall_score for s in scored}
+        out["current"] = rank(METHODS["current"], _current_players(pool))
     if "draft" in profiles:
-        from rankers.draft_class_ranker import DraftClassRanker
-
-        out["draft"] = {}
-        for name, rows in classes.items():
-            scored = DraftClassRanker().rank(
-                [GamePlayer(r) for r in rows], batch_size=max(len(rows), 1)
-            )
-            out["draft"][name] = {s.id: s.raw_overall_score for s in scored}
+        out["draft"] = {
+            name: rank(METHODS["draft"], _class_players(rows)) for name, rows in classes.items()
+        }
     return out
 
 
-def _v2_scores(profiles, pool, classes):
-    from league_snapshot import coerce_gf
-    from models.game_players import GamePlayer
+def _legacy_rank(method, players):
+    from rankers.get_ranker import get_ranker_for_method
+
+    return get_ranker_for_method(method).rank(players, batch_size=max(len(players), 1))
+
+
+def _v2_rank(method, players):
     from ranking import get_ranker
 
-    out = {}
-    if "current" in profiles:
-        players = [GamePlayer({**r, "G/F": coerce_gf(r.get("G/F"))}) for r in pool]
-        scored = get_ranker("overall").rank(players, batch_size=max(len(players), 1))
-        out["current"] = {s.id: s.overall_score for s in scored}
-    if "draft" in profiles:
-        out["draft"] = {}
-        for name, rows in classes.items():
-            scored = get_ranker("draft_class").rank(
-                [GamePlayer(r) for r in rows], batch_size=max(len(rows), 1)
-            )
-            out["draft"][name] = {s.id: s.pre_demand_score for s in scored}
-    return out
+    return get_ranker(method).rank(players, batch_size=max(len(players), 1))
 
 
-ENGINES = {"legacy": _legacy_scores, "v2": _v2_scores}
+ENGINES = {"legacy": _legacy_rank, "v2": _v2_rank}
 
 
-def score(engine, profiles, pool, classes):
+def results(engine, profiles, pool, classes):
     with contextlib.redirect_stdout(io.StringIO()):  # rankers print progress
-        return ENGINES[engine](profiles, pool, classes)
+        return _run(ENGINES[engine], profiles, pool, classes)
+
+
+def pre_demand(result):
+    """The score before the demand step: v2 has it as a field, legacy as the
+    raw score."""
+    return getattr(result, "pre_demand_score", result.raw_overall_score)
+
+
+def scores_of(ranked):
+    """The score each profile is judged on: current the final score, draft the
+    pre-demand one (demand is about signability, not talent)."""
+    out = {}
+    if "current" in ranked:
+        out["current"] = {r.id: r.overall_score for r in ranked["current"]}
+    if "draft" in ranked:
+        out["draft"] = {
+            name: {r.id: pre_demand(r) for r in rs} for name, rs in ranked["draft"].items()
+        }
+    return out
 
 
 def score_at_ref(ref, args):
@@ -483,6 +504,235 @@ def print_watchlist(head, base, pool, classes, snapshot):
             print(line + note)
 
 
+# ------------------------------------------------------------------ parity
+PARITY_EXAMPLES = 3
+
+
+def _diffs(name, a, b):
+    """(field path, a, b) for each place `a` and `b` differ, into nested dicts."""
+    if isinstance(a, dict) and isinstance(b, dict):
+        for key in sorted(set(a) | set(b), key=str):
+            yield from _diffs(f"{name}.{key}", a.get(key, _MISSING), b.get(key, _MISSING))
+    elif a != b:
+        yield name, a, b
+
+
+_MISSING = "(missing)"
+
+
+def _value(v):
+    return format(v, ".10g") if isinstance(v, float) else str(v)
+
+
+def pool_parity(head, base):
+    """Every ScoredPlayer field (breakdowns leaf by leaf) and the order, base
+    vs head. {"n", "only_base", "only_head", "rows", "fields", "order_from",
+    "ranks_moved"}; `fields` is field -> (count, examples)."""
+    from ranking.results import SCORED_PLAYER_FIELDS
+
+    hb, bb = {r.id: r for r in head}, {r.id: r for r in base}
+    common = [r.id for r in base if r.id in hb]
+    fields, rows = {}, 0
+    for pid in common:
+        h, b = hb[pid], bb[pid]
+        differs = False
+        for name in SCORED_PLAYER_FIELDS:
+            for path, hv, bv in _diffs(name, getattr(h, name), getattr(b, name)):
+                differs = True
+                count, examples = fields.get(path, (0, []))
+                if len(examples) < PARITY_EXAMPLES:
+                    examples.append(f"{b.name}: {_value(bv)} → {_value(hv)}")
+                fields[path] = (count + 1, examples)
+        rows += differs
+    head_order = [r.id for r in head if r.id in bb]
+    base_order = common
+    order_from = next((i + 1 for i, (x, y) in enumerate(zip(head_order, base_order)) if x != y), None)
+    hr = {pid: i for i, pid in enumerate(head_order)}
+    return {
+        "n": len(common),
+        "only_base": len(bb) - len(common),
+        "only_head": len(hb) - len(common),
+        "rows": rows,
+        "fields": fields,
+        "order_from": order_from,
+        "ranks_moved": sum(hr[pid] != i for i, pid in enumerate(base_order)),
+    }
+
+
+def print_parity(head, base, base_label, head_label):
+    print(f"\n== parity: {base_label} → {head_label}, every field (breakdowns leaf by leaf) and the order")
+    pools = []
+    if "current" in head:
+        pools.append((f"current ({METHODS['current']})", head["current"], base["current"]))
+    for name in head.get("draft", {}):
+        pools.append((name, head["draft"][name], base["draft"][name]))
+    same = 0
+    for label, h, b in pools:
+        m = pool_parity(h, b)
+        clean = not (m["rows"] or m["only_base"] or m["only_head"] or m["order_from"])
+        same += clean
+        line = f"  {label:<20} {m['n']:>6} players  "
+        if clean:
+            print(line + "identical")
+            continue
+        notes = [f"{m['rows']} rows differ"]
+        if m["order_from"]:
+            notes.append(f"order differs from #{m['order_from']} ({m['ranks_moved']} ranks changed)")
+        if m["only_base"] or m["only_head"]:
+            notes.append(f"only in {base_label}: {m['only_base']}, only in {head_label}: {m['only_head']}")
+        print(line + ", ".join(notes))
+        for name, (count, examples) in sorted(m["fields"].items(), key=lambda kv: -kv[1][0]):
+            print(f"      {name:<44} {count:>6}" + (f"   e.g. {'; '.join(examples)}" if examples else ""))
+    print(f"\n  {same} of {len(pools)} pools identical")
+
+
+# ------------------------------------------------------------------ explain
+def _find(ranked, targets):
+    """(pool label, method, rows' index, result) for each target - an ID or a
+    name, case-insensitive - in every pool it's in."""
+    wanted = {t.strip().lower() for t in targets}
+    pools = []
+    if "current" in ranked:
+        pools.append(("current", METHODS["current"], ranked["current"]))
+    for name, rs in ranked.get("draft", {}).items():
+        pools.append((name, METHODS["draft"], rs))
+    for label, method, rs in pools:
+        for r in rs:
+            if r.id.lower() in wanted or (r.name or "").lower() in wanted:
+                yield label, method, r
+
+
+def _ledger_view(engine, ranked, label, pool_rows, method, pid):
+    """(ledger, result) for `pid` under `engine`. An engine without ledgers
+    (legacy) gets one from the v2 legacy pipeline, which reproduces it."""
+    result = _in_pool(ranked, label, pid)
+    if result is None:
+        return None, None
+    if getattr(result, "ledger", None) is not None:
+        return result.ledger, result
+    from ranking import get_ranker
+
+    players = _current_players(pool_rows) if label == "current" else _class_players(pool_rows)
+    with contextlib.redirect_stdout(io.StringIO()):
+        replay = get_ranker(method, pipeline="legacy").rank(players, batch_size=max(len(players), 1))
+    mine = next(r for r in replay if r.id == pid)
+    if abs(mine.overall_score - result.overall_score) > 1e-6:
+        print(f"  (the legacy-pipeline ledger gives {mine.overall_score:.2f}, not {engine}'s {result.overall_score:.2f})")
+    return mine.ledger, result
+
+
+def _in_pool(ranked, label, pid):
+    rs = ranked["current"] if label == "current" else ranked["draft"][label]
+    return next((r for r in rs if r.id == pid), None)
+
+
+def _ranks(ranked, label, pid):
+    """(pre-demand rank, final rank) in the pool."""
+    rs = ranked["current"] if label == "current" else ranked["draft"][label]
+    final = next(i + 1 for i, r in enumerate(rs) if r.id == pid)
+    pre = sorted(rs, key=lambda r: -pre_demand(r))
+    return next(i + 1 for i, r in enumerate(pre) if r.id == pid), final
+
+
+def _lines(ledger):
+    """{(stage, label, side): (delta, counted)} in ledger order."""
+    out = {}
+    for line in ledger.lines:
+        key = (line.stage, line.label, line.side)
+        delta, counted = out.get(key, (0.0, ledger.counted(line)))
+        out[key] = (delta + line.delta, counted)
+    return out
+
+
+def print_explain(targets, head, head_label, base, base_label, pool, classes):
+    engines = [(head_label, head)] + ([(base_label, base)] if base is not None else [])
+    engines.reverse()  # base first, as in the other reports
+    found = list(_find(head, targets))
+    if not found:
+        print(f"\n== explain: no player matching {', '.join(targets)}")
+        return
+    for label, method, r in found:
+        rows = pool if label == "current" else classes[label]
+        print(f"\n== explain: {r.name} (ID {r.id}, {r.position}, age {r.age}), {label} ({method})")
+        views = []
+        for engine_label, ranked in engines:
+            ledger, result = _ledger_view(engine_label, ranked, label, rows, method, r.id)
+            views.append((engine_label, ledger, result, ranked))
+        keys = []
+        for _, ledger, _, _ in views:
+            for key in _lines(ledger) if ledger else ():
+                if key not in keys:
+                    keys.append(key)
+        per_view = [_lines(ledger) if ledger else {} for _, ledger, _, _ in views]
+        two = len(views) == 2
+        width = max([36] + [len(_line_label(k)) for k in keys])
+        print(f"  {'stage':<10} {'line':<{width}}" + "".join(f"{v[0]:>12}" for v in views) + (f"{'change':>10}" if two else ""))
+
+        def row(key):
+            cells, values = [], []
+            for lines in per_view:
+                delta, counted = lines.get(key, (None, True))
+                values.append(delta)
+                cells.append("-" if delta is None else f"{delta:+.2f}" if counted else f"({delta:+.2f})")
+            out = f"  {key[0]:<10} {_line_label(key):<{width}}" + "".join(f"{c:>12}" for c in cells)
+            if two and None not in values and abs(values[1] - values[0]) > 0.005:
+                out += f"{values[1] - values[0]:>+10.2f}"
+            print(out)
+
+        def counted_anywhere(key):
+            return any(lines.get(key, (0, False))[1] for lines in per_view)
+
+        for key in filter(counted_anywhere, keys):
+            row(key)
+
+        def total(name, values):
+            print(f"  {'':<10} {name:<{width}}" + "".join(f"{v:>12}" for v in values))
+
+        total("score", [f"{v[2].overall_score:.2f}" for v in views])
+        if label != "current":
+            total("pre-demand score", [f"{pre_demand(v[2]):.2f}" for v in views])
+        ranks = [_ranks(v[3], label, r.id) for v in views]
+        if label == "current":
+            total("rank", [str(final) for _, final in ranks])
+        else:
+            total("rank (pre-demand → final)", [f"{pre} → {final}" for pre, final in ranks])
+        other = [key for key in keys if not counted_anywhere(key)]
+        if other:
+            print("  the side not judged on (not counted):")
+            for key in other:
+                row(key)
+
+
+def _line_label(key):
+    stage, label, side = key
+    return f"{label} [{side}]" if side else label
+
+
+# ------------------------------------------------------------------ signals
+def print_signals(profiles, pool, classes):
+    from ranking import get_ranker
+    from ranking.signals import inventory
+
+    runs = []
+    if "current" in profiles:
+        runs.append(("current pool", METHODS["current"], _current_players(pool)))
+        runs.append(("current pool", "potential", _current_players(pool)))
+    if "draft" in profiles:
+        rows = [r for rs in classes.values() for r in rs]
+        runs.append((f"{len(classes)} classes", METHODS["draft"], _class_players(rows)))
+    for where, method, players in runs:
+        inv = inventory(get_ranker(method), players)
+        print(f"\n== signals: {method}, observed on {inv.players:,} players ({where})")
+        for side in ("batting", "pitching"):
+            by, flags = inv.by_rating(side), inv.flags(side)
+            print(f"  {side} side - {len(flags)} of {len(by)} ratings flagged")
+            ordered = sorted(by, key=lambda rating: (rating not in flags, -len(by[rating]), rating))
+            for rating in ordered:
+                mark = "!" if rating in flags else " "
+                note = f"   [{'; '.join(flags[rating])}]" if rating in flags else ""
+                print(f"   {mark} {rating:<17} {', '.join(by[rating])}{note}")
+
+
 # ------------------------------------------------------------------ main
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -500,11 +750,18 @@ def main(argv=None):
     p.add_argument("--datasets-dir", help="comma-separated dataset dirs, later ones win (default datasets/)")
     p.add_argument("--classes", help="comma-separated class names, e.g. yfmlb-2034-draft")
     p.add_argument("--levels", default="MLB,AAA", help="levels in the current pool")
+    p.add_argument("--parity", action="store_true", help="with --against-engine: diff every field")
+    p.add_argument("--explain", metavar="ID", help="comma-separated player IDs or names: show their ledgers")
+    p.add_argument("--signals", action="store_true", help="which parts of each profile read each rating")
     p.add_argument("--scores-only", metavar="PATH", help=argparse.SUPPRESS)
     p.add_argument("--code-root", help=argparse.SUPPRESS)
     args = p.parse_args(argv)
     if args.against and args.against_engine:
         p.error("--against and --against-engine are exclusive")
+    if args.parity and not args.against_engine:
+        p.error("--parity compares two engines: give --against-engine")
+    if args.explain and args.against:
+        p.error("--explain compares engines in this checkout: use --against-engine")
     data_root = Path(args.data_dir) if args.data_dir else ROOT
     args.snapshot = args.snapshot or str(data_root / "league_snapshots" / args.league / "players.csv")
     if args.datasets_dir:
@@ -523,20 +780,36 @@ def main(argv=None):
     pool = current_pool(snapshot, set(args.levels.split(",")))
     only = set(args.classes.split(",")) if args.classes else None
     classes = read_classes(args.datasets_dirs, args.league, only) if "draft" in profiles else {}
-
     rows = scored_rows(pool, snapshot)
-    head = score(args.engine, profiles, rows, classes)
+
+    if args.signals:
+        print_signals(profiles, rows, classes)
+        if not (args.parity or args.explain):
+            return
+
+    head_results = results(args.engine, profiles, rows, classes)
+    head = scores_of(head_results)
     if args.scores_only:
         Path(args.scores_only).write_text(json.dumps(head))
         return
-    base = None
+    base_results = base = None
     if args.against:
         base = score_at_ref(args.against, args)
         print(f"comparing {args.against} → working tree ({args.engine})")
     elif args.against_engine:
-        base = score(args.against_engine, profiles, rows, classes)
+        base_results = results(args.against_engine, profiles, rows, classes)
+        base = scores_of(base_results)
         print(f"comparing engine {args.against_engine} → {args.engine}")
 
+    if args.parity or args.explain:
+        if args.parity:
+            print_parity(head_results, base_results, args.against_engine, args.engine)
+        if args.explain:
+            print_explain(
+                args.explain.split(","), head_results, args.engine,
+                base_results, args.against_engine, rows, classes,
+            )
+        return
     if "current" in head:
         print_current(head["current"], base and base["current"], pool, snapshot)
     if "draft" in head:

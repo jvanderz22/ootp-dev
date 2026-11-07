@@ -1,13 +1,16 @@
 """Engine v2 reproduces the legacy rankers exactly (the step 2a gate in
 plans/ranking-v2-technical-plan.md): every ScoredPlayer field, breakdown and
-order - plus a ledger that sums to the score and first-class pre-demand fields."""
+order - plus a ledger that sums to the score and first-class pre-demand fields.
+
+Both pipelines are held to it: `legacy` for good (it's how the eval explains a
+legacy score), `v2` until phase 3 deliberately changes it."""
 import csv
 import io
 
 import pytest
 
 from models.game_players import GamePlayer
-from ranking import PROFILES, get_ranker
+from ranking import PIPELINES, PROFILES, get_ranker
 from ranking.results import SCORED_PLAYER_FIELDS
 from rankers.get_ranker import get_ranker_for_method
 from tests.e2e_fixtures import make_draft_class_csv
@@ -19,9 +22,9 @@ def _class_rows(seed):
     return list(csv.DictReader(io.StringIO(make_draft_class_csv(n=160, seed=seed))))
 
 
-def _rank_both(method, rows, batch_size):
+def _rank_both(method, rows, batch_size, pipeline="v2"):
     legacy = get_ranker_for_method(method).rank([GamePlayer(dict(r)) for r in rows], batch_size=batch_size)
-    v2 = get_ranker(method).rank([GamePlayer(dict(r)) for r in rows], batch_size=batch_size)
+    v2 = get_ranker(method, pipeline).rank([GamePlayer(dict(r)) for r in rows], batch_size=batch_size)
     return legacy, v2
 
 
@@ -29,17 +32,19 @@ def _fields(scored):
     return {name: getattr(scored, name) for name in SCORED_PLAYER_FIELDS}
 
 
+@pytest.mark.parametrize("pipeline", sorted(PIPELINES))
 @pytest.mark.parametrize("method", sorted(PROFILES))
 @pytest.mark.parametrize("seed", [7, 11, 23])
-def test_v2_matches_legacy_on_a_draft_class(method, seed):
+def test_v2_matches_legacy_on_a_draft_class(method, seed, pipeline):
     # a batch size that doesn't divide the class exercises the batch boundary
-    legacy, v2 = _rank_both(method, _class_rows(seed), batch_size=45)
+    legacy, v2 = _rank_both(method, _class_rows(seed), batch_size=45, pipeline=pipeline)
     assert [_fields(s) for s in v2] == [_fields(s) for s in legacy]
 
 
+@pytest.mark.parametrize("pipeline", sorted(PIPELINES))
 @pytest.mark.parametrize("method", ["overall", "potential"])
-def test_v2_matches_legacy_on_a_snapshot(method):
-    legacy, v2 = _rank_both(method, join_rows(*make_snapshot_csvs()), batch_size=1500)
+def test_v2_matches_legacy_on_a_snapshot(method, pipeline):
+    legacy, v2 = _rank_both(method, join_rows(*make_snapshot_csvs()), batch_size=1500, pipeline=pipeline)
     assert [_fields(s) for s in v2] == [_fields(s) for s in legacy]
 
 
@@ -64,6 +69,12 @@ def test_pre_and_post_demand_are_both_kept():
 
 def test_manifest_names_what_produced_the_run():
     m = get_ranker("draft_class").manifest(source_version=3)
-    assert m["engine"] == "v2" and m["profile"] == "draft_class" and m["unit"] == "points"
+    assert m["engine"] == "v2" and m["pipeline"] == "v2" and m["profile"] == "draft_class"
+    assert m["unit"] == "points"
     assert len(m["config_hash"]) == 12 and len(m["training_data_hash"]) == 12
     assert m["config_hash"] != get_ranker("overall").manifest()["config_hash"]
+
+
+def test_unknown_method_is_an_error():
+    with pytest.raises(ValueError):
+        get_ranker("nope")

@@ -158,8 +158,10 @@ To start collecting, because history doesn't backfill:
 - **Watchlist:** McDonald, Perello, Aliff.
 - **Comparisons:** `--against REF` (git worktree), `--against-engine NAME`
   (old vs new from one checkout), `--data-dir fly_data` (live data).
-- **To add:** the `potential` profile, calibration once stats exist, and
-  ledger-based stage diffs.
+- **Engine reports (2b):** `--parity` (every field, two engines),
+  `--explain <player>` (ledgers side by side) and `--signals` (which parts
+  read each rating).
+- **To add:** the `potential` profile and calibration once stats exist.
 
 ## Findings so far
 
@@ -185,6 +187,25 @@ To start collecting, because history doesn't backfill:
   a lower-POT player over a higher one don't pay off on average.
 - **Starters with Control 55+ sit 5–6 above OVR** on live data. This is
   unexplained so far.
+- **Signal inventory (`--signals`, live data, 2026-11-06).** Ratings read in
+  more than one place on the side a player is judged on:
+  - **Hitters, every profile:** Avoid K twice (directly and inside Contact);
+    Power in the batting model and the hit-profile modifier; Speed in the
+    running model and the hit-profile modifier.
+  - **Draft and potential hitters:** the draft-batter modifier reads the
+    current Contact *and* Avoid K, so current Avoid K counts twice too.
+  - **Draft and potential pitchers:** potential Stuff has 3 readers (the
+    pitching models plus the draft-pitcher overall and Stuff modifiers),
+    potential Movement 3, potential Control 2. This is the Aliff
+    Stuff-stacking item.
+  - **Draft and potential, both sides:** Age is read by the age and
+    personality modifiers, and the draft class reads Intelligence and Work
+    Ethic in both personality modifiers.
+  - **Current pitchers read potential ratings:** the HR-risk modifier keys
+    off potential Movement, and the knuckleball check off potential
+    pitches, even when ranking on current ratings. Likely a bug. It's legacy
+    behaviour, so v2 keeps it until phase 4, unless you want a legacy fix
+    first.
 
 ## Phases
 
@@ -245,8 +266,9 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
     ledger sums to its score.
   - Pitching shows as one "SP / RP role adjustments" ledger line until
     phase 4 replaces the legacy pitcher scorer.
-- **2b, eval reports:** `--parity`, `--explain <player>` and the signal
-  inventory (`--signals`).
+- ✅ **2b, eval reports:** `--parity`, `--explain <player>` and the signal
+  inventory (`--signals`). Live parity: 11 of 11 pools identical. The
+  inventory's findings are under "Findings so far".
 - **2c, the app:** store the ledger and pre-demand fields, show the ledger
   on the player card, and add the engine toggle (default `v2`).
 - Delete the dead code in `v2` only.

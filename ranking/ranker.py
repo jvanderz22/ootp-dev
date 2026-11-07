@@ -21,14 +21,28 @@ ENGINE = "v2"
 UNIT = "points"
 
 
+def legacy_pipeline(profile):
+    """Today's scoring as stages: (batch stages, pool stages)."""
+    return [LegacyModel(profile), LegacyModifiers(), TwoWay()], [Demand()]
+
+
+# Engine v2's pipeline. Each later layer swaps out a legacy stage here, while
+# `legacy` keeps reproducing the legacy rankers (with a ledger) for comparison.
+def v2_pipeline(profile):
+    return legacy_pipeline(profile)
+
+
+PIPELINES = {"v2": v2_pipeline, "legacy": legacy_pipeline}
+
+
 class Ranker:
-    def __init__(self, profile):
+    def __init__(self, profile, pipeline="v2"):
         self.profile = profile
-        self.batch_stages = [LegacyModel(profile), LegacyModifiers(), TwoWay()]
-        self.pool_stages = [Demand()]
+        self.pipeline = pipeline
+        self.batch_stages, self.pool_stages = PIPELINES[pipeline](profile)
 
     def manifest(self, source_version=None) -> dict:
-        return build_manifest(ENGINE, self.profile, UNIT, source_version)
+        return build_manifest(ENGINE, self.pipeline, self.profile, UNIT, source_version)
 
     def rank(self, players, batch_size: int = DEFAULT_BATCH_SIZE, progress=None) -> list:
         """Score `players` (any iterable of GamePlayer) and return RankedResults
