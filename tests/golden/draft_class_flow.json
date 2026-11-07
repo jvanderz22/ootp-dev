@@ -17083,7 +17083,7 @@
     "modelScore": 45.55,
     "name": "Jordan Thorne",
     "org": null,
-    "pitcherScore": 7.61,
+    "pitcherScore": 7.44,
     "position": "SP",
     "positionPlayerScore": 45.55,
     "rank": 11,
@@ -17163,7 +17163,7 @@
      "workEthic": "L"
     },
     "rawOverallScore": 45.549469926765134,
-    "relieverComponent": 7.61,
+    "relieverComponent": 7.44,
     "rule5Eligible": null,
     "runningScoreComponent": 31.45,
     "starterComponent": 0.0,
@@ -17959,109 +17959,6 @@
     "type": "Pitcher"
    },
    {
-    "age": 21,
-    "batHand": "Right",
-    "battingScoreComponent": 0.0,
-    "bestPosition": null,
-    "demand": "Slot",
-    "drafted": false,
-    "draftedPick": null,
-    "draftedRound": null,
-    "draftedRoundPick": null,
-    "draftedTeam": null,
-    "fieldingScoreComponent": 16.4,
-    "id": "90034",
-    "inGameOverall": 35,
-    "inGamePotential": 65,
-    "level": null,
-    "modelScore": 37.53,
-    "name": "Oakley Pembroke",
-    "org": null,
-    "pitcherScore": 37.53,
-    "position": "SP",
-    "positionPlayerScore": 5.04,
-    "rank": 21,
-    "ratings": {
-     "batHand": "Right",
-     "batting": {
-      "avoidK": 30,
-      "avoidKCur": 20,
-      "contact": 30,
-      "contactCur": 20,
-      "eye": 30,
-      "eyeCur": 20,
-      "gap": 20,
-      "gapCur": 20,
-      "power": 25,
-      "powerCur": 20,
-      "running": 20,
-      "speed": 65,
-      "steal": 25
-     },
-     "fielding": {
-      "cArm": 20,
-      "cBlocking": 30,
-      "cFraming": 25,
-      "ifArm": 65,
-      "ifError": 45,
-      "ifRange": 30,
-      "ofArm": 60,
-      "ofError": 40,
-      "ofRange": 45,
-      "turnDp": 20
-     },
-     "injuryProne": "Normal",
-     "intelligence": "N",
-     "leadership": "N",
-     "pitching": {
-      "armSlot": "SIDE",
-      "control": 50,
-      "controlCur": 45,
-      "groundballType": "NEU",
-      "movement": 50,
-      "movementCur": 45,
-      "pitches": [
-       {
-        "current": 65,
-        "name": "Slider",
-        "potential": 70
-       },
-       {
-        "current": 55,
-        "name": "Cutter",
-        "potential": 65
-       },
-       {
-        "current": 40,
-        "name": "Fastball",
-        "potential": 45
-       },
-       {
-        "current": 45,
-        "name": "Splitter",
-        "potential": 45
-       }
-      ],
-      "stamina": 50,
-      "stuff": 70,
-      "stuffCur": 50,
-      "velocity": "96-98"
-     },
-     "scoutingAccuracy": "Very High",
-     "throwHand": "Right",
-     "workEthic": "N"
-    },
-    "rawOverallScore": 37.526656309650875,
-    "relieverComponent": 29.6,
-    "rule5Eligible": null,
-    "runningScoreComponent": 27.58,
-    "starterComponent": 37.53,
-    "statsPlusUrl": null,
-    "team": null,
-    "throwHand": "Right",
-    "type": "Pitcher"
-   },
-   {
     "age": 20,
     "batHand": "Right",
     "battingScoreComponent": 0.0,
@@ -18083,7 +17980,7 @@
     "pitcherScore": 37.39,
     "position": "SP",
     "positionPlayerScore": 19.6,
-    "rank": 22,
+    "rank": 21,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -18186,7 +18083,7 @@
     "pitcherScore": 36.9,
     "position": "SP",
     "positionPlayerScore": 9.54,
-    "rank": 23,
+    "rank": 22,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -18294,7 +18191,7 @@
     "pitcherScore": 36.63,
     "position": "RP",
     "positionPlayerScore": 9.43,
-    "rank": 24,
+    "rank": 23,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -18370,6 +18267,109 @@
     "rule5Eligible": null,
     "runningScoreComponent": 23.19,
     "starterComponent": 36.63,
+    "statsPlusUrl": null,
+    "team": null,
+    "throwHand": "Right",
+    "type": "Pitcher"
+   },
+   {
+    "age": 21,
+    "batHand": "Right",
+    "battingScoreComponent": 0.0,
+    "bestPosition": null,
+    "demand": "Slot",
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "fieldingScoreComponent": 16.4,
+    "id": "90034",
+    "inGameOverall": 35,
+    "inGamePotential": 65,
+    "level": null,
+    "modelScore": 36.4,
+    "name": "Oakley Pembroke",
+    "org": null,
+    "pitcherScore": 36.4,
+    "position": "SP",
+    "positionPlayerScore": 5.04,
+    "rank": 24,
+    "ratings": {
+     "batHand": "Right",
+     "batting": {
+      "avoidK": 30,
+      "avoidKCur": 20,
+      "contact": 30,
+      "contactCur": 20,
+      "eye": 30,
+      "eyeCur": 20,
+      "gap": 20,
+      "gapCur": 20,
+      "power": 25,
+      "powerCur": 20,
+      "running": 20,
+      "speed": 65,
+      "steal": 25
+     },
+     "fielding": {
+      "cArm": 20,
+      "cBlocking": 30,
+      "cFraming": 25,
+      "ifArm": 65,
+      "ifError": 45,
+      "ifRange": 30,
+      "ofArm": 60,
+      "ofError": 40,
+      "ofRange": 45,
+      "turnDp": 20
+     },
+     "injuryProne": "Normal",
+     "intelligence": "N",
+     "leadership": "N",
+     "pitching": {
+      "armSlot": "SIDE",
+      "control": 50,
+      "controlCur": 45,
+      "groundballType": "NEU",
+      "movement": 50,
+      "movementCur": 45,
+      "pitches": [
+       {
+        "current": 65,
+        "name": "Slider",
+        "potential": 70
+       },
+       {
+        "current": 55,
+        "name": "Cutter",
+        "potential": 65
+       },
+       {
+        "current": 40,
+        "name": "Fastball",
+        "potential": 45
+       },
+       {
+        "current": 45,
+        "name": "Splitter",
+        "potential": 45
+       }
+      ],
+      "stamina": 50,
+      "stuff": 70,
+      "stuffCur": 50,
+      "velocity": "96-98"
+     },
+     "scoutingAccuracy": "Very High",
+     "throwHand": "Right",
+     "workEthic": "N"
+    },
+    "rawOverallScore": 36.40085662036135,
+    "relieverComponent": 28.71,
+    "rule5Eligible": null,
+    "runningScoreComponent": 27.58,
+    "starterComponent": 36.4,
     "statsPlusUrl": null,
     "team": null,
     "throwHand": "Right",
@@ -18704,104 +18704,6 @@
     "type": "Hitter"
    },
    {
-    "age": 18,
-    "batHand": "Left",
-    "battingScoreComponent": 0.0,
-    "bestPosition": null,
-    "demand": "$1.1m",
-    "drafted": false,
-    "draftedPick": null,
-    "draftedRound": null,
-    "draftedRoundPick": null,
-    "draftedTeam": null,
-    "fieldingScoreComponent": 49.13,
-    "id": "90146",
-    "inGameOverall": 30,
-    "inGamePotential": 45,
-    "level": null,
-    "modelScore": 31.45,
-    "name": "Gray Dunmore",
-    "org": null,
-    "pitcherScore": 31.45,
-    "position": "SP",
-    "positionPlayerScore": 12.61,
-    "rank": 29,
-    "ratings": {
-     "batHand": "Left",
-     "batting": {
-      "avoidK": 20,
-      "avoidKCur": 20,
-      "contact": 30,
-      "contactCur": 25,
-      "eye": 30,
-      "eyeCur": 20,
-      "gap": 25,
-      "gapCur": 20,
-      "power": 20,
-      "powerCur": 20,
-      "running": 20,
-      "speed": 60,
-      "steal": 35
-     },
-     "fielding": {
-      "cArm": 30,
-      "cBlocking": 30,
-      "cFraming": 25,
-      "ifArm": 20,
-      "ifError": 55,
-      "ifRange": 70,
-      "ofArm": 20,
-      "ofError": 65,
-      "ofRange": 25,
-      "turnDp": 50
-     },
-     "injuryProne": "Durable",
-     "intelligence": "N",
-     "leadership": "N",
-     "pitching": {
-      "armSlot": "3/4",
-      "control": 70,
-      "controlCur": 55,
-      "groundballType": "FB",
-      "movement": 65,
-      "movementCur": 45,
-      "pitches": [
-       {
-        "current": 55,
-        "name": "Fastball",
-        "potential": 80
-       },
-       {
-        "current": 55,
-        "name": "Curveball",
-        "potential": 55
-       },
-       {
-        "current": 25,
-        "name": "Cutter",
-        "potential": 35
-       }
-      ],
-      "stamina": 65,
-      "stuff": 70,
-      "stuffCur": 45,
-      "velocity": "84-86"
-     },
-     "scoutingAccuracy": "High",
-     "throwHand": "Right",
-     "workEthic": "N"
-    },
-    "rawOverallScore": 31.447747100763163,
-    "relieverComponent": 31.45,
-    "rule5Eligible": null,
-    "runningScoreComponent": 22.89,
-    "starterComponent": 28.2,
-    "statsPlusUrl": null,
-    "team": null,
-    "throwHand": "Right",
-    "type": "Pitcher"
-   },
-   {
     "age": 21,
     "batHand": "Left",
     "battingScoreComponent": 0.0,
@@ -18823,7 +18725,7 @@
     "pitcherScore": 28.16,
     "position": "CL",
     "positionPlayerScore": 21.76,
-    "rank": 30,
+    "rank": 29,
     "ratings": {
      "batHand": "Left",
      "batting": {
@@ -18910,109 +18812,6 @@
     "type": "Two-way"
    },
    {
-    "age": 20,
-    "batHand": "Right",
-    "battingScoreComponent": 0.0,
-    "bestPosition": null,
-    "demand": "Slot",
-    "drafted": false,
-    "draftedPick": null,
-    "draftedRound": null,
-    "draftedRoundPick": null,
-    "draftedTeam": null,
-    "fieldingScoreComponent": 61.04,
-    "id": "90112",
-    "inGameOverall": 45,
-    "inGamePotential": 60,
-    "level": null,
-    "modelScore": 30.69,
-    "name": "Morgan Radley",
-    "org": null,
-    "pitcherScore": 30.69,
-    "position": "SP",
-    "positionPlayerScore": 14.34,
-    "rank": 31,
-    "ratings": {
-     "batHand": "Right",
-     "batting": {
-      "avoidK": 20,
-      "avoidKCur": 20,
-      "contact": 30,
-      "contactCur": 25,
-      "eye": 25,
-      "eyeCur": 20,
-      "gap": 30,
-      "gapCur": 20,
-      "power": 25,
-      "powerCur": 20,
-      "running": 30,
-      "speed": 40,
-      "steal": 60
-     },
-     "fielding": {
-      "cArm": 30,
-      "cBlocking": 25,
-      "cFraming": 30,
-      "ifArm": 65,
-      "ifError": 75,
-      "ifRange": 30,
-      "ofArm": 45,
-      "ofError": 60,
-      "ofRange": 70,
-      "turnDp": 30
-     },
-     "injuryProne": "Normal",
-     "intelligence": "N",
-     "leadership": "H",
-     "pitching": {
-      "armSlot": "3/4",
-      "control": 35,
-      "controlCur": 35,
-      "groundballType": "FB",
-      "movement": 60,
-      "movementCur": 35,
-      "pitches": [
-       {
-        "current": 65,
-        "name": "Fastball",
-        "potential": 70
-       },
-       {
-        "current": 65,
-        "name": "Sinker",
-        "potential": 70
-       },
-       {
-        "current": 60,
-        "name": "Cutter",
-        "potential": 65
-       },
-       {
-        "current": 20,
-        "name": "Changeup",
-        "potential": 35
-       }
-      ],
-      "stamina": 75,
-      "stuff": 70,
-      "stuffCur": 65,
-      "velocity": "85-87"
-     },
-     "scoutingAccuracy": "Very High",
-     "throwHand": "Right",
-     "workEthic": "N"
-    },
-    "rawOverallScore": 30.68783891722273,
-    "relieverComponent": 11.33,
-    "rule5Eligible": null,
-    "runningScoreComponent": 12.56,
-    "starterComponent": 30.69,
-    "statsPlusUrl": null,
-    "team": null,
-    "throwHand": "Right",
-    "type": "Pitcher"
-   },
-   {
     "age": 17,
     "batHand": "Right",
     "battingScoreComponent": 0.0,
@@ -19034,7 +18833,7 @@
     "pitcherScore": 30.53,
     "position": "RP",
     "positionPlayerScore": 18.25,
-    "rank": 32,
+    "rank": 30,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -19132,7 +18931,7 @@
     "pitcherScore": 30.04,
     "position": "SP",
     "positionPlayerScore": 11.43,
-    "rank": 33,
+    "rank": 31,
     "ratings": {
      "batHand": "Left",
      "batting": {
@@ -19225,7 +19024,7 @@
     "pitcherScore": 29.45,
     "position": "SP",
     "positionPlayerScore": 12.11,
-    "rank": 34,
+    "rank": 32,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -19307,6 +19106,104 @@
     "type": "Pitcher"
    },
    {
+    "age": 18,
+    "batHand": "Left",
+    "battingScoreComponent": 0.0,
+    "bestPosition": null,
+    "demand": "$1.1m",
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "fieldingScoreComponent": 49.13,
+    "id": "90146",
+    "inGameOverall": 30,
+    "inGamePotential": 45,
+    "level": null,
+    "modelScore": 29.25,
+    "name": "Gray Dunmore",
+    "org": null,
+    "pitcherScore": 29.25,
+    "position": "SP",
+    "positionPlayerScore": 12.61,
+    "rank": 33,
+    "ratings": {
+     "batHand": "Left",
+     "batting": {
+      "avoidK": 20,
+      "avoidKCur": 20,
+      "contact": 30,
+      "contactCur": 25,
+      "eye": 30,
+      "eyeCur": 20,
+      "gap": 25,
+      "gapCur": 20,
+      "power": 20,
+      "powerCur": 20,
+      "running": 20,
+      "speed": 60,
+      "steal": 35
+     },
+     "fielding": {
+      "cArm": 30,
+      "cBlocking": 30,
+      "cFraming": 25,
+      "ifArm": 20,
+      "ifError": 55,
+      "ifRange": 70,
+      "ofArm": 20,
+      "ofError": 65,
+      "ofRange": 25,
+      "turnDp": 50
+     },
+     "injuryProne": "Durable",
+     "intelligence": "N",
+     "leadership": "N",
+     "pitching": {
+      "armSlot": "3/4",
+      "control": 70,
+      "controlCur": 55,
+      "groundballType": "FB",
+      "movement": 65,
+      "movementCur": 45,
+      "pitches": [
+       {
+        "current": 55,
+        "name": "Fastball",
+        "potential": 80
+       },
+       {
+        "current": 55,
+        "name": "Curveball",
+        "potential": 55
+       },
+       {
+        "current": 25,
+        "name": "Cutter",
+        "potential": 35
+       }
+      ],
+      "stamina": 65,
+      "stuff": 70,
+      "stuffCur": 45,
+      "velocity": "84-86"
+     },
+     "scoutingAccuracy": "High",
+     "throwHand": "Right",
+     "workEthic": "N"
+    },
+    "rawOverallScore": 29.246404803709744,
+    "relieverComponent": 29.25,
+    "rule5Eligible": null,
+    "runningScoreComponent": 22.89,
+    "starterComponent": 26.23,
+    "statsPlusUrl": null,
+    "team": null,
+    "throwHand": "Right",
+    "type": "Pitcher"
+   },
+   {
     "age": 17,
     "batHand": "Left",
     "battingScoreComponent": 25.16,
@@ -19328,7 +19225,7 @@
     "pitcherScore": 0.0,
     "position": "1B",
     "positionPlayerScore": 28.25,
-    "rank": 35,
+    "rank": 34,
     "ratings": {
      "batHand": "Left",
      "batting": {
@@ -19389,104 +19286,6 @@
     "type": "Hitter"
    },
    {
-    "age": 22,
-    "batHand": "Right",
-    "battingScoreComponent": 0.0,
-    "bestPosition": null,
-    "demand": "Slot",
-    "drafted": false,
-    "draftedPick": null,
-    "draftedRound": null,
-    "draftedRoundPick": null,
-    "draftedTeam": null,
-    "fieldingScoreComponent": 7.06,
-    "id": "90150",
-    "inGameOverall": 30,
-    "inGamePotential": 45,
-    "level": null,
-    "modelScore": 27.86,
-    "name": "Kai Dunmore",
-    "org": null,
-    "pitcherScore": 27.86,
-    "position": "SP",
-    "positionPlayerScore": 3.22,
-    "rank": 36,
-    "ratings": {
-     "batHand": "Right",
-     "batting": {
-      "avoidK": 20,
-      "avoidKCur": 20,
-      "contact": 20,
-      "contactCur": 20,
-      "eye": 25,
-      "eyeCur": 20,
-      "gap": 25,
-      "gapCur": 20,
-      "power": 20,
-      "powerCur": 20,
-      "running": 70,
-      "speed": 45,
-      "steal": 45
-     },
-     "fielding": {
-      "cArm": 20,
-      "cBlocking": 25,
-      "cFraming": 30,
-      "ifArm": 30,
-      "ifError": 35,
-      "ifRange": 35,
-      "ofArm": 55,
-      "ofError": 25,
-      "ofRange": 50,
-      "turnDp": 30
-     },
-     "injuryProne": "Normal",
-     "intelligence": "N",
-     "leadership": "N",
-     "pitching": {
-      "armSlot": "3/4",
-      "control": 65,
-      "controlCur": 65,
-      "groundballType": "NEU",
-      "movement": 55,
-      "movementCur": 40,
-      "pitches": [
-       {
-        "current": 50,
-        "name": "Fastball",
-        "potential": 70
-       },
-       {
-        "current": 20,
-        "name": "Curveball",
-        "potential": 40
-       },
-       {
-        "current": 20,
-        "name": "Cutter",
-        "potential": 40
-       }
-      ],
-      "stamina": 75,
-      "stuff": 65,
-      "stuffCur": 60,
-      "velocity": "95-97"
-     },
-     "scoutingAccuracy": "Very High",
-     "throwHand": "Right",
-     "workEthic": "N"
-    },
-    "rawOverallScore": 27.860818288670284,
-    "relieverComponent": 24.62,
-    "rule5Eligible": null,
-    "runningScoreComponent": 41.27,
-    "starterComponent": 27.86,
-    "statsPlusUrl": null,
-    "team": null,
-    "throwHand": "Right",
-    "type": "Pitcher"
-   },
-   {
     "age": 19,
     "batHand": "Left",
     "battingScoreComponent": 0.0,
@@ -19508,7 +19307,7 @@
     "pitcherScore": 27.86,
     "position": "SP",
     "positionPlayerScore": 12.77,
-    "rank": 37,
+    "rank": 35,
     "ratings": {
      "batHand": "Left",
      "batting": {
@@ -19611,7 +19410,7 @@
     "pitcherScore": 27.66,
     "position": "SP",
     "positionPlayerScore": 5.21,
-    "rank": 38,
+    "rank": 36,
     "ratings": {
      "batHand": "Left",
      "batting": {
@@ -19693,6 +19492,109 @@
     "type": "Pitcher"
    },
    {
+    "age": 20,
+    "batHand": "Right",
+    "battingScoreComponent": 0.0,
+    "bestPosition": "CF",
+    "demand": "Slot",
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "fieldingScoreComponent": 61.04,
+    "id": "90112",
+    "inGameOverall": 45,
+    "inGamePotential": 60,
+    "level": null,
+    "modelScore": 27.52,
+    "name": "Morgan Radley",
+    "org": null,
+    "pitcherScore": 27.52,
+    "position": "SP",
+    "positionPlayerScore": 14.34,
+    "rank": 37,
+    "ratings": {
+     "batHand": "Right",
+     "batting": {
+      "avoidK": 20,
+      "avoidKCur": 20,
+      "contact": 30,
+      "contactCur": 25,
+      "eye": 25,
+      "eyeCur": 20,
+      "gap": 30,
+      "gapCur": 20,
+      "power": 25,
+      "powerCur": 20,
+      "running": 30,
+      "speed": 40,
+      "steal": 60
+     },
+     "fielding": {
+      "cArm": 30,
+      "cBlocking": 25,
+      "cFraming": 30,
+      "ifArm": 65,
+      "ifError": 75,
+      "ifRange": 30,
+      "ofArm": 45,
+      "ofError": 60,
+      "ofRange": 70,
+      "turnDp": 30
+     },
+     "injuryProne": "Normal",
+     "intelligence": "N",
+     "leadership": "H",
+     "pitching": {
+      "armSlot": "3/4",
+      "control": 35,
+      "controlCur": 35,
+      "groundballType": "FB",
+      "movement": 60,
+      "movementCur": 35,
+      "pitches": [
+       {
+        "current": 65,
+        "name": "Fastball",
+        "potential": 70
+       },
+       {
+        "current": 65,
+        "name": "Sinker",
+        "potential": 70
+       },
+       {
+        "current": 60,
+        "name": "Cutter",
+        "potential": 65
+       },
+       {
+        "current": 20,
+        "name": "Changeup",
+        "potential": 35
+       }
+      ],
+      "stamina": 75,
+      "stuff": 70,
+      "stuffCur": 65,
+      "velocity": "85-87"
+     },
+     "scoutingAccuracy": "Very High",
+     "throwHand": "Right",
+     "workEthic": "N"
+    },
+    "rawOverallScore": 27.522680504839297,
+    "relieverComponent": 10.16,
+    "rule5Eligible": null,
+    "runningScoreComponent": 12.56,
+    "starterComponent": 27.52,
+    "statsPlusUrl": null,
+    "team": null,
+    "throwHand": "Right",
+    "type": "Two-way"
+   },
+   {
     "age": 21,
     "batHand": "Right",
     "battingScoreComponent": 26.91,
@@ -19714,7 +19616,7 @@
     "pitcherScore": 0.0,
     "position": "SS",
     "positionPlayerScore": 27.42,
-    "rank": 39,
+    "rank": 38,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -19773,6 +19675,104 @@
     "team": null,
     "throwHand": "Right",
     "type": "Hitter"
+   },
+   {
+    "age": 22,
+    "batHand": "Right",
+    "battingScoreComponent": 0.0,
+    "bestPosition": null,
+    "demand": "Slot",
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "fieldingScoreComponent": 7.06,
+    "id": "90150",
+    "inGameOverall": 30,
+    "inGamePotential": 45,
+    "level": null,
+    "modelScore": 26.78,
+    "name": "Kai Dunmore",
+    "org": null,
+    "pitcherScore": 26.78,
+    "position": "SP",
+    "positionPlayerScore": 3.22,
+    "rank": 39,
+    "ratings": {
+     "batHand": "Right",
+     "batting": {
+      "avoidK": 20,
+      "avoidKCur": 20,
+      "contact": 20,
+      "contactCur": 20,
+      "eye": 25,
+      "eyeCur": 20,
+      "gap": 25,
+      "gapCur": 20,
+      "power": 20,
+      "powerCur": 20,
+      "running": 70,
+      "speed": 45,
+      "steal": 45
+     },
+     "fielding": {
+      "cArm": 20,
+      "cBlocking": 25,
+      "cFraming": 30,
+      "ifArm": 30,
+      "ifError": 35,
+      "ifRange": 35,
+      "ofArm": 55,
+      "ofError": 25,
+      "ofRange": 50,
+      "turnDp": 30
+     },
+     "injuryProne": "Normal",
+     "intelligence": "N",
+     "leadership": "N",
+     "pitching": {
+      "armSlot": "3/4",
+      "control": 65,
+      "controlCur": 65,
+      "groundballType": "NEU",
+      "movement": 55,
+      "movementCur": 40,
+      "pitches": [
+       {
+        "current": 50,
+        "name": "Fastball",
+        "potential": 70
+       },
+       {
+        "current": 20,
+        "name": "Curveball",
+        "potential": 40
+       },
+       {
+        "current": 20,
+        "name": "Cutter",
+        "potential": 40
+       }
+      ],
+      "stamina": 75,
+      "stuff": 65,
+      "stuffCur": 60,
+      "velocity": "95-97"
+     },
+     "scoutingAccuracy": "Very High",
+     "throwHand": "Right",
+     "workEthic": "N"
+    },
+    "rawOverallScore": 26.779170619634584,
+    "relieverComponent": 23.66,
+    "rule5Eligible": null,
+    "runningScoreComponent": 41.27,
+    "starterComponent": 26.78,
+    "statsPlusUrl": null,
+    "team": null,
+    "throwHand": "Right",
+    "type": "Pitcher"
    },
    {
     "age": 18,
@@ -19857,114 +19857,6 @@
     "type": "Hitter"
    },
    {
-    "age": 22,
-    "batHand": "Right",
-    "battingScoreComponent": 0.0,
-    "bestPosition": null,
-    "demand": "Slot",
-    "drafted": true,
-    "draftedPick": 5,
-    "draftedRound": 1,
-    "draftedRoundPick": 5,
-    "draftedTeam": "Pirates",
-    "fieldingScoreComponent": 7.18,
-    "id": "90028",
-    "inGameOverall": 30,
-    "inGamePotential": 60,
-    "level": null,
-    "modelScore": 26.48,
-    "name": "Indy Garrow",
-    "org": null,
-    "pitcherScore": 26.48,
-    "position": "SP",
-    "positionPlayerScore": 4.08,
-    "rank": 41,
-    "ratings": {
-     "batHand": "Right",
-     "batting": {
-      "avoidK": 25,
-      "avoidKCur": 20,
-      "contact": 20,
-      "contactCur": 20,
-      "eye": 30,
-      "eyeCur": 20,
-      "gap": 20,
-      "gapCur": 20,
-      "power": 25,
-      "powerCur": 20,
-      "running": 70,
-      "speed": 70,
-      "steal": 50
-     },
-     "fielding": {
-      "cArm": 30,
-      "cBlocking": 25,
-      "cFraming": 30,
-      "ifArm": 45,
-      "ifError": 55,
-      "ifRange": 30,
-      "ofArm": 50,
-      "ofError": 75,
-      "ofRange": 40,
-      "turnDp": 35
-     },
-     "injuryProne": "Normal",
-     "intelligence": "H",
-     "leadership": "N",
-     "pitching": {
-      "armSlot": "OTT",
-      "control": 65,
-      "controlCur": 45,
-      "groundballType": "NEU",
-      "movement": 50,
-      "movementCur": 40,
-      "pitches": [
-       {
-        "current": 45,
-        "name": "Cutter",
-        "potential": 70
-       },
-       {
-        "current": 40,
-        "name": "Fastball",
-        "potential": 55
-       },
-       {
-        "current": 30,
-        "name": "Changeup",
-        "potential": 55
-       },
-       {
-        "current": 30,
-        "name": "Curveball",
-        "potential": 45
-       },
-       {
-        "current": 40,
-        "name": "Splitter",
-        "potential": 45
-       }
-      ],
-      "stamina": 65,
-      "stuff": 55,
-      "stuffCur": 55,
-      "velocity": "93-95"
-     },
-     "scoutingAccuracy": "Very High",
-     "throwHand": "Right",
-     "workEthic": "N"
-    },
-    "rawOverallScore": 26.483077998720706,
-    "relieverComponent": 19.51,
-    "rule5Eligible": null,
-    "runningScoreComponent": 59.98,
-    "starterComponent": 26.48,
-    "statsPlusUrl": null,
-    "team": null,
-    "throwHand": "Right",
-    "type": "Pitcher"
-   },
-   {
     "age": 18,
     "batHand": "Right",
     "battingScoreComponent": 0.0,
@@ -19986,7 +19878,7 @@
     "pitcherScore": 23.33,
     "position": "SP",
     "positionPlayerScore": 17.65,
-    "rank": 42,
+    "rank": 41,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -20071,6 +19963,114 @@
     "team": null,
     "throwHand": "Right",
     "type": "Two-way"
+   },
+   {
+    "age": 22,
+    "batHand": "Right",
+    "battingScoreComponent": 0.0,
+    "bestPosition": null,
+    "demand": "Slot",
+    "drafted": true,
+    "draftedPick": 5,
+    "draftedRound": 1,
+    "draftedRoundPick": 5,
+    "draftedTeam": "Pirates",
+    "fieldingScoreComponent": 7.18,
+    "id": "90028",
+    "inGameOverall": 30,
+    "inGamePotential": 60,
+    "level": null,
+    "modelScore": 25.45,
+    "name": "Indy Garrow",
+    "org": null,
+    "pitcherScore": 25.45,
+    "position": "SP",
+    "positionPlayerScore": 4.08,
+    "rank": 42,
+    "ratings": {
+     "batHand": "Right",
+     "batting": {
+      "avoidK": 25,
+      "avoidKCur": 20,
+      "contact": 20,
+      "contactCur": 20,
+      "eye": 30,
+      "eyeCur": 20,
+      "gap": 20,
+      "gapCur": 20,
+      "power": 25,
+      "powerCur": 20,
+      "running": 70,
+      "speed": 70,
+      "steal": 50
+     },
+     "fielding": {
+      "cArm": 30,
+      "cBlocking": 25,
+      "cFraming": 30,
+      "ifArm": 45,
+      "ifError": 55,
+      "ifRange": 30,
+      "ofArm": 50,
+      "ofError": 75,
+      "ofRange": 40,
+      "turnDp": 35
+     },
+     "injuryProne": "Normal",
+     "intelligence": "H",
+     "leadership": "N",
+     "pitching": {
+      "armSlot": "OTT",
+      "control": 65,
+      "controlCur": 45,
+      "groundballType": "NEU",
+      "movement": 50,
+      "movementCur": 40,
+      "pitches": [
+       {
+        "current": 45,
+        "name": "Cutter",
+        "potential": 70
+       },
+       {
+        "current": 40,
+        "name": "Fastball",
+        "potential": 55
+       },
+       {
+        "current": 30,
+        "name": "Changeup",
+        "potential": 55
+       },
+       {
+        "current": 30,
+        "name": "Curveball",
+        "potential": 45
+       },
+       {
+        "current": 40,
+        "name": "Splitter",
+        "potential": 45
+       }
+      ],
+      "stamina": 65,
+      "stuff": 55,
+      "stuffCur": 55,
+      "velocity": "93-95"
+     },
+     "scoutingAccuracy": "Very High",
+     "throwHand": "Right",
+     "workEthic": "N"
+    },
+    "rawOverallScore": 25.454918693081947,
+    "relieverComponent": 18.75,
+    "rule5Eligible": null,
+    "runningScoreComponent": 59.98,
+    "starterComponent": 25.45,
+    "statsPlusUrl": null,
+    "team": null,
+    "throwHand": "Right",
+    "type": "Pitcher"
    },
    {
     "age": 18,
@@ -20787,104 +20787,6 @@
     "type": "Hitter"
    },
    {
-    "age": 18,
-    "batHand": "Right",
-    "battingScoreComponent": 0.0,
-    "bestPosition": null,
-    "demand": "Slot",
-    "drafted": false,
-    "draftedPick": null,
-    "draftedRound": null,
-    "draftedRoundPick": null,
-    "draftedTeam": null,
-    "fieldingScoreComponent": 30.35,
-    "id": "90001",
-    "inGameOverall": 30,
-    "inGamePotential": 45,
-    "level": null,
-    "modelScore": 21.82,
-    "name": "Blake Jessop",
-    "org": null,
-    "pitcherScore": 21.82,
-    "position": "RP",
-    "positionPlayerScore": 7.72,
-    "rank": 51,
-    "ratings": {
-     "batHand": "Right",
-     "batting": {
-      "avoidK": 25,
-      "avoidKCur": 20,
-      "contact": 25,
-      "contactCur": 20,
-      "eye": 30,
-      "eyeCur": 20,
-      "gap": 30,
-      "gapCur": 20,
-      "power": 20,
-      "powerCur": 20,
-      "running": 45,
-      "speed": 40,
-      "steal": 50
-     },
-     "fielding": {
-      "cArm": 20,
-      "cBlocking": 25,
-      "cFraming": 20,
-      "ifArm": 60,
-      "ifError": 50,
-      "ifRange": 55,
-      "ofArm": 60,
-      "ofError": 50,
-      "ofRange": 30,
-      "turnDp": 40
-     },
-     "injuryProne": "Normal",
-     "intelligence": "H",
-     "leadership": "L",
-     "pitching": {
-      "armSlot": "SIDE",
-      "control": 60,
-      "controlCur": 60,
-      "groundballType": "EX FB",
-      "movement": 65,
-      "movementCur": 40,
-      "pitches": [
-       {
-        "current": 65,
-        "name": "Fastball",
-        "potential": 75
-       },
-       {
-        "current": 35,
-        "name": "Splitter",
-        "potential": 45
-       },
-       {
-        "current": 20,
-        "name": "Changeup",
-        "potential": 40
-       }
-      ],
-      "stamina": 40,
-      "stuff": 70,
-      "stuffCur": 60,
-      "velocity": "86-88"
-     },
-     "scoutingAccuracy": "Very High",
-     "throwHand": "Right",
-     "workEthic": "N"
-    },
-    "rawOverallScore": 21.81990821429504,
-    "relieverComponent": 20.6,
-    "rule5Eligible": null,
-    "runningScoreComponent": 25.84,
-    "starterComponent": 21.82,
-    "statsPlusUrl": null,
-    "team": null,
-    "throwHand": "Right",
-    "type": "Pitcher"
-   },
-   {
     "age": 22,
     "batHand": "Right",
     "battingScoreComponent": 0.0,
@@ -20906,7 +20808,7 @@
     "pitcherScore": 0.0,
     "position": "SP",
     "positionPlayerScore": 21.61,
-    "rank": 52,
+    "rank": 51,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -20999,7 +20901,7 @@
     "pitcherScore": 21.53,
     "position": "SP",
     "positionPlayerScore": 2.7,
-    "rank": 53,
+    "rank": 52,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -21097,7 +20999,7 @@
     "pitcherScore": 0.0,
     "position": "SP",
     "positionPlayerScore": 21.32,
-    "rank": 54,
+    "rank": 53,
     "ratings": {
      "batHand": "Switch",
      "batting": {
@@ -21205,7 +21107,7 @@
     "pitcherScore": 0.0,
     "position": "C",
     "positionPlayerScore": 21.03,
-    "rank": 55,
+    "rank": 54,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -21266,197 +21168,6 @@
     "type": "Hitter"
    },
    {
-    "age": 18,
-    "batHand": "Right",
-    "battingScoreComponent": 0.0,
-    "bestPosition": "SS",
-    "demand": "Slot",
-    "drafted": false,
-    "draftedPick": null,
-    "draftedRound": null,
-    "draftedRoundPick": null,
-    "draftedTeam": null,
-    "fieldingScoreComponent": 68.23,
-    "id": "90023",
-    "inGameOverall": 45,
-    "inGamePotential": 70,
-    "level": null,
-    "modelScore": 20.68,
-    "name": "Dakota Jessop",
-    "org": null,
-    "pitcherScore": 18.41,
-    "position": "RP",
-    "positionPlayerScore": 15.1,
-    "rank": 56,
-    "ratings": {
-     "batHand": "Right",
-     "batting": {
-      "avoidK": 30,
-      "avoidKCur": 20,
-      "contact": 30,
-      "contactCur": 20,
-      "eye": 30,
-      "eyeCur": 20,
-      "gap": 25,
-      "gapCur": 20,
-      "power": 20,
-      "powerCur": 20,
-      "running": 35,
-      "speed": 20,
-      "steal": 75
-     },
-     "fielding": {
-      "cArm": 30,
-      "cBlocking": 25,
-      "cFraming": 30,
-      "ifArm": 55,
-      "ifError": 60,
-      "ifRange": 70,
-      "ofArm": 20,
-      "ofError": 75,
-      "ofRange": 60,
-      "turnDp": 55
-     },
-     "injuryProne": "Normal",
-     "intelligence": "H",
-     "leadership": "H",
-     "pitching": {
-      "armSlot": "3/4",
-      "control": 50,
-      "controlCur": 50,
-      "groundballType": "NEU",
-      "movement": 55,
-      "movementCur": 30,
-      "pitches": [
-       {
-        "current": 80,
-        "name": "Fastball",
-        "potential": 80
-       },
-       {
-        "current": 50,
-        "name": "Curveball",
-        "potential": 55
-       },
-       {
-        "current": 40,
-        "name": "Slider",
-        "potential": 45
-       }
-      ],
-      "stamina": 35,
-      "stuff": 75,
-      "stuffCur": 65,
-      "velocity": "89-91"
-     },
-     "scoutingAccuracy": "Very High",
-     "throwHand": "Right",
-     "workEthic": "N"
-    },
-    "rawOverallScore": 20.676366355371094,
-    "relieverComponent": 18.41,
-    "rule5Eligible": null,
-    "runningScoreComponent": 11.09,
-    "starterComponent": 3.56,
-    "statsPlusUrl": null,
-    "team": null,
-    "throwHand": "Right",
-    "type": "Two-way"
-   },
-   {
-    "age": 22,
-    "batHand": "Right",
-    "battingScoreComponent": 0.0,
-    "bestPosition": null,
-    "demand": "Slot",
-    "drafted": false,
-    "draftedPick": null,
-    "draftedRound": null,
-    "draftedRoundPick": null,
-    "draftedTeam": null,
-    "fieldingScoreComponent": 3.97,
-    "id": "90153",
-    "inGameOverall": 40,
-    "inGamePotential": 40,
-    "level": null,
-    "modelScore": 20.53,
-    "name": "Noel Hollis",
-    "org": null,
-    "pitcherScore": 20.53,
-    "position": "SP",
-    "positionPlayerScore": 3.69,
-    "rank": 57,
-    "ratings": {
-     "batHand": "Right",
-     "batting": {
-      "avoidK": 30,
-      "avoidKCur": 25,
-      "contact": 25,
-      "contactCur": 20,
-      "eye": 20,
-      "eyeCur": 20,
-      "gap": 25,
-      "gapCur": 20,
-      "power": 25,
-      "powerCur": 20,
-      "running": 55,
-      "speed": 65,
-      "steal": 65
-     },
-     "fielding": {
-      "cArm": 30,
-      "cBlocking": 20,
-      "cFraming": 25,
-      "ifArm": 70,
-      "ifError": 40,
-      "ifRange": 20,
-      "ofArm": 30,
-      "ofError": 70,
-      "ofRange": 35,
-      "turnDp": 30
-     },
-     "injuryProne": "Normal",
-     "intelligence": "H",
-     "leadership": "L",
-     "pitching": {
-      "armSlot": "SIDE",
-      "control": 70,
-      "controlCur": 60,
-      "groundballType": "FB",
-      "movement": 45,
-      "movementCur": 40,
-      "pitches": [
-       {
-        "current": 75,
-        "name": "Fastball",
-        "potential": 75
-       },
-       {
-        "current": 25,
-        "name": "Sinker",
-        "potential": 45
-       }
-      ],
-      "stamina": 70,
-      "stuff": 70,
-      "stuffCur": 50,
-      "velocity": "96-98"
-     },
-     "scoutingAccuracy": "Very High",
-     "throwHand": "Right",
-     "workEthic": "N"
-    },
-    "rawOverallScore": 20.528510227067407,
-    "relieverComponent": 20.53,
-    "rule5Eligible": null,
-    "runningScoreComponent": 54.82,
-    "starterComponent": 18.72,
-    "statsPlusUrl": null,
-    "team": null,
-    "throwHand": "Right",
-    "type": "Pitcher"
-   },
-   {
     "age": 21,
     "batHand": "Left",
     "battingScoreComponent": 17.52,
@@ -21478,7 +21189,7 @@
     "pitcherScore": 0.0,
     "position": "2B",
     "positionPlayerScore": 20.37,
-    "rank": 58,
+    "rank": 55,
     "ratings": {
      "batHand": "Left",
      "batting": {
@@ -21539,6 +21250,99 @@
     "type": "Hitter"
    },
    {
+    "age": 22,
+    "batHand": "Right",
+    "battingScoreComponent": 0.0,
+    "bestPosition": null,
+    "demand": "Slot",
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "fieldingScoreComponent": 3.97,
+    "id": "90153",
+    "inGameOverall": 40,
+    "inGamePotential": 40,
+    "level": null,
+    "modelScore": 20.09,
+    "name": "Noel Hollis",
+    "org": null,
+    "pitcherScore": 20.09,
+    "position": "SP",
+    "positionPlayerScore": 3.69,
+    "rank": 56,
+    "ratings": {
+     "batHand": "Right",
+     "batting": {
+      "avoidK": 30,
+      "avoidKCur": 25,
+      "contact": 25,
+      "contactCur": 20,
+      "eye": 20,
+      "eyeCur": 20,
+      "gap": 25,
+      "gapCur": 20,
+      "power": 25,
+      "powerCur": 20,
+      "running": 55,
+      "speed": 65,
+      "steal": 65
+     },
+     "fielding": {
+      "cArm": 30,
+      "cBlocking": 20,
+      "cFraming": 25,
+      "ifArm": 70,
+      "ifError": 40,
+      "ifRange": 20,
+      "ofArm": 30,
+      "ofError": 70,
+      "ofRange": 35,
+      "turnDp": 30
+     },
+     "injuryProne": "Normal",
+     "intelligence": "H",
+     "leadership": "L",
+     "pitching": {
+      "armSlot": "SIDE",
+      "control": 70,
+      "controlCur": 60,
+      "groundballType": "FB",
+      "movement": 45,
+      "movementCur": 40,
+      "pitches": [
+       {
+        "current": 75,
+        "name": "Fastball",
+        "potential": 75
+       },
+       {
+        "current": 25,
+        "name": "Sinker",
+        "potential": 45
+       }
+      ],
+      "stamina": 70,
+      "stuff": 70,
+      "stuffCur": 50,
+      "velocity": "96-98"
+     },
+     "scoutingAccuracy": "Very High",
+     "throwHand": "Right",
+     "workEthic": "N"
+    },
+    "rawOverallScore": 20.086409756962635,
+    "relieverComponent": 20.09,
+    "rule5Eligible": null,
+    "runningScoreComponent": 54.82,
+    "starterComponent": 18.31,
+    "statsPlusUrl": null,
+    "team": null,
+    "throwHand": "Right",
+    "type": "Pitcher"
+   },
+   {
     "age": 17,
     "batHand": "Right",
     "battingScoreComponent": 0.0,
@@ -21560,7 +21364,7 @@
     "pitcherScore": 0.0,
     "position": "CF",
     "positionPlayerScore": 19.89,
-    "rank": 59,
+    "rank": 57,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -21642,7 +21446,7 @@
     "pitcherScore": 0.0,
     "position": "LF",
     "positionPlayerScore": 19.87,
-    "rank": 60,
+    "rank": 58,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -21724,7 +21528,7 @@
     "pitcherScore": 0.0,
     "position": "CF",
     "positionPlayerScore": 19.85,
-    "rank": 61,
+    "rank": 59,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -21785,6 +21589,104 @@
     "type": "Hitter"
    },
    {
+    "age": 18,
+    "batHand": "Right",
+    "battingScoreComponent": 0.0,
+    "bestPosition": "SS",
+    "demand": "Slot",
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "fieldingScoreComponent": 68.23,
+    "id": "90023",
+    "inGameOverall": 45,
+    "inGamePotential": 70,
+    "level": null,
+    "modelScore": 19.72,
+    "name": "Dakota Jessop",
+    "org": null,
+    "pitcherScore": 17.46,
+    "position": "RP",
+    "positionPlayerScore": 15.1,
+    "rank": 60,
+    "ratings": {
+     "batHand": "Right",
+     "batting": {
+      "avoidK": 30,
+      "avoidKCur": 20,
+      "contact": 30,
+      "contactCur": 20,
+      "eye": 30,
+      "eyeCur": 20,
+      "gap": 25,
+      "gapCur": 20,
+      "power": 20,
+      "powerCur": 20,
+      "running": 35,
+      "speed": 20,
+      "steal": 75
+     },
+     "fielding": {
+      "cArm": 30,
+      "cBlocking": 25,
+      "cFraming": 30,
+      "ifArm": 55,
+      "ifError": 60,
+      "ifRange": 70,
+      "ofArm": 20,
+      "ofError": 75,
+      "ofRange": 60,
+      "turnDp": 55
+     },
+     "injuryProne": "Normal",
+     "intelligence": "H",
+     "leadership": "H",
+     "pitching": {
+      "armSlot": "3/4",
+      "control": 50,
+      "controlCur": 50,
+      "groundballType": "NEU",
+      "movement": 55,
+      "movementCur": 30,
+      "pitches": [
+       {
+        "current": 80,
+        "name": "Fastball",
+        "potential": 80
+       },
+       {
+        "current": 50,
+        "name": "Curveball",
+        "potential": 55
+       },
+       {
+        "current": 40,
+        "name": "Slider",
+        "potential": 45
+       }
+      ],
+      "stamina": 35,
+      "stuff": 75,
+      "stuffCur": 65,
+      "velocity": "89-91"
+     },
+     "scoutingAccuracy": "Very High",
+     "throwHand": "Right",
+     "workEthic": "N"
+    },
+    "rawOverallScore": 19.720656945087804,
+    "relieverComponent": 17.46,
+    "rule5Eligible": null,
+    "runningScoreComponent": 11.09,
+    "starterComponent": 3.37,
+    "statsPlusUrl": null,
+    "team": null,
+    "throwHand": "Right",
+    "type": "Two-way"
+   },
+   {
     "age": 17,
     "batHand": "Right",
     "battingScoreComponent": 0.0,
@@ -21806,7 +21708,7 @@
     "pitcherScore": 19.71,
     "position": "SP",
     "positionPlayerScore": 8.63,
-    "rank": 62,
+    "rank": 61,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -21904,7 +21806,7 @@
     "pitcherScore": 2.37,
     "position": "RP",
     "positionPlayerScore": 19.54,
-    "rank": 63,
+    "rank": 62,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -22002,7 +21904,7 @@
     "pitcherScore": 0.0,
     "position": "C",
     "positionPlayerScore": 19.51,
-    "rank": 64,
+    "rank": 63,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -22084,7 +21986,7 @@
     "pitcherScore": 0.0,
     "position": "2B",
     "positionPlayerScore": 19.33,
-    "rank": 65,
+    "rank": 64,
     "ratings": {
      "batHand": "Left",
      "batting": {
@@ -22166,7 +22068,7 @@
     "pitcherScore": 16.78,
     "position": "SP",
     "positionPlayerScore": 15.62,
-    "rank": 66,
+    "rank": 65,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -22259,7 +22161,7 @@
     "pitcherScore": 0.0,
     "position": "SP",
     "positionPlayerScore": 18.96,
-    "rank": 67,
+    "rank": 66,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -22357,7 +22259,7 @@
     "pitcherScore": 4.94,
     "position": "SP",
     "positionPlayerScore": 18.28,
-    "rank": 68,
+    "rank": 67,
     "ratings": {
      "batHand": "Switch",
      "batting": {
@@ -22442,6 +22344,104 @@
     "team": null,
     "throwHand": "Right",
     "type": "Hitter"
+   },
+   {
+    "age": 18,
+    "batHand": "Right",
+    "battingScoreComponent": 0.0,
+    "bestPosition": null,
+    "demand": "Slot",
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "fieldingScoreComponent": 30.35,
+    "id": "90001",
+    "inGameOverall": 30,
+    "inGamePotential": 45,
+    "level": null,
+    "modelScore": 18.21,
+    "name": "Blake Jessop",
+    "org": null,
+    "pitcherScore": 18.21,
+    "position": "RP",
+    "positionPlayerScore": 7.72,
+    "rank": 68,
+    "ratings": {
+     "batHand": "Right",
+     "batting": {
+      "avoidK": 25,
+      "avoidKCur": 20,
+      "contact": 25,
+      "contactCur": 20,
+      "eye": 30,
+      "eyeCur": 20,
+      "gap": 30,
+      "gapCur": 20,
+      "power": 20,
+      "powerCur": 20,
+      "running": 45,
+      "speed": 40,
+      "steal": 50
+     },
+     "fielding": {
+      "cArm": 20,
+      "cBlocking": 25,
+      "cFraming": 20,
+      "ifArm": 60,
+      "ifError": 50,
+      "ifRange": 55,
+      "ofArm": 60,
+      "ofError": 50,
+      "ofRange": 30,
+      "turnDp": 40
+     },
+     "injuryProne": "Normal",
+     "intelligence": "H",
+     "leadership": "L",
+     "pitching": {
+      "armSlot": "SIDE",
+      "control": 60,
+      "controlCur": 60,
+      "groundballType": "EX FB",
+      "movement": 65,
+      "movementCur": 40,
+      "pitches": [
+       {
+        "current": 65,
+        "name": "Fastball",
+        "potential": 75
+       },
+       {
+        "current": 35,
+        "name": "Splitter",
+        "potential": 45
+       },
+       {
+        "current": 20,
+        "name": "Changeup",
+        "potential": 40
+       }
+      ],
+      "stamina": 40,
+      "stuff": 70,
+      "stuffCur": 60,
+      "velocity": "86-88"
+     },
+     "scoutingAccuracy": "Very High",
+     "throwHand": "Right",
+     "workEthic": "N"
+    },
+    "rawOverallScore": 18.206562142325847,
+    "relieverComponent": 17.19,
+    "rule5Eligible": null,
+    "runningScoreComponent": 25.84,
+    "starterComponent": 18.21,
+    "statsPlusUrl": null,
+    "team": null,
+    "throwHand": "Right",
+    "type": "Pitcher"
    },
    {
     "age": 20,
@@ -23148,6 +23148,104 @@
     "type": "Two-way"
    },
    {
+    "age": 22,
+    "batHand": "Right",
+    "battingScoreComponent": 0.0,
+    "bestPosition": "2B",
+    "demand": "$650k",
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "fieldingScoreComponent": 60.5,
+    "id": "90085",
+    "inGameOverall": 30,
+    "inGamePotential": 60,
+    "level": null,
+    "modelScore": 15.73,
+    "name": "Finley Norcross",
+    "org": null,
+    "pitcherScore": 11.21,
+    "position": "RP",
+    "positionPlayerScore": 14.05,
+    "rank": 77,
+    "ratings": {
+     "batHand": "Right",
+     "batting": {
+      "avoidK": 25,
+      "avoidKCur": 20,
+      "contact": 30,
+      "contactCur": 25,
+      "eye": 20,
+      "eyeCur": 20,
+      "gap": 30,
+      "gapCur": 20,
+      "power": 20,
+      "powerCur": 20,
+      "running": 70,
+      "speed": 70,
+      "steal": 30
+     },
+     "fielding": {
+      "cArm": 25,
+      "cBlocking": 20,
+      "cFraming": 30,
+      "ifArm": 20,
+      "ifError": 75,
+      "ifRange": 70,
+      "ofArm": 55,
+      "ofError": 35,
+      "ofRange": 70,
+      "turnDp": 60
+     },
+     "injuryProne": "Normal",
+     "intelligence": "N",
+     "leadership": "N",
+     "pitching": {
+      "armSlot": "SIDE",
+      "control": 70,
+      "controlCur": 45,
+      "groundballType": "NEU",
+      "movement": 45,
+      "movementCur": 45,
+      "pitches": [
+       {
+        "current": 65,
+        "name": "Fastball",
+        "potential": 65
+       },
+       {
+        "current": 50,
+        "name": "Slider",
+        "potential": 65
+       },
+       {
+        "current": 45,
+        "name": "Cutter",
+        "potential": 50
+       }
+      ],
+      "stamina": 25,
+      "stuff": 70,
+      "stuffCur": 45,
+      "velocity": "91-93"
+     },
+     "scoutingAccuracy": "Very High",
+     "throwHand": "Right",
+     "workEthic": "N"
+    },
+    "rawOverallScore": 15.727271532103387,
+    "relieverComponent": 11.21,
+    "rule5Eligible": null,
+    "runningScoreComponent": 42.84,
+    "starterComponent": 4.98,
+    "statsPlusUrl": null,
+    "team": null,
+    "throwHand": "Right",
+    "type": "Two-way"
+   },
+   {
     "age": 18,
     "batHand": "Right",
     "battingScoreComponent": 0.0,
@@ -23163,13 +23261,13 @@
     "inGameOverall": 30,
     "inGamePotential": 35,
     "level": null,
-    "modelScore": 15.73,
+    "modelScore": 15.66,
     "name": "Tatum Jessop",
     "org": null,
-    "pitcherScore": 12.47,
+    "pitcherScore": 12.02,
     "position": "SP",
     "positionPlayerScore": 13.86,
-    "rank": 77,
+    "rank": 78,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -23245,109 +23343,11 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 15.728113615207132,
-    "relieverComponent": 12.47,
+    "rawOverallScore": 15.661481895279767,
+    "relieverComponent": 12.02,
     "rule5Eligible": null,
     "runningScoreComponent": 4.43,
-    "starterComponent": 2.3,
-    "statsPlusUrl": null,
-    "team": null,
-    "throwHand": "Right",
-    "type": "Two-way"
-   },
-   {
-    "age": 22,
-    "batHand": "Right",
-    "battingScoreComponent": 0.0,
-    "bestPosition": "2B",
-    "demand": "$650k",
-    "drafted": false,
-    "draftedPick": null,
-    "draftedRound": null,
-    "draftedRoundPick": null,
-    "draftedTeam": null,
-    "fieldingScoreComponent": 60.5,
-    "id": "90085",
-    "inGameOverall": 30,
-    "inGamePotential": 60,
-    "level": null,
-    "modelScore": 15.73,
-    "name": "Finley Norcross",
-    "org": null,
-    "pitcherScore": 11.21,
-    "position": "RP",
-    "positionPlayerScore": 14.05,
-    "rank": 78,
-    "ratings": {
-     "batHand": "Right",
-     "batting": {
-      "avoidK": 25,
-      "avoidKCur": 20,
-      "contact": 30,
-      "contactCur": 25,
-      "eye": 20,
-      "eyeCur": 20,
-      "gap": 30,
-      "gapCur": 20,
-      "power": 20,
-      "powerCur": 20,
-      "running": 70,
-      "speed": 70,
-      "steal": 30
-     },
-     "fielding": {
-      "cArm": 25,
-      "cBlocking": 20,
-      "cFraming": 30,
-      "ifArm": 20,
-      "ifError": 75,
-      "ifRange": 70,
-      "ofArm": 55,
-      "ofError": 35,
-      "ofRange": 70,
-      "turnDp": 60
-     },
-     "injuryProne": "Normal",
-     "intelligence": "N",
-     "leadership": "N",
-     "pitching": {
-      "armSlot": "SIDE",
-      "control": 70,
-      "controlCur": 45,
-      "groundballType": "NEU",
-      "movement": 45,
-      "movementCur": 45,
-      "pitches": [
-       {
-        "current": 65,
-        "name": "Fastball",
-        "potential": 65
-       },
-       {
-        "current": 50,
-        "name": "Slider",
-        "potential": 65
-       },
-       {
-        "current": 45,
-        "name": "Cutter",
-        "potential": 50
-       }
-      ],
-      "stamina": 25,
-      "stuff": 70,
-      "stuffCur": 45,
-      "velocity": "91-93"
-     },
-     "scoutingAccuracy": "Very High",
-     "throwHand": "Right",
-     "workEthic": "N"
-    },
-    "rawOverallScore": 15.727271532103387,
-    "relieverComponent": 11.21,
-    "rule5Eligible": null,
-    "runningScoreComponent": 42.84,
-    "starterComponent": 4.98,
+    "starterComponent": 2.22,
     "statsPlusUrl": null,
     "team": null,
     "throwHand": "Right",
@@ -24055,7 +24055,7 @@
     "modelScore": 13.56,
     "name": "Tatum Oakes",
     "org": null,
-    "pitcherScore": 2.59,
+    "pitcherScore": 2.49,
     "position": "SP",
     "positionPlayerScore": 13.56,
     "rank": 87,
@@ -24135,10 +24135,10 @@
      "workEthic": "N"
     },
     "rawOverallScore": 13.557229911224367,
-    "relieverComponent": 2.59,
+    "relieverComponent": 2.49,
     "rule5Eligible": null,
     "runningScoreComponent": 42.67,
-    "starterComponent": 0.28,
+    "starterComponent": 0.27,
     "statsPlusUrl": null,
     "team": null,
     "throwHand": "Right",
@@ -24227,6 +24227,88 @@
     "type": "Hitter"
    },
    {
+    "age": 21,
+    "batHand": "Right",
+    "battingScoreComponent": 0.0,
+    "bestPosition": "CF",
+    "demand": "Slot",
+    "drafted": true,
+    "draftedPick": 7,
+    "draftedRound": 2,
+    "draftedRoundPick": 2,
+    "draftedTeam": "Brewers",
+    "fieldingScoreComponent": 44.96,
+    "id": "90042",
+    "inGameOverall": 45,
+    "inGamePotential": 50,
+    "level": null,
+    "modelScore": 13.2,
+    "name": "Casey Ellery",
+    "org": null,
+    "pitcherScore": 0.0,
+    "position": "2B",
+    "positionPlayerScore": 13.2,
+    "rank": 89,
+    "ratings": {
+     "batHand": "Right",
+     "batting": {
+      "avoidK": 45,
+      "avoidKCur": 30,
+      "contact": 35,
+      "contactCur": 20,
+      "eye": 65,
+      "eyeCur": 45,
+      "gap": 75,
+      "gapCur": 55,
+      "power": 40,
+      "powerCur": 25,
+      "running": 75,
+      "speed": 45,
+      "steal": 80
+     },
+     "fielding": {
+      "cArm": 25,
+      "cBlocking": 30,
+      "cFraming": 25,
+      "ifArm": 60,
+      "ifError": 50,
+      "ifRange": 45,
+      "ofArm": 70,
+      "ofError": 50,
+      "ofRange": 65,
+      "turnDp": 60
+     },
+     "injuryProne": "Normal",
+     "intelligence": "H",
+     "leadership": "N",
+     "pitching": {
+      "armSlot": "3/4",
+      "control": 25,
+      "controlCur": 20,
+      "groundballType": "EX GB",
+      "movement": 30,
+      "movementCur": 30,
+      "pitches": [],
+      "stamina": 25,
+      "stuff": 25,
+      "stuffCur": 20,
+      "velocity": "94-96"
+     },
+     "scoutingAccuracy": "Very High",
+     "throwHand": "Right",
+     "workEthic": "H"
+    },
+    "rawOverallScore": 13.19607784935242,
+    "relieverComponent": 0.0,
+    "rule5Eligible": null,
+    "runningScoreComponent": 55.98,
+    "starterComponent": 0.0,
+    "statsPlusUrl": null,
+    "team": null,
+    "throwHand": "Right",
+    "type": "Hitter"
+   },
+   {
     "age": 17,
     "batHand": "Right",
     "battingScoreComponent": 0.0,
@@ -24242,13 +24324,13 @@
     "inGameOverall": 40,
     "inGamePotential": 55,
     "level": null,
-    "modelScore": 13.47,
+    "modelScore": 13.16,
     "name": "Dakota Ingram",
     "org": null,
-    "pitcherScore": 13.47,
+    "pitcherScore": 13.16,
     "position": "RP",
     "positionPlayerScore": 3.94,
-    "rank": 89,
+    "rank": 90,
     "ratings": {
      "batHand": "Right",
      "batting": {
@@ -24319,97 +24401,15 @@
      "throwHand": "Left",
      "workEthic": "H"
     },
-    "rawOverallScore": 13.46834375339241,
-    "relieverComponent": 13.47,
+    "rawOverallScore": 13.164155178059586,
+    "relieverComponent": 13.16,
     "rule5Eligible": null,
     "runningScoreComponent": 33.5,
-    "starterComponent": 3.31,
+    "starterComponent": 3.23,
     "statsPlusUrl": null,
     "team": null,
     "throwHand": "Left",
     "type": "Pitcher"
-   },
-   {
-    "age": 21,
-    "batHand": "Right",
-    "battingScoreComponent": 0.0,
-    "bestPosition": "CF",
-    "demand": "Slot",
-    "drafted": true,
-    "draftedPick": 7,
-    "draftedRound": 2,
-    "draftedRoundPick": 2,
-    "draftedTeam": "Brewers",
-    "fieldingScoreComponent": 44.96,
-    "id": "90042",
-    "inGameOverall": 45,
-    "inGamePotential": 50,
-    "level": null,
-    "modelScore": 13.2,
-    "name": "Casey Ellery",
-    "org": null,
-    "pitcherScore": 0.0,
-    "position": "2B",
-    "positionPlayerScore": 13.2,
-    "rank": 90,
-    "ratings": {
-     "batHand": "Right",
-     "batting": {
-      "avoidK": 45,
-      "avoidKCur": 30,
-      "contact": 35,
-      "contactCur": 20,
-      "eye": 65,
-      "eyeCur": 45,
-      "gap": 75,
-      "gapCur": 55,
-      "power": 40,
-      "powerCur": 25,
-      "running": 75,
-      "speed": 45,
-      "steal": 80
-     },
-     "fielding": {
-      "cArm": 25,
-      "cBlocking": 30,
-      "cFraming": 25,
-      "ifArm": 60,
-      "ifError": 50,
-      "ifRange": 45,
-      "ofArm": 70,
-      "ofError": 50,
-      "ofRange": 65,
-      "turnDp": 60
-     },
-     "injuryProne": "Normal",
-     "intelligence": "H",
-     "leadership": "N",
-     "pitching": {
-      "armSlot": "3/4",
-      "control": 25,
-      "controlCur": 20,
-      "groundballType": "EX GB",
-      "movement": 30,
-      "movementCur": 30,
-      "pitches": [],
-      "stamina": 25,
-      "stuff": 25,
-      "stuffCur": 20,
-      "velocity": "94-96"
-     },
-     "scoutingAccuracy": "Very High",
-     "throwHand": "Right",
-     "workEthic": "H"
-    },
-    "rawOverallScore": 13.19607784935242,
-    "relieverComponent": 0.0,
-    "rule5Eligible": null,
-    "runningScoreComponent": 55.98,
-    "starterComponent": 0.0,
-    "statsPlusUrl": null,
-    "team": null,
-    "throwHand": "Right",
-    "type": "Hitter"
    },
    {
     "age": 21,
@@ -25520,114 +25520,6 @@
     "type": "Hitter"
    },
    {
-    "age": 17,
-    "batHand": "Left",
-    "battingScoreComponent": 0.0,
-    "bestPosition": "2B",
-    "demand": "$800k",
-    "drafted": false,
-    "draftedPick": null,
-    "draftedRound": null,
-    "draftedRoundPick": null,
-    "draftedTeam": null,
-    "fieldingScoreComponent": 30.59,
-    "id": "90116",
-    "inGameOverall": 20,
-    "inGamePotential": 65,
-    "level": null,
-    "modelScore": 10.47,
-    "name": "Quinn Oakes",
-    "org": null,
-    "pitcherScore": 9.34,
-    "position": "3B",
-    "positionPlayerScore": 7.52,
-    "rank": 103,
-    "ratings": {
-     "batHand": "Left",
-     "batting": {
-      "avoidK": 40,
-      "avoidKCur": 30,
-      "contact": 55,
-      "contactCur": 35,
-      "eye": 50,
-      "eyeCur": 45,
-      "gap": 40,
-      "gapCur": 40,
-      "power": 35,
-      "powerCur": 30,
-      "running": 60,
-      "speed": 25,
-      "steal": 80
-     },
-     "fielding": {
-      "cArm": 25,
-      "cBlocking": 20,
-      "cFraming": 25,
-      "ifArm": 60,
-      "ifError": 70,
-      "ifRange": 50,
-      "ofArm": 50,
-      "ofError": 40,
-      "ofRange": 35,
-      "turnDp": 50
-     },
-     "injuryProne": "Normal",
-     "intelligence": "N",
-     "leadership": "N",
-     "pitching": {
-      "armSlot": "3/4",
-      "control": 45,
-      "controlCur": 35,
-      "groundballType": "NEU",
-      "movement": 55,
-      "movementCur": 40,
-      "pitches": [
-       {
-        "current": 65,
-        "name": "Splitter",
-        "potential": 65
-       },
-       {
-        "current": 45,
-        "name": "Curveball",
-        "potential": 45
-       },
-       {
-        "current": 30,
-        "name": "Fastball",
-        "potential": 40
-       },
-       {
-        "current": 25,
-        "name": "Slider",
-        "potential": 35
-       },
-       {
-        "current": 20,
-        "name": "Cutter",
-        "potential": 35
-       }
-      ],
-      "stamina": 20,
-      "stuff": 55,
-      "stuffCur": 55,
-      "velocity": "86-88"
-     },
-     "scoutingAccuracy": "Very High",
-     "throwHand": "Right",
-     "workEthic": "N"
-    },
-    "rawOverallScore": 10.466131677007148,
-    "relieverComponent": 9.34,
-    "rule5Eligible": null,
-    "runningScoreComponent": 21.44,
-    "starterComponent": 7.96,
-    "statsPlusUrl": null,
-    "team": null,
-    "throwHand": "Right",
-    "type": "Two-way"
-   },
-   {
     "age": 18,
     "batHand": "Left",
     "battingScoreComponent": 0.0,
@@ -25649,7 +25541,7 @@
     "pitcherScore": 8.04,
     "position": "SP",
     "positionPlayerScore": 9.25,
-    "rank": 104,
+    "rank": 103,
     "ratings": {
      "batHand": "Left",
      "batting": {
@@ -25725,6 +25617,114 @@
     "rule5Eligible": null,
     "runningScoreComponent": 31.58,
     "starterComponent": 8.04,
+    "statsPlusUrl": null,
+    "team": null,
+    "throwHand": "Right",
+    "type": "Two-way"
+   },
+   {
+    "age": 17,
+    "batHand": "Left",
+    "battingScoreComponent": 0.0,
+    "bestPosition": "2B",
+    "demand": "$800k",
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "fieldingScoreComponent": 30.59,
+    "id": "90116",
+    "inGameOverall": 20,
+    "inGamePotential": 65,
+    "level": null,
+    "modelScore": 10.1,
+    "name": "Quinn Oakes",
+    "org": null,
+    "pitcherScore": 8.98,
+    "position": "3B",
+    "positionPlayerScore": 7.52,
+    "rank": 104,
+    "ratings": {
+     "batHand": "Left",
+     "batting": {
+      "avoidK": 40,
+      "avoidKCur": 30,
+      "contact": 55,
+      "contactCur": 35,
+      "eye": 50,
+      "eyeCur": 45,
+      "gap": 40,
+      "gapCur": 40,
+      "power": 35,
+      "powerCur": 30,
+      "running": 60,
+      "speed": 25,
+      "steal": 80
+     },
+     "fielding": {
+      "cArm": 25,
+      "cBlocking": 20,
+      "cFraming": 25,
+      "ifArm": 60,
+      "ifError": 70,
+      "ifRange": 50,
+      "ofArm": 50,
+      "ofError": 40,
+      "ofRange": 35,
+      "turnDp": 50
+     },
+     "injuryProne": "Normal",
+     "intelligence": "N",
+     "leadership": "N",
+     "pitching": {
+      "armSlot": "3/4",
+      "control": 45,
+      "controlCur": 35,
+      "groundballType": "NEU",
+      "movement": 55,
+      "movementCur": 40,
+      "pitches": [
+       {
+        "current": 65,
+        "name": "Splitter",
+        "potential": 65
+       },
+       {
+        "current": 45,
+        "name": "Curveball",
+        "potential": 45
+       },
+       {
+        "current": 30,
+        "name": "Fastball",
+        "potential": 40
+       },
+       {
+        "current": 25,
+        "name": "Slider",
+        "potential": 35
+       },
+       {
+        "current": 20,
+        "name": "Cutter",
+        "potential": 35
+       }
+      ],
+      "stamina": 20,
+      "stuff": 55,
+      "stuffCur": 55,
+      "velocity": "86-88"
+     },
+     "scoutingAccuracy": "Very High",
+     "throwHand": "Right",
+     "workEthic": "N"
+    },
+    "rawOverallScore": 10.103607994998917,
+    "relieverComponent": 8.98,
+    "rule5Eligible": null,
+    "runningScoreComponent": 21.44,
+    "starterComponent": 7.66,
     "statsPlusUrl": null,
     "team": null,
     "throwHand": "Right",
@@ -27428,7 +27428,7 @@
     "modelScore": 8.17,
     "name": "Gray Barrow",
     "org": null,
-    "pitcherScore": 0.89,
+    "pitcherScore": 0.78,
     "position": "RP",
     "positionPlayerScore": 8.17,
     "rank": 123,
@@ -27503,7 +27503,7 @@
      "workEthic": "H"
     },
     "rawOverallScore": 8.169854673065187,
-    "relieverComponent": 0.89,
+    "relieverComponent": 0.78,
     "rule5Eligible": null,
     "runningScoreComponent": 37.65,
     "starterComponent": 0.0,
@@ -27975,10 +27975,10 @@
     "inGameOverall": 25,
     "inGamePotential": 65,
     "level": null,
-    "modelScore": 7.49,
+    "modelScore": 7.48,
     "name": "Morgan Abbott",
     "org": null,
-    "pitcherScore": 4.77,
+    "pitcherScore": 4.7,
     "position": "SP",
     "positionPlayerScore": 6.78,
     "rank": 129,
@@ -28047,11 +28047,11 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 7.493074914685911,
-    "relieverComponent": 4.77,
+    "rawOverallScore": 7.482265957962596,
+    "relieverComponent": 4.7,
     "rule5Eligible": null,
     "runningScoreComponent": 49.11,
-    "starterComponent": 1.18,
+    "starterComponent": 1.16,
     "statsPlusUrl": null,
     "team": null,
     "throwHand": "Right",
@@ -28076,7 +28076,7 @@
     "modelScore": 7.35,
     "name": "Quinn Oakes",
     "org": null,
-    "pitcherScore": 1.69,
+    "pitcherScore": 1.63,
     "position": "RP",
     "positionPlayerScore": 7.35,
     "rank": 130,
@@ -28141,7 +28141,7 @@
      "workEthic": "N"
     },
     "rawOverallScore": 7.351496310424805,
-    "relieverComponent": 1.69,
+    "relieverComponent": 1.63,
     "rule5Eligible": null,
     "runningScoreComponent": 46.43,
     "starterComponent": 0.0,
@@ -28460,10 +28460,10 @@
     "inGameOverall": 45,
     "inGamePotential": 35,
     "level": null,
-    "modelScore": 6.99,
+    "modelScore": 6.75,
     "name": "Gray Hollis",
     "org": null,
-    "pitcherScore": 6.33,
+    "pitcherScore": 6.08,
     "position": "RP",
     "positionPlayerScore": 4.44,
     "rank": 134,
@@ -28537,8 +28537,8 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 6.994923700554228,
-    "relieverComponent": 6.33,
+    "rawOverallScore": 6.749189098790708,
+    "relieverComponent": 6.08,
     "rule5Eligible": null,
     "runningScoreComponent": 21.44,
     "starterComponent": 0.0,

@@ -5,8 +5,8 @@ import io
 
 from models.game_players import GamePlayer
 from models.scored_player import ScoredPlayer
-from ranking import get_ranker
-from ranking.signals import inventory
+from ranking import PROFILES, get_ranker
+from ranking.signals import POTENTIAL_RATINGS, Inventory, inventory
 from tests.e2e_fixtures import make_draft_class_csv
 
 
@@ -42,9 +42,15 @@ def test_flags_composites_and_repeat_reads_by_side():
 
 
 def test_flags_potential_reads_in_a_current_profile():
+    inv = Inventory(PROFILES["overall"], 1, {"pitching models": {"MOV P", "STU"}})
+    assert inv.flags("pitching") == {"MOV P": ["a potential rating in a current-ratings profile"]}
+
+
+def test_current_scoring_reads_no_potential_ratings():
+    # the HR-risk and knuckleball checks used potential Movement / pitches
     inv = inventory(get_ranker("overall"), _players())
-    # the HR-risk modifier keys off Movement's potential, even on current ratings
-    assert "a potential rating in a current-ratings profile" in inv.flags("pitching")["MOV P"]
+    for side in ("batting", "pitching"):
+        assert not set(inv.by_rating(side)) & POTENTIAL_RATINGS
 
 
 def test_tracing_is_removed_afterwards():

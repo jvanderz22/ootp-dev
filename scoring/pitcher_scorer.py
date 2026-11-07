@@ -86,7 +86,7 @@ rp_third_pitch_value_modifier_map = {
 def calculate_rp_modifier(player, type="potential"):
     modifier = 1
 
-    knuckleball_modifier = KnuckleballModifier.calculate_player_modifier(player)
+    knuckleball_modifier = KnuckleballModifier.calculate_player_modifier(player, type)
 
     modifier *= knuckleball_modifier
 
@@ -120,7 +120,7 @@ def calculate_rp_modifier(player, type="potential"):
     total_rp_value_modifier = stamina_modifier * rp_pitch_modifiers
 
     modifier *= total_rp_value_modifier
-    home_run_risk_modifier = HomerunRiskModifier.calculate_player_modifier(player)
+    home_run_risk_modifier = HomerunRiskModifier.calculate_player_modifier(player, type)
 
     modifier *= home_run_risk_modifier
     return modifier
@@ -235,16 +235,21 @@ sp_fifth_pitch_value_modifier_map = {
 }
 
 
+# `type` is the scorer's: "potential" reads the potential ratings, "overall"
+# the current ones.
 class BasePitcherModifier:
     @abstractmethod
-    def calculate_player_modifier(cls, player: GamePlayer):
+    def calculate_player_modifier(cls, player: GamePlayer, type="potential"):
         pass
 
 
 class KnuckleballModifier(BasePitcherModifier):
     @classmethod
-    def calculate_player_modifier(cls, player: GamePlayer):
-        has_knuckleball = "knuckleball" in player.get_pitches()
+    def calculate_player_modifier(cls, player: GamePlayer, type="potential"):
+        if type == "potential":
+            has_knuckleball = "knuckleball" in player.get_pitches()
+        else:
+            has_knuckleball = "knuckleball_ovr" in player.get_ovr_pitches()
         return 1.15 if has_knuckleball else 1
 
 
@@ -252,10 +257,11 @@ class HomerunRiskModifier(BasePitcherModifier):
     movement_hr_risk_exponent = {45: 1, 40: 1.3, 35: 1.5, 30: 1.75, 25: 2, 20: 3}
 
     @classmethod
-    def calculate_player_modifier(cls, player: GamePlayer):
+    def calculate_player_modifier(cls, player: GamePlayer, type="potential"):
         home_run_risk_modifier = 1
-        if player.movement <= 45:
-            exponent = cls.movement_hr_risk_exponent[player.movement]
+        movement = player.movement if type == "potential" else player.movement_ovr
+        if movement <= 45:
+            exponent = cls.movement_hr_risk_exponent[movement]
             if player.groundball_type == "EX FB":
                 home_run_risk_modifier = 0.87**exponent
             if player.groundball_type == "FB":
@@ -291,7 +297,7 @@ def _stuff_relative_grade(grade, stuff):
 def calculate_sp_modifiers(player, type="potential"):
     modifier = 1
 
-    modifier *= KnuckleballModifier.calculate_player_modifier(player)
+    modifier *= KnuckleballModifier.calculate_player_modifier(player, type)
 
     gb_type = player.groundball_type
     gb_type_modifier = sp_groundball_type_modifier_map.get(gb_type, 1)
@@ -338,7 +344,7 @@ def calculate_sp_modifiers(player, type="potential"):
 
     modifier *= total_sp_value_modifier
 
-    home_run_risk_modifier = HomerunRiskModifier.calculate_player_modifier(player)
+    home_run_risk_modifier = HomerunRiskModifier.calculate_player_modifier(player, type)
 
     write_runtime_component(player.id, "pitching.starter.hr_risk", home_run_risk_modifier)
     modifier *= home_run_risk_modifier

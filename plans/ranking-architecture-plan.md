@@ -201,11 +201,14 @@ To start collecting, because history doesn't backfill:
   - **Draft and potential, both sides:** Age is read by the age and
     personality modifiers, and the draft class reads Intelligence and Work
     Ethic in both personality modifiers.
-  - **Current pitchers read potential ratings:** the HR-risk modifier keys
-    off potential Movement, and the knuckleball check off potential
-    pitches, even when ranking on current ratings. Likely a bug. It's legacy
-    behaviour, so v2 keeps it until phase 4, unless you want a legacy fix
-    first.
+  - **Fixed: current pitchers read potential ratings.** The HR-risk modifier
+    keyed off potential Movement, and the knuckleball check off potential
+    pitches, even when ranking on current ratings. Both now follow the
+    scorer's ratings (fixed in legacy, so v2 has it too; goldens regenerated,
+    only the `overall` sections moved). Live MLB / AAA: 60 of 1,521 current
+    scores changed, all down (median −3%, young arms whose current Movement
+    trails their potential); SP spearman 0.887 unchanged, RP 0.846 → 0.845.
+    A test now checks the current profile reads no potential ratings.
 
 ## Phases
 
