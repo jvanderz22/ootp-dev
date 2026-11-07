@@ -30,6 +30,7 @@ COPY modifiers/ ./modifiers/
 COPY models/ ./models/
 COPY printers/ ./printers/
 COPY rankers/ ./rankers/
+COPY ranking/ ./ranking/
 COPY scoring/ ./scoring/
 COPY utils/ ./utils/
 COPY training_data/ ./training_data/
