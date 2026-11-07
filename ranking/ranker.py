@@ -12,6 +12,7 @@ from ranking.manifest import build_manifest
 from ranking.results import RankedResult
 from ranking.stages.demand import Demand
 from ranking.stages.legacy import LegacyModel, LegacyModifiers, TwoWay
+from ranking.stages.talent import HitterTalent
 from ranking.state import PlayerState
 from rankers.base_ranker import DEFAULT_BATCH_SIZE
 from scoring.runtime_components import runtime_components_scope
@@ -29,7 +30,7 @@ def legacy_pipeline(profile):
 # Engine v2's pipeline. Each later layer swaps out a legacy stage here, while
 # `legacy` keeps reproducing the legacy rankers (with a ledger) for comparison.
 def v2_pipeline(profile):
-    return legacy_pipeline(profile)
+    return [LegacyModel(profile, batting=HitterTalent(profile)), LegacyModifiers(), TwoWay()], [Demand()]
 
 
 PIPELINES = {"v2": v2_pipeline, "legacy": legacy_pipeline}
@@ -42,7 +43,10 @@ class Ranker:
         self.batch_stages, self.pool_stages = PIPELINES[pipeline](profile)
 
     def manifest(self, source_version=None) -> dict:
-        return build_manifest(ENGINE, self.pipeline, self.profile, UNIT, source_version)
+        artifacts = {}
+        for stage in self.batch_stages + self.pool_stages:
+            artifacts.update(getattr(stage, "artifacts", {}))
+        return build_manifest(ENGINE, self.pipeline, self.profile, UNIT, source_version, artifacts)
 
     def rank(self, players, batch_size: int = DEFAULT_BATCH_SIZE, progress=None) -> list:
         """Score `players` (any iterable of GamePlayer) and return RankedResults

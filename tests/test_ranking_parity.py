@@ -2,8 +2,10 @@
 plans/ranking-v2-technical-plan.md): every ScoredPlayer field, breakdown and
 order - plus a ledger that sums to the score and first-class pre-demand fields.
 
-Both pipelines are held to it: `legacy` for good (it's how the eval explains a
-legacy score), `v2` until phase 3 deliberately changes it."""
+`legacy` is held to it everywhere, for good (it's how the eval explains a
+legacy score). `v2` scores hitters with the fitted talent stage (phase 3) when
+their BABIP is there, so it's held to it only where it isn't - the draft-class
+fixtures, which are an old-format export - which is also its fallback test."""
 import csv
 import io
 
@@ -41,10 +43,9 @@ def test_v2_matches_legacy_on_a_draft_class(method, seed, pipeline):
     assert [_fields(s) for s in v2] == [_fields(s) for s in legacy]
 
 
-@pytest.mark.parametrize("pipeline", sorted(PIPELINES))
 @pytest.mark.parametrize("method", ["overall", "potential"])
-def test_v2_matches_legacy_on_a_snapshot(method, pipeline):
-    legacy, v2 = _rank_both(method, join_rows(*make_snapshot_csvs()), batch_size=1500, pipeline=pipeline)
+def test_legacy_pipeline_matches_legacy_on_a_snapshot(method):
+    legacy, v2 = _rank_both(method, join_rows(*make_snapshot_csvs()), batch_size=1500, pipeline="legacy")
     assert [_fields(s) for s in v2] == [_fields(s) for s in legacy]
 
 

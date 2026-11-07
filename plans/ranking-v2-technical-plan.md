@@ -378,6 +378,21 @@ constraints and acceptance tests, not training labels:
 **Talent:** XGBoost on base ratings → runs per PA / per 9 innings, weighted by
 PA / IP. Monotone; few rounds, chosen by CV grouped by season.
 
+- **Hitters, as built (2026-11-07):** one rate per rating, not one model of
+  runs. K% (Avoid K), BB + HBP per PA (Eye), HR per contact (Power), hits per
+  ball in play (BABIP) and extra bases per hit (Gap). Each is an XGBoost
+  `reg:logistic` fit with a monotone rating term plus a level term, kept
+  additive by an interaction constraint, on every level at once. The MLB
+  curve is tabulated for ratings 20–80, so the app needs no XGBoost for it.
+  The rates chain into a PA, and linear weights fit to team-season runs
+  (2030–42) value the outcomes.
+  - A single XGBoost model of runs per PA failed the floors: it extrapolates
+    flat into rating combinations the data barely covers. The chained rates
+    let low-rated minor leaguers pin down the bottom of each curve, and
+    cross-validate better (MLB 0.693 vs 0.667).
+  - Folds are grouped by player for now. A season split isn't possible yet:
+    2041 only has veterans.
+
 **Value:** mostly deterministic formulas, with parameters fit from the stats:
 - WAR = (runs above average + positional adjustment + replacement runs) ×
   expected playing time / runs per win. This is our own WAR, calibrated
@@ -393,6 +408,12 @@ the outcome. E[max(WAR, 0)] is computed from the quantiles.
 opinion run as a separate `judgment` stage with its own ledger lines.
 
 ### Rules suite: from your grids (confirmed 2026-11-07)
+
+On 2026-11-07, the Power floors in rule 1, rule 2 and the "similar values"
+half of rule 3 became hypotheses, because the stats disagree (see
+`ranking-architecture-plan.md`, "Findings so far"). Rule 3 keeps its other
+half: the grid's archetype rows keep their order (spearman ≥ 0.9). Checks are
+in `ranking/fitting/rules.py`.
 
 Hitting (from `batting_attribute_model.py`, restated in BABIP / Avoid K
 terms):
@@ -456,7 +477,7 @@ Fielding (from the position grids):
 | **2a** ✅ | `profiles`, `ledger`, `state`, `results`, `manifest`, `stages/legacy`, `stages/demand`, `ranker`; `ENGINES["v2"]`; parity tests | v2 = legacy on every field, unit and real data; ledger totals exact |
 | **2b** ✅ | `--parity`, `--explain`, `--signals` (reads traced, not declared) | report only |
 | **2c** ✅ | schema v3 + `results_store` fields; GraphQL ledger / pre-demand fields; card waterfall (behind v2) | goldens unchanged (legacy rows write NULLs) |
-| **3** | `RatingsView`; `fitting/datasets.py`; rules suite; hitter talent stage (BABIP / Avoid K / Gap / Power / Eye, fit to stats, monotone) with per-player legacy fallback when BABIP is missing | rules suite passes; eval vs legacy: hitter residuals by rating flatten; watchlist; draft metrics no worse |
+| **3** ✅ | `RatingsView`; `fitting/datasets.py`; rules suite; hitter talent stage (BABIP / Avoid K / Gap / Power / Eye, fit to stats, monotone) with per-player legacy fallback when BABIP is missing | rules suite passes; eval vs legacy: hitter residuals by rating flatten; watchlist; draft metrics no worse |
 | **4** | Movement / Stuff composition fit; pitcher talent stage | same, pitchers |
 | **5** | value stage (WAR); retire RP multiplier, batting weights, two-way bonus | calibration vs StatsPlus WAR; ranking metrics |
 | **6** | development stage (distributions, E[v], upside dial); judgment stage | draft metrics vs legacy and POT-only baseline |

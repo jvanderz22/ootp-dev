@@ -57,7 +57,12 @@ _SCORERS = {
     "position_player_scorer": ("batting scorer", "batting"),
     "pitcher_scorer": ("pitcher scorer (role adjustments)", "pitching"),
 }
-_READER_SIDES = {name: side for name, side in (*_MODELS.values(), _FIELDING, *_SCORERS.values())}
+# the fitted layers read through ranking/ratings.py: RatingsView method -> reader
+_RATINGS_FILE = os.path.join(_ROOT, "ranking", "ratings.py")
+_VIEWS = {"hitting": ("batting talent", "batting")}
+_READER_SIDES = {
+    name: side for name, side in (*_MODELS.values(), _FIELDING, *_SCORERS.values(), *_VIEWS.values())
+}
 # functions that read a rating only to copy it onto a what-if player (the
 # SP / RP Stuff shift), which are then read where they're scored
 _PASS_THROUGH = {"__sp_estimate_player", "__rp_estimate_player"}
@@ -98,6 +103,11 @@ def _reader(frame):
     """The model / scorer / modifier whose code `frame` (or a caller) is in."""
     while frame is not None:
         filename = frame.f_code.co_filename
+        if filename == _RATINGS_FILE:
+            view = frame
+            while view is not None and view.f_code.co_name not in _VIEWS:
+                view = view.f_back
+            return _VIEWS[view.f_code.co_name][0] if view else None
         for directory, kind in _DIRS.items():
             if not filename.startswith(directory):
                 continue

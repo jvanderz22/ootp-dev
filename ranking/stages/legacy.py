@@ -8,37 +8,53 @@ from scoring.model_cache import get_pitcher_scorer, get_position_player_scorer
 from scoring.runtime_components import get_runtime_components, write_runtime_component
 
 # PositionPlayerScorer's weighting of its three models
-_BATTING_WEIGHTS = (("batting", 0.73), ("fielding", 0.22), ("running", 0.05))
+BATTING_WEIGHTS = (("batting", 0.73), ("fielding", 0.22), ("running", 0.05))
+
+
+def batting_label(component, weight) -> str:
+    return f"{component} model x{weight}"
 
 
 class LegacyModel(BatchStage):
-    """The legacy attribute-model scorers, one batched call per side."""
+    """The legacy attribute-model scorers, one batched call per side.
+
+    `batting`, if given, is a fitted batting model (ranking.stages.talent) that
+    scores whoever it can; the legacy batting model only runs for the rest."""
 
     name = "legacy-model"
 
-    def __init__(self, profile):
+    def __init__(self, profile, batting=None):
         self.position_player_scorer = get_position_player_scorer(profile.ratings)
         self.pitcher_scorer = get_pitcher_scorer(profile.ratings, profile.rp_multiplier)
+        self.batting = batting
+
+    @property
+    def artifacts(self) -> dict:
+        return {self.batting.name: self.batting.artifact} if self.batting else {}
 
     def run(self, states, profile):
         players = [s.player for s in states]
-        batting = self.position_player_scorer.score_many(players)
+        fitted = self.batting.score(players) if self.batting else [None] * len(players)
+        batting = self.position_player_scorer.score_many(
+            players, batting_scores=[f and f.points for f in fitted]
+        )
         pitching = self.pitcher_scorer.score_many(players)
-        for state, bat, pit in zip(states, batting, pitching):
-            self._batting(state, bat)
+        for state, bat, fit, pit in zip(states, batting, fitted, pitching):
+            self._batting(state, bat, fit and fit.label)
             self._pitching(state, pit)
 
     @staticmethod
-    def _batting(state, result):
+    def _batting(state, result, fitted_label=None):
         overall, batting, fielding, running, best_position = result
         side = state.batting
         side.model_score = overall
         side.components = {"batting": batting, "fielding": fielding, "running": running}
         side.best_position = best_position
-        for component, weight in _BATTING_WEIGHTS:
-            state.ledger.add(
-                MODEL, f"{component} model x{weight}", side.components[component] * weight, BATTING
-            )
+        for component, weight in BATTING_WEIGHTS:
+            label = batting_label(component, weight)
+            if component == "batting" and fitted_label:
+                label = f"{fitted_label} x{weight}"
+            state.ledger.add(MODEL, label, side.components[component] * weight, BATTING)
 
     @staticmethod
     def _pitching(state, result):

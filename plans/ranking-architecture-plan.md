@@ -20,6 +20,9 @@ next to `legacy`) and judged by `eval_rankings.py` at every step.
 | 2026-11-04 | **Current scoring is judged on performance stats**, with OVR as the fallback and the watchlist as a sanity check. **Draft scoring is judged on holding potential**: OVR from age 25, POT now before; gone from the league = bust; baseline = draft-day POT order. |
 | 2026-11-04 | **Batting inputs are OOTP's base ratings** (BABIP, Avoid K, Gap, Power, Eye), not Contact. Contact ≈ ½ BABIP + ½ Avoid K. |
 | 2026-11-04 | The signal inventory is a report only and never fails the suite. |
+| 2026-11-07 | **The rules list is confirmed**, then **the four Power rules become hypotheses**: the Power 40 / 30 floors, "power without contact is much less valuable" and "archetypes land at similar values". The 2041–42 stats disagree with all four (see "Findings so far"). They're reported, not enforced, and re-checked as the archive grows. |
+| 2026-11-07 | **Hitter talent is built from one rate per rating** (Avoid K → K%, Eye → BB%, Power → HR per contact, BABIP → hits on balls in play, Gap → extra bases per hit), chained into a PA and valued with linear weights fit to the league's runs. It's fit on every level at once with a level term, and committed as lookup tables. |
+| 2026-11-07 | **Until the value layer, fitted batting goes onto the legacy points scale by matching percentiles** over the league's hitters. Hitters keep their legacy points distribution, so phase 3 only reorders hitters among themselves; the hitter-vs-pitcher balance moves in phase 5 (WAR). |
 
 ## Why: what's wrong today
 
@@ -201,7 +204,37 @@ To start collecting, because history doesn't backfill:
   - **Draft and potential, both sides:** Age is read by the age and
     personality modifiers, and the draft class reads Intelligence and Work
     Ethic in both personality modifiers.
-  - **Fixed: current pitchers read potential ratings.** The HR-risk modifier
+  - **Phase 3, hitter talent (2026-11-07).** Fit on 2,526 player-season-level
+  rows (2042 ratings at every level, plus 2041 for veterans, hitters 24+).
+  Cross-validated with folds grouped by player, the spearman of predicted
+  with actual runs per PA (200+ PA) inside each level:
+
+  | Level | Rows | Fitted | Legacy |
+  |---|---|---|---|
+  | MLB | 522 | 0.693 | 0.583 |
+  | AAA | 373 | 0.563 | 0.506 |
+  | AA | 292 | 0.606 | 0.532 |
+  | A | 339 | 0.503 | 0.523 |
+
+  - **Against OVR on live MLB / AAA hitters:** spearman 0.769 → 0.831. The
+    Contact ≤ 40 residual goes −6.4 → −2.7 and Avoid K ≤ 40 −6.8 → −2.9, so
+    the Avoid K double count is gone. Pitchers are unchanged apart from 7
+    two-way players. Draft classes don't move yet: none of the old exports
+    has BABIP.
+  - **The stats disagree with the grid's Power rules.** HR per contact climbs
+    smoothly with no cliff: .007 below 30, .012 at 30, .018 at 35, .022 at 40,
+    .032 at 45. Power 60+ hitters with weak contact (BABIP / Avoid K ≤ 42)
+    hit 115 wRC+ in MLB / AAA, against 134 with good contact. That's the same
+    gap as at Power 40–50 (94 vs 108). The legacy grid buried exactly these
+    hitters: Nestor Gallegos (Power 65, Avoid K 40) goes from rank 853 to 306
+    and hit 110 and 129 wRC+; Pete Ayers 616 → 117, 124 and 112.
+  - **The grid's scale anchors roughly hold:** balanced 60s / 65s / 70s fit
+    141 / 162 / 181 wRC+ against the grid's 130 / 160 / 180. But 55s fit
+    121, not 100: an average MLB hitter here has 50s ratings.
+  - **Young players are left out** (under 24). Their ratings rise during a
+    season, so their stats came from lower ratings than the end-of-season
+    snapshot shows, which flattens the bottom of every curve.
+- **Fixed: current pitchers read potential ratings.** The HR-risk modifier
     keyed off potential Movement, and the knuckleball check off potential
     pitches, even when ranking on current ratings. Both now follow the
     scorer's ratings (fixed in legacy, so v2 has it too; goldens regenerated,
@@ -241,6 +274,10 @@ watchlist.
     the season has none, the normal refresh starts and archives as it builds.
   - League-page refreshes during a session archive the same way.
   - It starts collecting once deployed.
+  - **The first 2042 archive had no BABIP.** It was taken from the snapshot
+    stored before the BABIP mapping deployed. On 2026-11-07 it was replaced
+    with the live in-game 2042-12-11 snapshot, which has BABIP; the original
+    is kept as `archive-2042-nobabip.csv.gz` next to `archive/`.
 - ✅ **Season stats:** `league_stats.py <league> <years>` writes
   `league_stats/<league>/{bat,pitch,field}/<year>.csv`, every level and
   split. What StatsPlus serves (checked 2026-11-05):
@@ -280,12 +317,21 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
   `*DistanceFromOverallModifier`s and the one-player `calculate_*` ranker
   paths. Nothing called them; no scores changed.
 
-**3. Talent layer, hitters first**
-- Use BABIP / Avoid K / Gap / Power / Eye.
-- Fit to season stats (runs per PA), monotone, held to the rules suite. Your
-  confirmed rule list comes first.
-- Classes without BABIP keep the legacy talent stage, and so does the
-  whole stage if the fitted model doesn't beat legacy in the eval yet.
+**3. Talent layer, hitters first: done** (2026-11-07)
+- ✅ `ranking/hitter_talent.py` (the model and its committed artifact
+  `ranking/artifacts/hitter_talent_v1.json`), fit by
+  `python -m ranking.fitting.hitter_talent --data-dir fly_data`, which prints
+  the cross-validation against legacy, the rules and the hypotheses.
+- ✅ Rules suite (`ranking/fitting/rules.py`, `tests/test_model_rules.py`):
+  7 rules pass, and 4 Power hypotheses aren't supported (see "Findings so far").
+- ✅ In `v2`, `LegacyModel` takes its batting component from the fitted
+  model, and the legacy batting model only runs for players without BABIP.
+  The ledger line reads "batting talent (N wRC+)".
+- Refit once the 2043 archive (April ratings) is in. That's the first
+  season with start-of-season ratings, and the first real season-grouped
+  holdout.
+- Not done yet: `eval_rankings.py --hypotheses` (re-checking hypotheses
+  against the stats); the vs L / vs R splits (phase 6).
 
 **4. Talent layer, pitchers**
 - First, fit how Movement (and Stuff) is built from its parts.

@@ -17,7 +17,7 @@ def _hash_dir(path: str) -> str:
     return digest.hexdigest()[:12]
 
 
-def build_manifest(engine: str, pipeline: str, profile, unit: str, source_version=None) -> dict:
+def build_manifest(engine: str, pipeline: str, profile, unit: str, source_version=None, artifacts=None) -> dict:
     return {
         "engine": engine,
         "pipeline": pipeline,
@@ -25,7 +25,7 @@ def build_manifest(engine: str, pipeline: str, profile, unit: str, source_versio
         "config_hash": profile.config_hash(),
         "unit": unit,
         "training_data_hash": _hash_dir(str(TRAINING_DATA_DIR)),
-        # fitted artifacts (ranking/artifacts/) arrive with the first fitted stage
-        "artifact_versions": {},
+        # stage -> the fitted artifact (ranking/artifacts/) it scored with
+        "artifact_versions": artifacts or {},
         "source_version": source_version,
     }

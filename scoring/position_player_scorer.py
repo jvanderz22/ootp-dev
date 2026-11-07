@@ -29,16 +29,20 @@ class PositionPlayerScorer:
     def score(self, player):
         return self.score_many([player])[0]
 
-    def score_many(self, players):
+    def score_many(self, players, batting_scores=None):
         """Score a whole batch at once. Each attribute model runs a single
         batched prediction for the list (see `AttributeModel.predict_many`); the
         per-player fielding aggregation, modifiers and runtime-component writes
         are unchanged. Returns one
-        `[overall, batting, fielding, running, best_position]` per player."""
+        `[overall, batting, fielding, running, best_position]` per player.
+
+        `batting_scores`, if given, are batting scores from elsewhere (engine
+        v2's fitted model), aligned with `players`; the batting model only
+        scores the players whose entry is None."""
         players = list(players)
         if not players:
             return []
-        batting_scores = self.batting_model.predict_many(players)
+        batting_scores = self.__batting_scores(players, batting_scores)
         running_scores = self.running_model.predict_many(players)
         fielding_by_position = {
             position: model.predict_many(players)
@@ -74,6 +78,13 @@ class PositionPlayerScorer:
                 ]
             )
         return results
+
+    def __batting_scores(self, players, given):
+        if given is None:
+            return self.batting_model.predict_many(players)
+        missing = [p for p, score in zip(players, given) if score is None]
+        legacy = iter(self.batting_model.predict_many(missing) if missing else [])
+        return [score if score is not None else next(legacy) for score in given]
 
     def __aggregate_fielding_score(self, player, position_scores):
         [best_score, best_position] = self.__calculate_best_position_score(
