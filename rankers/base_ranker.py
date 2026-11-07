@@ -169,7 +169,7 @@ class BaseRanker(ABC):
             )
 
     def _apply_rank_adjustment(self, result: ScoredPlayer, rank: int) -> float:
-        """Port of `calculate_rank_adjusted_score` for the batched path: the
+        """Apply the rank modifiers on the batched path: the
         player's GamePlayer is long gone, so read what the rank modifiers need
         off the ScoredPlayer and fold the values straight into its `breakdown`
         (same paths/rounding `write_runtime_component` would use).
@@ -189,11 +189,6 @@ class BaseRanker(ABC):
             result.breakdown, "rank_adjust.pre_score", round(float(result.raw_overall_score), 2)
         )
         return score
-
-    def calculate_position_player_score(self, player: GamePlayer) -> list:
-        return self._apply_position_player_modifier(
-            player, self.position_player_scorer.score(player)
-        )
 
     def _apply_position_player_modifier(
         self, player: GamePlayer, base_score: list
@@ -232,11 +227,6 @@ class BaseRanker(ABC):
         write_runtime_component(player.id, "batting.modifier_total", modifier_val)
         return modifier_val
 
-    def calculate_pitcher_score(self, player: GamePlayer) -> float:
-        return self._apply_pitcher_modifier(
-            player, self.pitcher_scorer.score(player)
-        )
-
     def _apply_pitcher_modifier(self, player: GamePlayer, base_score: list) -> list:
         [
             pitcher_score,
@@ -256,20 +246,6 @@ class BaseRanker(ABC):
             modifier_val *= mod_val
         write_runtime_component(player.id, "pitching.modifier_total", modifier_val)
         return modifier_val
-
-    def calculate_rank_adjusted_score(self, player, raw_score, rank) -> float:
-        score = raw_score
-        for modifier in self.rank_adjusted_modifiers:
-            mod_val = modifier.calculate_modified_score(player, rank)
-            if float(mod_val) != float(1):
-                write_runtime_component(
-                    player.id, f"rank_adjust.modifiers.{modifier.__name__}", mod_val
-                )
-            score *= mod_val
-
-        write_runtime_component(player.id, "rank_adjust.pre_rank", rank)
-        write_runtime_component(player.id, "rank_adjust.pre_score", raw_score)
-        return score
 
     def aggregate_pitcher_batter_scores(self, batter_score, pitcher_score) -> float:
         high_score = batter_score if batter_score > pitcher_score else pitcher_score

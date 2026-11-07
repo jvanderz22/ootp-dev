@@ -45,9 +45,9 @@ next to `legacy`) and judged by `eval_rankings.py` at every step.
   subclasses, constructor args, a `splits.py` copy (fixed), and
   `model_cache.warm()`.
 - **Results are hard to follow.** Scorers return positional lists and the
-  breakdown goes through a ContextVar side channel. There's dead code too:
-  `apply_adjustment`, the `*DistanceFromOverallModifier`s, the one-player
-  `calculate_*` paths.
+  breakdown goes through a ContextVar side channel. There was dead code too
+  (`apply_adjustment`, the `*DistanceFromOverallModifier`s, the one-player
+  `calculate_*` paths), now deleted.
 
 ## Design
 
@@ -275,8 +275,10 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
 - ✅ **2c, the app:** runs are stored per engine with the ledger and
   pre-demand fields; the player card shows the ledger as a waterfall; the
   draft table has pre-demand columns; a top-bar toggle switches engines
-  (default `v2`). Needs a deploy to take effect (schema migration 3).
-- Delete the dead code in `v2` only.
+  (default `v2`). Deployed.
+- ✅ **Dead code deleted:** `apply_adjustment`, the two
+  `*DistanceFromOverallModifier`s and the one-player `calculate_*` ranker
+  paths. Nothing called them; no scores changed.
 
 **3. Talent layer, hitters first**
 - Use BABIP / Avoid K / Gap / Power / Eye.

@@ -396,27 +396,8 @@ class PitcherScorer:
             write_runtime_component(player.id, "pitching.reliever.score", relief_score)
             score = starting_score if starting_score > relief_score else relief_score
             score = score if score > 0 else 0
-            # Try to fix the batter/pitcher distribution
-            # score = self.apply_adjustment(score, player)
             results.append([score, starting_score, relief_score])
         return results
-
-    def apply_adjustment(self, score, player):
-        diff_from_65 = score - 70
-        diff_exponent = -diff_from_65 / 650
-        multiplier = max(score**diff_exponent, 1)
-
-        additive_effect = 0
-        if score > 10:
-            # boost mid-tier pitcher scoring with an addition
-            additive_effect = max(-diff_from_65 / 4, 0)
-
-        write_runtime_component(player.id, "pitching.adjustment.pre_score", score)
-        adjusted_score = multiplier * score + additive_effect
-        write_runtime_component(player.id, "pitching.adjustment.multiplier", multiplier)
-        write_runtime_component(player.id, "pitching.adjustment.effect", additive_effect)
-        write_runtime_component(player.id, "pitching.adjustment.score", adjusted_score)
-        return adjusted_score
 
     def __sp_estimate_player(self, player: GamePlayer) -> GamePlayer:
         """The player whose ratings the SP model should score - a real SP

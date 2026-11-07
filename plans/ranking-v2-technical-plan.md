@@ -392,7 +392,7 @@ the outcome. E[max(WAR, 0)] is computed from the quantiles.
 **Judgment adjustments:** any of your modifier tables you want kept as
 opinion run as a separate `judgment` stage with its own ledger lines.
 
-### Rules suite: draft list from your grids (to confirm)
+### Rules suite: from your grids (confirmed 2026-11-07)
 
 Hitting (from `batting_attribute_model.py`, restated in BABIP / Avoid K
 terms):
@@ -490,4 +490,4 @@ Fielding (from the position grids):
 4. **WAR target:** our own WAR from counting stats, calibrated against
    StatsPlus's `war`.
 5. **Models are fit from data, not your grids.** The grids' general rules
-   become constraints and the rules suite (see above, to confirm).
+   become constraints and the rules suite (see above, confirmed 2026-11-07).
