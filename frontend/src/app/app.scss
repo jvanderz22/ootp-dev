@@ -34,6 +34,59 @@ nav.row a:hover {
   margin: 0 auto;
 }
 
+.narrow-only { display: none; }
+.more { position: relative; }
+.more-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 36px;
+  padding: 0;
+}
+
+/* phones: one line - brand, league shortcuts, Settings, and a menu holding
+   the engine toggle + log out */
+@media (max-width: 640px) {
+  .topbar {
+    gap: 4px;
+    padding: 6px 12px 6px 16px;
+    flex-wrap: nowrap;
+  }
+  .brand { margin-right: 6px; white-space: nowrap; }
+  nav.row {
+    gap: 0;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  nav.row a {
+    padding: 8px 8px;
+    white-space: nowrap;
+  }
+  .topbar .wide-only { display: none; }
+  .topbar .more.narrow-only { display: inline-block; }
+}
+.more-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 11rem;
+  padding: 10px 12px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+}
+.more-menu .muted { font-size: 12px; }
+.more-menu .engine-toggle button { flex: 1 1 0; padding: 6px 10px; }
+.more-menu > button { min-height: 40px; }
+
 /* ranking engine toggle: a two-button segmented control */
 .engine-toggle {
   display: inline-flex;

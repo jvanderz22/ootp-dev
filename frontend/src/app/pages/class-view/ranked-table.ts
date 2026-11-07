@@ -16,9 +16,17 @@ import { TagModule } from 'primeng/tag';
 import { TableModule } from 'primeng/table';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { PopoverModule } from 'primeng/popover';
+import { DrawerModule } from 'primeng/drawer';
 
-import { ClassView, NumericFilter, RankedPlayerRow, RankedQuery } from '../../core/api.types';
+import {
+  ClassView,
+  NumericFilter,
+  RankedPlayerRow,
+  RankedQuery,
+  TradePriority,
+} from '../../core/api.types';
 import { TradeListStore } from '../../core/trade-list-store';
+import { Viewport } from '../../core/viewport';
 import {
   ColumnDef,
   DEFAULT_SORT,
@@ -39,11 +47,6 @@ import { PlayerCompareComponent } from '../player-compare';
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-/** At or below this viewport width the Name cell shows "J. Smith" instead of
- *  the full name (full name kept as the cell tooltip) to claw back horizontal
- *  room on phones. Matches the `sticky-name` narrowing in the stylesheet. */
-const NARROW_VIEWPORT_QUERY = '(max-width: 640px)';
-
 /** How close to the bottom of the loaded rows (in px) triggers the next
  *  infinite-scroll batch fetch. */
 const SCROLL_LOAD_THRESHOLD_PX = 300;
@@ -55,6 +58,14 @@ const SCROLL_LOAD_THRESHOLD_PX = 300;
  *  `.content` page padding (20px) so the page itself doesn't gain a scrollbar. */
 const TABLE_BOTTOM_GAP_PX = 24;
 const MIN_TABLE_SCROLL_PX = 320;
+
+/** Trade-list priority tag beside the name: the word on desktop, its initial
+ *  on a phone, where the Name column is pinned and has to stay narrow. */
+const PRIORITY_LABEL: Record<TradePriority, string> = {
+  HIGH: 'High',
+  MEDIUM: 'Med',
+  LOW: 'Low',
+};
 
 /** Hover-intent before the column-header quick filter opens. Deliberately
  *  unhurried — it's a power-user affordance, not something to surprise anyone
@@ -75,6 +86,7 @@ const COL_POP_MARGIN = 8;
     TagModule,
     SelectButtonModule,
     PopoverModule,
+    DrawerModule,
     PlayerDetailCardComponent,
     PositionFilterComponent,
     HandednessFilterComponent,
@@ -150,6 +162,11 @@ export class RankedTableComponent {
   protected readonly compareSel = signal<RankedPlayerRow[]>([]);
   protected readonly compareOpen = signal(false);
 
+  /** Phones: the player whose full-screen detail panel is open. It replaces the
+   *  inline row expansion there, and only a tap on the Name cell opens it, so
+   *  tapping or panning elsewhere on the wide table never takes over the screen. */
+  protected readonly panelPlayer = signal<RankedPlayerRow | null>(null);
+
   /** Row whose trade-list popover is open (set just before the popover toggles). */
   protected readonly starRow = signal<RankedPlayerRow | null>(null);
   /** Inline "new list" name being typed in the star popover. */
@@ -184,12 +201,26 @@ export class RankedTableComponent {
   );
   protected readonly headerGroups = computed(() => groupSpans(this.columns()));
 
+  /** The leading compare / star cell. Phones compare from the player panel, so
+   *  there it's only kept to carry the trade-list star. */
+  protected readonly showCmpCol = computed(() => !this.isNarrow() || !!this.tradeStore());
+  /** Phones open the player panel instead of expanding rows inline. */
+  protected readonly showExpander = computed(() => !this.isNarrow());
+  protected readonly colCount = computed(
+    () =>
+      this.columns().length + (this.showCmpCol() ? 1 : 0) + (this.showExpander() ? 1 : 0),
+  );
+  protected readonly tableExpandedKeys = computed(() =>
+    this.isNarrow() ? {} : this.expandedKeys(),
+  );
+
   /** Visible width of the horizontal-scroll viewport, so an expanded row can be
    *  pinned to it instead of stretching the full (overflowing) table width. */
   protected readonly viewportWidth = signal<number | null>(null);
 
-  /** Phone-width viewport — abbreviates the Name cell to a first initial. */
-  protected readonly isNarrow = signal(false);
+  /** Phone-width viewport — abbreviates the Name cell to a first initial, pins
+   *  it alone, and swaps row expansion for the full-screen player panel. */
+  protected readonly isNarrow = inject(Viewport).narrow;
 
   /** Height of the table's own scroll body, sized to reach the bottom of the
    *  viewport and recomputed on resize / scroll — the table fills the page
@@ -294,23 +325,22 @@ export class RankedTableComponent {
     window.addEventListener('resize', scheduleMeasure, { passive: true });
     window.addEventListener('scroll', scheduleMeasure, { passive: true });
 
-    // Track phone-width — abbreviates the Name cell and switches the scroll-body
-    // sizing to the "chrome scrolls away" mobile mode (see `measure`).
-    const mq = window.matchMedia(NARROW_VIEWPORT_QUERY);
-    this.isNarrow.set(mq.matches);
-    const onMq = (e: MediaQueryListEvent) =>
-      this.zone.run(() => {
-        this.isNarrow.set(e.matches);
-        measure();
-      });
-    mq.addEventListener('change', onMq);
+    // Crossing phone-width switches the scroll-body sizing to the "chrome
+    // scrolls away" mobile mode (see `measure`).
+    effect(() => {
+      this.isNarrow();
+      untracked(() => scheduleMeasure());
+    });
+
+    // The phone back gesture closes the player panel rather than leaving the page.
+    window.addEventListener('popstate', this.onPopState);
 
     inject(DestroyRef).onDestroy(() => {
       ro.disconnect();
       cancelAnimationFrame(measureRaf);
       window.removeEventListener('resize', scheduleMeasure);
       window.removeEventListener('scroll', scheduleMeasure);
-      mq.removeEventListener('change', onMq);
+      window.removeEventListener('popstate', this.onPopState);
       this.scrollEl?.removeEventListener('scroll', this.onScroll);
       clearTimeout(this.colShowTimer);
       clearTimeout(this.colHideTimer);
@@ -345,6 +375,15 @@ export class RankedTableComponent {
   protected cellTitle(c: ColumnDef, v: unknown): string | null {
     if (c.sticky === 'name' && this.isNarrow()) return String(v ?? '') || null;
     return c.cellTitle?.(v) || null;
+  }
+
+  protected shortName(p: RankedPlayerRow): string {
+    return abbreviatePlayerName(p.name);
+  }
+
+  protected priorityLabel(p: RankedPlayerRow): string {
+    if (!p.priority) return '';
+    return this.isNarrow() ? p.priority[0] : PRIORITY_LABEL[p.priority];
   }
 
   protected sortCaret(c: ColumnDef): string {
@@ -441,6 +480,7 @@ export class RankedTableComponent {
   }
 
   protected toggleRow(p: RankedPlayerRow, event: Event): void {
+    if (this.isNarrow()) return; // phones: only the Name cell opens the panel
     if ((event.target as HTMLElement).closest('a, button, input, label, .p-checkbox')) {
       return;
     }
@@ -454,6 +494,44 @@ export class RankedTableComponent {
 
   protected isExpanded(p: RankedPlayerRow): boolean {
     return !!this.expandedKeys()[p.id];
+  }
+
+  // ------------------------------------------------------------ player panel
+  protected onNameTap(p: RankedPlayerRow, event: Event): void {
+    if (!this.isNarrow()) return; // desktop: the row's own click expands it
+    event.stopPropagation();
+    this.openPanel(p);
+  }
+
+  private openPanel(p: RankedPlayerRow): void {
+    // a history entry of its own, so the back gesture closes the panel
+    if (!this.panelPlayer()) history.pushState({ ...history.state, playerPanel: true }, '');
+    this.panelPlayer.set(p);
+  }
+
+  protected closePanel(): void {
+    if (!this.panelPlayer()) return;
+    this.panelPlayer.set(null);
+    if (history.state?.playerPanel) history.back();
+  }
+
+  /** Back gesture / button: the pushed entry is gone, so just drop the panel.
+   *  The URL didn't change, so the router ignores this popstate. */
+  private readonly onPopState = (): void => {
+    if (this.panelPlayer()) this.zone.run(() => this.panelPlayer.set(null));
+  };
+
+  /** The panel's compare button: the first pick waits in the compare bar for a
+   *  second player; picking the second opens the comparison. */
+  protected compareFromPanel(p: RankedPlayerRow): void {
+    if (this.isSelected(p)) {
+      this.toggleCompare(p);
+      return;
+    }
+    const pending = this.compareSel().length === 1;
+    this.compareSel.set([...this.compareSel(), p].slice(-2));
+    this.closePanel();
+    if (pending) this.compareOpen.set(true);
   }
 
   private applyExpansion(): void {

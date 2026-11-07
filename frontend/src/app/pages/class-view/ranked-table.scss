@@ -32,30 +32,6 @@
   }
 }
 
-/* Controls the caller projects into the "Filters" popover on mobile. The
-   popover is appended to <body>, so these can't be reached via a `.filters`
-   descendant selector — style them flat. */
-.m-fld,
-.m-chk {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-}
-.m-fld > span {
-  min-width: 3.5rem;
-  color: var(--text-dim);
-}
-.m-fld select {
-  flex: 1 1 auto;
-}
-.m-chk {
-  color: var(--text-dim);
-  cursor: pointer;
-}
-.m-chk input {
-  cursor: pointer;
-}
 .filters .chk {
   gap: 6px;
   font-size: 13px;
@@ -102,6 +78,21 @@
   line-height: 1;
 }
 .compare-bar .chip-x:hover { color: var(--drafted); }
+/* phones: compare picks are made from the player panel, so the bar floats at
+   the bottom of the screen where it stays in view while browsing for pick two */
+@media (max-width: 640px) {
+  .compare-bar {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 30;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  }
+  .compare-bar > button:last-child { margin-left: auto; }
+}
 
 /* ------------------------------------------------------------- ranked table */
 .ranked-table {
@@ -297,29 +288,50 @@
     min-width: 44px;
     box-shadow: inset -1px 0 0 var(--border);
   }
-  /* phones: frozen, the leading columns took most of the screen - they scroll
-     with the rest instead. The Name cell is abbreviated to "J. Smith" (see
-     ranked-table.ts), so its column narrows too. */
+  /* phones: frozen, the leading columns took most of the screen, so only the
+     Name (abbreviated to "J. Smith", see ranked-table.ts) stays pinned. The
+     star and rank cells before it scroll away underneath it, and it sticks once
+     it reaches the left edge, so every row keeps its name in view. */
   @media (max-width: 640px) {
     ::ng-deep th.cmp-col,
     ::ng-deep td.cmp-col,
     ::ng-deep th.sticky-rank,
     ::ng-deep td.sticky-rank,
-    ::ng-deep th.sticky-name,
-    ::ng-deep td.sticky-name,
     ::ng-deep th.sticky-pos,
     ::ng-deep td.sticky-pos {
       position: static;
     }
-    ::ng-deep th.sticky-name,
-    ::ng-deep td.sticky-name {
-      width: 96px;
-      min-width: 96px;
-      white-space: nowrap;
+    &,
+    &.with-star {
+      ::ng-deep th.sticky-name,
+      ::ng-deep tr.body-row > td.sticky-name {
+        left: 0;
+        width: 96px;
+        min-width: 96px;
+        white-space: nowrap;
+        box-shadow: inset -1px 0 0 var(--border);
+      }
     }
     ::ng-deep th.sticky-pos,
     ::ng-deep td.sticky-pos {
       box-shadow: none;
+    }
+    /* the Name cell is the panel's trigger - make it read as one */
+    ::ng-deep td.name-link {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    /* the cell only carries the star here, so it can be narrow but the star
+       itself gets a finger-sized hit area */
+    &.with-star ::ng-deep td.cmp-col,
+    &.with-star ::ng-deep th.cmp-col {
+      display: table-cell;
+      width: 36px;
+    }
+    ::ng-deep .star-btn {
+      font-size: 17px;
+      padding: 6px 8px;
+      margin: -6px 0;
     }
   }
 
@@ -443,3 +455,4 @@
   padding: 3px 10px;
   font-size: 12px;
 }
+

@@ -60,11 +60,14 @@
         </select>
       </label>
 
-      <app-position-filter
-        [positions]="positions()"
-        [value]="positionSel()"
-        (valueChange)="onPositions($event)"
-      />
+      <div class="m-fld">
+        <span>Pos</span>
+        <app-position-filter
+          [positions]="positions()"
+          [value]="positionSel()"
+          (valueChange)="onPositions($event)"
+        />
+      </div>
 
       @if (context() !== 'league') {
         <label class="m-chk">
@@ -90,28 +93,34 @@
     </label>
   }
 
-  <button
-    type="button"
-    class="expand-all"
-    [class.active]="expandAll()"
-    (click)="toggleAllExpansion()"
-  >
-    {{ expandAll() ? 'Collapse all' : 'Expand all' }}
-  </button>
+  @if (!isNarrow()) {
+    <button
+      type="button"
+      class="expand-all"
+      [class.active]="expandAll()"
+      (click)="toggleAllExpansion()"
+    >
+      {{ expandAll() ? 'Collapse all' : 'Expand all' }}
+    </button>
+  }
 
   @if (compareSel().length) {
     <div class="compare-bar row">
-      <span class="muted">Compare</span>
+      @if (!isNarrow()) { <span class="muted">Compare</span> }
       @for (p of compareSel(); track p.id) {
         <span class="chip">
-          {{ p.name }}
+          {{ isNarrow() ? shortName(p) : p.name }}
           <button type="button" class="chip-x" (click)="toggleCompare(p)" title="Remove">×</button>
         </span>
       }
-      @if (compareSel().length === 1) { <span class="muted">pick one more</span> }
-      <button class="primary" (click)="openCompare()" [disabled]="compareSel().length !== 2">
-        Compare
-      </button>
+      @if (compareSel().length === 1) {
+        <span class="muted">{{ isNarrow() ? '+ open another player' : 'pick one more' }}</span>
+      }
+      @if (!isNarrow() || compareSel().length === 2) {
+        <button class="primary" (click)="openCompare()" [disabled]="compareSel().length !== 2">
+          Compare
+        </button>
+      }
       <button type="button" (click)="clearCompare()">Clear</button>
     </div>
   }
@@ -126,19 +135,23 @@
     [loading]="loading()"
     [scrollable]="true"
     [scrollHeight]="scrollHeight()"
-    [expandedRowKeys]="expandedKeys()"
+    [expandedRowKeys]="tableExpandedKeys()"
     size="small"
   >
     <ng-template #header>
       <tr class="grp-row">
-        <th class="cmp-col"></th>
+        @if (showCmpCol()) { <th class="cmp-col"></th> }
         @for (g of headerGroups(); track $index) {
           <th class="grp" [attr.colspan]="g.span">{{ g.label }}</th>
         }
-        <th class="expander-col"></th>
+        @if (showExpander()) { <th class="expander-col"></th> }
       </tr>
       <tr>
-        <th class="cmp-col" title="Pick two to compare">⇄</th>
+        @if (showCmpCol()) {
+          <th class="cmp-col" [attr.title]="isNarrow() ? null : 'Pick two to compare'">
+            {{ isNarrow() ? '' : '⇄' }}
+          </th>
+        }
         @for (c of columns(); track c.field) {
           <th
             class="sortable"
@@ -160,7 +173,7 @@
             @if (isColFiltered(c)) { <span class="col-filter-dot" title="Filtered">●</span> }
           </th>
         }
-        <th class="expander-col"></th>
+        @if (showExpander()) { <th class="expander-col"></th> }
       </tr>
     </ng-template>
 
@@ -171,49 +184,70 @@
         [class.is-expanded]="isExpanded(p)"
         (click)="toggleRow(p, $event)"
       >
-        <td class="cmp-col">
-          <input
-            type="checkbox"
-            [checked]="isSelected(p)"
-            [disabled]="compareSel().length === 2 && !isSelected(p)"
-            (change)="toggleCompare(p)"
-            (click)="$event.stopPropagation()"
-            title="Add to compare"
-          />
-          @if (tradeStore()) {
-            <button
-              type="button"
-              class="star-btn"
-              [class.on]="isListed(p)"
-              [title]="isListed(p) ? 'On a trade list' : 'Add to a trade list'"
-              (click)="onStarClick(p); starPop.toggle($event)"
-            >{{ isListed(p) ? '★' : '☆' }}</button>
-          }
-        </td>
+        @if (showCmpCol()) {
+          <td class="cmp-col">
+            @if (!isNarrow()) {
+              <input
+                type="checkbox"
+                [checked]="isSelected(p)"
+                [disabled]="compareSel().length === 2 && !isSelected(p)"
+                (change)="toggleCompare(p)"
+                (click)="$event.stopPropagation()"
+                title="Add to compare"
+              />
+            }
+            @if (tradeStore()) {
+              <button
+                type="button"
+                class="star-btn"
+                [class.on]="isListed(p)"
+                [title]="isListed(p) ? 'On a trade list' : 'Add to a trade list'"
+                (click)="onStarClick(p); starPop.toggle($event)"
+              >{{ isListed(p) ? '★' : '☆' }}</button>
+            }
+          </td>
+        }
         @for (c of columns(); track c.field) {
           @if (c.tag) {
             <td><p-tag [value]="p.type" [severity]="typeSeverity(p.type)" /></td>
           } @else {
             @let cv = c.value(p);
-            <td
-              [class.num]="c.numeric"
-              [class.sticky-rank]="c.sticky === 'rank'"
-              [class.sticky-name]="c.sticky === 'name'"
-              [class.sticky-pos]="c.sticky === 'pos'"
-              [class.col-wide]="c.wide"
-              [class.tone-danger]="c.tone?.(cv) === 'danger'"
-              [class.tone-warn]="c.tone?.(cv) === 'warn'"
-              [attr.title]="cellTitle(c, cv)"
-            >{{ cellText(c, cv) }}</td>
+            @if (c.sticky === 'name') {
+              <td
+                class="sticky-name"
+                [class.name-link]="isNarrow()"
+                [attr.title]="cellTitle(c, cv)"
+                (click)="onNameTap(p, $event)"
+              >
+                {{ cellText(c, cv) }}
+                @if (p.priority) {
+                  <span [class]="'prio prio-' + p.priority.toLowerCase()"
+                    [title]="p.priority + ' priority'">{{ priorityLabel(p) }}</span>
+                }
+                @if (p.note) { <span class="note-mark" [title]="p.note">✎</span> }
+              </td>
+            } @else {
+              <td
+                [class.num]="c.numeric"
+                [class.sticky-rank]="c.sticky === 'rank'"
+                [class.sticky-pos]="c.sticky === 'pos'"
+                [class.col-wide]="c.wide"
+                [class.tone-danger]="c.tone?.(cv) === 'danger'"
+                [class.tone-warn]="c.tone?.(cv) === 'warn'"
+                [attr.title]="cellTitle(c, cv)"
+              >{{ cellText(c, cv) }}</td>
+            }
           }
         }
-        <td class="num muted expander-col">{{ isExpanded(p) ? '▾' : '▸' }}</td>
+        @if (showExpander()) {
+          <td class="num muted expander-col">{{ isExpanded(p) ? '▾' : '▸' }}</td>
+        }
       </tr>
     </ng-template>
 
     <ng-template #expandedrow let-p>
       <tr class="detail-row">
-        <td [attr.colspan]="columns().length + 2">
+        <td [attr.colspan]="colCount()">
           <div class="detail-viewport" [style.width.px]="viewportWidth()">
             <app-player-detail-card
               [player]="p"
@@ -230,7 +264,7 @@
 
     <ng-template #emptymessage>
       <tr>
-        <td [attr.colspan]="columns().length + 2" class="muted">No players match.</td>
+        <td [attr.colspan]="colCount()" class="muted">No players match.</td>
       </tr>
     </ng-template>
   </p-table>
@@ -247,6 +281,51 @@
     </div>
   }
 </div>
+
+<!-- phones: the player's detail as a full-screen panel, opened from the Name
+     cell (see `onNameTap`), with compare / trade-list actions pinned below -->
+<p-drawer
+  [visible]="!!panelPlayer()"
+  (visibleChange)="!$event && closePanel()"
+  position="full"
+  [blockScroll]="true"
+  [header]="panelPlayer()?.name ?? ''"
+  styleClass="player-panel"
+>
+  @if (panelPlayer(); as p) {
+    <app-player-detail-card
+      [player]="p"
+      [showName]="false"
+      [totalRanked]="totalRecords()"
+      [canEditRank]="context() === 'class'"
+      [tradeStore]="tradeStore()"
+      [tradeListId]="tradeListId()"
+      (setRank)="onSetRank(p, $event)"
+    />
+  }
+  <ng-template #footer>
+    @if (panelPlayer(); as p) {
+      <div class="panel-actions">
+        @if (isSelected(p)) {
+          <button type="button" (click)="compareFromPanel(p)">Remove from compare</button>
+        } @else if (compareSel().length === 1) {
+          <button type="button" class="primary" (click)="compareFromPanel(p)">
+            Compare with {{ shortName(compareSel()[0]) }}
+          </button>
+        } @else {
+          <button type="button" (click)="compareFromPanel(p)">⇄ Compare…</button>
+        }
+        @if (tradeStore()) {
+          <button
+            type="button"
+            [class.on]="isListed(p)"
+            (click)="onStarClick(p); starPop.toggle($event)"
+          >{{ isListed(p) ? '★' : '☆' }} Trade lists</button>
+        }
+      </div>
+    }
+  </ng-template>
+</p-drawer>
 
 <app-player-compare
   [a]="compareSel()[0] ?? null"

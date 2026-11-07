@@ -1,10 +1,12 @@
-import { Component, ElementRef, computed, input, output, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, inject, input, output, viewChild } from '@angular/core';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 
 import { DraftClass, League, RANKING_METHODS } from '../../core/api.types';
+import { Viewport } from '../../core/viewport';
 
-/** Class heading + summary counts + the class-level action buttons. */
+/** Class heading + summary counts + the class-level action buttons. On a phone
+ *  the secondary actions (refresh drafted, download) fold into the ⚙ menu. */
 @Component({
   selector: 'app-class-toolbar',
   imports: [MenuModule],
@@ -12,22 +14,30 @@ import { DraftClass, League, RANKING_METHODS } from '../../core/api.types';
     @let d = detail();
     @if (d) {
       <div class="head">
-        <div>
+        <div class="title">
           <h1>{{ d.name }}</h1>
-          <p class="muted sub">
-            {{ d.playerCount }} players · {{ shownCount() }} shown · {{ d.draftedCount }} drafted ·
-            {{ d.rankingMethod }} ·
-            {{ d.leagueName || 'no league' }}
-            @if (d.hasCustomOrder) {
-              · <span class="tag">custom order</span>
+          <div class="meta">
+            <span class="stat"><b>{{ d.playerCount }}</b> players</span>
+            @if (shownCount() !== d.playerCount) {
+              <span class="stat"><b>{{ shownCount() }}</b> shown</span>
             }
-          </p>
+            <span class="stat"><b>{{ d.draftedCount }}</b> drafted</span>
+            <span class="pill" title="Ranking method">{{ methodLabel(d.rankingMethod) }}</span>
+            <span class="pill" [class.none]="!d.leagueName" title="League">
+              {{ d.leagueName || 'No league' }}
+            </span>
+            @if (d.hasCustomOrder) {
+              <span class="pill accent">Custom order</span>
+            }
+          </div>
         </div>
 
         <div class="actions">
-          @if (!notProcessed()) {
+          @if (!notProcessed() && !narrow()) {
             <button (click)="refreshDrafted.emit()" [disabled]="busy()">Refresh drafted</button>
             <button (click)="download.emit()" [disabled]="busy()">Download S+ CSV</button>
+          }
+          @if (!notProcessed()) {
             @if (mode() === 'table') {
               <button class="primary" (click)="startReorder.emit()" [disabled]="busy()">
                 Edit custom order
@@ -39,6 +49,7 @@ import { DraftClass, League, RANKING_METHODS } from '../../core/api.types';
             class="icon-btn"
             type="button"
             aria-label="Class settings"
+            title="Class settings"
             [disabled]="busy()"
             (click)="settingsMenu.toggle($event)"
           >
@@ -69,15 +80,36 @@ import { DraftClass, League, RANKING_METHODS } from '../../core/api.types';
         flex-wrap: wrap;
       }
       h1 {
-        margin: 0 0 4px;
+        margin: 0 0 8px;
+        overflow-wrap: anywhere;
       }
-      .sub {
-        margin: 0;
-      }
-      .muted {
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 12px;
+        font-size: 13px;
         color: var(--text-dim);
       }
-      .tag {
+      .stat b {
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+      }
+      .pill {
+        padding: 1px 8px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        font-size: 12px;
+        background: var(--bg-elev);
+        color: var(--text);
+      }
+      .pill.none {
+        color: var(--text-dim);
+        border-style: dashed;
+        background: none;
+      }
+      .pill.accent {
+        border-color: var(--accent);
         color: var(--accent);
       }
       .actions {
@@ -93,6 +125,25 @@ import { DraftClass, League, RANKING_METHODS } from '../../core/api.types';
       }
       .icon-btn i {
         font-size: 1rem;
+      }
+      /* phones: a smaller title, and the actions on one row under the meta */
+      @media (max-width: 640px) {
+        .head {
+          gap: 12px;
+        }
+        h1 {
+          font-size: 22px;
+        }
+        .actions {
+          width: 100%;
+        }
+        .actions .primary {
+          flex: 1 1 auto;
+        }
+        .icon-btn {
+          width: 40px;
+          height: 34px;
+        }
       }
     `,
   ],
@@ -115,6 +166,13 @@ export class ClassToolbarComponent {
   readonly setLeague = output<string | null>();
 
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
+  protected readonly narrow = inject(Viewport).narrow;
+
+  /** "draft_class" → "Draft class ranking". */
+  protected methodLabel(method: string): string {
+    const words = method.replace(/_/g, ' ');
+    return `${words.charAt(0).toUpperCase()}${words.slice(1)} ranking`;
+  }
 
   protected readonly settingsItems = computed<MenuItem[]>(() => {
     const d = this.detail();
@@ -143,7 +201,28 @@ export class ClassToolbarComponent {
       })),
     ];
 
+    // phones: the toolbar's secondary buttons live here instead
+    const classActions: MenuItem[] =
+      this.narrow() && !this.notProcessed()
+        ? [
+            {
+              label: 'Refresh drafted',
+              icon: 'pi pi-sync',
+              disabled: busy,
+              command: () => this.refreshDrafted.emit(),
+            },
+            {
+              label: 'Download S+ CSV',
+              icon: 'pi pi-download',
+              disabled: busy,
+              command: () => this.download.emit(),
+            },
+            { separator: true },
+          ]
+        : [];
+
     return [
+      ...classActions,
       { label: 'Ranking method', items: methodItems },
       { label: 'Move to league', items: leagueItems },
       { separator: true },

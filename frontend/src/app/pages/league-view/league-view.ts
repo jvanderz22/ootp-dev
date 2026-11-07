@@ -170,6 +170,12 @@ function defaultQuery(): RankedQuery {
     }
     .seg button:last-child { border-right: none; }
     .seg button.active { background: var(--accent); color: #fff; font-weight: 600; }
+    /* phones: both toggles share one row; the org pickers wrap below */
+    @media (max-width: 640px) {
+      .controls { gap: 8px; margin: 10px 0 6px; }
+      .seg button { padding: 7px 10px; font-size: 13px; }
+      select { flex: 1 1 100%; }
+    }
     .notice { color: var(--ok); }
   `,
 })

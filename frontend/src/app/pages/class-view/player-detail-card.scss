@@ -198,60 +198,27 @@
 .rating b.down { color: var(--danger); }
 .split-note { font-size: 12px; }
 
-/* trade-list membership + entry editors (live-league only) */
-.trade-lists {
+/* trade-list entry editors (Trade Targets page only) */
+.tl-entry {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
   padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg-elev);
 }
-.trade-lists .tl-label {
-  font-weight: 600;
-  font-size: 12px;
-}
-.trade-lists .tl-lists {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-}
-.trade-lists .tl-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  cursor: pointer;
-  font-size: 12px;
-}
-.trade-lists .tl-chip.on {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.trade-lists .tl-new input {
-  width: 9rem;
-  font-size: 12px;
-}
-.trade-lists .tl-entry {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-start;
-}
-.trade-lists .tl-entry label {
+.tl-entry label {
   display: flex;
   flex-direction: column;
   gap: 2px;
   font-size: 12px;
 }
-.trade-lists .tl-note {
+.tl-note {
   flex: 1 1 16rem;
 }
-.trade-lists .tl-note textarea {
+.tl-note textarea {
   width: 100%;
   resize: vertical;
   font: inherit;

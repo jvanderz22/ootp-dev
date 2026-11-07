@@ -3,6 +3,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
+import { MenuModule } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
 
 import { ApiService } from '../../core/api';
 import { LeagueSnapshotStore } from '../../core/league-snapshot-store';
@@ -48,7 +50,7 @@ function sortValue(row: RankedPlayer, field: string): number | string | null {
 
 /**
  * Trade Targets: the league's named trade-target lists. A list picker up top
- * (rename / delete / new), then the class-view ranked table fed by
+ * (new / rename / delete behind its menu), then the class-view ranked table fed by
  * `tradeListPlayers` — live model scores / ratings pulled against the current
  * snapshot, priority + note per entry, stale rows for players who have left the
  * snapshot.
@@ -59,7 +61,7 @@ function sortValue(row: RankedPlayer, field: string): number | string | null {
  */
 @Component({
   selector: 'app-trade-targets',
-  imports: [FormsModule, RouterLink, RankedTableComponent],
+  imports: [FormsModule, RouterLink, MenuModule, RankedTableComponent],
   template: `
     @if (store.error()) { <p class="error">{{ store.error() }}</p> }
     @if (error()) { <p class="error">{{ error() }}</p> }
@@ -76,27 +78,35 @@ function sortValue(row: RankedPlayer, field: string): number | string | null {
       </div>
     } @else {
       <div class="picker">
-        <select [ngModel]="listId()" (ngModelChange)="selectList($event)" name="list">
-          @for (l of store.lists(); track l.id) {
-            <option [value]="l.id">{{ l.name }} ({{ l.entryCount }})</option>
-          }
-        </select>
-
         @if (renaming()) {
           <form class="inline" (submit)="$event.preventDefault(); commitRename()">
             <input type="text" [(ngModel)]="draftName" name="rn" />
-            <button type="submit" class="sm primary">Save</button>
-            <button type="button" class="sm" (click)="renaming.set(false)">Cancel</button>
+            <button type="submit" class="primary" [disabled]="!draftName.trim()">Save</button>
+            <button type="button" (click)="renaming.set(false)">Cancel</button>
+          </form>
+        } @else if (creating()) {
+          <form class="inline" (submit)="$event.preventDefault(); createList()">
+            <input type="text" placeholder="New list name…" [(ngModel)]="newName" name="nn" />
+            <button type="submit" class="primary" [disabled]="!newName.trim()">Create</button>
+            <button type="button" (click)="creating.set(false)">Cancel</button>
           </form>
         } @else {
-          <button type="button" class="sm" (click)="startRename()">Rename</button>
-          <button type="button" class="sm" (click)="deleteList()">Delete</button>
+          <select [ngModel]="listId()" (ngModelChange)="selectList($event)" name="list">
+            @for (l of store.lists(); track l.id) {
+              <option [value]="l.id">{{ l.name }} ({{ l.entryCount }})</option>
+            }
+          </select>
+          <button
+            type="button"
+            class="icon-btn"
+            aria-label="List actions"
+            title="List actions"
+            (click)="listMenu.toggle($event)"
+          >
+            <i class="pi pi-ellipsis-h"></i>
+          </button>
+          <p-menu #listMenu [model]="listItems" [popup]="true" appendTo="body" />
         }
-
-        <form class="inline new-list" (submit)="$event.preventDefault(); createList()">
-          <input type="text" placeholder="New list…" [(ngModel)]="newName" name="nn" />
-          <button type="submit" class="sm" [disabled]="!newName.trim()">Add list</button>
-        </form>
       </div>
 
       @if (!activeList()?.entryCount) {
@@ -129,15 +139,17 @@ function sortValue(row: RankedPlayer, field: string): number | string | null {
     .empty { margin: 24px 0; display: flex; flex-direction: column; gap: 10px; }
     .picker {
       display: flex;
-      flex-wrap: wrap;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       margin: 14px 0 6px;
     }
     .picker select { min-width: 12rem; }
-    .inline { display: inline-flex; align-items: center; gap: 6px; }
+    .inline { display: flex; align-items: center; gap: 6px; }
     .new-list { display: inline-flex; align-items: center; gap: 6px; }
-    button.sm { font-size: 12px; padding: 3px 8px; }
+    .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 34px; padding: 0; }
+    @media (max-width: 640px) {
+      .picker select, .inline, .inline input { flex: 1 1 auto; min-width: 0; }
+    }
     .muted { color: var(--text-dim); }
     .muted a { color: var(--accent); }
   `,
@@ -159,6 +171,19 @@ export class TradeTargetsPage {
   protected draftName = '';
   protected newName = '';
   protected readonly renaming = signal(false);
+  protected readonly creating = signal(false);
+
+  protected readonly listItems: MenuItem[] = [
+    { label: 'New list…', icon: 'pi pi-plus', command: () => this.startCreate() },
+    { label: 'Rename…', icon: 'pi pi-pencil', command: () => this.startRename() },
+    { separator: true },
+    {
+      label: 'Delete list',
+      icon: 'pi pi-trash',
+      styleClass: 'danger',
+      command: () => void this.deleteList(),
+    },
+  ];
 
   /** All rows for the selected list, freshly fetched (unsorted-for-display). */
   private readonly allRows = signal<RankedPlayer[]>([]);
@@ -269,6 +294,7 @@ export class TradeTargetsPage {
 
   protected selectList(id: string): void {
     this.renaming.set(false);
+    this.creating.set(false);
     this.listId.set(id);
     this.query.set(defaultQuery());
   }
@@ -286,7 +312,14 @@ export class TradeTargetsPage {
     }
   }
 
+  protected startCreate(): void {
+    this.renaming.set(false);
+    this.newName = '';
+    this.creating.set(true);
+  }
+
   protected startRename(): void {
+    this.creating.set(false);
     this.draftName = this.activeList()?.name ?? '';
     this.renaming.set(true);
   }

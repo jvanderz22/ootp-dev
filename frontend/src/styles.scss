@@ -140,3 +140,100 @@ a { color: var(--accent); }
 .error { color: var(--danger); }
 .row { display: flex; gap: 8px; align-items: center; }
 .spacer { flex: 1; }
+
+/* phones: the ranked table's full-screen player panel (a p-drawer appended to
+   <body>, so it's styled here rather than in ranked-table.scss) */
+.player-panel .p-drawer-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.player-panel .p-drawer-title {
+  font-size: 17px;
+}
+.player-panel .p-drawer-content {
+  padding: 8px 16px 16px;
+}
+.player-panel .p-drawer-footer {
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+}
+.panel-actions {
+  display: flex;
+  gap: 8px;
+}
+.panel-actions button {
+  flex: 1 1 0;
+  min-height: 44px;
+}
+.panel-actions button.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* phones: the ranked table's Filters panel as a bottom sheet (p-drawer) */
+.filter-sheet.p-drawer {
+  height: auto;
+  max-height: 85vh;
+  border-radius: 14px 14px 0 0;
+}
+.filter-sheet .p-drawer-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.filter-sheet .p-drawer-content {
+  padding: 14px 16px;
+}
+.filter-sheet .p-drawer-footer {
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+}
+
+/* trade-list priority + note markers beside the name (Trade Targets);
+   global so ranked-table.scss stays inside its style budget */
+.prio {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  vertical-align: 1px;
+  text-transform: uppercase;
+  color: var(--accent-contrast);
+}
+.prio-high { background: var(--tone-weak); }
+.prio-medium { background: var(--tone-mid); }
+.prio-low { background: var(--text-dim); }
+.note-mark {
+  margin-left: 4px;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+/* Controls the ranked table projects into its "Filters" panel on mobile. The
+   panel is appended to <body>, so they're styled flat, and globally to keep
+   ranked-table.scss inside its style budget. */
+.m-fld,
+.m-chk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.m-fld > span {
+  min-width: 3rem;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.m-fld select,
+.m-fld app-position-filter {
+  flex: 1 1 auto;
+}
+.m-chk {
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.m-chk input {
+  cursor: pointer;
+}

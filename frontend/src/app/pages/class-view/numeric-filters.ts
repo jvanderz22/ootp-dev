@@ -10,10 +10,13 @@ import {
   untracked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NgTemplateOutlet } from '@angular/common';
 import { PopoverModule } from 'primeng/popover';
+import { DrawerModule } from 'primeng/drawer';
 
 import { NumericFilter } from '../../core/api.types';
 import { FILTERABLE_FIELDS, FilterableField } from '../../core/ranked-columns';
+import { Viewport } from '../../core/viewport';
 import { HandednessFilterComponent } from './handedness-filter';
 import { TeamFilterComponent } from './team-filter';
 import { LevelFilterComponent } from './level-filter';
@@ -30,24 +33,50 @@ const EMIT_DEBOUNCE_MS = 300;
  * on their tier ordinal). Everything is AND-combined; the button shows how many
  * groups are actually constraining. Emits the full numeric-row list so
  * half-typed rows survive a refetch — `api.ts` drops the non-constraining ones.
+ * On a phone the same panel opens as a bottom sheet instead of a popover.
  */
 @Component({
   selector: 'app-numeric-filters',
   imports: [
     FormsModule,
+    NgTemplateOutlet,
     PopoverModule,
+    DrawerModule,
     HandednessFilterComponent,
     TeamFilterComponent,
     LevelFilterComponent,
     BestPosFilterComponent,
   ],
   template: `
-    <button type="button" class="filter-btn" [class.active]="activeCount()" (click)="op.toggle($event)">
+    <button
+      type="button"
+      class="filter-btn"
+      [class.active]="activeCount()"
+      (click)="narrow() ? sheetOpen.set(true) : op.toggle($event)"
+    >
       Filters@if (activeCount()) { <span class="badge">{{ activeCount() }}</span> }
     </button>
 
     <p-popover #op appendTo="body">
-      <div class="panel">
+      <ng-container *ngTemplateOutlet="panel" />
+    </p-popover>
+
+    <p-drawer
+      [visible]="sheetOpen()"
+      (visibleChange)="sheetOpen.set($event)"
+      position="bottom"
+      header="Filters"
+      [blockScroll]="true"
+      styleClass="filter-sheet"
+    >
+      <ng-container *ngTemplateOutlet="panel" />
+      <ng-template #footer>
+        <button type="button" class="primary done" (click)="sheetOpen.set(false)">Done</button>
+      </ng-template>
+    </p-drawer>
+
+    <ng-template #panel>
+      <div class="panel" [class.sheet]="narrow()">
         <!-- caller-projected controls (mobile: view / position / hide-drafted
              fold in here so the sticky filters strip stays a single row) -->
         <div class="slot" [class.on]="extras()"><ng-content /></div>
@@ -161,7 +190,7 @@ const EMIT_DEBOUNCE_MS = 300;
           }
         </div>
       </div>
-    </p-popover>
+    </ng-template>
   `,
   styles: [
     `
@@ -178,6 +207,17 @@ const EMIT_DEBOUNCE_MS = 300;
         padding: 0 4px;
       }
       .panel { display: flex; flex-direction: column; gap: 8px; min-width: 22rem; max-width: min(92vw, 26rem); }
+      .panel.sheet { min-width: 0; max-width: none; gap: 12px; font-size: 14px; }
+      .panel.sheet .slot.on, .panel.sheet .facets { gap: 12px; }
+      /* sheet: one label column, controls stretched to the right edge (the
+         dropdowns cap their own width inline, hence the !important) */
+      .panel.sheet .facets > * { display: flex; }
+      .panel.sheet ::ng-deep .lbl,
+      .panel.sheet ::ng-deep .m-fld > span { min-width: 4.5rem; }
+      .panel.sheet ::ng-deep .p-multiselect,
+      .panel.sheet ::ng-deep .p-treeselect,
+      .panel.sheet ::ng-deep app-position-filter { flex: 1 1 auto; max-width: none !important; }
+      .done { width: 100%; min-height: 44px; }
       .slot { display: none; }
       .slot.on {
         display: flex;
@@ -269,6 +309,10 @@ export class NumericFiltersComponent {
   readonly rule5OnlyChange = output<boolean>();
 
   protected readonly rows = signal<NumericFilter[]>([]);
+
+  protected readonly narrow = inject(Viewport).narrow;
+  /** Phones: the panel's bottom sheet is open. */
+  protected readonly sheetOpen = signal(false);
 
   protected readonly groups = computed(() => {
     const m = new Map<string, { field: string; name: string }[]>();

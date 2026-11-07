@@ -48,23 +48,19 @@ export class PlayerDetailCardComponent {
   /** Whether the "Edit rank" control is offered — only draft classes have a
    *  hand-editable order; the live-league view hides it. */
   readonly canEditRank = input(true);
+  /** Off when a surrounding panel already titles the card with the name. */
+  readonly showName = input(true);
   /** New 1-based rank the user committed for this player. */
   readonly setRank = output<number>();
 
-  /** Live-league only: the league's trade-list store. When set, a "Trade lists"
-   *  block is shown (which lists the player is on, add / remove). */
+  /** Live-league only: the league's trade-list store (list membership itself is
+   *  edited from the table row's star popover). */
   readonly tradeStore = input<TradeListStore | null>(null);
   /** Trade Targets page only: the list currently being viewed, so the priority
    *  / note editors know which entry to patch. */
   readonly tradeListId = input<string | null>(null);
 
-  protected readonly onLists = computed(
-    () => this.tradeStore()?.listsWith(this.player().id) ?? [],
-  );
-  protected readonly allLists = computed(() => this.tradeStore()?.lists() ?? []);
   protected readonly priorities = TRADE_PRIORITIES;
-  protected readonly newListName = signal('');
-  protected readonly tlBusy = signal(false);
 
   /** Local, editable copies of the viewed entry's priority / note — seeded from
    *  the row (which carries them only when loaded via `tradeListPlayers`). */
@@ -72,34 +68,8 @@ export class PlayerDetailCardComponent {
   protected readonly noteDraft = signal('');
 
   protected isOnList(listId: string): boolean {
-    return this.allLists().find((l) => l.id === listId)?.entryIds.includes(this.player().id)
-      ?? false;
-  }
-
-  protected async toggleList(listId: string, on: boolean): Promise<void> {
-    const store = this.tradeStore();
-    if (!store || this.tlBusy()) return;
-    this.tlBusy.set(true);
-    try {
-      if (on) await store.addPlayer(listId, this.player().id);
-      else await store.removePlayer(listId, this.player().id);
-    } finally {
-      this.tlBusy.set(false);
-    }
-  }
-
-  protected async addNewList(): Promise<void> {
-    const store = this.tradeStore();
-    const name = this.newListName().trim();
-    if (!store || !name || this.tlBusy()) return;
-    this.tlBusy.set(true);
-    try {
-      const made = await store.create(name);
-      await store.addPlayer(made.id, this.player().id);
-      this.newListName.set('');
-    } finally {
-      this.tlBusy.set(false);
-    }
+    return this.tradeStore()?.lists().find((l) => l.id === listId)?.entryIds
+      .includes(this.player().id) ?? false;
   }
 
   /** Commit the priority / note editors — only meaningful with a `tradeListId`

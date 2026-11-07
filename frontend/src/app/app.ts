@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, signal } from '@angular/core';
 import {
   NavigationEnd,
   Router,
@@ -17,6 +17,7 @@ import { LeagueStore } from './core/league-store';
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  host: { '(document:click)': 'onDocumentClick($event)' },
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -53,6 +54,17 @@ export class App {
       })
       .slice(0, 4),
   );
+
+  /** Phones: the top-bar menu holding the engine toggle and log out. Hand-rolled
+   *  rather than a PrimeNG menu, which would land in the initial bundle. */
+  protected readonly moreOpen = signal(false);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  protected onDocumentClick(ev: MouseEvent): void {
+    if (!this.moreOpen()) return;
+    const more = this.host.nativeElement.querySelector('.more');
+    if (!more?.contains(ev.target as Node)) this.moreOpen.set(false);
+  }
 
   constructor() {
     effect(() => {

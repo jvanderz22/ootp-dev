@@ -27,15 +27,15 @@ import { TradeListStore } from '../core/trade-list-store';
           [routerLink]="['/league', id()]"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: true }"
-        >Current League</a>
+        ><span class="long">Current </span>League</a>
         <a [routerLink]="['/league', id(), 'system']" routerLinkActive="active"
           >System</a
         >
         <a [routerLink]="['/league', id(), 'targets']" routerLinkActive="active"
-          >Trade Targets</a
+          ><span class="long">Trade </span>Targets</a
         >
         <a [routerLink]="['/league', id(), 'classes']" routerLinkActive="active"
-          >Draft Classes</a
+          ><span class="long">Draft </span>Classes</a
         >
       </nav>
     </header>
@@ -45,14 +45,21 @@ import { TradeListStore } from '../core/trade-list-store';
       @if (store.snapshot(); as s) {
         @if (s.fetchedAt) {
           <span class="muted" [title]="s.playerCount + ' players'"
-            >Refreshed {{ s.fetchedAt | date: 'medium' }}</span
+            >Refreshed {{ s.fetchedAt | date: 'MMM d, y, h:mm a' }}</span
           >
         }
       } @else if (!store.refreshing()) {
         <span class="muted">No snapshot yet — pull one from StatsPlus.</span>
       }
-      <button class="primary" [disabled]="store.refreshing()" (click)="store.refresh()">
-        {{ store.refreshing() ? 'Refreshing…' : 'Refresh from StatsPlus' }}
+      <button
+        class="primary refresh-btn"
+        [disabled]="store.refreshing()"
+        (click)="store.refresh()"
+        aria-label="Refresh from StatsPlus"
+        title="Refresh from StatsPlus"
+      >
+        <i class="pi pi-refresh" [class.pi-spin]="store.refreshing()"></i>
+        <span class="lbl">{{ store.refreshing() ? 'Refreshing…' : 'Refresh from StatsPlus' }}</span>
       </button>
     </div>
 
@@ -110,7 +117,20 @@ import { TradeListStore } from '../core/trade-list-store';
       justify-content: flex-end;
       gap: 10px;
     }
+    .refresh-btn { display: inline-flex; align-items: center; gap: 8px; }
+    .refresh-btn .pi { font-size: 13px; }
     .notice { color: var(--ok); }
+    /* phones: tabs fill one row with their short names, and the refresh
+       button shrinks to its icon beside the timestamp */
+    @media (max-width: 640px) {
+      .shell-head { gap: 10px; margin-bottom: 10px; }
+      .seg { display: flex; width: 100%; }
+      .seg a { flex: 1 1 0; text-align: center; padding: 8px 4px; }
+      .seg .long { display: none; }
+      .bar { justify-content: space-between; font-size: 13px; }
+      .refresh-btn { width: 40px; height: 36px; justify-content: center; padding: 0; }
+      .refresh-btn .lbl { display: none; }
+    }
     .refresh {
       display: flex;
       gap: 12px;
