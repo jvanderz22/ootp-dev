@@ -1,5 +1,8 @@
 """The fitted hitter talent layer (phase 3): the model's tables, the ratings view,
 and the v2 stage that replaces the legacy batting component."""
+import csv
+import io
+
 import numpy as np
 import pytest
 
@@ -102,3 +105,55 @@ def test_legacy_rankers_are_untouched(snapshot_rows):
     legacy = get_ranker_for_method("overall").rank([GamePlayer(dict(r)) for r in snapshot_rows], batch_size=1500)
     mirrored = _rank("overall", snapshot_rows, "legacy")
     assert [r.batting_score_component for r in legacy] == [r.batting_score_component for r in mirrored]
+
+
+def _split_hitter(bats, combined, vl=None, vr=None):
+    """A position player with current batting ratings `combined` ({field:
+    value}) and, when given, vL / vR splits."""
+    from models.game_players import PLAYER_FIELDS, split_header
+    from tests.e2e_fixtures import make_draft_class_csv
+
+    rows = csv.DictReader(io.StringIO(make_draft_class_csv(n=80, seed=7)))
+    row = dict(next(r for r in rows if r["POS"] not in ("SP", "RP", "CL")))
+    row["B"] = bats
+    row.update({PLAYER_FIELDS[f]: str(v) for f, v in combined.items()})
+    for side, ratings in (("vL", vl), ("vR", vr)):
+        if ratings:
+            row.update({split_header(f, side): str(v) for f, v in ratings.items()})
+    return GamePlayer(row)
+
+
+_BATTING = ("babip_ovr", "avoid_k_ovr", "gap_ovr", "power_ovr", "eye_ovr")
+
+
+def _even(v):
+    return dict.fromkeys(_BATTING, v)
+
+
+def _score(player):
+    from ranking.profiles import CURRENT
+    from ranking.stages.talent import HitterTalent
+
+    (scored,) = HitterTalent(CURRENT).score([player])
+    return scored
+
+
+def test_hitter_splits_equal_to_the_combined_ratings_score_the_same():
+    plain = _score(_split_hitter("Right", _even(55)))
+    split = _score(_split_hitter("Right", _even(55), _even(55), _even(55)))
+    assert not plain.platoon and split.platoon
+    assert split.wrc_plus == pytest.approx(plain.wrc_plus)
+
+
+def test_a_hitter_is_judged_mostly_on_the_side_he_faces_more():
+    # a lefty bats against right-handed pitchers about three times in four
+    strong_vr = _score(_split_hitter("Left", _even(55), _even(45), _even(60)))
+    strong_vl = _score(_split_hitter("Left", _even(55), _even(60), _even(45)))
+    assert strong_vr.wrc_plus > strong_vl.wrc_plus
+
+
+def test_righties_face_left_handed_pitchers_more_than_lefties():
+    from ranking import hitter_talent
+
+    mix = hitter_talent.load().platoon_mix
+    assert mix["R"] > mix["S"] > mix["L"]

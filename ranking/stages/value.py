@@ -6,6 +6,14 @@ legacy modifiers need (their factors are weighted by the legacy score), and
 replaces their points with WAR: the ledger is rewritten in display points,
 50 + 10 x WAR, and its counted lines sum to the value.
 
+A hitter is platooned the way you use your roster (2026-11-08): against each
+pitcher hand he starts in proportion to his WAR rate on that side next to an
+average regular's - every start at average or better, none at replacement - so
+a bat that's average only against right-handers becomes the strong side of a
+platoon (~73% of PA) and one average only against left-handers the short side.
+What he loses is the "platoon" ledger line; a hitter at least average on both
+sides has none.
+
 The modifiers scale only WAR above replacement, so a factor below 1 can't
 lift a below-replacement player; where potential ratings are read, the
 development factors (ranking/development.py) follow them, tapered by the
@@ -51,8 +59,16 @@ class Value(BatchStage):
 
     def _hitting(self, state) -> float:
         fitted, side = state.fitted, state.batting
-        wrc = fitted["batting"].wrc_plus if fitted["batting"] else float(
-            bridge.talent(side.components["batting"], self.hitting_model.bridge))
+        batting = fitted["batting"]
+        if batting and batting.wrc_vl is not None:
+            # the season his two sides make (his blended splits, or the
+            # expected ones), so the platoon line below adds up with it
+            vs_lhp = self.hitting_model.platoon_mix[batting.bats]
+            wrc = vs_lhp * batting.wrc_vl + (1 - vs_lhp) * batting.wrc_vr
+        elif batting:
+            wrc = batting.wrc_plus
+        else:
+            wrc = float(bridge.talent(side.components["batting"], self.hitting_model.bridge))
         pa = self.model.hitter_pa
         batting_runs = (wrc / 100 - 1) * self.hitting_model.mlb_runs_per_pa * pa
         field = fitted["fielding"]
@@ -61,23 +77,50 @@ class Value(BatchStage):
                         - bridge.talent(field.points, self.fielding_model.bridge))
         running = fitted["running"].runs * pa / 600
         parts = self.model.hitting(batting_runs, field.value + utility, running)
+        platoon = self._platoon(fitted["batting"], parts, pa)
         utility_war = self.model.hitter["per_defense_run"] * utility
         ledger = state.ledger
-        ledger.add(MODEL, f"batting talent ({wrc:.0f} wRC+, {batting_runs:+.1f} runs)", SCALE * parts["batting"], BATTING)
+        splits = " on his vL / vR splits" if fitted["batting"] and fitted["batting"].platoon else ""
+        ledger.add(MODEL, f"batting talent ({wrc:.0f} wRC+{splits}, {batting_runs:+.1f} runs)",
+                   SCALE * parts["batting"], BATTING)
         ledger.add(MODEL, f"fielding ({field.best_position}, {field.runs:+.0f} runs, {field.value:+.0f} with position)",
                    SCALE * (parts["fielding"] - utility_war), BATTING)
         ledger.add(MODEL, f"utility ({utility:+.1f} runs)", SCALE * utility_war, BATTING)
         ledger.add(MODEL, f"baserunning ({running:+.1f} runs)", SCALE * parts["running"], BATTING)
         ledger.add(MODEL, f"position player allowance ({pa:.0f} PA)", SCALE * parts["allowance"], BATTING)
+        if platoon:
+            war_lost, starts = platoon
+            ledger.add(MODEL, f"platoon (starts {starts['vR']:.0%} vs RHP, {starts['vL']:.0%} vs LHP)",
+                       SCALE * war_lost, BATTING)
+            parts["platoon"] = war_lost
         side.components = {
-            "batting": SCALE * (parts["batting"] + parts["allowance"]),
+            "batting": SCALE * (parts["batting"] + parts["allowance"] + parts.get("platoon", 0.0)),
             "fielding": SCALE * parts["fielding"],
             "running": SCALE * parts["running"],
         }
         side.best_position = field.best_position
         state.wrc_plus = wrc
         war = sum(parts.values())
-        return self._modified(state, side, war, BATTING, self._development(state, war))
+        developing = self._development(state, war)
+        if self.develops and batting and batting.bats == "S":
+            developing.append(development.switch_hitter(war))
+        return self._modified(state, side, war, BATTING, developing)
+
+    def _platoon(self, batting, parts, pa):
+        """(WAR the platoon takes off, {side: share of starts}) for a hitter
+        whose vs-L / vs-R lines are known, or None when nothing changes. A
+        side's WAR rate is his season at that side's wRC+; he starts it in
+        proportion to that rate over an average regular's (the allowance)."""
+        if batting is None or batting.wrc_vl is None:
+            return None
+        rest = parts["fielding"] + parts["running"] + parts["allowance"]
+        per_run = self.model.hitter["per_batting_run"] * self.hitting_model.mlb_runs_per_pa * pa
+        rate = {"vL": per_run * (batting.wrc_vl / 100 - 1) + rest, "vR": per_run * (batting.wrc_vr / 100 - 1) + rest}
+        starts = {s: float(np.clip(w / parts["allowance"], 0.0, 1.0)) for s, w in rate.items()}
+        share = {"vL": self.hitting_model.platoon_mix[batting.bats]}
+        share["vR"] = 1 - share["vL"]
+        lost = -sum(share[s] * (1 - starts[s]) * rate[s] for s in rate)
+        return (lost, starts) if abs(lost) > 1e-9 else None
 
     # -- pitchers --------------------------------------------------------------
 

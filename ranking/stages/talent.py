@@ -24,6 +24,10 @@ class FittedBatting(NamedTuple):
     points: float
     label: str
     wrc_plus: float
+    platoon: bool = False   # scored on his vL / vR splits
+    bats: str = None        # "R" / "L" / "S"; None when not exported
+    wrc_vl: float = None    # vs left- / right-handed pitchers: his splits, or
+    wrc_vr: float = None    # the expected ones for his hand (None without one)
 
 
 class HitterTalent:
@@ -44,12 +48,55 @@ class HitterTalent:
         if not rated:
             return out
         ratings = {name: np.array([r[name] for _, r in rated]) for name in hitter_talent.RATINGS}
-        wrc_plus = self.model.wrc_plus(ratings)
+        events = self.model.events(ratings)
+        hitters = [players[i] for i, _ in rated]
+        bats = [self.ratings.bats(p) for p in hitters]
+        real, side_wrc = self._sides(hitters, bats, ratings, events)
+        wrc_plus = self.model.wrc_of(events)
         points = self.model.points(wrc_plus)
-        for (i, _), wrc, pts in zip(rated, wrc_plus, points):
+        for j, ((i, _), wrc, pts) in enumerate(zip(rated, wrc_plus, points)):
             write_runtime_component(players[i].id, "batting.talent.wrc_plus", float(wrc))
-            out[i] = FittedBatting(float(pts), f"batting talent ({wrc:.0f} wRC+)", float(wrc))
+            vl, vr = (None if np.isnan(w[j]) else float(w[j]) for w in (side_wrc["vL"], side_wrc["vR"]))
+            out[i] = FittedBatting(float(pts), f"batting talent ({wrc:.0f} wRC+)", float(wrc), bool(real[j]),
+                                   bats[j], vl, vr)
         return out
+
+    def _sides(self, hitters, bats, ratings, events):
+        """Each hitter's vs-L / vs-R wRC+ (NaN without a batting hand): from his
+        splits where they're there - whose blend then replaces his `events` -
+        else from the expected splits for his hand. Returns (which are real
+        splits, {side: wRC+})."""
+        n = len(hitters)
+        splits = [self.ratings.hitting_splits(p) for p in hitters]
+        handed = np.array([b is not None for b in bats])
+        real = handed & np.array([s is not None for s in splits])
+        sides = {side: {name: np.full(n, np.nan) for name in hitter_talent.RATINGS} for side in SPLIT_SIDES}
+        guess = np.flatnonzero(handed & ~real)
+        if len(guess):
+            expected = self.model.expected_sides({k: v[guess] for k, v in ratings.items()}, [bats[i] for i in guess])
+            for side in SPLIT_SIDES:
+                for name in hitter_talent.RATINGS:
+                    sides[side][name][guess] = expected[side][name]
+        for i in np.flatnonzero(real):
+            for side in SPLIT_SIDES:
+                for name in hitter_talent.RATINGS:
+                    sides[side][name][i] = splits[i][side][name]
+        side_wrc = {side: np.full(n, np.nan) for side in SPLIT_SIDES}
+        rows = np.flatnonzero(handed)
+        if not len(rows):
+            return real, side_wrc
+        side_events = {side: self.model.events({k: v[rows] for k, v in sides[side].items()}) for side in SPLIT_SIDES}
+        for side in SPLIT_SIDES:
+            side_wrc[side][rows] = self.model.wrc_of(side_events[side])
+        # real splits: the season's events are the two sides blended
+        share = self.model.lhp_share([bats[i] for i in rows])
+        mine = real[rows]
+        if mine.any():
+            for name in events:
+                blended = share * side_events["vL"][name] + (1 - share) * side_events["vR"][name]
+                events[name] = np.asarray(events[name], dtype=float).copy()
+                events[name][rows[mine]] = blended[mine]
+        return real, side_wrc
 
 
 # Role viability - can he hold a starter's workload, does he have the pitches to

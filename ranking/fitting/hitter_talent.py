@@ -6,6 +6,14 @@ Each component rate is fit on every level at once with a level term (see
 ranking/fitting/components.py), weighted by its denominator; the artifact keeps
 its MLB table.
 
+The platoon mix - the share of PA each batting hand takes against left-handed
+pitchers - is read off MLB lines' vs-L / vs-R PA; it blends a hitter's split
+scores (ranking/hitter_talent.py). The batting hand is the latest snapshot's.
+The expected splits - for a hitter without split ratings (potential ratings,
+draft classes) - come from the latest snapshot's hitters: per batting hand
+and rating, the weight OOTP's combined rating puts on vL, and vL - vR as a
+line in the combined rating's level.
+
 The report: cross-validated (folds grouped by player, so a player's seasons
 stay together), the spearman of predicted runs per PA with the actual line
 inside each level, next to the legacy batting model's on the same rows; then
@@ -32,7 +40,7 @@ from ranking.fitting import rules
 from ranking.fitting.components import PARAMS, Rate
 from ranking.fitting.datasets import hitter_rows, read_hitters, season_snapshots
 from ranking.fitting.stats import (
-    LEVEL_MLB, fit_linear_weights, load_batting, mlb_runs_per_pa, runs,
+    LEVEL_MLB, batting_pa_by_side, fit_linear_weights, load_batting, mlb_runs_per_pa, runs,
 )
 from ranking.hitter_talent import (
     ARTIFACT, ARTIFACTS_DIR, COMPONENTS, RATINGS, HitterTalent, outcomes, runs_per_pa,
@@ -122,6 +130,55 @@ def data_hash(snapshots, stats_dir, years, kinds=("bat",)) -> str:
     return digest.hexdigest()[:12]
 
 
+def platoon_mix(stats_dir, years, snapshot_path) -> dict:
+    """{"R" | "L" | "S": share of PA against left-handed pitchers} over MLB
+    hitters' lines."""
+    lines = batting_pa_by_side(stats_dir, years)
+    lines = lines[lines.level_id == LEVEL_MLB]
+    snap = pd.read_csv(snapshot_path, low_memory=False, usecols=["ID", "B", "POS"])
+    snap = snap[~snap.POS.isin(["SP", "RP", "CL"])]
+    snap = snap.assign(bats=snap["B"].astype(str).str[:1].str.upper()).rename(columns={"ID": "player_id"})
+    lines = lines.merge(snap[["player_id", "bats"]], on="player_id")
+    out = {}
+    for hand in ("R", "L", "S"):
+        g = lines[lines.bats == hand]
+        out[hand] = round(float(g.pa_l.sum() / (g.pa_l.sum() + g.pa_r.sum())), 4)
+    return out
+
+
+# rating -> its snapshot column, whose vL / vR splits are "<column> vL"
+SPLIT_COLUMNS = {"babip": "BABIP", "avoid_k": "K's", "gap": "GAP", "power": "POW", "eye": "EYE"}
+SPLIT_MIN_RATING = 25
+
+
+def expected_splits(snapshot_path) -> dict:
+    """{"R" | "L" | "S": {rating: {"weight", "gap": [at 50, per point]}}} from
+    the snapshot's position players' combined and split ratings."""
+    snap = pd.read_csv(snapshot_path, low_memory=False)
+    snap = snap[~snap.POS.isin(["SP", "RP", "CL"])]
+    bats = snap["B"].astype(str).str[:1].str.upper()
+    out = {}
+    for hand in ("R", "L", "S"):
+        g = snap[bats == hand]
+        out[hand] = {}
+        for rating, col in SPLIT_COLUMNS.items():
+            c, vl, vr = (pd.to_numeric(g[k], errors="coerce") for k in (col, f"{col} vL", f"{col} vR"))
+            ok = c.notna() & vl.notna() & vr.notna() & (c >= SPLIT_MIN_RATING)
+            c, d, vr = c[ok].to_numpy(float), (vl - vr)[ok].to_numpy(float), vr[ok].to_numpy(float)
+            weight = float(np.linalg.lstsq(d[:, None], c - vr, rcond=None)[0][0])
+            slope, at50 = np.polyfit(c - 50, d, 1)
+            out[hand][rating] = {"weight": round(weight, 3), "gap": [round(float(at50), 3), round(float(slope), 4)]}
+    return out
+
+
+def pa_vs_lhp(stats_dir, years) -> float:
+    """The share of MLB PA against left-handed pitchers - the short side of a
+    platoon."""
+    lines = batting_pa_by_side(stats_dir, years)
+    lines = lines[lines.level_id == LEVEL_MLB]
+    return round(float(lines.pa_l.sum() / (lines.pa_l.sum() + lines.pa_r.sum())), 4)
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--league", default="yfmlb")
@@ -144,10 +201,18 @@ def main(argv=None):
     weights = fit_linear_weights(bat)
     latest = max(snapshots)
     rows = hitter_rows(snapshots, stats_dir)
+    mix = platoon_mix(stats_dir, stat_years, snapshots[latest])
+    print("share of PA against left-handed pitchers:", mix)
+    splits = expected_splits(snapshots[latest])
+    print("expected splits (weight on vL, vL - vR at 50 and per point):",
+          {h: {r: (v["weight"], v["gap"]) for r, v in s.items()} for h, s in splits.items()})
     artifact_base = {
         "version": ARTIFACT,
         "linear_weights": {k: round(v, 4) for k, v in weights.items()},
         "triple_share": round(triple_share(bat[bat.year.isin(snapshots)]), 4),
+        "platoon_mix": mix,
+        "pa_vs_lhp": pa_vs_lhp(stats_dir, stat_years),
+        "expected_splits": splits,
         "mlb_runs_per_pa": round(mlb_runs_per_pa(bat, weights, latest), 5),
     }
     print(f"{len(rows)} rows from seasons {sorted(rows.year.unique())}; "

@@ -57,6 +57,26 @@ class RatingsView:
             return None
         return values
 
+    def hitting_splits(self, player):
+        """{"vL" | "vR": base batting ratings} from his platoon splits (vs left-
+        / right-handed pitchers), or None: only current ratings have splits,
+        and only a league snapshot's rows."""
+        if self.ratings != "overall":
+            return None
+        sides = {}
+        for side in SPLIT_SIDES:
+            split = player.with_split(side)
+            sides[side] = self.hitting(split) if split is not None else None
+            if sides[side] is None:
+                return None
+        return sides
+
+    @staticmethod
+    def bats(player):
+        """"R" / "L" / "S", or None when not exported."""
+        hand = (player.bat_hand or "").strip()[:1].upper()
+        return {"B": "S"}.get(hand, hand) if hand in ("R", "L", "S", "B") else None
+
     def pitching_splits(self, player):
         """{"vL" | "vR": base pitching ratings} from his platoon splits, or None:
         only current ratings have splits, and only a league snapshot's rows."""

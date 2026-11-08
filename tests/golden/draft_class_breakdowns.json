@@ -138,10 +138,6 @@
        "value": 1.24
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.98
       }
@@ -182,10 +178,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 0.97
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -350,15 +342,11 @@
        "value": 1.08
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.0
       }
      ],
-     "total": 1.22
+     "total": 1.14
     },
     "positionModel": 23.08,
     "runningModel": 52.24,
@@ -561,15 +549,11 @@
        "value": 0.89
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.97
       }
      ],
-     "total": 0.99
+     "total": 0.95
     },
     "positionModel": 9.08,
     "runningModel": 24.83,
@@ -612,10 +596,6 @@
        "value": 1.16
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
@@ -636,7 +616,7 @@
       "value": 0.96
      }
     ],
-    "preRank": 55,
+    "preRank": 54,
     "preScore": 87.14
    }
   },
@@ -661,10 +641,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.16
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -742,7 +718,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 39,
+    "preRank": 38,
     "preScore": 96.06
    }
   },
@@ -912,7 +888,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 25,
+    "preRank": 24,
     "preScore": 103.75
    }
   },
@@ -937,10 +913,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.14
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -1068,7 +1040,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 130,
+    "preRank": 129,
     "preScore": 56.87
    }
   },
@@ -1183,7 +1155,7 @@
       "value": 0.4
      }
     ],
-    "preRank": 17,
+    "preRank": 16,
     "preScore": 109.78
    }
   },
@@ -1293,7 +1265,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 41,
+    "preRank": 39,
     "preScore": 94.0
    }
   },
@@ -1320,10 +1292,6 @@
        "value": 1.16
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.97
       }
@@ -1339,7 +1307,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 32,
+    "preRank": 31,
     "preScore": 99.21
    }
   },
@@ -1449,7 +1417,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 51,
+    "preRank": 50,
     "preScore": 87.91
    }
   },
@@ -1476,10 +1444,6 @@
        "value": 1.04
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.0
       }
@@ -1495,7 +1459,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 119,
+    "preRank": 118,
     "preScore": 63.03
    }
   },
@@ -1550,7 +1514,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 34,
+    "preRank": 33,
     "preScore": 97.99
    }
   },
@@ -1610,7 +1574,7 @@
       "value": 0.4
      }
     ],
-    "preRank": 118,
+    "preRank": 117,
     "preScore": 63.11
    }
   },
@@ -1635,10 +1599,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.07
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -1798,15 +1758,11 @@
        "value": 1.07
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.03
       }
      ],
-     "total": 1.2
+     "total": 1.15
     },
     "positionModel": 40.73,
     "runningModel": 85.04,
@@ -1817,8 +1773,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 78,
-    "preScore": 77.53
+    "preRank": 80,
+    "preScore": 76.47
    }
   },
   "90034": {
@@ -1954,15 +1910,11 @@
        "value": 0.98
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
      ],
-     "total": 1.04
+     "total": 1.0
     },
     "positionModel": 30.56,
     "runningModel": 37.01,
@@ -1973,8 +1925,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 129,
-    "preScore": 57.0
+    "preRank": 130,
+    "preScore": 56.73
    }
   },
   "90037": {
@@ -2055,10 +2007,6 @@
        "value": 1.05
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.89
       }
@@ -2129,7 +2077,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 29,
+    "preRank": 28,
     "preScore": 101.23
    }
   },
@@ -2211,10 +2159,6 @@
        "value": 1.24
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.01
       }
@@ -2255,10 +2199,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 0.98
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -2303,10 +2243,6 @@
        "value": 1.24
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
@@ -2322,7 +2258,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 3,
+    "preRank": 2,
     "preScore": 150.6
    }
   },
@@ -2409,10 +2345,6 @@
        "value": 1.02
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.96
       }
@@ -2455,10 +2387,6 @@
        "value": 1.24
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.07
       }
@@ -2499,10 +2427,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.24
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -2602,15 +2526,11 @@
        "value": 1.01
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.99
       }
      ],
-     "total": 1.16
+     "total": 1.09
     },
     "positionModel": 51.82,
     "runningModel": 6.03,
@@ -2621,8 +2541,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 36,
-    "preScore": 96.95
+    "preRank": 40,
+    "preScore": 93.88
    }
   },
   "90050": {
@@ -2708,10 +2628,6 @@
        "value": 1.13
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.08
       }
@@ -2759,10 +2675,6 @@
        "value": 0.96
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.91
       }
@@ -2808,10 +2720,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.24
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -3031,10 +2939,6 @@
        "value": 1.06
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.03
       }
@@ -3132,10 +3036,6 @@
        "value": 1.08
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.07
       }
@@ -3151,7 +3051,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 53,
+    "preRank": 52,
     "preScore": 87.64
    }
   },
@@ -3176,10 +3076,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.06
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -3284,15 +3180,11 @@
        "value": 1.05
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.05
       }
      ],
-     "total": 1.17
+     "total": 1.13
     },
     "positionModel": 46.15,
     "runningModel": 54.82,
@@ -3303,8 +3195,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 40,
-    "preScore": 95.33
+    "preRank": 41,
+    "preScore": 93.58
    }
   },
   "90063": {
@@ -3358,7 +3250,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 74,
+    "preRank": 73,
     "preScore": 78.95
    }
   },
@@ -3440,15 +3332,11 @@
        "value": 1.06
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.96
       }
      ],
-     "total": 1.11
+     "total": 1.04
     },
     "positionModel": 44.91,
     "runningModel": 49.11,
@@ -3459,8 +3347,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 72,
-    "preScore": 79.67
+    "preRank": 76,
+    "preScore": 77.73
    }
   },
   "90066": {
@@ -3514,7 +3402,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 68,
+    "preRank": 67,
     "preScore": 81.8
    }
   },
@@ -3541,15 +3429,11 @@
        "value": 1.16
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
      ],
-     "total": 1.31
+     "total": 1.26
     },
     "positionModel": 38.15,
     "runningModel": 55.16,
@@ -3560,8 +3444,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 94,
-    "preScore": 71.96
+    "preRank": 97,
+    "preScore": 71.11
    }
   },
   "90068": {
@@ -3585,10 +3469,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.1
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -3631,10 +3511,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.07
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -3734,15 +3610,11 @@
        "value": 1.16
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.01
       }
      ],
-     "total": 1.33
+     "total": 1.28
     },
     "positionModel": 49.81,
     "runningModel": 49.11,
@@ -3758,8 +3630,8 @@
       "value": 0.96
      }
     ],
-    "preRank": 31,
-    "preScore": 99.25
+    "preRank": 35,
+    "preScore": 97.36
    }
   },
   "90072": {
@@ -3895,15 +3767,11 @@
        "value": 1.14
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.06
       }
      ],
-     "total": 1.33
+     "total": 1.28
     },
     "positionModel": 56.06,
     "runningModel": 49.39,
@@ -3914,8 +3782,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 13,
-    "preScore": 113.08
+    "preRank": 14,
+    "preScore": 110.65
    }
   },
   "90075": {
@@ -3969,7 +3837,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 35,
+    "preRank": 34,
     "preScore": 97.45
    }
   },
@@ -3996,10 +3864,6 @@
        "value": 1.13
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.99
       }
@@ -4015,7 +3879,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 79,
+    "preRank": 78,
     "preScore": 77.13
    }
   },
@@ -4042,10 +3906,6 @@
        "value": 0.96
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.97
       }
@@ -4066,7 +3926,7 @@
       "value": 0.4
      }
     ],
-    "preRank": 76,
+    "preRank": 75,
     "preScore": 78.31
    }
   },
@@ -4093,10 +3953,6 @@
        "value": 1.15
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.01
       }
@@ -4112,7 +3968,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 10,
+    "preRank": 9,
     "preScore": 119.45
    }
   },
@@ -4137,10 +3993,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.08
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -4185,15 +4037,11 @@
        "value": 1.1
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.98
       }
      ],
-     "total": 1.55
+     "total": 1.49
     },
     "positionModel": 15.07,
     "runningModel": 33.51,
@@ -4319,7 +4167,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 117,
+    "preRank": 116,
     "preScore": 63.11
    }
   },
@@ -4599,7 +4447,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 56,
+    "preRank": 55,
     "preScore": 86.93
    }
   },
@@ -4626,15 +4474,11 @@
        "value": 1.14
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.04
       }
      ],
-     "total": 1.23
+     "total": 1.18
     },
     "positionModel": 55.01,
     "runningModel": 74.42,
@@ -4645,8 +4489,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 28,
-    "preScore": 101.53
+    "preRank": 29,
+    "preScore": 99.55
    }
   },
   "90089": {
@@ -4669,10 +4513,6 @@
       },
       {
        "name": "DraftBatterOverallModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHandednessModifier",
        "value": 1.0
       },
       {
@@ -4716,10 +4556,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.03
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -4902,7 +4738,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 73,
+    "preRank": 72,
     "preScore": 79.67
    }
   },
@@ -4989,10 +4825,6 @@
        "value": 1.09
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.06
       }
@@ -5008,7 +4840,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 33,
+    "preRank": 32,
     "preScore": 99.12
    }
   },
@@ -5033,10 +4865,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.17
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -5109,7 +4937,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 80,
+    "preRank": 79,
     "preScore": 77.01
    }
   },
@@ -5194,10 +5022,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.17
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -5357,15 +5181,11 @@
        "value": 1.1
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.99
       }
      ],
-     "total": 1.17
+     "total": 1.12
     },
     "positionModel": 27.97,
     "runningModel": 22.77,
@@ -5456,10 +5276,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.01
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -5674,15 +5490,11 @@
        "value": 1.17
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.01
       }
      ],
-     "total": 1.25
+     "total": 1.2
     },
     "positionModel": 65.84,
     "runningModel": 49.11,
@@ -5694,7 +5506,7 @@
    "rankAdjust": {
     "modifiers": [],
     "preRank": 7,
-    "preScore": 127.77
+    "preScore": 124.92
    }
   },
   "90109": {
@@ -5773,10 +5585,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.14
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -5941,10 +5749,6 @@
        "value": 1.07
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.97
       }
@@ -6047,10 +5851,6 @@
        "value": 1.17
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
@@ -6093,15 +5893,11 @@
        "value": 1.03
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.93
       }
      ],
-     "total": 1.15
+     "total": 1.1
     },
     "positionModel": 27.97,
     "runningModel": 79.26,
@@ -6183,10 +5979,6 @@
        "value": 1.14
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.03
       }
@@ -6229,15 +6021,11 @@
        "value": 1.2
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.08
       }
      ],
-     "total": 1.46
+     "total": 1.37
     },
     "positionModel": 65.56,
     "runningModel": 45.96,
@@ -6249,7 +6037,7 @@
    "rankAdjust": {
     "modifiers": [],
     "preRank": 8,
-    "preScore": 126.38
+    "preScore": 121.38
    }
   },
   "90119": {
@@ -6358,7 +6146,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 97,
+    "preRank": 96,
     "preScore": 71.39
    }
   },
@@ -6440,15 +6228,11 @@
        "value": 1.1
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
      ],
-     "total": 1.21
+     "total": 1.16
     },
     "positionModel": 56.18,
     "runningModel": 24.83,
@@ -6459,8 +6243,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 23,
-    "preScore": 105.28
+    "preRank": 25,
+    "preScore": 103.15
    }
   },
   "90123": {
@@ -6486,15 +6270,11 @@
        "value": 1.24
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
      ],
-     "total": 1.39
+     "total": 1.33
     },
     "positionModel": 72.55,
     "runningModel": 54.82,
@@ -6505,8 +6285,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 2,
-    "preScore": 151.91
+    "preRank": 3,
+    "preScore": 147.99
    }
   },
   "90124": {
@@ -6532,10 +6312,6 @@
        "value": 1.08
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.91
       }
@@ -6556,7 +6332,7 @@
       "value": 0.96
      }
     ],
-    "preRank": 50,
+    "preRank": 49,
     "preScore": 88.1
    }
   },
@@ -6583,15 +6359,11 @@
        "value": 1.02
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.01
       }
      ],
-     "total": 1.11
+     "total": 1.07
     },
     "positionModel": 40.41,
     "runningModel": 49.11,
@@ -6607,8 +6379,8 @@
       "value": 0.4
      }
     ],
-    "preRank": 67,
-    "preScore": 82.28
+    "preRank": 68,
+    "preScore": 81.04
    }
   },
   "90126": {
@@ -6632,10 +6404,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.01
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -6680,10 +6448,6 @@
        "value": 1.06
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.03
       }
@@ -6699,7 +6463,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 38,
+    "preRank": 37,
     "preScore": 96.29
    }
   },
@@ -6754,7 +6518,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 37,
+    "preRank": 36,
     "preScore": 96.44
    }
   },
@@ -6841,15 +6605,11 @@
        "value": 1.09
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.03
       }
      ],
-     "total": 1.2
+     "total": 1.15
     },
     "positionModel": 47.58,
     "runningModel": 58.16,
@@ -6865,8 +6625,8 @@
       "value": 0.4
      }
     ],
-    "preRank": 49,
-    "preScore": 88.35
+    "preRank": 56,
+    "preScore": 86.88
    }
   },
   "90131": {
@@ -6889,10 +6649,6 @@
       },
       {
        "name": "DraftBatterOverallModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHandednessModifier",
        "value": 1.0
       },
       {
@@ -6966,7 +6722,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 75,
+    "preRank": 74,
     "preScore": 78.63
    }
   },
@@ -6991,10 +6747,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.1
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -7127,7 +6879,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 52,
+    "preRank": 51,
     "preScore": 87.79
    }
   },
@@ -7152,10 +6904,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 0.96
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -7200,15 +6948,11 @@
        "value": 0.97
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.04
       }
      ],
-     "total": 1.08
+     "total": 1.03
     },
     "positionModel": 28.94,
     "runningModel": 45.96,
@@ -7220,7 +6964,7 @@
    "rankAdjust": {
     "modifiers": [],
     "preRank": 144,
-    "preScore": 52.0
+    "preScore": 51.92
    }
   },
   "90138": {
@@ -7246,15 +6990,11 @@
        "value": 1.17
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.03
       }
      ],
-     "total": 1.35
+     "total": 1.26
     },
     "positionModel": 60.01,
     "runningModel": 45.96,
@@ -7265,8 +7005,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 9,
-    "preScore": 121.99
+    "preRank": 10,
+    "preScore": 117.28
    }
   },
   "90139": {
@@ -7610,7 +7350,7 @@
       "value": 0.4
      }
     ],
-    "preRank": 15,
+    "preRank": 13,
     "preScore": 110.8
    }
   },
@@ -7637,10 +7377,6 @@
        "value": 1.15
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.0
       }
@@ -7656,7 +7392,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 54,
+    "preRank": 53,
     "preScore": 87.52
    }
   },
@@ -7711,7 +7447,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 16,
+    "preRank": 15,
     "preScore": 110.31
    }
   },
@@ -7793,15 +7529,11 @@
        "value": 1.05
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.03
       }
      ],
-     "total": 1.29
+     "total": 1.21
     },
     "positionModel": 31.57,
     "runningModel": 65.22,
@@ -7812,8 +7544,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 116,
-    "preScore": 63.23
+    "preRank": 119,
+    "preScore": 62.37
    }
   },
   "90149": {
@@ -7839,15 +7571,11 @@
        "value": 1.17
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.05
       }
      ],
-     "total": 1.33
+     "total": 1.28
     },
     "positionModel": 63.3,
     "runningModel": 49.11,
@@ -7858,8 +7586,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 14,
-    "preScore": 111.65
+    "preRank": 17,
+    "preScore": 109.28
    }
   },
   "90150": {
@@ -7938,10 +7666,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.01
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -8101,10 +7825,6 @@
        "value": 1.14
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.97
       }
@@ -8120,7 +7840,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 24,
+    "preRank": 23,
     "preScore": 104.75
    }
   },
@@ -8312,10 +8032,6 @@
        "value": 1.01
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
@@ -8336,7 +8052,7 @@
       "value": 0.4
      }
     ],
-    "preRank": 95,
+    "preRank": 94,
     "preScore": 71.82
    }
   },
@@ -8391,7 +8107,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 96,
+    "preRank": 95,
     "preScore": 71.7
    }
   }
@@ -8464,10 +8180,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.98
       }
@@ -8493,10 +8205,6 @@
     "bestPositionScore": 7.06,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 0.97
@@ -8584,15 +8292,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.0
       }
      ],
-     "total": 1.07
+     "total": 1.0
     },
     "positionModel": 2.71,
     "runningModel": 52.24,
@@ -8704,15 +8408,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
      ],
-     "total": 1.06
+     "total": 1.02
     },
     "positionModel": 2.25,
     "runningModel": 24.83,
@@ -8733,10 +8433,6 @@
     "bestPositionScore": 17.96,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.02
@@ -8763,10 +8459,6 @@
     "bestPositionScore": 6.99,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.02
@@ -8914,10 +8606,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.99
       }
@@ -9053,7 +8741,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 18,
+    "preRank": 17,
     "preScore": 80.02
    }
   },
@@ -9123,10 +8811,6 @@
     "bestPositionScore": 54.05,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 0.97
@@ -9214,10 +8898,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.9
       }
@@ -9303,10 +8983,6 @@
     "bestPositionScore": 16.43,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.02
@@ -9394,15 +9070,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
      ],
-     "total": 1.06
+     "total": 1.02
     },
     "positionModel": 19.79,
     "runningModel": 85.04,
@@ -9484,15 +9156,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
      ],
-     "total": 1.06
+     "total": 1.02
     },
     "positionModel": 10.97,
     "runningModel": 37.01,
@@ -9544,10 +9212,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.91
       }
@@ -9593,7 +9257,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 11,
+    "preRank": 9,
     "preScore": 83.57
    }
   },
@@ -9634,10 +9298,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.0
       }
@@ -9664,10 +9324,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.04
       }
@@ -9693,10 +9349,6 @@
     "bestPositionScore": 19.89,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.02
@@ -9754,10 +9406,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.89
       }
@@ -9784,10 +9432,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.05
       }
@@ -9813,10 +9457,6 @@
     "bestPositionScore": 9.63,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.1
@@ -9874,15 +9514,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.99
       }
      ],
-     "total": 1.06
+     "total": 0.99
     },
     "positionModel": 6.79,
     "runningModel": 6.03,
@@ -9934,10 +9570,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.06
       }
@@ -9964,10 +9596,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.91
       }
@@ -9993,10 +9621,6 @@
     "bestPositionScore": 59.4,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.05
@@ -10114,10 +9738,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
@@ -10174,10 +9794,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.07
       }
@@ -10203,10 +9819,6 @@
     "bestPositionScore": 14.35,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.08
@@ -10264,15 +9876,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.05
       }
      ],
-     "total": 1.09
+     "total": 1.05
     },
     "positionModel": 21.05,
     "runningModel": 54.82,
@@ -10354,15 +9962,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.96
       }
      ],
-     "total": 1.03
+     "total": 0.96
     },
     "positionModel": 16.31,
     "runningModel": 49.11,
@@ -10414,15 +10018,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
      ],
-     "total": 1.06
+     "total": 1.02
     },
     "positionModel": 22.6,
     "runningModel": 55.16,
@@ -10443,10 +10043,6 @@
     "bestPositionScore": 28.49,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.08
@@ -10473,10 +10069,6 @@
     "bestPositionScore": 36.3,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 0.95
@@ -10534,15 +10126,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.01
       }
      ],
-     "total": 1.05
+     "total": 1.01
     },
     "positionModel": 26.87,
     "runningModel": 49.11,
@@ -10554,7 +10142,7 @@
    "rankAdjust": {
     "modifiers": [],
     "preRank": 55,
-    "preScore": 52.41
+    "preScore": 52.32
    }
   },
   "90072": {
@@ -10624,15 +10212,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.06
       }
      ],
-     "total": 1.1
+     "total": 1.06
     },
     "positionModel": 45.93,
     "runningModel": 49.39,
@@ -10643,8 +10227,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 12,
-    "preScore": 82.48
+    "preRank": 14,
+    "preScore": 81.23
    }
   },
   "90075": {
@@ -10684,10 +10268,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.99
       }
@@ -10713,10 +10293,6 @@
     "bestPositionScore": 64.55,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 0.9
@@ -10744,10 +10320,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.01
       }
@@ -10773,10 +10345,6 @@
     "bestPositionScore": 25.23,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.02
@@ -10804,15 +10372,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.98
       }
      ],
-     "total": 1.02
+     "total": 0.98
     },
     "positionModel": 5.52,
     "runningModel": 33.51,
@@ -10894,15 +10458,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.96
       }
      ],
-     "total": 1.03
+     "total": 0.96
     },
     "positionModel": 4.43,
     "runningModel": 6.03,
@@ -11044,15 +10604,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.04
       }
      ],
-     "total": 1.08
+     "total": 1.04
     },
     "positionModel": 20.41,
     "runningModel": 74.42,
@@ -11073,10 +10629,6 @@
     "bestPositionScore": 4.31,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.0
@@ -11103,10 +10655,6 @@
     "bestPositionScore": 4.45,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.02
@@ -11254,10 +10802,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.06
       }
@@ -11283,10 +10827,6 @@
     "bestPositionScore": 7.92,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 0.98
@@ -11374,10 +10914,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.0
       }
@@ -11464,15 +11000,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.99
       }
      ],
-     "total": 1.03
+     "total": 0.99
     },
     "positionModel": 13.58,
     "runningModel": 22.77,
@@ -11523,10 +11055,6 @@
     "bestPositionScore": 35.3,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 0.98
@@ -11644,15 +11172,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.04
       }
      ],
-     "total": 1.08
+     "total": 1.04
     },
     "positionModel": 47.27,
     "runningModel": 49.11,
@@ -11663,8 +11187,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 10,
-    "preScore": 83.71
+    "preRank": 11,
+    "preScore": 82.41
    }
   },
   "90109": {
@@ -11703,10 +11227,6 @@
     "bestPositionScore": 21.48,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.01
@@ -11794,10 +11314,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.97
       }
@@ -11854,10 +11370,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.01
       }
@@ -11884,15 +11396,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.93
       }
      ],
-     "total": 0.96
+     "total": 0.93
     },
     "positionModel": 10.72,
     "runningModel": 79.26,
@@ -11913,10 +11421,6 @@
     "bestPositionScore": 1.08,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.02
@@ -11944,15 +11448,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.05
       }
      ],
-     "total": 1.12
+     "total": 1.05
     },
     "positionModel": 36.02,
     "runningModel": 45.96,
@@ -11964,7 +11464,7 @@
    "rankAdjust": {
     "modifiers": [],
     "preRank": 36,
-    "preScore": 66.59
+    "preScore": 65.5
    }
   },
   "90119": {
@@ -12064,15 +11564,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.01
       }
      ],
-     "total": 1.05
+     "total": 1.01
     },
     "positionModel": 17.89,
     "runningModel": 24.83,
@@ -12094,15 +11590,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
      ],
-     "total": 1.06
+     "total": 1.02
     },
     "positionModel": 70.25,
     "runningModel": 54.82,
@@ -12114,7 +11606,7 @@
    "rankAdjust": {
     "modifiers": [],
     "preRank": 1,
-    "preScore": 118.35
+    "preScore": 115.73
    }
   },
   "90124": {
@@ -12123,10 +11615,6 @@
     "bestPositionScore": 51.98,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 0.95
@@ -12154,15 +11642,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.0
       }
      ],
-     "total": 1.04
+     "total": 1.0
     },
     "positionModel": 13.85,
     "runningModel": 49.11,
@@ -12183,10 +11667,6 @@
     "bestPositionScore": 0.44,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.06
@@ -12213,10 +11693,6 @@
     "bestPositionScore": 27.08,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.03
@@ -12263,7 +11739,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 14,
+    "preRank": 13,
     "preScore": 81.82
    }
   },
@@ -12304,15 +11780,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.03
       }
      ],
-     "total": 1.08
+     "total": 1.03
     },
     "positionModel": 20.42,
     "runningModel": 58.16,
@@ -12333,10 +11805,6 @@
     "bestPositionScore": 34.5,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.07
@@ -12393,10 +11861,6 @@
     "bestPositionScore": 83.24,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.0
@@ -12484,10 +11948,6 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
@@ -12514,15 +11974,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.04
       }
      ],
-     "total": 1.08
+     "total": 1.04
     },
     "positionModel": 6.64,
     "runningModel": 45.96,
@@ -12544,15 +12000,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
      ],
-     "total": 1.09
+     "total": 1.02
     },
     "positionModel": 48.29,
     "runningModel": 45.96,
@@ -12563,8 +12015,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 9,
-    "preScore": 84.91
+    "preRank": 10,
+    "preScore": 82.63
    }
   },
   "90139": {
@@ -12743,7 +12195,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 13,
+    "preRank": 12,
     "preScore": 81.97
    }
   },
@@ -12753,10 +12205,6 @@
     "bestPositionScore": 23.02,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.0
@@ -12844,15 +12292,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.03
       }
      ],
-     "total": 1.1
+     "total": 1.03
     },
     "positionModel": 9.16,
     "runningModel": 65.22,
@@ -12874,15 +12318,11 @@
     "modifiers": {
      "modifiers": [
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
      ],
-     "total": 1.06
+     "total": 1.02
     },
     "positionModel": 43.86,
     "runningModel": 49.11,
@@ -12893,8 +12333,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 17,
-    "preScore": 80.5
+    "preRank": 18,
+    "preScore": 79.33
    }
   },
   "90150": {
@@ -12933,10 +12373,6 @@
     "bestPositionScore": 83.24,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 0.91
@@ -13023,10 +12459,6 @@
     "bestPositionScore": 25.36,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 0.97
@@ -13162,10 +12594,6 @@
     "bestPositionScore": 14.52,
     "modifiers": {
      "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
       {
        "name": "BatterHitProfileModifier",
        "value": 1.02
@@ -13339,10 +12767,6 @@
        "value": 1.24
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.98
       }
@@ -13379,10 +12803,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 0.97
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -13525,15 +12945,11 @@
        "value": 1.08
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.0
       }
      ],
-     "total": 1.22
+     "total": 1.14
     },
     "positionModel": 23.08,
     "runningModel": 52.24,
@@ -13720,15 +13136,11 @@
        "value": 0.89
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.97
       }
      ],
-     "total": 0.99
+     "total": 0.95
     },
     "positionModel": 9.08,
     "runningModel": 24.83,
@@ -13762,10 +13174,6 @@
        "value": 1.16
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
@@ -13781,7 +13189,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 54,
+    "preRank": 53,
     "preScore": 87.14
    }
   },
@@ -13802,10 +13210,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.16
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -13874,7 +13278,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 39,
+    "preRank": 38,
     "preScore": 96.06
    }
   },
@@ -14027,7 +13431,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 25,
+    "preRank": 24,
     "preScore": 103.75
    }
   },
@@ -14048,10 +13452,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.14
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -14273,7 +13673,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 17,
+    "preRank": 16,
     "preScore": 109.78
    }
   },
@@ -14375,7 +13775,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 41,
+    "preRank": 40,
     "preScore": 93.77
    }
   },
@@ -14398,10 +13798,6 @@
        "value": 1.16
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.97
       }
@@ -14417,7 +13813,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 32,
+    "preRank": 31,
     "preScore": 99.21
    }
   },
@@ -14519,7 +13915,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 50,
+    "preRank": 49,
     "preScore": 87.91
    }
   },
@@ -14542,10 +13938,6 @@
        "value": 1.04
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.0
       }
@@ -14561,7 +13953,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 118,
+    "preRank": 117,
     "preScore": 63.03
    }
   },
@@ -14612,7 +14004,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 34,
+    "preRank": 33,
     "preScore": 97.99
    }
   },
@@ -14663,7 +14055,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 117,
+    "preRank": 116,
     "preScore": 63.05
    }
   },
@@ -14684,10 +14076,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.07
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -14830,15 +14218,11 @@
        "value": 1.07
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.03
       }
      ],
-     "total": 1.2
+     "total": 1.15
     },
     "positionModel": 40.73,
     "runningModel": 85.04,
@@ -14849,8 +14233,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 78,
-    "preScore": 77.53
+    "preRank": 80,
+    "preScore": 76.47
    }
   },
   "90034": {
@@ -14974,15 +14358,11 @@
        "value": 0.98
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
      ],
-     "total": 1.04
+     "total": 1.0
     },
     "positionModel": 30.56,
     "runningModel": 37.01,
@@ -14994,7 +14374,7 @@
    "rankAdjust": {
     "modifiers": [],
     "preRank": 130,
-    "preScore": 57.0
+    "preScore": 56.73
    }
   },
   "90037": {
@@ -15067,10 +14447,6 @@
        "value": 1.05
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.89
       }
@@ -15137,7 +14513,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 29,
+    "preRank": 28,
     "preScore": 101.23
    }
   },
@@ -15211,10 +14587,6 @@
        "value": 1.24
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.01
       }
@@ -15251,10 +14623,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 0.98
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -15295,10 +14663,6 @@
        "value": 1.24
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
@@ -15314,7 +14678,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 3,
+    "preRank": 2,
     "preScore": 150.6
    }
   },
@@ -15388,10 +14752,6 @@
        "value": 1.02
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.96
       }
@@ -15430,10 +14790,6 @@
        "value": 1.24
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.07
       }
@@ -15470,10 +14826,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.24
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -15565,15 +14917,11 @@
        "value": 1.01
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.99
       }
      ],
-     "total": 1.16
+     "total": 1.09
     },
     "positionModel": 51.82,
     "runningModel": 6.03,
@@ -15584,8 +14932,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 36,
-    "preScore": 96.95
+    "preRank": 39,
+    "preScore": 93.88
    }
   },
   "90050": {
@@ -15658,10 +15006,6 @@
        "value": 1.13
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.08
       }
@@ -15700,10 +15044,6 @@
        "value": 0.96
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.91
       }
@@ -15740,10 +15080,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.24
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -15937,10 +15273,6 @@
        "value": 1.06
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.03
       }
@@ -16030,10 +15362,6 @@
        "value": 1.08
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.07
       }
@@ -16049,7 +15377,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 52,
+    "preRank": 51,
     "preScore": 87.64
    }
   },
@@ -16070,10 +15398,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.06
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -16165,15 +15489,11 @@
        "value": 1.05
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.05
       }
      ],
-     "total": 1.17
+     "total": 1.13
     },
     "positionModel": 46.15,
     "runningModel": 54.82,
@@ -16184,8 +15504,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 40,
-    "preScore": 95.33
+    "preRank": 41,
+    "preScore": 93.58
    }
   },
   "90063": {
@@ -16235,7 +15555,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 74,
+    "preRank": 73,
     "preScore": 78.95
    }
   },
@@ -16309,15 +15629,11 @@
        "value": 1.06
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.96
       }
      ],
-     "total": 1.11
+     "total": 1.04
     },
     "positionModel": 44.91,
     "runningModel": 49.11,
@@ -16328,8 +15644,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 72,
-    "preScore": 79.67
+    "preRank": 76,
+    "preScore": 77.73
    }
   },
   "90066": {
@@ -16379,7 +15695,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 68,
+    "preRank": 67,
     "preScore": 81.8
    }
   },
@@ -16402,15 +15718,11 @@
        "value": 1.16
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
      ],
-     "total": 1.31
+     "total": 1.26
     },
     "positionModel": 38.15,
     "runningModel": 55.16,
@@ -16421,8 +15733,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 94,
-    "preScore": 71.96
+    "preRank": 96,
+    "preScore": 71.11
    }
   },
   "90068": {
@@ -16442,10 +15754,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.1
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -16484,10 +15792,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.07
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -16579,15 +15883,11 @@
        "value": 1.16
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.01
       }
      ],
-     "total": 1.33
+     "total": 1.28
     },
     "positionModel": 49.81,
     "runningModel": 49.11,
@@ -16598,8 +15898,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 31,
-    "preScore": 99.25
+    "preRank": 35,
+    "preScore": 97.36
    }
   },
   "90072": {
@@ -16723,15 +16023,11 @@
        "value": 1.14
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.06
       }
      ],
-     "total": 1.33
+     "total": 1.28
     },
     "positionModel": 56.06,
     "runningModel": 49.39,
@@ -16742,8 +16038,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 13,
-    "preScore": 113.08
+    "preRank": 14,
+    "preScore": 110.65
    }
   },
   "90075": {
@@ -16793,7 +16089,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 35,
+    "preRank": 34,
     "preScore": 97.45
    }
   },
@@ -16816,10 +16112,6 @@
        "value": 1.13
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.99
       }
@@ -16835,7 +16127,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 80,
+    "preRank": 79,
     "preScore": 76.75
    }
   },
@@ -16858,10 +16150,6 @@
        "value": 0.96
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.97
       }
@@ -16877,7 +16165,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 76,
+    "preRank": 75,
     "preScore": 78.31
    }
   },
@@ -16900,10 +16188,6 @@
        "value": 1.15
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.01
       }
@@ -16919,7 +16203,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 10,
+    "preRank": 9,
     "preScore": 119.45
    }
   },
@@ -16940,10 +16224,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.08
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -16984,15 +16264,11 @@
        "value": 1.1
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.98
       }
      ],
-     "total": 1.29
+     "total": 1.24
     },
     "positionModel": 15.07,
     "runningModel": 33.51,
@@ -17105,7 +16381,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 119,
+    "preRank": 118,
     "preScore": 62.92
    }
   },
@@ -17360,7 +16636,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 55,
+    "preRank": 54,
     "preScore": 86.93
    }
   },
@@ -17383,15 +16659,11 @@
        "value": 1.14
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.04
       }
      ],
-     "total": 1.23
+     "total": 1.18
     },
     "positionModel": 55.01,
     "runningModel": 74.42,
@@ -17402,8 +16674,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 28,
-    "preScore": 101.53
+    "preRank": 29,
+    "preScore": 99.55
    }
   },
   "90089": {
@@ -17422,10 +16694,6 @@
       },
       {
        "name": "DraftBatterOverallModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHandednessModifier",
        "value": 1.0
       },
       {
@@ -17465,10 +16733,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.03
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -17639,7 +16903,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 73,
+    "preRank": 72,
     "preScore": 79.52
    }
   },
@@ -17690,7 +16954,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 67,
+    "preRank": 66,
     "preScore": 82.06
    }
   },
@@ -17713,10 +16977,6 @@
        "value": 1.09
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.06
       }
@@ -17732,7 +16992,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 33,
+    "preRank": 32,
     "preScore": 99.12
    }
   },
@@ -17753,10 +17013,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.17
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -17825,7 +17081,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 79,
+    "preRank": 78,
     "preScore": 77.01
    }
   },
@@ -17897,10 +17153,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.17
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -18043,15 +17295,11 @@
        "value": 1.1
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.99
       }
      ],
-     "total": 1.17
+     "total": 1.12
     },
     "positionModel": 27.97,
     "runningModel": 22.77,
@@ -18134,10 +17382,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.01
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -18331,15 +17575,11 @@
        "value": 1.17
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.01
       }
      ],
-     "total": 1.25
+     "total": 1.2
     },
     "positionModel": 65.84,
     "runningModel": 49.11,
@@ -18351,7 +17591,7 @@
    "rankAdjust": {
     "modifiers": [],
     "preRank": 7,
-    "preScore": 127.68
+    "preScore": 124.83
    }
   },
   "90109": {
@@ -18422,10 +17662,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.14
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -18568,10 +17804,6 @@
        "value": 1.07
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.97
       }
@@ -18661,10 +17893,6 @@
        "value": 1.17
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
@@ -18703,15 +17931,11 @@
        "value": 1.03
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.93
       }
      ],
-     "total": 1.15
+     "total": 1.1
     },
     "positionModel": 27.97,
     "runningModel": 79.26,
@@ -18785,10 +18009,6 @@
        "value": 1.14
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.03
       }
@@ -18827,15 +18047,11 @@
        "value": 1.2
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.08
       }
      ],
-     "total": 1.46
+     "total": 1.37
     },
     "positionModel": 65.56,
     "runningModel": 45.96,
@@ -18847,7 +18063,7 @@
    "rankAdjust": {
     "modifiers": [],
     "preRank": 8,
-    "preScore": 126.38
+    "preScore": 121.38
    }
   },
   "90119": {
@@ -18948,7 +18164,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 96,
+    "preRank": 95,
     "preScore": 71.39
    }
   },
@@ -19022,15 +18238,11 @@
        "value": 1.1
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
      ],
-     "total": 1.21
+     "total": 1.16
     },
     "positionModel": 56.18,
     "runningModel": 24.83,
@@ -19041,8 +18253,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 23,
-    "preScore": 105.28
+    "preRank": 25,
+    "preScore": 103.15
    }
   },
   "90123": {
@@ -19064,15 +18276,11 @@
        "value": 1.24
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
      ],
-     "total": 1.39
+     "total": 1.33
     },
     "positionModel": 72.55,
     "runningModel": 54.82,
@@ -19083,8 +18291,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 2,
-    "preScore": 151.91
+    "preRank": 3,
+    "preScore": 147.99
    }
   },
   "90124": {
@@ -19106,10 +18314,6 @@
        "value": 1.08
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.91
       }
@@ -19125,7 +18329,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 49,
+    "preRank": 48,
     "preScore": 88.1
    }
   },
@@ -19148,15 +18352,11 @@
        "value": 1.02
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.01
       }
      ],
-     "total": 1.11
+     "total": 1.07
     },
     "positionModel": 40.41,
     "runningModel": 49.11,
@@ -19167,8 +18367,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 66,
-    "preScore": 82.28
+    "preRank": 68,
+    "preScore": 81.04
    }
   },
   "90126": {
@@ -19188,10 +18388,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.01
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -19232,10 +18428,6 @@
        "value": 1.06
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.03
       }
@@ -19251,7 +18443,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 38,
+    "preRank": 37,
     "preScore": 96.29
    }
   },
@@ -19302,7 +18494,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 37,
+    "preRank": 36,
     "preScore": 96.44
    }
   },
@@ -19376,15 +18568,11 @@
        "value": 1.09
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.03
       }
      ],
-     "total": 1.2
+     "total": 1.15
     },
     "positionModel": 47.58,
     "runningModel": 58.16,
@@ -19395,8 +18583,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 48,
-    "preScore": 88.35
+    "preRank": 55,
+    "preScore": 86.88
    }
   },
   "90131": {
@@ -19415,10 +18603,6 @@
       },
       {
        "name": "DraftBatterOverallModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHandednessModifier",
        "value": 1.0
       },
       {
@@ -19488,7 +18672,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 75,
+    "preRank": 74,
     "preScore": 78.63
    }
   },
@@ -19509,10 +18693,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.1
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -19632,7 +18812,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 51,
+    "preRank": 50,
     "preScore": 87.79
    }
   },
@@ -19653,10 +18833,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 0.96
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -19697,15 +18873,11 @@
        "value": 0.97
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.04
       }
      ],
-     "total": 1.08
+     "total": 1.03
     },
     "positionModel": 28.94,
     "runningModel": 45.96,
@@ -19717,7 +18889,7 @@
    "rankAdjust": {
     "modifiers": [],
     "preRank": 143,
-    "preScore": 52.0
+    "preScore": 51.92
    }
   },
   "90138": {
@@ -19739,15 +18911,11 @@
        "value": 1.17
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.03
       }
      ],
-     "total": 1.35
+     "total": 1.26
     },
     "positionModel": 60.01,
     "runningModel": 45.96,
@@ -19758,8 +18926,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 9,
-    "preScore": 121.99
+    "preRank": 10,
+    "preScore": 117.28
    }
   },
   "90139": {
@@ -20064,7 +19232,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 15,
+    "preRank": 13,
     "preScore": 110.8
    }
   },
@@ -20087,10 +19255,6 @@
        "value": 1.15
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.0
       }
@@ -20106,7 +19270,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 53,
+    "preRank": 52,
     "preScore": 87.52
    }
   },
@@ -20157,7 +19321,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 16,
+    "preRank": 15,
     "preScore": 110.31
    }
   },
@@ -20231,15 +19395,11 @@
        "value": 1.05
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.03
       }
      ],
-     "total": 1.29
+     "total": 1.21
     },
     "positionModel": 31.57,
     "runningModel": 65.22,
@@ -20250,8 +19410,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 116,
-    "preScore": 63.23
+    "preRank": 119,
+    "preScore": 62.37
    }
   },
   "90149": {
@@ -20273,15 +19433,11 @@
        "value": 1.17
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.05
       }
      ],
-     "total": 1.33
+     "total": 1.28
     },
     "positionModel": 63.3,
     "runningModel": 49.11,
@@ -20292,8 +19448,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 14,
-    "preScore": 111.65
+    "preRank": 17,
+    "preScore": 109.28
    }
   },
   "90150": {
@@ -20364,10 +19520,6 @@
       {
        "name": "DraftBatterOverallModifier",
        "value": 1.01
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
       },
       {
        "name": "BatterHitProfileModifier",
@@ -20510,10 +19662,6 @@
        "value": 1.14
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 0.97
       }
@@ -20529,7 +19677,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 24,
+    "preRank": 23,
     "preScore": 104.68
    }
   },
@@ -20705,10 +19853,6 @@
        "value": 1.01
       },
       {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
        "name": "BatterHitProfileModifier",
        "value": 1.02
       }
@@ -20724,7 +19868,7 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 95,
+    "preRank": 94,
     "preScore": 71.82
    }
   },

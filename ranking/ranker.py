@@ -15,7 +15,7 @@ from ranking.stages.demand import Demand
 from ranking.stages.legacy import LegacyModel, LegacyModifiers, TwoWay
 from ranking.stages.talent import FieldingTalent, HitterTalent, PitcherTalent, RunningTalent
 from ranking.stages.value import Value
-from ranking.value import DISPLAY_OFFSET
+from ranking.value import DISPLAY_OFFSET, PLATOON_REPLACES
 from ranking.state import PlayerState
 from rankers.base_ranker import DEFAULT_BATCH_SIZE
 from scoring.runtime_components import runtime_components_scope
@@ -40,9 +40,10 @@ def v2_pipeline(profile):
         running=RunningTalent(profile),
         pitching=PitcherTalent(profile),
     )
-    # the development layer replaces the legacy makeup / injury modifiers
-    # wherever potential ratings are read
-    drop = development.REPLACES if profile.ratings == "potential" else ()
+    # the value layer's platoons replace the batter handedness modifier, and
+    # the development layer the legacy makeup / injury modifiers wherever
+    # potential ratings are read
+    drop = (*PLATOON_REPLACES, *(development.REPLACES if profile.ratings == "potential" else ()))
     return [model, LegacyModifiers(drop), Value(profile)], [Demand(offset=DISPLAY_OFFSET)]
 
 

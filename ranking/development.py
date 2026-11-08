@@ -32,6 +32,10 @@ FACTORS = {
     "durability": ("injury_prone", {"Iron Man": 1.05, "Durable": 1.03, "Fragile": 0.75, "Wrecked": 0.6}),
 }
 FULL_WEIGHT_WAR, TAPERED_WAR, TAPERED_WEIGHT = 2.5, 5.0, 0.35
+# judgment (2026-11-08): a switch-hitting prospect gives you lineup flexibility
+# the platoons don't price - your legacy bonus, on the batting side, tapered
+# like the factors above. Current ratings don't need it: real splits carry it.
+SWITCH_HITTER = 1.07
 REPLACES = ("PersonalityModifier", "BatterInjuryModifier", "PitcherInjuryModifier")
 
 
@@ -39,6 +43,12 @@ def weight(war) -> float:
     """How much of each factor applies to a side worth `war` at potential."""
     ramp = (war - FULL_WEIGHT_WAR) / (TAPERED_WAR - FULL_WEIGHT_WAR)
     return float(1 - (1 - TAPERED_WEIGHT) * np.clip(ramp, 0.0, 1.0))
+
+
+def switch_hitter(war) -> tuple:
+    """(ledger label, factor) for a switch-hitting prospect's batting side."""
+    w = weight(war)
+    return f"switch hitter (x{SWITCH_HITTER:g}" + (f" at {w:.0%} weight)" if w < 1 else ")"), SWITCH_HITTER ** w
 
 
 def factors(player, war) -> list:

@@ -40,6 +40,8 @@ TWO_WAY_FLOOR, TWO_WAY_FULL = 1.75, 2.5   # the other side's WAR
 STARTER_MIN_STAMINA = 35   # borderline, at the bottom of the innings curve
 STARTER_MIN_PITCHES = 3
 DISPLAY_OFFSET, DISPLAY_SCALE = 50.0, 10.0
+# legacy modifiers the hitter platoons (ranking/stages/value.py) replace
+PLATOON_REPLACES = ("BatterHandednessModifier",)
 
 
 def points(war):

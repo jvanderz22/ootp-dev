@@ -58,6 +58,17 @@ def load_pitching(stats_dir, years) -> pd.DataFrame:
     return pit
 
 
+def batting_pa_by_side(stats_dir, years) -> pd.DataFrame:
+    """Per batting stint: PA vs left (`pa_l`) and right (`pa_r`) -handed
+    pitchers."""
+    keys = ["player_id", "year", "team_id", "level_id", "stint"]
+    out = None
+    for split, name in ((VS_LEFT_SPLIT, "pa_l"), (VS_RIGHT_SPLIT, "pa_r")):
+        side = _load(stats_dir, "bat", years, split)[keys + ["pa"]].rename(columns={"pa": name})
+        out = side if out is None else out.merge(side, on=keys)
+    return out
+
+
 def pitching_bf_by_side(stats_dir, years) -> pd.DataFrame:
     """Per pitching stint: g, gs, and batters faced vs left (`bf_l`) and right
     (`bf_r`) -handed batters."""

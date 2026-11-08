@@ -14,6 +14,15 @@ balls for his Power and BABIP to act on. Outcomes are valued with linear
 weights fit to the league's team-season runs, and expressed as wRC+ against
 the MLB average.
 
+Current ratings come with platoon splits in a league snapshot. A hitter who
+has them is scored on each side's events, blended at the share of PA his
+batting hand takes against left-handed pitchers (`platoon_mix`); OOTP's
+combined ratings are about that blend already, so this mostly stops the
+rounded combined rating from hiding a weak side. A hitter without splits
+(potential ratings, draft classes) gets the expected ones for his batting hand
+and rating level (`expected_sides`); his vs-L / vs-R wRC+ is what the value
+layer platoons him on.
+
 Everything is a lookup table per rating (20-80) in a committed artifact, fit by
 `ranking.fitting.hitter_talent`; nothing trains at runtime.
 """
@@ -32,6 +41,7 @@ ARTIFACT = "hitter_talent_v1"
 COMPONENTS = {"k": "avoid_k", "bb": "eye", "hr": "power", "hit": "babip", "xbh": "gap"}
 RATINGS = ("babip", "avoid_k", "gap", "power", "eye")
 LOW, HIGH = 20, 80
+STEPS = np.arange(LOW, HIGH + 1, 5)
 
 
 def outcomes(k, bb, hr, hit, xbh, triple_share):
@@ -63,6 +73,10 @@ class HitterTalent:
         self.weights = artifact["linear_weights"]
         self.triple_share = artifact["triple_share"]
         self.mlb_runs_per_pa = artifact["mlb_runs_per_pa"]
+        # {"R" | "L" | "S": share of PA against left-handed pitchers}
+        self.platoon_mix = artifact.get("platoon_mix")
+        # {hand: {rating: {"weight": on vL, "gap": [vL - vR at 50, per point]}}}
+        self.expected = artifact.get("expected_splits")
         # wRC+ -> the legacy batting model's points (ranking/bridge.py); absent
         # while fitting
         self.bridge = artifact.get("points_bridge")
@@ -72,16 +86,49 @@ class HitterTalent:
         return cls(json.loads(Path(path).read_text()))
 
     def rates(self, ratings: dict) -> dict:
-        """Component rates for `ratings` ({rating: int or array}), clamped to 20-80."""
+        """Component rates for `ratings` ({rating: number or array}), clamped to
+        20-80. OOTP shows ratings in steps of 5 and the tables hold one value
+        per step, so a rating between steps (an expected split) reads along
+        the line between the two steps around it."""
         out = {}
         for name, rating in COMPONENTS.items():
-            index = np.clip(np.asarray(ratings[rating], dtype=int), LOW, HIGH) - LOW
-            out[name] = self.tables[name][index]
+            value = np.clip(np.asarray(ratings[rating], dtype=float), LOW, HIGH)
+            out[name] = np.interp(value, STEPS, self.tables[name][STEPS - LOW])
+        return out
+
+    def events(self, ratings: dict) -> dict:
+        r = self.rates(ratings)
+        return outcomes(r["k"], r["bb"], r["hr"], r["hit"], r["xbh"], self.triple_share)
+
+    def lhp_share(self, bats):
+        """The share of PA against left-handed pitchers, per batting hand
+        ("R" / "L" / "S")."""
+        return np.array([self.platoon_mix[b] for b in bats])
+
+    def platoon_events(self, sides: dict, lhp_share) -> dict:
+        """Events against a season's pitchers: `sides` {"vL" | "vR": ratings}
+        scored apart and blended at `lhp_share`."""
+        vl, vr = self.events(sides["vL"]), self.events(sides["vR"])
+        return {k: lhp_share * vl[k] + (1 - lhp_share) * vr[k] for k in vl}
+
+    def expected_sides(self, ratings: dict, bats) -> dict:
+        """{"vL" | "vR": ratings} expected from combined `ratings` for hitters
+        batting `bats`: the combined rating is OOTP's weighted blend of the two,
+        and the gap between them grows with the rating."""
+        out = {"vL": {}, "vR": {}}
+        for rating in RATINGS:
+            c = np.asarray(ratings[rating], dtype=float)
+            fit = [self.expected[b][rating] for b in bats]
+            weight = np.array([f["weight"] for f in fit])
+            gap = np.array([f["gap"][0] for f in fit]) + np.array([f["gap"][1] for f in fit]) * (c - 50)
+            out["vL"][rating] = c + (1 - weight) * gap
+            out["vR"][rating] = c - weight * gap
         return out
 
     def wrc_plus(self, ratings: dict):
-        r = self.rates(ratings)
-        events = outcomes(r["k"], r["bb"], r["hr"], r["hit"], r["xbh"], self.triple_share)
+        return self.wrc_of(self.events(ratings))
+
+    def wrc_of(self, events: dict):
         return 100 * runs_per_pa(events, self.weights) / self.mlb_runs_per_pa
 
     def points(self, wrc_plus):

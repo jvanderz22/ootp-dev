@@ -520,8 +520,7 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
     45% / LHP 25% LHB as starters, 43% / 27% as relievers, MLB lines
     2030–2042), and AI managers barely tailor it to a pitcher's own splits
     (< 0.1% per rating point). OOTP's combined ratings are already that
-    blend of the splits (vL weighs 44% for a RHP, 28% for a LHP; Control
-    25% for both).
+    blend of the splits (vL weighs 44% for a RHP, 28% for a LHP).
   - **Built: current pitchers are scored on their vL / vR splits**
     (2026-11-08). Each side's events are scored apart and blended at the
     mix his role and throwing hand face (`platoon_mix` in the pitcher
@@ -626,6 +625,59 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
     ratings, so expected platoon value for potential and draft class pitchers
     should come from those (which pitches play against which side, and how
     slot changes it), fit against the current split ratings.
+- **Splits: what the data says (2026-11-08).**
+  - Hitters' combined ratings are OOTP's blend of their splits at about the
+    share of PA each batting hand takes vs LHP (R 30%, S 26%, L 23%; all
+    MLB PA 26.5% vs LHP). The batting model doesn't under-predict lefties at
+    any level (MLB L +0.4 / R −0.8 runs per 600 PA), and left-handed draft
+    prospects realize ×0.90–0.95 of what righties do at the same potential:
+    the handedness edge is in the ratings, potential included, so the
+    legacy ×1.04 lefty bonus double-counts. Switch hitters beat the model by
+    ~3 runs a season in MLB but not in AAA / AA.
+  - Pitchers' split gaps (same-handed minus opposite-handed batters) are
+    predictable from arm slot, velocity and pitch mix: R² 0.49 Stuff, 0.45
+    Movement, 0.44 HRA, 0.56 PBABIP, 0.16 Control (hand alone: ~0).
+    Sidearm +3 and submarine +5 Stuff gap, over the top −1; a good
+    changeup closes it (60 CH ≈ −2.8), a good slider widens it (60 SL ≈
+    +4.6); the gap grows with the rating. But in this league the AI doesn't
+    act on splits: big-split pitchers don't underperform their combined
+    rating (MLB 5+ gap: −2.5 runs per 600 BF, i.e. better), and drafted
+    starters with big predicted gaps aren't moved to relief more often
+    (odds ratio 0.98 per SD, with stamina 0.82 and pitch count 0.89 doing
+    the moving) nor wash out more.
+  - The model is for you, and you platoon: so value comes from your usage,
+    not the AI's (your call, 2026-11-08).
+- **Built (2026-11-08): hitters are platooned the way you use them.**
+  - Current hitters are scored on their vL / vR splits, blended at their
+    hand's PA mix (`platoon_mix` in the hitter artifact; wRC+ moves up to
+    ±7 where the rounded combined rating hid a weak side). Hitters without
+    splits (potential, draft) get expected ones: per hand and rating, OOTP's
+    weight on vL and the vL − vR gap as a line in the rating's level
+    (`expected_splits`; a 50 lefty is ~6–8 points worse vs LHP, a 50 righty
+    ~2–4 better, switch hitters about even). Fractional ratings read along
+    the line between the tables' 5-point steps (reading the steps instead
+    cost lefties 3 wRC+).
+  - Against each pitcher hand, a hitter starts in proportion to his WAR rate
+    on that side next to an average regular's: every start at average or
+    better, none at replacement (your choice: near average, soft). What he
+    loses is a "platoon (starts x% vs RHP, y% vs LHP)" ledger line; a
+    regular on both sides has none. An all-50 left fielder as a prospect:
+    lefty +1.01 WAR (starts 76% vs RHP, 0% vs LHP), righty +0.73 (37% /
+    88%), switch +0.64; from 60 up they play every day and come out level.
+  - Replaces `BatterHandednessModifier` in every v2 profile. Switch-hitting
+    prospects (potential, draft) keep your ×1.07 as a lineup-flexibility
+    factor on the batting side, tapered like the makeup factors; current
+    switch hitters don't need it (their real splits carry it).
+  - Board effect vs the 5b–6 commits: hitters' share of the top 100 barely
+    moves; lefties drop a median ~27 places in the top 500 (the ×1.04 gone),
+    switch hitters −55 on current ratings, −6 as prospects.
+- **Next: relievers get matchups under your usage** (decided 2026-11-08).
+  A starter faces both sides at the normal mix; as a reliever, a big-split
+  arm faces his strong side more, scaled with his split: no tilt for an
+  even split, up to +20 points of strong-side batters for the biggest
+  splits. Current pitchers use their real splits, potential and draft ones
+  the gap predicted from slot, velocity and pitch mix. The value layer's
+  better-of-SP-and-RP then moves big-split arms to relief more often.
 
 **7. Decision layer**
 
