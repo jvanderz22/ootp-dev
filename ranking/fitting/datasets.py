@@ -13,6 +13,7 @@ from pathlib import Path
 import pandas as pd
 
 from ranking.fitting.stats import baserunning_runs, load_batting, load_fielding, load_pitching
+from ranking.pitcher_talent import SHIFT_PITCHES, top_pitches
 
 PITCHER_POSITIONS = ("SP", "RP", "CL")
 # snapshot column -> talent rating, current ratings
@@ -25,6 +26,8 @@ FIELDING_COLUMNS = {
     "OF RNG": "of_range", "OF ARM": "of_arm", "OF ERR": "of_error",
 }
 RUNNING_COLUMNS = {"SPE": "speed", "STE": "steal", "RUN": "running_ability"}
+# current pitch grades
+PITCH_COLUMNS = ("FB", "CH", "CB", "SL", "SI", "SP", "CT", "FO", "CC", "SC", "KN", "KC")
 MIN_INNINGS = 50
 # A veteran's ratings barely move in a year, so a snapshot also stands in for
 # his season before.
@@ -68,7 +71,13 @@ def read_hitters(path) -> pd.DataFrame:
 
 
 def read_pitchers(path) -> pd.DataFrame:
-    return _read(path, True, PITCHING_COLUMNS)
+    """With `listed_sp` (displayed Stuff is for the listed role) and his best
+    current pitch grades, `p1`... (ranking.pitcher_talent.top_pitches)."""
+    snap = pd.read_csv(path, low_memory=False)
+    grades = snap[list(PITCH_COLUMNS)].apply(pd.to_numeric, errors="coerce").fillna(0).to_numpy()
+    top = pd.DataFrame([top_pitches(g) for g in grades], columns=[f"p{i + 1}" for i in range(SHIFT_PITCHES)])
+    extra = pd.concat([snap.ID.rename("player_id"), (snap.POS == "SP").astype(int).rename("listed_sp"), top], axis=1)
+    return _read(path, True, PITCHING_COLUMNS).merge(extra, on="player_id")
 
 
 def read_fielders(path) -> pd.DataFrame:

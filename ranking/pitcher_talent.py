@@ -17,8 +17,13 @@ Outcomes are valued with the hitters' linear weights, and runs allowed are an
 index: 100 is the MLB average batter's line, lower is better. `era` puts the
 same runs per nine innings, scaled so the MLB average line gives the league's
 ERA (which takes care of unearned runs and the outs the events leave out).
-Starting and relieving differ by a fitted role term (relievers strike out
-more), not by shifting the ratings.
+Starting and relieving differ by a fitted role term, and by Stuff itself: OOTP
+shows Stuff for the listed role, weighting a starter's 3rd pitch more and a
+reliever's top two (measured 2026-11-08 by exporting one org's pitchers all as
+SP and all as RP; nothing else changes). `role_stuff` moves displayed Stuff
+into the other role with the fitted shift: a listed starter gains it in relief,
+anyone else loses it plus a margin as a starter, erring towards taking too much
+away rather than too little.
 """
 import json
 from functools import lru_cache
@@ -35,6 +40,14 @@ COMPONENTS = {"k": "stuff", "bb": "control", "hr": "hra", "hit": "pbabip"}
 MOVEMENT_COMPONENTS = {"hr": "movement", "hit": "movement"}
 RATINGS = ("stuff", "control", "hra", "pbabip", "movement")
 ROLES = ("sp", "rp")
+# pitches the role shift reads, best first
+SHIFT_PITCHES = 4
+
+
+def top_pitches(grades) -> list:
+    """The best SHIFT_PITCHES grades, best first, 0 for a pitch he lacks."""
+    top = sorted((g for g in grades if g), reverse=True)[:SHIFT_PITCHES]
+    return top + [0] * (SHIFT_PITCHES - len(top))
 
 
 class PitcherTalent:
@@ -53,6 +66,8 @@ class PitcherTalent:
         self.triple_share = artifact["triple_share"]
         self.mlb_runs_per_pa = artifact["mlb_runs_per_pa"]
         self.era_scale = artifact.get("era_scale")
+        # {"overall" | "potential": {"coef": [intercept, best, 2nd, ...], "margin"}}
+        self.role_shift = artifact.get("role_shift")
         # runs allowed index -> legacy SP / RP points (ranking/bridge.py);
         # absent while fitting
         self.bridges = artifact.get("points_bridges")
@@ -72,6 +87,23 @@ class PitcherTalent:
                 rating, table = MOVEMENT_COMPONENTS[name], self.movement_tables[role][name]
             out[name] = table[np.clip(np.asarray(ratings[rating], dtype=int), LOW, HIGH) - LOW]
         return out
+
+    def stuff_shift(self, top, side: str):
+        """Stuff gained as a reliever over a starter, from `top` (rows of
+        top_pitches) on `side` ("overall" or "potential"); never negative."""
+        coef = np.asarray(self.role_shift[side]["coef"])
+        return np.maximum(coef[0] + np.asarray(top, dtype=float) @ coef[1:], 0.0)
+
+    def role_stuff(self, stuff, top, listed_sp, side: str) -> dict:
+        """{role: Stuff in that role} from displayed Stuff, which is for the
+        listed role: a listed SP's as a starter, anyone else's as a reliever."""
+        stuff, listed_sp = np.asarray(stuff, dtype=float), np.asarray(listed_sp, dtype=bool)
+        shift = self.stuff_shift(top, side)
+        margin = self.role_shift[side]["margin"]
+        return {
+            "sp": np.rint(np.where(listed_sp, stuff, stuff - shift - margin)),
+            "rp": np.rint(np.where(listed_sp, stuff + shift, stuff)),
+        }
 
     def events(self, ratings: dict, role: str) -> dict:
         r = self.rates(ratings, role)

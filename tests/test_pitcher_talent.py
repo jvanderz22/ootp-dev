@@ -81,7 +81,7 @@ def test_a_class_without_hra_is_scored_on_movement():
 def test_v2_scores_pitchers_with_the_talent_layer():
     for r in get_ranker("draft_class").rank([GamePlayer(dict(row)) for row in _class_rows()], batch_size=45):
         labels = [line.label for line in r.ledger.lines if line.side == "pitching"]
-        assert any("talent (runs allowed" in label for label in labels), labels
+        assert any("talent (Stuff" in label and "runs allowed" in label for label in labels), labels
         assert not any(label in ("SP model", "RP model") for label in labels)
         assert r.ledger.total() == pytest.approx(r.overall_score, abs=1e-9)
         assert r.starter_component >= 0 and r.reliever_component >= 0
@@ -93,3 +93,28 @@ def test_a_pitcher_without_ratings_falls_back_to_legacy():
     (r,) = get_ranker("draft_class").rank([GamePlayer(row)], batch_size=1)
     labels = [line.label for line in r.ledger.lines if line.side == "pitching"]
     assert {"SP model", "RP model"} & set(labels)
+
+
+@pytest.mark.parametrize("side", ["overall", "potential"])
+def test_relievers_gain_stuff_most_from_two_good_pitches(model, side):
+    shift = model.stuff_shift([[70, 65, 40, 0], [60, 55, 50, 45]], side)
+    assert np.all(shift >= 0) and shift[0] > shift[1]
+    assert model.stuff_shift([[20, 0, 0, 0]], side)[0] == 0
+
+
+@pytest.mark.parametrize("side", ["overall", "potential"])
+def test_a_reliever_loses_more_stuff_as_a_starter_than_a_starter_gains_in_relief(model, side):
+    top = [[70, 65, 40, 0]]
+    as_sp = model.role_stuff([55], top, [True], side)
+    as_rp = model.role_stuff([55], top, [False], side)
+    assert as_sp["sp"][0] == 55 and as_rp["rp"][0] == 55
+    gained, lost = as_sp["rp"][0] - 55, 55 - as_rp["sp"][0]
+    assert gained > 0 and lost > gained  # the margin errs towards taking Stuff away
+
+
+def test_v2_scores_a_listed_reliever_as_a_starter_on_less_stuff():
+    row = dict(next(r for r in _class_rows() if r["POS"] == "SP"))
+    (sp,) = get_ranker("draft_class").rank([GamePlayer(row)], batch_size=1)
+    (rp,) = get_ranker("draft_class").rank([GamePlayer({**row, "POS": "RP"})], batch_size=1)
+    assert rp.starter_component < sp.starter_component
+    assert rp.reliever_component < sp.reliever_component

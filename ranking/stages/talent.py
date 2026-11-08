@@ -84,6 +84,8 @@ class FittedPitching(NamedTuple):
     rp_index: float
     sp_era: float
     rp_era: float
+    sp_stuff: float         # Stuff in each role: displayed is the listed role's
+    rp_stuff: float
 
 
 class PitcherTalent:
@@ -114,8 +116,13 @@ class PitcherTalent:
             name: (np.array([r[name] for _, r in group]) if group[0][1][name] is not None else None)
             for name in pitcher_talent.RATINGS
         }
-        index = {role: self.model.runs_index(ratings, role) for role in pitcher_talent.ROLES}
-        era = {role: self.model.era(ratings, role) for role in pitcher_talent.ROLES}
+        # displayed Stuff is the listed role's; each role is scored at its own
+        top = np.array([self.ratings.pitch_grades(players[i]) for i, _ in group])
+        listed_sp = np.array([players[i].position == "SP" for i, _ in group])
+        stuff = self.model.role_stuff(ratings["stuff"], top, listed_sp, self.ratings.ratings)
+        in_role = {role: {**ratings, "stuff": stuff[role]} for role in pitcher_talent.ROLES}
+        index = {role: self.model.runs_index(in_role[role], role) for role in pitcher_talent.ROLES}
+        era = {role: self.model.era(in_role[role], role) for role in pitcher_talent.ROLES}
         talent = {role: self.model.points(index[role], role) for role in pitcher_talent.ROLES}
         for j, (i, _) in enumerate(group):
             player = players[i]
@@ -130,6 +137,8 @@ class PitcherTalent:
                 rp_index=float(index["rp"][j]),
                 sp_era=float(era["sp"][j]),
                 rp_era=float(era["rp"][j]),
+                sp_stuff=float(stuff["sp"][j]),
+                rp_stuff=float(stuff["rp"][j]),
             )
             write_runtime_component(player.id, "pitching.talent.sp_runs_index", out[i].sp_index)
             write_runtime_component(player.id, "pitching.talent.rp_runs_index", out[i].rp_index)

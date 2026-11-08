@@ -10,6 +10,7 @@ from ranking.fielding_talent import RATINGS as FIELDING
 from ranking.hitter_talent import RATINGS as HITTING
 from ranking.running_talent import RATINGS as RUNNING
 from ranking.pitcher_talent import RATINGS as PITCHING
+from ranking.pitcher_talent import top_pitches
 
 # rating -> GamePlayer attribute, per profile `ratings`
 _ATTRS = {
@@ -64,6 +65,11 @@ class RatingsView:
 
     def stamina(self, player) -> int:
         return player.stamina
+
+    def pitch_grades(self, player) -> list:
+        """His best pitch grades, best first (ranking.pitcher_talent.top_pitches)."""
+        pitches = player.get_pitches() if self.ratings == "potential" else player.get_ovr_pitches()
+        return top_pitches([getattr(player, p) for p in pitches])
 
     def pitch_count(self, player) -> int:
         pitches = player.get_pitches() if self.ratings == "potential" else player.get_ovr_pitches()

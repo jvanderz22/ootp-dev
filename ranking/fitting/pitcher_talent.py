@@ -7,6 +7,16 @@ Each component rate is fit on every level at once with a level and a role
 denominator; the artifact keeps its MLB table for each role. `hr` and `hit`
 are fit a second time on Movement, for classes exported without HRA / PBABIP.
 
+Displayed Stuff is for the listed role (see ranking/pitcher_talent.py). The
+role shift is fit from two exports of one org's pitchers, all set to SP and
+all set to RP (`role_reference/all_starters.html`, `all_relievers.html` under
+the data dir): reliever Stuff minus starter Stuff on the best four pitch
+grades, current and potential each on their own grades. Its margin, taken off
+on top when a reliever is scored as a starter, is the ROLE_SHIFT_MARGIN
+quantile of what the formula misses (you'd rather take too much Stuff away
+than too little, 2026-11-08). Before the rates are fit, each line's Stuff is
+moved into the role he pitched (central shift, no margin).
+
 PBABIP's effect is kept at PBABIP_KEEP of what the fit finds (decided
 2026-11-08): MLB BABIP spread is about what luck alone gives, so the stats
 can't size it, and you judge it to matter little. The `hit` tables (and the
@@ -28,14 +38,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 from scipy.stats import spearmanr
 from sklearn.model_selection import GroupKFold
 
 from context import default_base_dir
 from ranking import bridge
-from ranking.fitting import rules
 from ranking.fitting.components import PARAMS, Rate
-from ranking.fitting.datasets import pitcher_rows, read_pitchers, season_snapshots
+from ranking.fitting import ootp_export, rules
+from ranking.fitting.datasets import PITCH_COLUMNS, pitcher_rows, read_pitchers, season_snapshots
 from ranking.fitting.hitter_talent import data_hash
 from ranking.fitting.stats import (
     LEVEL_MLB, extra_base_shares, fit_linear_weights, load_batting, mlb_era, mlb_events_per_pa,
@@ -43,7 +54,7 @@ from ranking.fitting.stats import (
 )
 from ranking.hitter_talent import ARTIFACTS_DIR, HIGH, LOW, outcomes, runs_per_pa
 from ranking.pitcher_talent import (
-    ARTIFACT, COMPONENTS, MOVEMENT_COMPONENTS, ROLES, PitcherTalent, era_from,
+    ARTIFACT, COMPONENTS, MOVEMENT_COMPONENTS, ROLES, SHIFT_PITCHES, PitcherTalent, era_from, top_pitches,
 )
 
 # component -> (numerator, denominator, direction of its rating)
@@ -58,6 +69,12 @@ TERMS = ["level_id", "sp"]
 FOLDS = 5
 # the share of the fitted PBABIP -> hits-in-play effect that is kept
 PBABIP_KEEP = 1 / 3
+ROLE_SHIFT_MARGIN = 0.75
+# side -> (Stuff column, pitch grade columns) in an OOTP export
+ROLE_SHIFT_SIDES = {
+    "overall": ("STU", PITCH_COLUMNS),
+    "potential": ("STU P", tuple(f"{c}P" for c in PITCH_COLUMNS)),
+}
 REPORT_MIN_BF = 150
 
 
@@ -69,6 +86,39 @@ def _tables(rows, components) -> dict:
         for role in ROLES:
             out[role][name] = rate.table(level_id=LEVEL_MLB, sp=ROLE_SP[role])
     return out
+
+
+def fit_role_shift(reference_dir) -> dict:
+    """{side: {"coef", "margin", "pitchers", "rmse"}} from the all-SP and
+    all-RP exports of the same pitchers."""
+    starters = ootp_export.read(Path(reference_dir) / "all_starters.html")
+    relievers = ootp_export.read(Path(reference_dir) / "all_relievers.html")
+    pairs = starters.merge(relievers, on="ID", suffixes=("", "_rp"))
+    out = {}
+    for side, (stuff, grades) in ROLE_SHIFT_SIDES.items():
+        values = pairs[list(grades)].apply(pd.to_numeric, errors="coerce").fillna(0).to_numpy()
+        top = np.array([top_pitches(g) for g in values], dtype=float)
+        shift = pd.to_numeric(pairs[f"{stuff}_rp"], errors="coerce") - pd.to_numeric(pairs[stuff], errors="coerce")
+        ok = shift.notna().to_numpy() & (top[:, 0] > 0)
+        design = np.column_stack([np.ones(ok.sum()), top[ok]])
+        coef, *_ = np.linalg.lstsq(design, shift[ok].to_numpy(float), rcond=None)
+        missed = shift[ok].to_numpy(float) - design @ coef
+        out[side] = {
+            "coef": np.round(coef, 4).tolist(),
+            "margin": round(float(np.quantile(missed, ROLE_SHIFT_MARGIN)), 2),
+            "pitchers": int(ok.sum()),
+            "rmse": round(float(np.sqrt(np.mean(missed ** 2))), 2),
+        }
+    return out
+
+
+def in_line_role(rows, role_shift) -> pd.DataFrame:
+    """Rows with Stuff moved into the role each line was pitched in."""
+    coef = np.asarray(role_shift["overall"]["coef"])
+    shift = np.maximum(coef[0] + rows[[f"p{i + 1}" for i in range(SHIFT_PITCHES)]].to_numpy(float) @ coef[1:], 0)
+    stuff = rows.stuff + np.where((rows.sp == 1) & (rows.listed_sp == 0), -shift, 0)
+    stuff = stuff + np.where((rows.sp == 0) & (rows.listed_sp == 1), shift, 0)
+    return rows.assign(stuff=np.rint(stuff).astype(int))
 
 
 def fit_tables(rows) -> dict:
@@ -146,9 +196,11 @@ def points_bridges(model: PitcherTalent, snapshot_path) -> dict:
     players = {int(p.id): p for p in _players(snapshot_path, pitchers.player_id)}
     legacy = legacy_scores(list(players.values()))
     ratings = {r: pitchers[r].to_numpy() for r in COMPONENTS.values()}
+    top = pitchers[[f"p{i + 1}" for i in range(SHIFT_PITCHES)]].to_numpy()
+    stuff = model.role_stuff(pitchers.stuff, top, pitchers.listed_sp, "overall")
     out = {}
     for role in ROLES:
-        index = model.runs_index(ratings, role)
+        index = model.runs_index({**ratings, "stuff": stuff[role]}, role)
         talent, target = [], []
         for pid, value in zip(pitchers.player_id, index):
             p = players[pid]
@@ -205,6 +257,7 @@ def main(argv=None):
     p.add_argument("--data-dir", help="a DATA_DIR copy, e.g. fly_data (default: the app's)")
     p.add_argument("--snapshot", action="append", default=[], metavar="SEASON=PATH",
                    help="a ratings snapshot for SEASON, on top of the archived ones")
+    p.add_argument("--role-reference", help="the all-SP / all-RP exports (default: <data dir>/role_reference)")
     p.add_argument("--out", default=str(ARTIFACTS_DIR / f"{ARTIFACT}.json"))
     p.add_argument("--dry-run", action="store_true", help="report only, write nothing")
     args = p.parse_args(argv)
@@ -221,7 +274,17 @@ def main(argv=None):
     weights = fit_linear_weights(bat)
     latest = max(snapshots)
     extra_base, triples = extra_base_shares(bat, snapshots)
+    reference = Path(args.role_reference) if args.role_reference else base / "role_reference"
+    if not (reference / "all_starters.html").exists():
+        sys.exit(f"No role exports under {reference}: save the all-SP / all-RP player lists there.")
+    role_shift = fit_role_shift(reference)
+    for side, f in role_shift.items():
+        print(f"role shift ({side}, {f['pitchers']} pitchers): {f['coef']}, rmse {f['rmse']},"
+              f" margin {f['margin']:+.2f} as a starter")
     rows = pitcher_rows(snapshots, stats_dir)
+    moved = ((rows.sp == 1) != (rows.listed_sp == 1)).sum()
+    rows = in_line_role(rows, role_shift)
+    print(f"{moved} of {len(rows)} lines pitched outside the listed role; Stuff moved into it")
     artifact_base = {
         "version": ARTIFACT,
         "linear_weights": {k: round(v, 4) for k, v in weights.items()},
@@ -229,6 +292,7 @@ def main(argv=None):
         "triple_share": round(triples, 4),
         "mlb_runs_per_pa": round(mlb_runs_per_pa(bat, weights, latest), 5),
         # the MLB average line's raw runs per nine -> the league's actual ERA
+        "role_shift": role_shift,
         "era_scale": round(
             mlb_era(stats_dir, latest) / era_from(mlb_events_per_pa(bat, latest), weights, 1.0), 5
         ),

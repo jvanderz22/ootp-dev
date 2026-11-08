@@ -111,8 +111,10 @@ class LegacyModel(BatchStage):
         model = recorded.get(role, {}).get("model", 0.0)
         if fitted:
             index = fitted.sp_index if role == "starter" else fitted.rp_index
+            stuff = fitted.sp_stuff if role == "starter" else fitted.rp_stuff
             state.era = fitted.sp_era if role == "starter" else fitted.rp_era
-            state.ledger.add(MODEL, f"{label} talent (runs allowed {index:.0f})", model, PITCHING)
+            state.ledger.add(MODEL, f"{label} talent (Stuff {stuff:.0f} as {label}, runs allowed {index:.0f})",
+                             model, PITCHING)
             state.ledger.add(MODEL, f"{label} role (stamina, pitches)", chosen - model, PITCHING)
         else:
             state.ledger.add(MODEL, f"{label} model", model, PITCHING)
