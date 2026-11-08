@@ -45,7 +45,8 @@ export type ColGroup =
   | 'Pitching'
   | 'Arsenal'
   | 'Makeup'
-  | 'Demand';
+  | 'Demand'
+  | 'Compare';
 
 export interface ColumnDef {
   field: string;
@@ -68,7 +69,7 @@ export interface ColumnDef {
   /** widen the cell and keep its text on one line */
   wide?: boolean;
   /** optional colour cue for the cell text, from its formatted-ish value */
-  tone?: (v: unknown) => '' | 'danger' | 'warn';
+  tone?: (v: unknown) => '' | 'danger' | 'warn' | 'good';
   /** optional per-cell tooltip (e.g. the full team name behind a short code) */
   cellTitle?: (v: unknown) => string;
 }
@@ -642,10 +643,61 @@ const PITCHING_LEAD: ColumnDef[] = [
   },
 ];
 
+const fmtSigned = (digits: number) => (v: unknown): string => {
+  if (isBlank(v)) return '—';
+  const n = N(v);
+  return (n > 0 ? '+' : '') + n.toFixed(digits);
+};
+const compareCol = (
+  field: keyof RankedPlayerRow,
+  header: string,
+  title: string,
+  descFirst: boolean,
+  fmt: (v: unknown) => string,
+  tone?: ColumnDef['tone'],
+): ColumnDef => ({
+  field,
+  header,
+  title,
+  numeric: true,
+  descFirst,
+  group: 'Compare',
+  value: model(field),
+  fmt,
+  tone,
+});
+
+/** The Compare view: each engine's overall score and rank side by side. Ranks
+ *  are each engine's model order; the units differ (legacy points, v2's
+ *  50 + 10 × WAR), so the rank diff is the like-for-like one. */
+const COMPARE_COLUMNS: ColumnDef[] = [
+  compareCol('legacyScore', 'Legacy', 'Legacy engine overall score (points)', true, fmtNum2),
+  compareCol('legacyRank', 'Legacy #', 'Rank under the legacy engine', false, fmtInt),
+  compareCol('v2Score', 'v2', 'v2 engine overall score (50 + 10 × WAR)', true, fmtNum2),
+  compareCol('v2Rank', 'v2 #', 'Rank under the v2 engine', false, fmtInt),
+  compareCol(
+    'rankDiff',
+    'Rank Δ',
+    'Legacy rank minus v2 rank: positive when v2 ranks him higher',
+    true,
+    fmtSigned(0),
+    (v) => (isBlank(v) || N(v) === 0 ? '' : N(v) > 0 ? 'good' : 'danger'),
+  ),
+  compareCol('scoreDiff', 'Score Δ', 'v2 score minus legacy score (different units: a rough guide)', true, fmtSigned(1)),
+];
+
+/** The fields only the Compare view's query fills in. */
+export const COMPARE_FIELDS = new Set(COMPARE_COLUMNS.map((c) => c.field));
+
+const COMPARE_LEAD = LEADING_COLUMNS.filter((c) =>
+  ['rank', 'name', 'type', 'position', 'age', 'inGameOverall', 'inGamePotential'].includes(c.field),
+);
+
 export const VIEW_COLUMNS: Record<ClassView, ColumnDef[]> = {
   modeled: [...LEADING_COLUMNS, ...MODELED_COLUMNS],
   batting: [...BATTING_LEAD, ...BATTING_COLUMNS],
   pitching: [...PITCHING_LEAD, ...PITCHING_COLUMNS],
+  compare: [...COMPARE_LEAD, ...COMPARE_COLUMNS],
 };
 
 /** Columns with no meaning for a live-league snapshot: the drafted/demand
@@ -675,12 +727,14 @@ export const DEFAULT_SORT: Record<ClassView, { field: string; order: 1 | -1 }> =
   modeled: { field: 'rank', order: 1 },
   batting: { field: 'rank', order: 1 },
   pitching: { field: 'rank', order: 1 },
+  compare: { field: 'rank', order: 1 },
 };
 
 export const VIEW_OPTIONS: { label: string; value: ClassView }[] = [
   { label: 'Modeled', value: 'modeled' },
   { label: 'Batting', value: 'batting' },
   { label: 'Pitching', value: 'pitching' },
+  { label: 'Compare', value: 'compare' },
 ];
 
 /** Descriptive-grade columns whose text maps to a tier ordinal the backend can

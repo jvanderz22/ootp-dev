@@ -24,7 +24,7 @@ import { Params } from '@angular/router';
 import { ClassView, NumericFilter, RankedQuery } from './api.types';
 import { DEFAULT_SORT, FILTERABLE_FIELDS } from './ranked-columns';
 
-const VIEWS: ClassView[] = ['modeled', 'batting', 'pitching'];
+const VIEWS: ClassView[] = ['modeled', 'batting', 'pitching', 'compare'];
 
 export function queryToParams(q: RankedQuery): Params {
   const p: Params = {};

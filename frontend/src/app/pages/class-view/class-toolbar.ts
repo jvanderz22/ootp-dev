@@ -1,5 +1,4 @@
 import { Component, ElementRef, computed, inject, input, output, viewChild } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 
@@ -10,7 +9,7 @@ import { Viewport } from '../../core/viewport';
  *  the secondary actions (refresh drafted, download) fold into the ⚙ menu. */
 @Component({
   selector: 'app-class-toolbar',
-  imports: [MenuModule, RouterLink],
+  imports: [MenuModule],
   template: `
     @let d = detail();
     @if (d) {
@@ -46,9 +45,6 @@ import { Viewport } from '../../core/viewport';
             }
           }
 
-          @if (!notProcessed() && !narrow()) {
-            <a class="compare-link" [routerLink]="['/class', d.name, 'compare']">Compare models</a>
-          }
           <button
             class="icon-btn"
             type="button"
@@ -121,17 +117,6 @@ import { Viewport } from '../../core/viewport';
         gap: 8px;
         align-items: center;
         flex-wrap: wrap;
-      }
-      .compare-link {
-        padding: 6px 12px;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        color: var(--text);
-        text-decoration: none;
-        white-space: nowrap;
-      }
-      .compare-link:hover {
-        background: var(--bg-elev);
       }
       .icon-btn {
         display: inline-flex;

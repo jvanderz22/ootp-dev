@@ -180,33 +180,39 @@ def test_v2_stores_the_modeled_line(data_dir):
     assert pitchers and all(0 < rows[s.id]["era"] == s.era for s in pitchers)
 
 
-_COMPARE = """query($sort: ModelComparisonSort, $positions: [String!]) {
-  modelComparison(className: "%s", sort: $sort, positions: $positions, pageSize: 200) {
+_COMPARE = """query($sort: RankedPlayerSort, $filter: RankedPlayerFilter) {
+  rankedPlayers(name: "%s", sort: $sort, filter: $filter, pageSize: 200, compare: true) {
     totalRecords
-    rows { id name position legacyScore legacyRank v2Score v2Rank scoreDiff rankDiff }
+    rows { id rank position legacyScore legacyRank v2Score v2Rank scoreDiff rankDiff }
   }
 }""" % CLASS
 
 
 def test_compare_view_lines_up_both_engines(client):
-    page = _gql(client, _COMPARE)["modelComparison"]
+    page = _gql(client, _COMPARE)["rankedPlayers"]
     rows = page["rows"]
     assert page["totalRecords"] == len(rows) == 80
-    # v2 order by default, each engine's own ranks, both complete
-    assert [r["v2Rank"] for r in rows] == list(range(1, 81))
+    # the table's own (v2) order, with each engine's ranks, both complete
+    assert [r["v2Rank"] for r in rows] == [r["rank"] for r in rows] == list(range(1, 81))
     assert sorted(r["legacyRank"] for r in rows) == list(range(1, 81))
     for r in rows:
         assert r["rankDiff"] == r["legacyRank"] - r["v2Rank"]
         assert r["scoreDiff"] == pytest.approx(r["v2Score"] - r["legacyScore"])
-    # the same ranks the ranked table serves under each engine
-    top = {e: _gql(client, _ROWS, engine=e)["rankedPlayers"]["rows"][0]["id"] for e in ("v2", "legacy")}
-    assert top["v2"] == rows[0]["id"]
-    assert top["legacy"] == next(r["id"] for r in rows if r["legacyRank"] == 1)
+    # the same top player the ranked table serves under the legacy engine
+    top = _gql(client, _ROWS, engine="legacy")["rankedPlayers"]["rows"][0]["id"]
+    assert top == next(r["id"] for r in rows if r["legacyRank"] == 1)
 
 
 def test_compare_view_sorts_and_filters(client):
-    risers = _gql(client, _COMPARE, sort={"field": "rankDiff", "order": -1})["modelComparison"]["rows"]
+    risers = _gql(client, _COMPARE, sort={"field": "rankDiff", "order": -1})["rankedPlayers"]["rows"]
     diffs = [r["rankDiff"] for r in risers]
     assert diffs == sorted(diffs, reverse=True)
-    pitchers = _gql(client, _COMPARE, positions=["SP", "RP"])["modelComparison"]["rows"]
+    pitchers = _gql(client, _COMPARE, filter={"positions": ["SP", "RP"]})["rankedPlayers"]["rows"]
     assert pitchers and {r["position"] for r in pitchers} <= {"SP", "RP"}
+    big = _gql(client, _COMPARE, filter={"numeric": [{"field": "rankDiff", "min": 5}]})["rankedPlayers"]["rows"]
+    assert all(r["rankDiff"] >= 5 for r in big)
+
+
+def test_rows_carry_no_comparison_unless_asked(client):
+    rows = _gql(client, f"""{{ rankedPlayers(name: "{CLASS}", pageSize: 3) {{ rows {{ v2Rank rankDiff }} }} }}""")
+    assert all(r == {"v2Rank": None, "rankDiff": None} for r in rows["rankedPlayers"]["rows"])

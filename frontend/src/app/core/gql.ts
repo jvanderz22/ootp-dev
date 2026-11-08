@@ -37,6 +37,12 @@ const PLAYER_FIELDS = gql`
     preDemandRank
     wrcPlus
     era
+    legacyScore
+    legacyRank
+    v2Score
+    v2Rank
+    scoreDiff
+    rankDiff
     ratings
     source {
       className
@@ -93,6 +99,7 @@ export const CLASS_DETAIL = gql`
     $sort: RankedPlayerSort
     $page: Int
     $pageSize: Int
+    $compare: Boolean
   ) {
     draftClass(name: $name) {
       ...ClassFields
@@ -105,6 +112,7 @@ export const CLASS_DETAIL = gql`
       sort: $sort
       page: $page
       pageSize: $pageSize
+      compare: $compare
     ) {
       totalRecords
       rows {
@@ -123,6 +131,7 @@ export const RANKED_PAGE = gql`
     $sort: RankedPlayerSort
     $page: Int
     $pageSize: Int
+    $compare: Boolean
   ) {
     rankedPlayers(
       name: $name
@@ -130,6 +139,7 @@ export const RANKED_PAGE = gql`
       sort: $sort
       page: $page
       pageSize: $pageSize
+      compare: $compare
     ) {
       totalRecords
       rows {
@@ -205,6 +215,7 @@ export const LEAGUE_VIEW_DETAIL = gql`
     $sort: RankedPlayerSort
     $page: Int
     $pageSize: Int
+    $compare: Boolean
   ) {
     leagueSnapshot(leagueId: $leagueId) {
       ...LeagueSnapshotFields
@@ -225,6 +236,7 @@ export const LEAGUE_VIEW_DETAIL = gql`
       sort: $sort
       page: $page
       pageSize: $pageSize
+      compare: $compare
     ) {
       totalRecords
       rows {
@@ -246,6 +258,7 @@ export const LEAGUE_SNAPSHOT_PLAYERS = gql`
     $sort: RankedPlayerSort
     $page: Int
     $pageSize: Int
+    $compare: Boolean
   ) {
     leagueSnapshotPlayers(
       leagueId: $leagueId
@@ -256,6 +269,7 @@ export const LEAGUE_SNAPSHOT_PLAYERS = gql`
       sort: $sort
       page: $page
       pageSize: $pageSize
+      compare: $compare
     ) {
       totalRecords
       rows {
@@ -690,55 +704,5 @@ export const SET_TRADE_LIST_ENTRY = gql`
     ) {
       ...TradeListFields
     }
-  }
-`;
-
-
-export const MODEL_COMPARISON = gql`
-  query ModelComparison(
-    $className: String
-    $leagueId: ID
-    $method: String
-    $search: String
-    $positions: [String!]
-    $level: String
-    $sort: ModelComparisonSort
-    $page: Int
-    $pageSize: Int
-  ) {
-    modelComparison(
-      className: $className
-      leagueId: $leagueId
-      method: $method
-      search: $search
-      positions: $positions
-      level: $level
-      sort: $sort
-      page: $page
-      pageSize: $pageSize
-    ) {
-      totalRecords
-      rows {
-        id
-        name
-        position
-        age
-        org
-        level
-        playerType
-        legacyScore
-        legacyRank
-        v2Score
-        v2Rank
-        scoreDiff
-        rankDiff
-      }
-    }
-  }
-`;
-
-export const LEAGUE_LEVELS = gql`
-  query LeagueLevels($leagueId: ID!) {
-    leagueLevels(leagueId: $leagueId)
   }
 `;

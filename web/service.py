@@ -513,13 +513,18 @@ def _filter_sort_page(rows, filter=None, sort=None, page=0, page_size=50, all_ro
 
 
 def ranked_players_page(
-    name: str, *, filter=None, sort=None, page=0, page_size=50, all_rows=False
+    name: str, *, filter=None, sort=None, page=0, page_size=50, all_rows=False, compare=False
 ):
     """One filtered/sorted/paginated slice of a class, served from the in-memory
     index (see web/class_index.py). `filter` = {search, positions, hide_drafted};
-    `sort` = {field, order} with order 1 asc / -1 desc."""
-    idx = class_index.get_index(_ctx(name))
-    return _filter_sort_page(idx.rows, filter, sort, page, page_size, all_rows)
+    `sort` = {field, order} with order 1 asc / -1 desc. `compare` adds each
+    engine's score and rank (web/model_compare.py), to show, filter and sort on."""
+    rows = class_index.get_index(_ctx(name)).rows
+    if compare:
+        from web import model_compare
+
+        rows = model_compare.with_comparison(rows, class_name=name)
+    return _filter_sort_page(rows, filter, sort, page, page_size, all_rows)
 
 
 def ranked_players(name: str):
@@ -990,6 +995,7 @@ def league_snapshot_players_page(
     page=0,
     page_size=50,
     all_rows=False,
+    compare=False,
 ):
     # No snapshot yet is a normal state (the league page loads before the first
     # refresh) - hand back an empty page rather than erroring the whole query.
@@ -1001,6 +1007,10 @@ def league_snapshot_players_page(
     if (group_by or "LEAGUE").upper() in ("ORG", "TEAM") and not group_id:
         return {"rows": [], "total_records": 0}
     rows = _grouped(_league_built_rows(league_id, method), group_by, group_id)
+    if compare:
+        from web import model_compare
+
+        rows = model_compare.with_comparison(rows, league_id=league_id, method=method)
     return _filter_sort_page(rows, filter, sort, page, page_size, all_rows)
 
 

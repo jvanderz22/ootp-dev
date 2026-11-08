@@ -2,7 +2,7 @@
   @if (!isNarrow()) {
     <p-selectbutton
       class="view-toggle"
-      [options]="viewOptions"
+      [options]="viewOptions()"
       optionLabel="label"
       optionValue="value"
       [allowEmpty]="false"
@@ -54,7 +54,7 @@
       <label class="m-fld">
         <span>View</span>
         <select [ngModel]="view()" (ngModelChange)="onView($event)">
-          @for (o of viewOptions; track o.value) {
+          @for (o of viewOptions(); track o.value) {
             <option [value]="o.value">{{ o.label }}</option>
           }
         </select>
@@ -234,6 +234,7 @@
                 [class.col-wide]="c.wide"
                 [class.tone-danger]="c.tone?.(cv) === 'danger'"
                 [class.tone-warn]="c.tone?.(cv) === 'warn'"
+                [class.tone-good]="c.tone?.(cv) === 'good'"
                 [attr.title]="cellTitle(c, cv)"
               >{{ cellText(c, cv) }}</td>
             }

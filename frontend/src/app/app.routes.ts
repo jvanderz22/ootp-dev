@@ -52,22 +52,12 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./pages/league-classes').then((m) => m.LeagueClassesPage),
           },
-          {
-            path: 'compare',
-            loadComponent: () =>
-              import('./pages/model-compare/model-compare').then((m) => m.ModelComparePage),
-          },
         ],
       },
       {
         path: 'class/:name',
         loadComponent: () =>
           import('./pages/class-view/class-view').then((m) => m.ClassViewPage),
-      },
-      {
-        path: 'class/:name/compare',
-        loadComponent: () =>
-          import('./pages/model-compare/model-compare').then((m) => m.ModelComparePage),
       },
     ],
   },

@@ -143,6 +143,16 @@ export interface RankedPlayer {
   /** v2 engine only: the fitted model's wRC+ (hitters) and ERA (pitchers) */
   wrcPlus: number | null;
   era: number | null;
+  /** the Compare view only (null otherwise): overall score and rank under
+   *  each engine — ranks are each engine's model order; the units differ
+   *  (legacy points vs v2's 50 + 10 × WAR), so the score diff is rough */
+  legacyScore?: number | null;
+  legacyRank?: number | null;
+  v2Score?: number | null;
+  v2Rank?: number | null;
+  scoreDiff?: number | null;
+  /** legacy rank minus v2 rank: positive when v2 ranks him higher */
+  rankDiff?: number | null;
   ratings: PlayerRatings | null;
   /** which stored ranking this row came from — pass it to `playerBreakdown` */
   source: RankingSource;
@@ -314,8 +324,8 @@ export interface RankedPlayerPage {
   totalRecords: number;
 }
 
-/** The three column presets the class table can show. */
-export type ClassView = 'modeled' | 'batting' | 'pitching';
+/** The column presets the class / league table can show. */
+export type ClassView = 'modeled' | 'batting' | 'pitching' | 'compare';
 
 /** One greater-than / less-than bound on a sortable column. `label` is for the
  *  UI only; `field` + `min` + `max` are what the backend filter consumes. */
@@ -360,41 +370,3 @@ export interface DraftedRefreshResult {
 
 export const RANKING_METHODS = ['draft_class', 'potential', 'overall'] as const;
 export type RankingMethod = (typeof RANKING_METHODS)[number];
-
-/** One player's overall score and rank under each ranking engine (the Compare
- *  view). Ranks are each engine's own model order. */
-export interface ModelComparisonRow {
-  id: string;
-  name: string;
-  position: string | null;
-  age: number | null;
-  org: string | null;
-  level: string | null;
-  playerType: string | null;
-  legacyScore: number | null;
-  legacyRank: number | null;
-  v2Score: number | null;
-  v2Rank: number | null;
-  /** v2 minus legacy; the units differ, so a rough guide */
-  scoreDiff: number | null;
-  /** legacy rank minus v2 rank: positive when v2 ranks him higher */
-  rankDiff: number | null;
-}
-
-export interface ModelComparisonPage {
-  rows: ModelComparisonRow[];
-  totalRecords: number;
-}
-
-/** What to compare (a class, or a league + method) and how to slice it. */
-export interface ModelComparisonQuery {
-  className?: string;
-  leagueId?: string;
-  method?: string;
-  search?: string;
-  positions?: string[];
-  level?: string;
-  sort?: { field: string; order: number };
-  page: number;
-  pageSize: number;
-}

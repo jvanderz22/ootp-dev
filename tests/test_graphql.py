@@ -420,6 +420,27 @@ def test_league_snapshot_queries(client):
         assert unfiltered["totalRecords"] == 2
 
 
+def test_league_players_compare_both_engines_within_an_org(client):
+    lid = gql(client, 'mutation { createLeague(name: "YFc", leagueUrl: "yfmlb") { id } }')[
+        "createLeague"
+    ]["id"]
+    _seed_snapshot(lid)
+    q = (
+        "query($l: ID!, $m: String!, $g: LeagueGroupBy!, $gid: ID) {"
+        " leagueSnapshotPlayers(leagueId: $l, method: $m, groupBy: $g, groupId: $gid,"
+        " allRows: true, compare: true) { rows { id rank legacyRank v2Rank rankDiff legacyScore v2Score } } }"
+    )
+    for method in ("overall", "potential"):
+        rows = gql(client, q, l=lid, m=method, g="LEAGUE")["leagueSnapshotPlayers"]["rows"]
+        assert sorted(r["legacyRank"] for r in rows) == sorted(r["v2Rank"] for r in rows) == [1, 2]
+        assert all(r["rankDiff"] == r["legacyRank"] - r["v2Rank"] for r in rows)
+        assert all(r["legacyScore"] is not None and r["v2Score"] is not None for r in rows)
+    # within one org the ranks are still the whole league's
+    org = gql(client, "query($l: ID!) { leagueOrgs(leagueId: $l) { id } }", l=lid)["leagueOrgs"][0]["id"]
+    one = gql(client, q, l=lid, m="overall", g="ORG", gid=org)["leagueSnapshotPlayers"]["rows"]
+    assert len(one) == 1 and one[0]["v2Rank"] in (1, 2)
+
+
 def test_league_players_no_selection_is_empty_and_skips_scoring(client):
     lid = gql(client, 'mutation { createLeague(name: "YFn", leagueUrl: "yfmlb") { id } }')[
         "createLeague"

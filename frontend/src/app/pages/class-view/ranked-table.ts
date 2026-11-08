@@ -132,13 +132,18 @@ export class RankedTableComponent {
   /** Trade Targets page only: the list being viewed, threaded to the detail
    *  card so its priority / note editors know which entry to patch. */
   readonly tradeListId = input<string | null>(null);
+  /** Offer the Compare view (each engine's score and rank) — off where the
+   *  container doesn't fetch the comparison fields (Trade Targets). */
+  readonly compareView = input(true);
 
   readonly queryChange = output<RankedQuery>();
   readonly loadMore = output<void>();
   readonly setRankChange = output<{ id: string; rank: number }>();
 
   protected readonly typeSeverity = typeSeverity;
-  protected readonly viewOptions = VIEW_OPTIONS;
+  protected readonly viewOptions = computed(() =>
+    VIEW_OPTIONS.filter((o) => o.value !== 'compare' || this.compareView()),
+  );
   protected readonly fieldingPositions = FIELDING_POSITIONS;
 
   // ------------------------------------------------------------- table state

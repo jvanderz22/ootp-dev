@@ -354,6 +354,7 @@
      gold amber for the middling one — both kept clear of the drafted red */
   ::ng-deep td.tone-danger { color: var(--tone-weak); font-weight: 700; }
   ::ng-deep td.tone-warn { color: var(--tone-mid); font-weight: 600; }
+  ::ng-deep td.tone-good { color: var(--ok); font-weight: 600; }
 }
 
 /* trade-list "labels" popover — p-popover content is appended to <body>, so

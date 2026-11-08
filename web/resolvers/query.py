@@ -3,14 +3,15 @@ from functools import partial
 import anyio
 from ariadne import ObjectType, QueryType
 
-from web import model_compare, service
+from web import service
 
 query = QueryType()
 
 # Ariadne would look up `v2Rank` as `v_2_rank`
-model_comparison_row = ObjectType("ModelComparisonRow")
-model_comparison_row.set_alias("v2Rank", "v2_rank")
-model_comparison_row.set_alias("v2Score", "v2_score")
+# the Compare view's fields; Ariadne's name conversion would read v_2_rank
+ranked_player = ObjectType("RankedPlayer")
+ranked_player.set_alias("v2Rank", "v2_rank")
+ranked_player.set_alias("v2Score", "v2_score")
 
 
 async def _off_loop(fn, *args, **kwargs):
@@ -33,7 +34,7 @@ async def resolve_draft_class(_, __, name):
 
 @query.field("rankedPlayers")
 async def resolve_ranked_players(
-    _, __, name, filter=None, sort=None, page=0, page_size=50, all_rows=False
+    _, __, name, filter=None, sort=None, page=0, page_size=50, all_rows=False, compare=False
 ):
     return await _off_loop(
         service.ranked_players_page,
@@ -43,6 +44,7 @@ async def resolve_ranked_players(
         page=page,
         page_size=page_size,
         all_rows=all_rows,
+        compare=compare,
     )
 
 
@@ -79,6 +81,7 @@ async def resolve_league_snapshot_players(
     page=0,
     page_size=50,
     all_rows=False,
+    compare=False,
 ):
     return await _off_loop(
         service.league_snapshot_players_page,
@@ -91,6 +94,7 @@ async def resolve_league_snapshot_players(
         page=page,
         page_size=page_size,
         all_rows=all_rows,
+        compare=compare,
     )
 
 
@@ -122,18 +126,6 @@ async def resolve_league_game_leagues(_, __, league_id):
 @query.field("leagueRefreshStatus")
 async def resolve_league_refresh_status(_, __, league_id):
     return await _off_loop(service.league_refresh_status, league_id)
-
-
-@query.field("modelComparison")
-async def resolve_model_comparison(
-    _, __, class_name=None, league_id=None, method="overall", search=None, positions=None, level=None,
-    sort=None, page=0, page_size=100,
-):
-    return await _off_loop(
-        model_compare.model_comparison_page,
-        class_name=class_name, league_id=league_id, method=method, search=search, positions=positions,
-        level=level, sort=sort, page=page, page_size=page_size,
-    )
 
 
 @query.field("playerBreakdown")

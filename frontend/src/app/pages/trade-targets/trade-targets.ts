@@ -130,6 +130,7 @@ function sortValue(row: RankedPlayer, field: string): number | string | null {
           [initialQuery]="query()"
           [tradeStore]="store"
           [tradeListId]="listId()"
+          [compareView]="false"
           (queryChange)="onQueryChange($event)"
         />
       }
