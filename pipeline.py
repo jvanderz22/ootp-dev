@@ -94,23 +94,34 @@ def _write_player_scores(ctx, players, engine) -> None:
     )
 
 
+def _run(ctx, engine):
+    return results_store.run_info(results_store.CLASS, ctx.name, ctx.ranking_method, engine)
+
+
 def _has_current_run(ctx, engine) -> bool:
-    info = results_store.run_info(results_store.CLASS, ctx.name, ctx.ranking_method, engine)
-    return info is not None and info["source_version"] == ctx.data_version
+    return results_store.is_current(_run(ctx, engine), ctx.data_version)
+
+
+def _is_processed(ctx) -> bool:
+    """Some engine scored the class's current dataset, by whatever model."""
+    return any(
+        (info := _run(ctx, e)) is not None and info["source_version"] == ctx.data_version
+        for e in ranking_engine.ENGINES
+    )
 
 
 def class_results(ctx, with_breakdown=False):
     """The class's ranking under the current engine (`results_store.class_results`),
-    scored now if the class is processed but not under this engine yet - say,
-    it was processed before the engine existed. None if it isn't processed."""
+    scored now if the class is processed but not by this engine's current model
+    yet - say, it was processed before the engine existed, or before a deploy
+    changed the model. None if it isn't processed."""
     from scoring.model_cache import HEAVY_SCORING_LOCK
 
     engine = ranking_engine.current()
     results = results_store.class_results(ctx, with_breakdown, engine)
     if results is not None:
         return results
-    others = [e for e in ranking_engine.ENGINES if e != engine]
-    if not any(_has_current_run(ctx, e) for e in others):
+    if not _is_processed(ctx):
         return None
     with HEAVY_SCORING_LOCK:
         # re-check: a concurrent request may have scored it while we waited

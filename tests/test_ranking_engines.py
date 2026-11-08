@@ -75,7 +75,9 @@ def test_engines_store_separate_runs(fixture_class):
     assert sum(line[2] for line in counted) == pytest.approx(top["model_score"], abs=0.01)
     manifest = results_store.run_info("class", CLASS, "draft_class", "v2")["manifest"]
     assert manifest["engine"] == "v2" and manifest["profile"] == "draft_class"
-    assert results_store.run_info("class", CLASS, "draft_class", "legacy")["manifest"] is None
+    # a legacy run has no manifest of its own, just the model version
+    legacy_manifest = results_store.run_info("class", CLASS, "draft_class", "legacy")["manifest"]
+    assert set(legacy_manifest) == {"model_version"} == set(manifest) & {"model_version"}
 
 
 def test_a_class_missing_the_current_engine_is_scored_on_read(fixture_class):
@@ -216,3 +218,20 @@ def test_compare_view_sorts_and_filters(client):
 def test_rows_carry_no_comparison_unless_asked(client):
     rows = _gql(client, f"""{{ rankedPlayers(name: "{CLASS}", pageSize: 3) {{ rows {{ v2Rank rankDiff }} }} }}""")
     assert all(r == {"v2Rank": None, "rankDiff": None} for r in rows["rankedPlayers"]["rows"])
+
+
+def test_a_run_scored_by_another_model_is_rescored_on_its_next_read(fixture_class, monkeypatch):
+    import pipeline
+    from ranking import manifest
+
+    pipeline.process_class(fixture_class)
+    before = results_store.run_info("class", CLASS, "draft_class", "v2")
+    assert results_store.class_results(fixture_class, engine="v2") is not None
+    # a deploy that changes the model: both engines' runs are now stale, but
+    # the class still counts as processed and is re-scored when read
+    monkeypatch.setattr(manifest, "model_version", lambda: "next-model")
+    assert results_store.class_results(fixture_class, engine="v2") is None
+    rows = pipeline.class_results(fixture_class)
+    assert rows
+    after = results_store.run_info("class", CLASS, "draft_class", "v2")
+    assert after["manifest"]["model_version"] == "next-model" != before["manifest"]["model_version"]

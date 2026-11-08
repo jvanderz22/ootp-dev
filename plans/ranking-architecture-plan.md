@@ -601,6 +601,22 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
 - Scouting accuracy stays judgment: nearly every draftee in this league is
   "Very High", so there's nothing to fit. Leadership stays judgment too
   (org value beyond MLB outcomes).
+- **Outcome distributions: tested and dropped (2026-11-08).** You care about
+  P90, not P10 (the bottom 25–50% of prospects bust). A P90 curve against
+  the board's pre-demand value was well calibrated (7–15% of a held-out
+  class above it), but it rises with the board value, so it never reorders
+  anyone, and it flattens at 3.6 WAR above a value of 5 (only ~90 past
+  draftees that high), so the top of a class all read the same. P75 orders
+  2+ WAR prospects like P90 (spearman 0.95), and ranking by P75, P90 or E[v]
+  picks no better top 100 than the board value (1.61–1.65 vs 1.65 mean
+  WAR). A bust-chance column was skipped for the same reason. The ranking
+  stays on the board value; revisit once the archive adds more top
+  prospects' outcomes.
+- **Stored runs are rescored when the model changes (2026-11-08).** A run
+  records the version of the scoring code, artifacts and grids that made it
+  (`ranking.manifest.model_version`); one made by another version is stale
+  and re-scored on its next read, so a deploy shows up without reprocessing
+  classes by hand.
 - Platoon items from `my-todo.txt` land here and in talent (vs L / vs R
   ratings per profile).
   - This should apply to the overall model only because undeveloped players don't have enough

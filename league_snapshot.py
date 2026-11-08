@@ -632,14 +632,11 @@ def snapshot_version(ctx: LeagueSnapshotContext) -> int:
 
 def ranked_method_is_fresh(ctx: LeagueSnapshotContext, method: str) -> bool:
     """Whether the stored `method` ranking under the current engine was scored
-    from the current snapshot - i.e. it is ready to serve without a re-score.
-    Drives the "model hasn't run yet" hint on the league page."""
+    from the current snapshot by the model scoring now - i.e. it is ready to
+    serve without a re-score. Drives the "model hasn't run yet" hint on the
+    league page."""
     info = results_store.run_info(results_store.LEAGUE, ctx.league_id, method)
-    return (
-        info is not None
-        and ctx.data_file.exists()
-        and info["source_version"] == snapshot_version(ctx)
-    )
+    return ctx.data_file.exists() and results_store.is_current(info, snapshot_version(ctx))
 
 
 def _score(ctx: LeagueSnapshotContext, ranker, method: str, progress=None) -> list[dict]:

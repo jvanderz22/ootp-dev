@@ -6,7 +6,8 @@ class's dataset (scope "class", id = class name) or a league snapshot (scope
 is kept; `save_run` replaces it in one transaction. `engine` defaults to the
 one the request is served by (`ranking_engine.current()`). A run is fresh while its `source_version`
 matches the source's current version (`draft_classes.data_version` /
-`league_snapshots.version`).
+`league_snapshots.version`) and its manifest's `model_version` matches the
+code and artifacts scoring now (`ranking.manifest.model_version`).
 
 Each result row carries the scores plus the player's score breakdown, already
 pruned to the side(s) his Hitter / Pitcher / Two-way type is judged on. A v2
@@ -108,7 +109,11 @@ def save_run(
     """Replace the stored run for (scope, scope_id, method, engine) with
     `results` - result rows in model order, best first (see
     `result_from_scored`). A player id that repeats (a duplicated row in the
-    export) keeps its best entry. `manifest` is the v2 run manifest."""
+    export) keeps its best entry. `manifest` is the v2 run manifest; every
+    run's records the model version that scored it (see `is_current`)."""
+    from ranking.manifest import model_version
+
+    manifest = {**(manifest or {}), "model_version": model_version()}
     scored_at = scored_at or datetime.now(timezone.utc).isoformat()
     engine = _engine(engine)
     deduped, seen = [], set()
@@ -132,7 +137,7 @@ def save_run(
             "INSERT INTO model_runs (scope, scope_id, method, engine, source_version, scored_at, "
             "player_count, manifest) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (*key, source_version, scored_at, len(results),
-             json.dumps(manifest, sort_keys=True) if manifest else None),
+             json.dumps(manifest, sort_keys=True)),
         )
         conn.executemany(
             insert,
@@ -201,11 +206,24 @@ def load_breakdown(scope, scope_id, method, player_id, engine=None):
     )
 
 
+def is_current(info, source_version) -> bool:
+    """Whether a stored run (`run_info`) was scored from `source_version` by
+    the model scoring now."""
+    from ranking.manifest import model_version
+
+    return (
+        info is not None
+        and info["source_version"] == source_version
+        and (info["manifest"] or {}).get("model_version") == model_version()
+    )
+
+
 def class_results(ctx, with_breakdown=False, engine=None):
     """A draft class's ranking for its current method, or None if it hasn't
-    been scored since its dataset was last uploaded."""
+    been scored since its dataset was last uploaded, or by the model scoring
+    now."""
     info = run_info(CLASS, ctx.name, ctx.ranking_method, engine)
-    if info is None or info["source_version"] != ctx.data_version:
+    if not is_current(info, ctx.data_version):
         return None
     return load_results(CLASS, ctx.name, ctx.ranking_method, with_breakdown, engine)
 
