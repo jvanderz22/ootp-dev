@@ -24,6 +24,11 @@ SP and all as RP; nothing else changes). `role_stuff` moves displayed Stuff
 into the other role with the fitted shift: a listed starter gains it in relief,
 anyone else loses it plus a margin as a starter, erring towards taking too much
 away rather than too little.
+
+Current ratings come with platoon splits in a league snapshot. A pitcher who
+has them is scored on each side's events, blended at the share of left-handed
+batters his role and throwing hand face (`platoon_mix`, fit on MLB lines), so
+a pitcher with one bad side isn't flattered by the rounded combined rating.
 """
 import json
 from functools import lru_cache
@@ -68,6 +73,8 @@ class PitcherTalent:
         self.era_scale = artifact.get("era_scale")
         # {"overall" | "potential": {"coef": [intercept, best, 2nd, ...], "margin"}}
         self.role_shift = artifact.get("role_shift")
+        # {role: {"R" | "L": share of batters faced who bat left}}
+        self.platoon_mix = artifact.get("platoon_mix")
         # runs allowed index -> legacy SP / RP points (ranking/bridge.py);
         # absent while fitting
         self.bridges = artifact.get("points_bridges")
@@ -109,11 +116,28 @@ class PitcherTalent:
         r = self.rates(ratings, role)
         return outcomes(r["k"], r["bb"], r["hr"], r["hit"], self.extra_base_share, self.triple_share)
 
+    def lhb_share(self, role: str, throws):
+        """The share of left-handed batters faced in `role`, per throwing hand
+        ("R" / "L")."""
+        mix = self.platoon_mix[role]
+        return np.array([mix[t] for t in throws])
+
+    def platoon_events(self, sides: dict, role: str, lhb_share) -> dict:
+        """Events against the role's batters: `sides` {"vL" | "vR": ratings}
+        scored apart and blended at `lhb_share`."""
+        vl, vr = self.events(sides["vL"], role), self.events(sides["vR"], role)
+        return {k: lhb_share * vl[k] + (1 - lhb_share) * vr[k] for k in vl}
+
     def runs_index(self, ratings: dict, role: str):
-        return 100 * runs_per_pa(self.events(ratings, role), self.weights) / self.mlb_runs_per_pa
+        return self.index_of(self.events(ratings, role))
+
+    def index_of(self, events: dict):
+        return 100 * runs_per_pa(events, self.weights) / self.mlb_runs_per_pa
 
     def era(self, ratings: dict, role: str):
-        events = self.events(ratings, role)
+        return self.era_of(self.events(ratings, role))
+
+    def era_of(self, events: dict):
         return era_from(events, self.weights, self.era_scale)
 
     def points(self, runs_index, role: str):

@@ -7,7 +7,13 @@ from scoring.runtime_components import set_path
 
 
 class Demand(PoolStage):
+    """`offset`: the part of the score the factors leave alone - v2's 50 points
+    of replacement level, so a factor scales only the value above it."""
+
     name = "demand"
+
+    def __init__(self, offset=0.0):
+        self.offset = offset
 
     def run(self, results, profile):
         # `results` arrive in pre-demand order with `pre_demand_rank` set
@@ -21,7 +27,11 @@ class Demand(PoolStage):
                         f"rank_adjust.modifiers.{modifier_name(modifier)}",
                         round(float(factor), 2),
                     )
-                score = result.ledger.scale(DEMAND, modifier_name(modifier), score, factor)
+                if self.offset:
+                    above = max(score - self.offset, 0.0)
+                    score += result.ledger.scale(DEMAND, modifier_name(modifier), above, factor) - above
+                else:
+                    score = result.ledger.scale(DEMAND, modifier_name(modifier), score, factor)
             set_path(result.breakdown, "rank_adjust.pre_rank", result.pre_demand_rank)
             set_path(result.breakdown, "rank_adjust.pre_score", round(float(result.pre_demand_score), 2))
             result.overall_score = score

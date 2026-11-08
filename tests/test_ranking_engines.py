@@ -150,7 +150,7 @@ def test_breakdown_carries_the_ledger(client):
     top = _gql(client, _ROWS)["rankedPlayers"]["rows"][0]
     source = {"className": CLASS}
     b = _gql(client, _BREAKDOWN, source=source, id=top["id"])["playerBreakdown"]
-    assert b["engine"] == "v2" and b["unit"] == "points"
+    assert b["engine"] == "v2" and b["unit"] == "WAR points (50 + 10 x WAR)"
     counted = [line["delta"] for line in b["ledger"] if line["counted"]]
     assert sum(counted) == pytest.approx(top["modelScore"], abs=0.01)
     assert {line["stage"] for line in b["ledger"]} >= {"model", "modifiers", "demand"}

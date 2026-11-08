@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 OVERALL_SPLIT = 1
+VS_LEFT_SPLIT, VS_RIGHT_SPLIT = 2, 3   # vs left- / right-handed opponents
 # team-seasons with fewer PA (partial or short-season teams) are left out of
 # the linear-weights fit
 MIN_TEAM_PA = 3000
@@ -15,7 +16,7 @@ LEVEL_MLB = 1
 EVENTS = ("single", "double", "triple", "hr", "bb", "k", "out")
 
 
-def _load(stats_dir, kind, years) -> pd.DataFrame:
+def _load(stats_dir, kind, years, split=OVERALL_SPLIT) -> pd.DataFrame:
     frames = []
     for year in years:
         path = Path(stats_dir) / kind / f"{year}.csv"
@@ -24,7 +25,7 @@ def _load(stats_dir, kind, years) -> pd.DataFrame:
     if not frames:
         raise FileNotFoundError(f"no {kind} stats for {list(years)} under {stats_dir}")
     stats = pd.concat(frames, ignore_index=True)
-    return stats[stats.split_id == OVERALL_SPLIT].copy()
+    return stats[stats.split_id == split].copy()
 
 
 def load_batting(stats_dir, years) -> pd.DataFrame:
@@ -55,6 +56,17 @@ def load_pitching(stats_dir, years) -> pd.DataFrame:
     pit["in_play"] = pit.contact - pit.hr
     pit["hits_in_play"] = pit.ha - pit.hra
     return pit
+
+
+def pitching_bf_by_side(stats_dir, years) -> pd.DataFrame:
+    """Per pitching stint: g, gs, and batters faced vs left (`bf_l`) and right
+    (`bf_r`) -handed batters."""
+    keys = ["player_id", "year", "team_id", "level_id", "stint"]
+    out = _load(stats_dir, "pitch", years)[keys + ["g", "gs"]]
+    for split, name in ((VS_LEFT_SPLIT, "bf_l"), (VS_RIGHT_SPLIT, "bf_r")):
+        side = _load(stats_dir, "pitch", years, split)[keys + ["bf"]].rename(columns={"bf": name})
+        out = out.merge(side, on=keys)
+    return out
 
 
 # StatsPlus field position number -> position
@@ -118,3 +130,47 @@ def mlb_events_per_pa(bat: pd.DataFrame, year: int) -> dict:
 def mlb_runs_per_pa(bat: pd.DataFrame, weights: dict, year: int) -> float:
     mlb = bat[(bat.year == year) & (bat.level_id == LEVEL_MLB)]
     return float(runs(mlb, weights).sum() / mlb.pa.sum())
+
+
+SEASON_PA = 600
+DH = "DH"
+
+
+def hitter_war(stats_dir, years) -> dict:
+    """StatsPlus's MLB hitter WAR taken apart: WAR per batting run (linear
+    weights against the league), per defense run (zone rating + framing + arm
+    + baserunning, as StatsPlus counts them) and an allowance per SEASON_PA at
+    the position he played most (DH when he never took the field)."""
+    bat = load_batting(stats_dir, years)
+    weights = fit_linear_weights(bat)
+    mlb = bat[bat.level_id == LEVEL_MLB].copy()
+    mlb["lw"] = runs(mlb, weights)
+    mlb["baserunning"] = baserunning_runs(mlb)
+    league = mlb.groupby("year").apply(lambda g: g.lw.sum() / g.pa.sum()).rename("league")
+    hitters = mlb.groupby(["player_id", "year"]).agg(
+        pa=("pa", "sum"), lw=("lw", "sum"), war=("war", "sum"), baserunning=("baserunning", "sum"),
+    ).reset_index().join(league, on="year")
+    hitters["batting"] = hitters.lw - hitters.league * hitters.pa
+    field = pd.concat(
+        pd.read_csv(Path(stats_dir) / "field" / f"{y}.csv") for y in years
+        if (Path(stats_dir) / "field" / f"{y}.csv").exists()
+    )
+    field = field[field.level_id == LEVEL_MLB]
+    played = field.groupby(["player_id", "year"]).agg(
+        fielding=("zr", "sum"), framing=("framing", "sum"), arm=("arm", "sum")).reset_index()
+    main = field[field.position.isin(list(FIELD_POSITIONS))].sort_values("ip")
+    main = main.groupby(["player_id", "year"]).tail(1)[["player_id", "year", "position"]]
+    main["position"] = main.position.map(FIELD_POSITIONS)
+    hitters = hitters.merge(played, on=["player_id", "year"], how="left").merge(
+        main, on=["player_id", "year"], how="left")
+    hitters = hitters[hitters.pa >= 100].fillna({"fielding": 0, "framing": 0, "arm": 0, "position": DH})
+    # StatsPlus's WAR counts its arm runs, so the split has to as well
+    hitters["defense"] = hitters.fielding + hitters.framing + hitters.arm + hitters.baserunning
+    names = list(FIELD_POSITIONS.values()) + [DH]
+    dummies = np.column_stack([(hitters.position == n) * hitters.pa for n in names])
+    coef, *_ = np.linalg.lstsq(np.column_stack([hitters.batting, hitters.defense, dummies]), hitters.war, rcond=None)
+    return {
+        "per_batting_run": float(coef[0]),
+        "per_defense_run": float(coef[1]),
+        "allowance_600": {n: float(a * SEASON_PA) for n, a in zip(names, coef[2:])},
+    }

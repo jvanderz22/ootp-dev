@@ -26,68 +26,68 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 52,
-    "preScore": 10.39
+    "preRank": 63,
+    "preScore": 46.68
    }
   },
   "1001": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 0.07,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 0.96
-      }
-     ],
-     "total": 1.03
-    },
-    "positionModel": 1.28,
-    "runningModel": 25.3,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.84,
+     "hrRisk": null,
+     "model": 8.05,
+     "pitchMix": null,
+     "score": 6.74
+    },
+    "starter": {
+     "baseModifier": 1.01,
+     "hrRisk": null,
+     "model": 7.62,
+     "pitchMix": null,
+     "score": 7.73
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 103,
-    "preScore": 1.31
+    "preRank": 12,
+    "preScore": 64.44
    }
   },
   "1002": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 19.73,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 0.96
-      }
-     ],
-     "total": 1.03
-    },
-    "positionModel": 4.71,
-    "runningModel": 7.47,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.82,
+     "hrRisk": null,
+     "model": 4.42,
+     "pitchMix": null,
+     "score": 3.63
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 81,
-    "preScore": 4.84
+    "preRank": 59,
+    "preScore": 47.31
    }
   },
   "1003": {
@@ -116,8 +116,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 19,
-    "preScore": 29.52
+    "preRank": 44,
+    "preScore": 49.5
    }
   },
   "1004": {
@@ -131,23 +131,23 @@
     "reliever": {
      "baseModifier": 0.83,
      "hrRisk": null,
-     "model": 33.83,
+     "model": 23.56,
      "pitchMix": null,
-     "score": 28.02
+     "score": 19.51
     },
     "starter": {
      "baseModifier": 0.45,
      "hrRisk": null,
-     "model": 33.65,
+     "model": 22.89,
      "pitchMix": null,
-     "score": 15.14
+     "score": 10.3
     }
    },
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 22,
-    "preScore": 28.02
+    "preRank": 26,
+    "preScore": 52.92
    }
   },
   "1005": {
@@ -176,38 +176,38 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 43,
-    "preScore": 15.49
+    "preRank": 82,
+    "preScore": 43.69
    }
   },
   "1006": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 14.52,
+   "batting": null,
+   "legacy": [],
+   "pitching": {
     "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 1.0
-      }
-     ],
+     "modifiers": [],
      "total": 1.0
     },
-    "positionModel": 5.49,
-    "runningModel": 45.96,
-    "utilityBonus": 0.0
+    "reliever": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    }
    },
-   "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 75,
-    "preScore": 5.49
+    "preRank": 66,
+    "preScore": 46.11
    }
   },
   "1007": {
@@ -236,8 +236,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 18,
-    "preScore": 30.31
+    "preRank": 35,
+    "preScore": 50.88
    }
   },
   "1008": {
@@ -251,23 +251,23 @@
     "reliever": {
      "baseModifier": 0.83,
      "hrRisk": null,
-     "model": 16.24,
+     "model": 14.53,
      "pitchMix": null,
-     "score": 13.45
+     "score": 12.04
     },
     "starter": {
      "baseModifier": 0.45,
      "hrRisk": null,
-     "model": 21.74,
+     "model": 18.07,
      "pitchMix": null,
-     "score": 9.78
+     "score": 8.13
     }
    },
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 47,
-    "preScore": 13.45
+    "preRank": 43,
+    "preScore": 49.64
    }
   },
   "1009": {
@@ -296,8 +296,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 28,
-    "preScore": 22.44
+    "preRank": 54,
+    "preScore": 48.73
    }
   },
   "1010": {
@@ -326,8 +326,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 45,
-    "preScore": 15.16
+    "preRank": 75,
+    "preScore": 45.45
    }
   },
   "1011": {
@@ -356,8 +356,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 15,
-    "preScore": 33.11
+    "preRank": 23,
+    "preScore": 56.49
    }
   },
   "1012": {
@@ -386,38 +386,38 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 14,
-    "preScore": 33.53
+    "preRank": 21,
+    "preScore": 56.95
    }
   },
   "1013": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 4.18,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 0.99
-      }
-     ],
-     "total": 0.99
-    },
-    "positionModel": 2.82,
-    "runningModel": 37.98,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 95,
-    "preScore": 2.79
+    "preRank": 96,
+    "preScore": 41.82
    }
   },
   "1014": {
@@ -446,8 +446,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 23,
-    "preScore": 27.61
+    "preRank": 42,
+    "preScore": 49.7
    }
   },
   "1015": {
@@ -476,8 +476,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 11,
-    "preScore": 37.7
+    "preRank": 19,
+    "preScore": 59.72
    }
   },
   "1016": {
@@ -506,8 +506,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 38,
-    "preScore": 18.24
+    "preRank": 92,
+    "preScore": 42.59
    }
   },
   "1017": {
@@ -521,53 +521,53 @@
     "reliever": {
      "baseModifier": 0.83,
      "hrRisk": null,
-     "model": 22.54,
+     "model": 34.22,
      "pitchMix": null,
-     "score": 18.67
+     "score": 28.34
     },
     "starter": {
      "baseModifier": 0.45,
      "hrRisk": null,
-     "model": 26.13,
+     "model": 42.16,
      "pitchMix": null,
-     "score": 11.76
+     "score": 18.97
     }
    },
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 37,
-    "preScore": 18.67
+    "preRank": 22,
+    "preScore": 56.6
    }
   },
   "1018": {
-   "batting": {
-    "battingModel": 7.5,
-    "bestPositionScore": 22.57,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 0.99
-      }
-     ],
-     "total": 0.99
-    },
-    "positionModel": 10.59,
-    "runningModel": 2.94,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 18.6,
+     "pitchMix": null,
+     "score": 0.0
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 21.25,
+     "pitchMix": null,
+     "score": 0.0
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 51,
-    "preScore": 10.48
+    "preRank": 34,
+    "preScore": 51.04
    }
   },
   "1019": {
@@ -596,8 +596,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 3,
-    "preScore": 47.42
+    "preRank": 5,
+    "preScore": 77.04
    }
   },
   "1020": {
@@ -626,8 +626,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 85,
-    "preScore": 4.35
+    "preRank": 77,
+    "preScore": 44.43
    }
   },
   "1021": {
@@ -656,31 +656,12 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 69,
-    "preScore": 6.49
+    "preRank": 61,
+    "preScore": 46.98
    }
   },
   "1022": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 10.55,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 1.02
-      }
-     ],
-     "total": 1.06
-    },
-    "positionModel": 4.62,
-    "runningModel": 45.96,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
    "pitching": {
     "modifiers": {
@@ -690,9 +671,9 @@
     "reliever": {
      "baseModifier": 0.84,
      "hrRisk": null,
-     "model": 5.5,
+     "model": 1.37,
      "pitchMix": null,
-     "score": 4.62
+     "score": 1.15
     },
     "starter": {
      "baseModifier": 0.0,
@@ -702,11 +683,11 @@
      "score": 0.0
     }
    },
-   "playerType": "Two-way",
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 74,
-    "preScore": 5.59
+    "preRank": 39,
+    "preScore": 50.67
    }
   },
   "1023": {
@@ -720,23 +701,23 @@
     "reliever": {
      "baseModifier": 0.84,
      "hrRisk": null,
-     "model": 4.97,
+     "model": 16.97,
      "pitchMix": null,
-     "score": 4.18
+     "score": 14.26
     },
     "starter": {
-     "baseModifier": 0.0,
+     "baseModifier": 0.45,
      "hrRisk": null,
-     "model": 0.0,
+     "model": 21.31,
      "pitchMix": null,
-     "score": 0.0
+     "score": 9.59
     }
    },
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 87,
-    "preScore": 4.18
+    "preRank": 40,
+    "preScore": 50.26
    }
   },
   "1024": {
@@ -765,8 +746,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 39,
-    "preScore": 16.69
+    "preRank": 100,
+    "preScore": 40.84
    }
   },
   "1025": {
@@ -795,98 +776,98 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 65,
-    "preScore": 7.25
+    "preRank": 80,
+    "preScore": 44.1
    }
   },
   "1026": {
-   "batting": {
-    "battingModel": 5.55,
-    "bestPositionScore": 7.76,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 0.99
-      }
-     ],
-     "total": 1.06
-    },
-    "positionModel": 6.23,
-    "runningModel": 9.43,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 23.72,
+     "pitchMix": null,
+     "score": 0.0
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 28.02,
+     "pitchMix": null,
+     "score": 0.0
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 68,
-    "preScore": 6.6
+    "preRank": 37,
+    "preScore": 50.81
    }
   },
   "1027": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 14.35,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 0.97
-      }
-     ],
-     "total": 1.04
-    },
-    "positionModel": 5.46,
-    "runningModel": 45.96,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 73,
-    "preScore": 5.66
+    "preRank": 106,
+    "preScore": 30.2
    }
   },
   "1028": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 7.03,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 0.98
-      }
-     ],
-     "total": 1.05
-    },
-    "positionModel": 2.8,
-    "runningModel": 25.15,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.84,
+     "hrRisk": null,
+     "model": 16.37,
+     "pitchMix": null,
+     "score": 13.69
+    },
+    "starter": {
+     "baseModifier": 1.01,
+     "hrRisk": null,
+     "model": 11.64,
+     "pitchMix": null,
+     "score": 11.82
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 93,
-    "preScore": 2.94
+    "preRank": 15,
+    "preScore": 61.57
    }
   },
   "1029": {
@@ -900,23 +881,23 @@
     "reliever": {
      "baseModifier": 0.8,
      "hrRisk": null,
-     "model": 26.29,
+     "model": 5.4,
      "pitchMix": null,
-     "score": 21.12
+     "score": 4.34
     },
     "starter": {
-     "baseModifier": 0.45,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 27.53,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 12.39
+     "score": 0.0
     }
    },
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 33,
-    "preScore": 21.12
+    "preRank": 50,
+    "preScore": 48.96
    }
   },
   "1030": {
@@ -945,8 +926,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 91,
-    "preScore": 3.28
+    "preRank": 90,
+    "preScore": 42.74
    }
   },
   "1031": {
@@ -976,7 +957,7 @@
    "rankAdjust": {
     "modifiers": [],
     "preRank": 98,
-    "preScore": 2.04
+    "preScore": 41.23
    }
   },
   "1032": {
@@ -1005,8 +986,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 55,
-    "preScore": 9.53
+    "preRank": 87,
+    "preScore": 42.99
    }
   },
   "1033": {
@@ -1035,8 +1016,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 7,
-    "preScore": 40.43
+    "preRank": 14,
+    "preScore": 63.88
    }
   },
   "1034": {
@@ -1050,83 +1031,83 @@
     "reliever": {
      "baseModifier": 0.83,
      "hrRisk": null,
-     "model": 48.06,
+     "model": 30.64,
      "pitchMix": null,
-     "score": 39.81
+     "score": 25.38
     },
     "starter": {
      "baseModifier": 0.99,
      "hrRisk": null,
-     "model": 57.34,
+     "model": 29.13,
      "pitchMix": null,
-     "score": 56.77
+     "score": 28.84
     }
    },
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 1,
-    "preScore": 56.77
+    "preRank": 7,
+    "preScore": 75.36
    }
   },
   "1035": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 38.28,
+   "batting": null,
+   "legacy": [],
+   "pitching": {
     "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 1.0
-      }
-     ],
+     "modifiers": [],
      "total": 1.0
     },
-    "positionModel": 8.97,
-    "runningModel": 6.03,
-    "utilityBonus": 1.13
+    "reliever": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    }
    },
-   "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 59,
-    "preScore": 8.97
+    "preRank": 94,
+    "preScore": 42.03
    }
   },
   "1036": {
-   "batting": {
-    "battingModel": 17.97,
-    "bestPositionScore": 29.8,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 1.0
-      }
-     ],
-     "total": 1.04
-    },
-    "positionModel": 22.36,
-    "runningModel": 45.96,
-    "utilityBonus": 1.77
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 23.11,
+     "pitchMix": null,
+     "score": 0.0
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 25.29,
+     "pitchMix": null,
+     "score": 0.0
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 26,
-    "preScore": 23.25
+    "preRank": 31,
+    "preScore": 51.86
    }
   },
   "1037": {
@@ -1155,8 +1136,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 9,
-    "preScore": 40.37
+    "preRank": 13,
+    "preScore": 64.25
    }
   },
   "1038": {
@@ -1185,8 +1166,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 48,
-    "preScore": 12.14
+    "preRank": 88,
+    "preScore": 42.91
    }
   },
   "1039": {
@@ -1215,8 +1196,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 21,
-    "preScore": 28.73
+    "preRank": 47,
+    "preScore": 49.24
    }
   },
   "1040": {
@@ -1245,8 +1226,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 62,
-    "preScore": 8.13
+    "preRank": 91,
+    "preScore": 42.64
    }
   },
   "1041": {
@@ -1260,23 +1241,23 @@
     "reliever": {
      "baseModifier": 0.83,
      "hrRisk": null,
-     "model": 5.11,
+     "model": 34.86,
      "pitchMix": null,
-     "score": 4.23
+     "score": 28.87
     },
     "starter": {
      "baseModifier": 0.93,
      "hrRisk": null,
-     "model": 5.77,
+     "model": 43.25,
      "pitchMix": null,
-     "score": 5.36
+     "score": 40.19
     }
    },
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 77,
-    "preScore": 5.36
+    "preRank": 2,
+    "preScore": 83.58
    }
   },
   "1042": {
@@ -1305,8 +1286,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 8,
-    "preScore": 40.41
+    "preRank": 11,
+    "preScore": 66.69
    }
   },
   "1043": {
@@ -1318,25 +1299,25 @@
      "total": 1.0
     },
     "reliever": {
-     "baseModifier": 0.82,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 39.68,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 32.54
+     "score": 0.0
     },
     "starter": {
-     "baseModifier": 0.45,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 35.14,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 15.81
+     "score": 0.0
     }
    },
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 17,
-    "preScore": 32.54
+    "preRank": 83,
+    "preScore": 43.62
    }
   },
   "1044": {
@@ -1365,8 +1346,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 5,
-    "preScore": 42.78
+    "preRank": 9,
+    "preScore": 68.42
    }
   },
   "1045": {
@@ -1395,8 +1376,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 79,
-    "preScore": 5.07
+    "preRank": 68,
+    "preScore": 46.05
    }
   },
   "1046": {
@@ -1425,38 +1406,38 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 78,
-    "preScore": 5.24
+    "preRank": 62,
+    "preScore": 46.7
    }
   },
   "1047": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 3.43,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 1.02
-      }
-     ],
-     "total": 1.09
-    },
-    "positionModel": 1.02,
-    "runningModel": 5.4,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.83,
+     "hrRisk": null,
+     "model": 44.02,
+     "pitchMix": null,
+     "score": 36.64
+    },
+    "starter": {
+     "baseModifier": 0.45,
+     "hrRisk": null,
+     "model": 49.03,
+     "pitchMix": null,
+     "score": 22.06
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 105,
-    "preScore": 1.12
+    "preRank": 16,
+    "preScore": 61.34
    }
   },
   "1048": {
@@ -1485,8 +1466,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 31,
-    "preScore": 21.44
+    "preRank": 46,
+    "preScore": 49.34
    }
   },
   "1049": {
@@ -1500,46 +1481,27 @@
     "reliever": {
      "baseModifier": 0.84,
      "hrRisk": null,
-     "model": 13.15,
+     "model": 26.0,
      "pitchMix": null,
-     "score": 11.0
+     "score": 21.75
     },
     "starter": {
      "baseModifier": 1.01,
      "hrRisk": null,
-     "model": 15.29,
+     "model": 31.88,
      "pitchMix": null,
-     "score": 15.52
+     "score": 32.36
     }
    },
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 42,
-    "preScore": 15.52
+    "preRank": 3,
+    "preScore": 78.92
    }
   },
   "1050": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 15.67,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 0.99
-      }
-     ],
-     "total": 1.06
-    },
-    "positionModel": 4.83,
-    "runningModel": 27.58,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
    "pitching": {
     "modifiers": {
@@ -1549,23 +1511,23 @@
     "reliever": {
      "baseModifier": 0.8,
      "hrRisk": null,
-     "model": 10.88,
+     "model": 15.04,
      "pitchMix": null,
-     "score": 8.74
+     "score": 12.08
     },
     "starter": {
      "baseModifier": 0.45,
      "hrRisk": null,
-     "model": 7.75,
+     "model": 16.59,
      "pitchMix": null,
-     "score": 3.49
+     "score": 7.47
     }
    },
-   "playerType": "Two-way",
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 60,
-    "preScore": 8.74
+    "preRank": 48,
+    "preScore": 49.21
    }
   },
   "1051": {
@@ -1577,25 +1539,25 @@
      "total": 1.0
     },
     "reliever": {
-     "baseModifier": 0.84,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 23.58,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 19.73
+     "score": 0.0
     },
     "starter": {
-     "baseModifier": 0.93,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 24.03,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 22.44
+     "score": 0.0
     }
    },
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 29,
-    "preScore": 22.44
+    "preRank": 95,
+    "preScore": 41.97
    }
   },
   "1052": {
@@ -1624,8 +1586,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 54,
-    "preScore": 9.78
+    "preRank": 53,
+    "preScore": 48.8
    }
   },
   "1053": {
@@ -1654,8 +1616,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 16,
-    "preScore": 32.92
+    "preRank": 28,
+    "preScore": 52.31
    }
   },
   "1054": {
@@ -1684,8 +1646,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 34,
-    "preScore": 21.0
+    "preRank": 45,
+    "preScore": 49.37
    }
   },
   "1055": {
@@ -1714,8 +1676,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 94,
-    "preScore": 2.88
+    "preRank": 86,
+    "preScore": 43.06
    }
   },
   "1056": {
@@ -1727,25 +1689,25 @@
      "total": 1.0
     },
     "reliever": {
-     "baseModifier": 0.83,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 11.19,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 9.27
+     "score": 0.0
     },
     "starter": {
-     "baseModifier": 0.99,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 8.59,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 8.51
+     "score": 0.0
     }
    },
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 57,
-    "preScore": 9.27
+    "preRank": 81,
+    "preScore": 43.72
    }
   },
   "1057": {
@@ -1759,53 +1721,53 @@
     "reliever": {
      "baseModifier": 0.84,
      "hrRisk": null,
-     "model": 10.17,
+     "model": 4.45,
      "pitchMix": null,
-     "score": 8.51
+     "score": 3.72
     },
     "starter": {
-     "baseModifier": 1.01,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 6.33,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 6.43
+     "score": 0.0
     }
    },
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 61,
-    "preScore": 8.51
+    "preRank": 24,
+    "preScore": 55.82
    }
   },
   "1058": {
-   "batting": {
-    "battingModel": 13.74,
-    "bestPositionScore": 16.44,
+   "batting": null,
+   "legacy": [],
+   "pitching": {
     "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 1.0
-      }
-     ],
+     "modifiers": [],
      "total": 1.0
     },
-    "positionModel": 15.32,
-    "runningModel": 33.51,
-    "utilityBonus": 0.0
+    "reliever": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 19.07,
+     "pitchMix": null,
+     "score": 0.0
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 18.56,
+     "pitchMix": null,
+     "score": 0.0
+    }
    },
-   "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 44,
-    "preScore": 15.32
+    "preRank": 32,
+    "preScore": 51.84
    }
   },
   "1059": {
@@ -1819,53 +1781,53 @@
     "reliever": {
      "baseModifier": 0.83,
      "hrRisk": null,
-     "model": 17.61,
+     "model": 1.88,
      "pitchMix": null,
-     "score": 14.65
+     "score": 1.57
     },
     "starter": {
-     "baseModifier": 0.93,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 17.32,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 16.1
+     "score": 0.0
     }
    },
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 41,
-    "preScore": 16.1
+    "preRank": 29,
+    "preScore": 52.28
    }
   },
   "1060": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 15.67,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 0.99
-      }
-     ],
-     "total": 0.99
-    },
-    "positionModel": 5.0,
-    "runningModel": 30.99,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.83,
+     "hrRisk": null,
+     "model": 8.95,
+     "pitchMix": null,
+     "score": 7.41
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 80,
-    "preScore": 4.95
+    "preRank": 49,
+    "preScore": 49.21
    }
   },
   "1061": {
@@ -1894,8 +1856,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 35,
-    "preScore": 20.52
+    "preRank": 101,
+    "preScore": 39.66
    }
   },
   "1062": {
@@ -1924,8 +1886,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 32,
-    "preScore": 21.2
+    "preRank": 60,
+    "preScore": 47.15
    }
   },
   "1063": {
@@ -1954,8 +1916,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 4,
-    "preScore": 46.52
+    "preRank": 6,
+    "preScore": 75.46
    }
   },
   "1064": {
@@ -1984,8 +1946,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 72,
-    "preScore": 5.74
+    "preRank": 52,
+    "preScore": 48.84
    }
   },
   "1065": {
@@ -2014,8 +1976,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 99,
-    "preScore": 1.76
+    "preRank": 104,
+    "preScore": 36.5
    }
   },
   "1066": {
@@ -2044,8 +2006,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 40,
-    "preScore": 16.61
+    "preRank": 103,
+    "preScore": 37.28
    }
   },
   "1067": {
@@ -2074,8 +2036,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 67,
-    "preScore": 6.82
+    "preRank": 89,
+    "preScore": 42.75
    }
   },
   "1068": {
@@ -2087,25 +2049,25 @@
      "total": 1.0
     },
     "reliever": {
-     "baseModifier": 0.83,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 15.83,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 13.11
+     "score": 0.0
     },
     "starter": {
-     "baseModifier": 1.0,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 21.96,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 21.96
+     "score": 0.0
     }
    },
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 30,
-    "preScore": 21.96
+    "preRank": 99,
+    "preScore": 40.91
    }
   },
   "1069": {
@@ -2134,8 +2096,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 25,
-    "preScore": 24.95
+    "preRank": 64,
+    "preScore": 46.12
    }
   },
   "1070": {
@@ -2164,8 +2126,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 102,
-    "preScore": 1.35
+    "preRank": 78,
+    "preScore": 44.25
    }
   },
   "1071": {
@@ -2194,8 +2156,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 97,
-    "preScore": 2.43
+    "preRank": 85,
+    "preScore": 43.38
    }
   },
   "1072": {
@@ -2224,38 +2186,38 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 88,
-    "preScore": 3.62
+    "preRank": 73,
+    "preScore": 45.68
    }
   },
   "1073": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 22.57,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 0.96
-      }
-     ],
-     "total": 0.96
-    },
-    "positionModel": 6.64,
-    "runningModel": 33.51,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 70,
-    "preScore": 6.38
+    "preRank": 97,
+    "preScore": 41.36
    }
   },
   "1074": {
@@ -2284,8 +2246,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 46,
-    "preScore": 13.67
+    "preRank": 65,
+    "preScore": 46.12
    }
   },
   "1075": {
@@ -2314,8 +2276,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 63,
-    "preScore": 7.94
+    "preRank": 56,
+    "preScore": 47.8
    }
   },
   "1076": {
@@ -2345,7 +2307,7 @@
    "rankAdjust": {
     "modifiers": [],
     "preRank": 10,
-    "preScore": 39.49
+    "preScore": 68.36
    }
   },
   "1077": {
@@ -2374,8 +2336,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 24,
-    "preScore": 27.11
+    "preRank": 76,
+    "preScore": 44.91
    }
   },
   "1078": {
@@ -2404,31 +2366,12 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 2,
-    "preScore": 53.59
+    "preRank": 1,
+    "preScore": 85.9
    }
   },
   "1079": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 21.35,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 1.0
-      }
-     ],
-     "total": 1.07
-    },
-    "positionModel": 5.31,
-    "runningModel": 12.28,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
    "pitching": {
     "modifiers": {
@@ -2438,23 +2381,23 @@
     "reliever": {
      "baseModifier": 0.8,
      "hrRisk": null,
-     "model": 7.85,
+     "model": 18.61,
      "pitchMix": null,
-     "score": 6.31
+     "score": 14.96
     },
     "starter": {
      "baseModifier": 0.45,
      "hrRisk": null,
-     "model": 2.42,
+     "model": 20.54,
      "pitchMix": null,
-     "score": 1.09
+     "score": 9.24
     }
    },
-   "playerType": "Two-way",
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 66,
-    "preScore": 7.16
+    "preRank": 30,
+    "preScore": 52.0
    }
   },
   "1080": {
@@ -2483,38 +2426,38 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 27,
-    "preScore": 23.12
+    "preRank": 71,
+    "preScore": 45.77
    }
   },
   "1081": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 4.56,
+   "batting": null,
+   "legacy": [],
+   "pitching": {
     "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 1.0
-      }
-     ],
+     "modifiers": [],
      "total": 1.0
     },
-    "positionModel": 2.55,
-    "runningModel": 30.99,
-    "utilityBonus": 0.0
+    "reliever": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    }
    },
-   "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 96,
-    "preScore": 2.55
+    "preRank": 93,
+    "preScore": 42.04
    }
   },
   "1082": {
@@ -2526,25 +2469,25 @@
      "total": 1.0
     },
     "reliever": {
-     "baseModifier": 0.84,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 33.45,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 28.11
+     "score": 0.0
     },
     "starter": {
-     "baseModifier": 1.02,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 39.85,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 40.65
+     "score": 0.0
     }
    },
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 6,
-    "preScore": 40.65
+    "preRank": 84,
+    "preScore": 43.59
    }
   },
   "1083": {
@@ -2573,8 +2516,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 76,
-    "preScore": 5.47
+    "preRank": 67,
+    "preScore": 46.05
    }
   },
   "1084": {
@@ -2603,8 +2546,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 49,
-    "preScore": 10.83
+    "preRank": 102,
+    "preScore": 37.33
    }
   },
   "1085": {
@@ -2633,68 +2576,68 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 89,
-    "preScore": 3.49
+    "preRank": 105,
+    "preScore": 35.13
    }
   },
   "1086": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 36.59,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 1.02
-      }
-     ],
-     "total": 1.06
-    },
-    "positionModel": 9.74,
-    "runningModel": 24.98,
-    "utilityBonus": 2.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.83,
+     "hrRisk": null,
+     "model": 3.65,
+     "pitchMix": null,
+     "score": 3.02
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 53,
-    "preScore": 10.33
+    "preRank": 38,
+    "preScore": 50.75
    }
   },
   "1087": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 4.58,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 0.98
-      }
-     ],
-     "total": 1.02
-    },
-    "positionModel": 1.38,
-    "runningModel": 7.47,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 11.41,
+     "pitchMix": null,
+     "score": 0.0
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 17.17,
+     "pitchMix": null,
+     "score": 0.0
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 100,
-    "preScore": 1.41
+    "preRank": 41,
+    "preScore": 50.19
    }
   },
   "1088": {
@@ -2723,8 +2666,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 20,
-    "preScore": 29.33
+    "preRank": 51,
+    "preScore": 48.89
    }
   },
   "1089": {
@@ -2753,31 +2696,12 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 82,
-    "preScore": 4.59
+    "preRank": 55,
+    "preScore": 48.14
    }
   },
   "1090": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 28.69,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 0.96
-      }
-     ],
-     "total": 0.96
-    },
-    "positionModel": 8.61,
-    "runningModel": 45.96,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
    "pitching": {
     "modifiers": {
@@ -2785,55 +2709,55 @@
      "total": 1.0
     },
     "reliever": {
-     "baseModifier": 0.82,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 8.93,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 7.33
+     "score": 0.0
     },
     "starter": {
-     "baseModifier": 0.45,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 0.3,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 0.14
+     "score": 0.0
     }
    },
-   "playerType": "Two-way",
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 56,
-    "preScore": 9.37
+    "preRank": 69,
+    "preScore": 45.95
    }
   },
   "1091": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 14.35,
+   "batting": null,
+   "legacy": [],
+   "pitching": {
     "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 1.0
-      }
-     ],
+     "modifiers": [],
      "total": 1.0
     },
-    "positionModel": 4.3,
-    "runningModel": 22.77,
-    "utilityBonus": 0.0
+    "reliever": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    }
    },
-   "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 86,
-    "preScore": 4.3
+    "preRank": 79,
+    "preScore": 44.12
    }
   },
   "1092": {
@@ -2862,8 +2786,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 104,
-    "preScore": 1.18
+    "preRank": 70,
+    "preScore": 45.82
    }
   },
   "1093": {
@@ -2892,98 +2816,98 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 36,
-    "preScore": 19.39
+    "preRank": 72,
+    "preScore": 45.76
    }
   },
   "1094": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 14.31,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 1.0
-      }
-     ],
-     "total": 1.04
-    },
-    "positionModel": 4.34,
-    "runningModel": 23.81,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 23.35,
+     "pitchMix": null,
+     "score": 0.0
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 24.17,
+     "pitchMix": null,
+     "score": 0.0
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 84,
-    "preScore": 4.51
+    "preRank": 27,
+    "preScore": 52.53
    }
   },
   "1095": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 4.51,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 1.02
-      }
-     ],
-     "total": 1.06
-    },
-    "positionModel": 1.3,
-    "runningModel": 6.1,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 17.2,
+     "pitchMix": null,
+     "score": 0.0
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 22.42,
+     "pitchMix": null,
+     "score": 0.0
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 101,
-    "preScore": 1.38
+    "preRank": 36,
+    "preScore": 50.86
    }
   },
   "1096": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 26.97,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 1.0
-      }
-     ],
-     "total": 1.07
-    },
-    "positionModel": 6.9,
-    "runningModel": 12.28,
-    "utilityBonus": 1.61
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.82,
+     "hrRisk": null,
+     "model": 9.08,
+     "pitchMix": null,
+     "score": 7.45
+    },
+    "starter": {
+     "baseModifier": 0.85,
+     "hrRisk": null,
+     "model": 2.33,
+     "pitchMix": null,
+     "score": 1.98
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 64,
-    "preScore": 7.39
+    "preRank": 20,
+    "preScore": 58.5
    }
   },
   "1097": {
@@ -2995,55 +2919,55 @@
      "total": 1.0
     },
     "reliever": {
-     "baseModifier": 0.84,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 10.9,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 9.16
+     "score": 0.0
     },
     "starter": {
-     "baseModifier": 1.02,
+     "baseModifier": 0.0,
      "hrRisk": null,
-     "model": 7.41,
+     "model": 0.0,
      "pitchMix": null,
-     "score": 7.56
+     "score": 0.0
     }
    },
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 58,
-    "preScore": 9.16
+    "preRank": 57,
+    "preScore": 47.76
    }
   },
   "1098": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 7.01,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.07
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 1.02
-      }
-     ],
-     "total": 1.09
-    },
-    "positionModel": 3.18,
-    "runningModel": 32.84,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.84,
+     "hrRisk": null,
+     "model": 30.48,
+     "pitchMix": null,
+     "score": 25.62
+    },
+    "starter": {
+     "baseModifier": 1.02,
+     "hrRisk": null,
+     "model": 34.8,
+     "pitchMix": null,
+     "score": 35.49
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 90,
-    "preScore": 3.47
+    "preRank": 4,
+    "preScore": 78.81
    }
   },
   "1099": {
@@ -3072,8 +2996,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 71,
-    "preScore": 6.18
+    "preRank": 74,
+    "preScore": 45.53
    }
   },
   "1100": {
@@ -3102,68 +3026,68 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 50,
-    "preScore": 10.75
+    "preRank": 58,
+    "preScore": 47.58
    }
   },
   "1101": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 0.74,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 0.99
-      }
-     ],
-     "total": 0.99
-    },
-    "positionModel": 0.51,
-    "runningModel": 7.01,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.84,
+     "hrRisk": null,
+     "model": 1.47,
+     "pitchMix": null,
+     "score": 1.23
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 106,
-    "preScore": 0.51
+    "preRank": 33,
+    "preScore": 51.48
    }
   },
   "1102": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 12.21,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 1.02
-      }
-     ],
-     "total": 1.02
-    },
-    "positionModel": 4.5,
-    "runningModel": 36.17,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.82,
+     "hrRisk": null,
+     "model": 26.02,
+     "pitchMix": null,
+     "score": 21.33
+    },
+    "starter": {
+     "baseModifier": 0.78,
+     "hrRisk": null,
+     "model": 26.06,
+     "pitchMix": null,
+     "score": 20.38
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 83,
-    "preScore": 4.59
+    "preRank": 8,
+    "preScore": 72.79
    }
   },
   "1103": {
@@ -3192,38 +3116,38 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 12,
-    "preScore": 35.72
+    "preRank": 17,
+    "preScore": 61.06
    }
   },
   "1111": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 4.58,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.0
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 0.99
-      }
-     ],
-     "total": 0.99
-    },
-    "positionModel": 3.31,
-    "runningModel": 45.96,
-    "utilityBonus": 0.0
-   },
+   "batting": null,
    "legacy": [],
-   "pitching": null,
-   "playerType": "Hitter",
+   "pitching": {
+    "modifiers": {
+     "modifiers": [],
+     "total": 1.0
+    },
+    "reliever": {
+     "baseModifier": 0.82,
+     "hrRisk": null,
+     "model": 4.12,
+     "pitchMix": null,
+     "score": 3.38
+    },
+    "starter": {
+     "baseModifier": 0.0,
+     "hrRisk": null,
+     "model": 0.0,
+     "pitchMix": null,
+     "score": 0.0
+    }
+   },
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 92,
-    "preScore": 3.27
+    "preRank": 25,
+    "preScore": 53.42
    }
   },
   "1112": {
@@ -3252,8 +3176,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 13,
-    "preScore": 35.64
+    "preRank": 18,
+    "preScore": 59.98
    }
   }
  },
@@ -3314,7 +3238,7 @@
    "rankAdjust": {
     "modifiers": [],
     "preRank": 51,
-    "preScore": 27.7
+    "preScore": 58.59
    }
   },
   "1009": {
@@ -3363,8 +3287,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 23,
-    "preScore": 48.14
+    "preRank": 15,
+    "preScore": 86.32
    }
   },
   "1010": {
@@ -3413,8 +3337,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 53,
-    "preScore": 27.06
+    "preRank": 59,
+    "preScore": 53.04
    }
   },
   "1011": {
@@ -3463,8 +3387,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 27,
-    "preScore": 45.5
+    "preRank": 21,
+    "preScore": 79.82
    }
   },
   "1012": {
@@ -3513,8 +3437,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 22,
-    "preScore": 48.6
+    "preRank": 16,
+    "preScore": 84.27
    }
   },
   "1013": {
@@ -3572,8 +3496,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 72,
-    "preScore": 9.96
+    "preRank": 62,
+    "preScore": 51.77
    }
   },
   "1014": {
@@ -3622,8 +3546,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 20,
-    "preScore": 49.26
+    "preRank": 25,
+    "preScore": 75.46
    }
   },
   "1015": {
@@ -3672,8 +3596,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 5,
-    "preScore": 68.68
+    "preRank": 6,
+    "preScore": 98.09
    }
   },
   "1016": {
@@ -3722,8 +3646,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 33,
-    "preScore": 41.22
+    "preRank": 43,
+    "preScore": 63.14
    }
   },
   "1017": {
@@ -3781,8 +3705,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 8,
-    "preScore": 64.76
+    "preRank": 17,
+    "preScore": 83.51
    }
   },
   "1018": {
@@ -3831,8 +3755,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 55,
-    "preScore": 25.1
+    "preRank": 60,
+    "preScore": 51.88
    }
   },
   "1019": {
@@ -3881,8 +3805,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 2,
-    "preScore": 89.13
+    "preRank": 1,
+    "preScore": 135.58
    }
   },
   "1020": {
@@ -3931,8 +3855,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 65,
-    "preScore": 15.57
+    "preRank": 69,
+    "preScore": 37.24
    }
   },
   "1021": {
@@ -3981,8 +3905,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 35,
-    "preScore": 38.11
+    "preRank": 46,
+    "preScore": 59.92
    }
   },
   "1022": {
@@ -4040,8 +3964,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 62,
-    "preScore": 20.75
+    "preRank": 35,
+    "preScore": 69.84
    }
   },
   "1023": {
@@ -4099,8 +4023,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 19,
-    "preScore": 50.74
+    "preRank": 27,
+    "preScore": 74.07
    }
   },
   "1024": {
@@ -4149,8 +4073,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 48,
-    "preScore": 29.92
+    "preRank": 58,
+    "preScore": 54.3
    }
   },
   "1025": {
@@ -4199,8 +4123,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 38,
-    "preScore": 34.77
+    "preRank": 40,
+    "preScore": 66.39
    }
   },
   "1034": {
@@ -4258,8 +4182,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 1,
-    "preScore": 92.33
+    "preRank": 3,
+    "preScore": 106.24
    }
   },
   "1035": {
@@ -4317,8 +4241,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 28,
-    "preScore": 44.67
+    "preRank": 18,
+    "preScore": 83.39
    }
   },
   "1036": {
@@ -4367,8 +4291,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 30,
-    "preScore": 42.73
+    "preRank": 24,
+    "preScore": 76.32
    }
   },
   "1037": {
@@ -4417,8 +4341,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 3,
-    "preScore": 87.17
+    "preRank": 2,
+    "preScore": 127.64
    }
   },
   "1038": {
@@ -4467,8 +4391,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 47,
-    "preScore": 30.27
+    "preRank": 45,
+    "preScore": 61.52
    }
   },
   "1039": {
@@ -4517,8 +4441,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 43,
-    "preScore": 32.83
+    "preRank": 48,
+    "preScore": 59.65
    }
   },
   "1040": {
@@ -4567,8 +4491,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 56,
-    "preScore": 23.9
+    "preRank": 61,
+    "preScore": 51.81
    }
   },
   "1041": {
@@ -4626,8 +4550,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 31,
-    "preScore": 41.89
+    "preRank": 22,
+    "preScore": 79.52
    }
   },
   "1042": {
@@ -4676,8 +4600,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 12,
-    "preScore": 55.24
+    "preRank": 20,
+    "preScore": 82.2
    }
   },
   "1043": {
@@ -4735,8 +4659,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 40,
-    "preScore": 33.89
+    "preRank": 42,
+    "preScore": 63.89
    }
   },
   "1044": {
@@ -4785,8 +4709,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 17,
-    "preScore": 51.33
+    "preRank": 14,
+    "preScore": 86.5
    }
   },
   "1045": {
@@ -4835,8 +4759,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 42,
-    "preScore": 33.18
+    "preRank": 52,
+    "preScore": 58.13
    }
   },
   "1046": {
@@ -4885,8 +4809,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 29,
-    "preScore": 43.86
+    "preRank": 38,
+    "preScore": 67.93
    }
   },
   "1047": {
@@ -4944,8 +4868,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 63,
-    "preScore": 20.56
+    "preRank": 57,
+    "preScore": 54.6
    }
   },
   "1048": {
@@ -4994,8 +4918,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 9,
-    "preScore": 64.64
+    "preRank": 4,
+    "preScore": 100.05
    }
   },
   "1049": {
@@ -5053,8 +4977,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 50,
-    "preScore": 29.11
+    "preRank": 34,
+    "preScore": 70.55
    }
   },
   "1050": {
@@ -5112,8 +5036,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 44,
-    "preScore": 32.78
+    "preRank": 54,
+    "preScore": 57.29
    }
   },
   "1051": {
@@ -5171,8 +5095,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 15,
-    "preScore": 51.97
+    "preRank": 13,
+    "preScore": 88.26
    }
   },
   "1060": {
@@ -5230,8 +5154,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 61,
-    "preScore": 20.78
+    "preRank": 56,
+    "preScore": 55.0
    }
   },
   "1061": {
@@ -5280,8 +5204,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 21,
-    "preScore": 49.15
+    "preRank": 31,
+    "preScore": 73.58
    }
   },
   "1062": {
@@ -5330,8 +5254,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 14,
-    "preScore": 53.5
+    "preRank": 23,
+    "preScore": 78.13
    }
   },
   "1063": {
@@ -5380,8 +5304,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 13,
-    "preScore": 54.84
+    "preRank": 9,
+    "preScore": 94.79
    }
   },
   "1064": {
@@ -5430,8 +5354,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 69,
-    "preScore": 10.9
+    "preRank": 67,
+    "preScore": 39.81
    }
   },
   "1065": {
@@ -5480,8 +5404,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 71,
-    "preScore": 10.16
+    "preRank": 72,
+    "preScore": 30.06
    }
   },
   "1066": {
@@ -5530,8 +5454,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 41,
-    "preScore": 33.36
+    "preRank": 36,
+    "preScore": 68.56
    }
   },
   "1067": {
@@ -5580,8 +5504,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 39,
-    "preScore": 34.34
+    "preRank": 49,
+    "preScore": 58.96
    }
   },
   "1068": {
@@ -5639,8 +5563,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 4,
-    "preScore": 76.76
+    "preRank": 7,
+    "preScore": 97.84
    }
   },
   "1069": {
@@ -5689,8 +5613,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 36,
-    "preScore": 37.69
+    "preRank": 47,
+    "preScore": 59.9
    }
   },
   "1070": {
@@ -5739,8 +5663,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 60,
-    "preScore": 21.63
+    "preRank": 65,
+    "preScore": 43.45
    }
   },
   "1071": {
@@ -5789,8 +5713,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 68,
-    "preScore": 12.65
+    "preRank": 71,
+    "preScore": 32.42
    }
   },
   "1072": {
@@ -5839,8 +5763,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 73,
-    "preScore": 9.91
+    "preRank": 70,
+    "preScore": 33.52
    }
   },
   "1073": {
@@ -5898,8 +5822,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 66,
-    "preScore": 14.53
+    "preRank": 41,
+    "preScore": 64.17
    }
   },
   "1074": {
@@ -5948,8 +5872,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 24,
-    "preScore": 47.31
+    "preRank": 33,
+    "preScore": 71.26
    }
   },
   "1075": {
@@ -5998,8 +5922,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 26,
-    "preScore": 45.7
+    "preRank": 32,
+    "preScore": 71.7
    }
   },
   "1076": {
@@ -6048,8 +5972,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 6,
-    "preScore": 67.55
+    "preRank": 5,
+    "preScore": 98.13
    }
   },
   "1077": {
@@ -6098,51 +6022,12 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 7,
-    "preScore": 65.64
+    "preRank": 10,
+    "preScore": 93.65
    }
   },
   "1086": {
-   "batting": {
-    "battingModel": 0.0,
-    "bestPositionScore": 36.59,
-    "modifiers": {
-     "modifiers": [
-      {
-       "name": "ScoutingAccuracyModifier",
-       "value": 1.0
-      },
-      {
-       "name": "PersonalityModifier",
-       "value": 1.05
-      },
-      {
-       "name": "AgeModifier",
-       "value": 1.01
-      },
-      {
-       "name": "DraftBatterOverallModifier",
-       "value": 0.85
-      },
-      {
-       "name": "BatterHandednessModifier",
-       "value": 1.04
-      },
-      {
-       "name": "BatterHitProfileModifier",
-       "value": 1.02
-      },
-      {
-       "name": "BatterInjuryModifier",
-       "value": 1.0
-      }
-     ],
-     "total": 0.95
-    },
-    "positionModel": 9.74,
-    "runningModel": 24.98,
-    "utilityBonus": 2.0
-   },
+   "batting": null,
    "legacy": [],
    "pitching": {
     "modifiers": {
@@ -6193,11 +6078,11 @@
      "score": 11.75
     }
    },
-   "playerType": "Two-way",
+   "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 67,
-    "preScore": 13.42
+    "preRank": 39,
+    "preScore": 67.14
    }
   },
   "1087": {
@@ -6246,8 +6131,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 59,
-    "preScore": 21.92
+    "preRank": 68,
+    "preScore": 37.63
    }
   },
   "1088": {
@@ -6296,8 +6181,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 16,
-    "preScore": 51.44
+    "preRank": 26,
+    "preScore": 74.45
    }
   },
   "1089": {
@@ -6346,8 +6231,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 64,
-    "preScore": 19.65
+    "preRank": 66,
+    "preScore": 42.62
    }
   },
   "1090": {
@@ -6405,8 +6290,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 54,
-    "preScore": 26.37
+    "preRank": 55,
+    "preScore": 56.83
    }
   },
   "1091": {
@@ -6464,8 +6349,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 25,
-    "preScore": 47.31
+    "preRank": 19,
+    "preScore": 82.46
    }
   },
   "1092": {
@@ -6514,8 +6399,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 37,
-    "preScore": 36.99
+    "preRank": 63,
+    "preScore": 51.06
    }
   },
   "1093": {
@@ -6564,8 +6449,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 45,
-    "preScore": 32.57
+    "preRank": 50,
+    "preScore": 58.94
    }
   },
   "1094": {
@@ -6614,8 +6499,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 46,
-    "preScore": 31.94
+    "preRank": 64,
+    "preScore": 47.86
    }
   },
   "1095": {
@@ -6664,8 +6549,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 70,
-    "preScore": 10.83
+    "preRank": 73,
+    "preScore": 28.21
    }
   },
   "1096": {
@@ -6723,8 +6608,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 49,
-    "preScore": 29.39
+    "preRank": 30,
+    "preScore": 73.84
    }
   },
   "1097": {
@@ -6782,8 +6667,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 18,
-    "preScore": 50.81
+    "preRank": 11,
+    "preScore": 90.02
    }
   },
   "1098": {
@@ -6841,8 +6726,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 57,
-    "preScore": 23.79
+    "preRank": 29,
+    "preScore": 73.95
    }
   },
   "1099": {
@@ -6891,8 +6776,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 32,
-    "preScore": 41.3
+    "preRank": 44,
+    "preScore": 61.78
    }
   },
   "1100": {
@@ -6941,8 +6826,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 34,
-    "preScore": 39.22
+    "preRank": 53,
+    "preScore": 57.93
    }
   },
   "1101": {
@@ -7000,8 +6885,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 52,
-    "preScore": 27.26
+    "preRank": 28,
+    "preScore": 73.98
    }
   },
   "1102": {
@@ -7059,8 +6944,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 58,
-    "preScore": 22.34
+    "preRank": 37,
+    "preScore": 68.22
    }
   },
   "1103": {
@@ -7109,8 +6994,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 11,
-    "preScore": 57.28
+    "preRank": 8,
+    "preScore": 97.77
    }
   },
   "1112": {
@@ -7159,8 +7044,8 @@
    "playerType": "Hitter",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 10,
-    "preScore": 62.43
+    "preRank": 12,
+    "preScore": 89.14
    }
   }
  }

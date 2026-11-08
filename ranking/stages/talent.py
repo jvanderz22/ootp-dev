@@ -12,6 +12,7 @@ from typing import NamedTuple
 
 import numpy as np
 
+from models.game_players import SPLIT_SIDES
 from ranking import fielding_talent, hitter_talent, pitcher_talent, running_talent
 from ranking.ratings import RatingsView
 from scoring.pitcher_scorer import rp_stamina_modifier_map, sp_stamina_modifier_map
@@ -86,6 +87,7 @@ class FittedPitching(NamedTuple):
     rp_era: float
     sp_stuff: float         # Stuff in each role: displayed is the listed role's
     rp_stuff: float
+    platoon: bool           # scored on his vL / vR splits
 
 
 class PitcherTalent:
@@ -120,9 +122,10 @@ class PitcherTalent:
         top = np.array([self.ratings.pitch_grades(players[i]) for i, _ in group])
         listed_sp = np.array([players[i].position == "SP" for i, _ in group])
         stuff = self.model.role_stuff(ratings["stuff"], top, listed_sp, self.ratings.ratings)
-        in_role = {role: {**ratings, "stuff": stuff[role]} for role in pitcher_talent.ROLES}
-        index = {role: self.model.runs_index(in_role[role], role) for role in pitcher_talent.ROLES}
-        era = {role: self.model.era(in_role[role], role) for role in pitcher_talent.ROLES}
+        events = {role: self.model.events({**ratings, "stuff": stuff[role]}, role) for role in pitcher_talent.ROLES}
+        platoon = self._platoon(players, group, top, listed_sp, events)
+        index = {role: self.model.index_of(events[role]) for role in pitcher_talent.ROLES}
+        era = {role: self.model.era_of(events[role]) for role in pitcher_talent.ROLES}
         talent = {role: self.model.points(index[role], role) for role in pitcher_talent.ROLES}
         for j, (i, _) in enumerate(group):
             player = players[i]
@@ -139,9 +142,42 @@ class PitcherTalent:
                 rp_era=float(era["rp"][j]),
                 sp_stuff=float(stuff["sp"][j]),
                 rp_stuff=float(stuff["rp"][j]),
+                platoon=bool(platoon[j]),
             )
             write_runtime_component(player.id, "pitching.talent.sp_runs_index", out[i].sp_index)
             write_runtime_component(player.id, "pitching.talent.rp_runs_index", out[i].rp_index)
+
+    def _platoon(self, players, group, top, listed_sp, events) -> np.ndarray:
+        """Puts each role's events against its batters, vL and vR scored apart,
+        in `events` for the pitchers whose splits are there (and on the group's
+        side of HRA / Movement); returns which ones."""
+        hra = group[0][1]["hra"] is not None
+        rows, sides, throws = [], [], []
+        for j, (i, _) in enumerate(group):
+            split, hand = self.ratings.pitching_splits(players[i]), self.ratings.throws(players[i])
+            if split and hand and all((split[side]["hra"] is not None) == hra for side in split):
+                rows.append(j)
+                sides.append(split)
+                throws.append(hand)
+        done = np.zeros(len(group), dtype=bool)
+        if not rows:
+            return done
+        done[rows] = True
+        by_side = {
+            side: {name: (np.array([s[side][name] for s in sides]) if sides[0][side][name] is not None else None)
+                   for name in pitcher_talent.RATINGS}
+            for side in SPLIT_SIDES
+        }
+        # each side's displayed Stuff is the listed role's too
+        stuff = {side: self.model.role_stuff(r["stuff"], top[rows], listed_sp[rows], self.ratings.ratings)
+                 for side, r in by_side.items()}
+        for role in pitcher_talent.ROLES:
+            in_role = {side: {**r, "stuff": stuff[side][role]} for side, r in by_side.items()}
+            blended = self.model.platoon_events(in_role, role, self.model.lhb_share(role, throws))
+            for name, value in blended.items():
+                events[role][name] = np.asarray(events[role][name], dtype=float).copy()
+                events[role][name][rows] = value
+        return done
 
 
 class FittedFielding(NamedTuple):

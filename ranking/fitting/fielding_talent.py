@@ -37,17 +37,13 @@ from ranking.fielding_talent import (
 )
 from ranking.fitting.datasets import fielding_rows, season_snapshots
 from ranking.fitting.hitter_talent import data_hash
-from ranking.fitting.stats import (
-    FIELD_POSITIONS, LEVEL_MLB, baserunning_runs, fit_linear_weights, load_batting, load_fielding, runs,
-)
+from ranking.fitting.stats import DH, LEVEL_MLB, hitter_war, load_fielding
 from ranking.hitter_talent import ARTIFACTS_DIR
 
 SPREAD_YEARS = 8           # seasons of fielding stats behind each position's spread
 SPREAD_LEVELS = (1, 2)     # MLB and AAA
 SPREAD_MIN_INNINGS = 300
 WAR_YEARS = 5
-SEASON_PA = 600
-DH = "DH"
 # 7. harder positions are worth more: (harder, easier) pairs of adjustments
 POSITION_ORDER = [("C", "1B"), ("SS", "2B"), ("SS", "3B"), ("CF", "LF"), ("CF", "RF"),
                   ("2B", "1B"), ("3B", "1B"), ("LF", "1B"), ("RF", "1B"), ("1B", DH)]
@@ -84,40 +80,10 @@ def true_spreads(stats_dir, years) -> dict:
 
 def position_adjustments(stats_dir, years) -> dict:
     """{position: runs per season above the average position}, DH included."""
-    bat = load_batting(stats_dir, years)
-    weights = fit_linear_weights(bat)
-    mlb = bat[bat.level_id == LEVEL_MLB].copy()
-    mlb["lw"] = runs(mlb, weights)
-    mlb["baserunning"] = baserunning_runs(mlb)
-    league = mlb.groupby("year").apply(lambda g: g.lw.sum() / g.pa.sum()).rename("league")
-    hitters = mlb.groupby(["player_id", "year"]).agg(
-        pa=("pa", "sum"), lw=("lw", "sum"), war=("war", "sum"), baserunning=("baserunning", "sum"),
-    ).reset_index().join(league, on="year")
-    hitters["batting"] = hitters.lw - hitters.league * hitters.pa
-    field = pd.concat(
-        pd.read_csv(Path(stats_dir) / "field" / f"{y}.csv") for y in years
-        if (Path(stats_dir) / "field" / f"{y}.csv").exists()
-    )
-    field = field[field.level_id == LEVEL_MLB]
-    played = field.groupby(["player_id", "year"]).agg(
-        fielding=("zr", "sum"), framing=("framing", "sum"), arm=("arm", "sum")).reset_index()
-    # the position he played most; none (a DH) when he never took the field
-    main = field[field.position.isin(list(FIELD_POSITIONS))].sort_values("ip")
-    main = main.groupby(["player_id", "year"]).tail(1)[["player_id", "year", "position"]]
-    main["position"] = main.position.map(FIELD_POSITIONS)
-    hitters = hitters.merge(played, on=["player_id", "year"], how="left").merge(
-        main, on=["player_id", "year"], how="left")
-    hitters = hitters[hitters.pa >= 100].fillna({"fielding": 0, "framing": 0, "arm": 0, "position": DH})
-    # StatsPlus's WAR counts its arm runs, so the split has to as well
-    hitters["defense"] = hitters.fielding + hitters.framing + hitters.arm + hitters.baserunning
-    names = list(POSITIONS) + [DH]
-    dummies = np.column_stack([(hitters.position == n) * hitters.pa for n in names])
-    design = np.column_stack([hitters.batting, hitters.defense, dummies])
-    coef, *_ = np.linalg.lstsq(design, hitters.war, rcond=None)
-    per_run = coef[1]
-    allowance = dict(zip(names, coef[2:] * SEASON_PA))
+    war = hitter_war(stats_dir, years)
+    allowance = war["allowance_600"]
     mean = np.mean(list(allowance.values()))
-    return {n: round(float((a - mean) / per_run), 2) for n, a in allowance.items()}, float(per_run)
+    return {n: round(float((a - mean) / war["per_defense_run"]), 2) for n, a in allowance.items()}, war["per_defense_run"]
 
 
 def floored_by_season(rows, snapshots) -> dict:

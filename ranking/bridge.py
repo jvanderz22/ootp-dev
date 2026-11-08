@@ -22,6 +22,15 @@ def fit(talent, legacy, higher_is_better=True) -> dict:
     return {"talent": np.round(x[keep], 4).tolist(), "points": np.round(y[keep], 3).tolist()}
 
 
+def talent(points_value, bridge: dict):
+    """The inverse: legacy points -> talent, clamped to the knots' range. For
+    players a fitted model can't score (an old export without BABIP), so the
+    value layer can still price them."""
+    x, y = np.asarray(bridge["talent"]), np.asarray(bridge["points"])
+    order = np.argsort(y)
+    return np.interp(points_value, y[order], x[order])
+
+
 def points(value, bridge: dict):
     """`value` through `bridge`, extended past its ends along the end slopes and
     floored at 0."""

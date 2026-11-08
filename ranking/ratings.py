@@ -6,6 +6,7 @@ stage can read the wrong side by accident.
 """
 import numpy as np
 
+from models.game_players import SPLIT_SIDES
 from ranking.fielding_talent import RATINGS as FIELDING
 from ranking.hitter_talent import RATINGS as HITTING
 from ranking.running_talent import RATINGS as RUNNING
@@ -55,6 +56,25 @@ class RatingsView:
         if not values["stuff"] or not values["control"] or not (values["movement"] or values["hra"]):
             return None
         return values
+
+    def pitching_splits(self, player):
+        """{"vL" | "vR": base pitching ratings} from his platoon splits, or None:
+        only current ratings have splits, and only a league snapshot's rows."""
+        if self.ratings != "overall":
+            return None
+        sides = {}
+        for side in SPLIT_SIDES:
+            split = player.with_split(side)
+            sides[side] = self.pitching(split) if split is not None else None
+            if sides[side] is None:
+                return None
+        return sides
+
+    @staticmethod
+    def throws(player):
+        """"R" / "L", or None (a switch pitcher, or not exported)."""
+        hand = (player.throw_hand or "").strip()[:1].upper()
+        return hand if hand in ("R", "L") else None
 
     def fielding(self, players) -> dict:
         """{rating: array} of the fielding ratings (one value each: no potential side)."""

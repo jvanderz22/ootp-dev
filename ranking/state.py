@@ -16,6 +16,8 @@ class SideState:
     # batting: batting / fielding / running; pitching: starter / reliever
     components: dict = field(default_factory=dict)
     best_position: str = None
+    # the profile's modifiers as (name, factor), for the value layer to replay
+    modifiers: list = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -29,3 +31,6 @@ class PlayerState:
     # pitching side is judged in (None where a legacy model scored the side)
     wrc_plus: float = None
     era: float = None
+    # the fitted talent layers' outputs by side ("batting", "fielding",
+    # "running", "pitching"; None where a legacy model scored it)
+    fitted: dict = None

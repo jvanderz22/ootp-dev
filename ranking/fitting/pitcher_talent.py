@@ -17,6 +17,11 @@ quantile of what the formula misses (you'd rather take too much Stuff away
 than too little, 2026-11-08). Before the rates are fit, each line's Stuff is
 moved into the role he pitched (central shift, no margin).
 
+The platoon mix - the share of left-handed batters each role and throwing
+hand faces - is read off MLB lines' vs-L / vs-R batters faced; it blends a
+pitcher's split scores (ranking/pitcher_talent.py). The throwing hand is the
+latest snapshot's.
+
 PBABIP's effect is kept at PBABIP_KEEP of what the fit finds (decided
 2026-11-08): MLB BABIP spread is about what luck alone gives, so the stats
 can't size it, and you judge it to matter little. The `hit` tables (and the
@@ -46,11 +51,13 @@ from context import default_base_dir
 from ranking import bridge
 from ranking.fitting.components import PARAMS, Rate
 from ranking.fitting import ootp_export, rules
-from ranking.fitting.datasets import PITCH_COLUMNS, pitcher_rows, read_pitchers, season_snapshots
+from ranking.fitting.datasets import (
+    PITCH_COLUMNS, STARTER_SHARE, pitcher_rows, read_pitchers, season_snapshots,
+)
 from ranking.fitting.hitter_talent import data_hash
 from ranking.fitting.stats import (
     LEVEL_MLB, extra_base_shares, fit_linear_weights, load_batting, mlb_era, mlb_events_per_pa,
-    mlb_runs_per_pa,
+    mlb_runs_per_pa, pitching_bf_by_side,
 )
 from ranking.hitter_talent import ARTIFACTS_DIR, HIGH, LOW, outcomes, runs_per_pa
 from ranking.pitcher_talent import (
@@ -109,6 +116,23 @@ def fit_role_shift(reference_dir) -> dict:
             "pitchers": int(ok.sum()),
             "rmse": round(float(np.sqrt(np.mean(missed ** 2))), 2),
         }
+    return out
+
+
+def platoon_mix(stats_dir, years, snapshot_path) -> dict:
+    """{role: {"R" | "L": share of batters faced who bat left}} over MLB lines."""
+    lines = pitching_bf_by_side(stats_dir, years)
+    lines = lines[lines.level_id == LEVEL_MLB]
+    hands = pd.read_csv(snapshot_path, low_memory=False, usecols=["ID", "T"])
+    hands = hands.assign(throws=hands["T"].astype(str).str[:1].str.upper()).rename(columns={"ID": "player_id"})
+    lines = lines.merge(hands[["player_id", "throws"]], on="player_id")
+    lines["role"] = np.where(lines.gs >= STARTER_SHARE * lines.g, "sp", "rp")
+    out = {}
+    for role in ROLES:
+        out[role] = {}
+        for hand in ("R", "L"):
+            group = lines[(lines.role == role) & (lines.throws == hand)]
+            out[role][hand] = round(float(group.bf_l.sum() / (group.bf_l.sum() + group.bf_r.sum())), 4)
     return out
 
 
@@ -281,6 +305,8 @@ def main(argv=None):
     for side, f in role_shift.items():
         print(f"role shift ({side}, {f['pitchers']} pitchers): {f['coef']}, rmse {f['rmse']},"
               f" margin {f['margin']:+.2f} as a starter")
+    mix = platoon_mix(stats_dir, stat_years, snapshots[latest])
+    print("share of batters faced who bat left:", mix)
     rows = pitcher_rows(snapshots, stats_dir)
     moved = ((rows.sp == 1) != (rows.listed_sp == 1)).sum()
     rows = in_line_role(rows, role_shift)
@@ -293,6 +319,7 @@ def main(argv=None):
         "mlb_runs_per_pa": round(mlb_runs_per_pa(bat, weights, latest), 5),
         # the MLB average line's raw runs per nine -> the league's actual ERA
         "role_shift": role_shift,
+        "platoon_mix": mix,
         "era_scale": round(
             mlb_era(stats_dir, latest) / era_from(mlb_events_per_pa(bat, latest), weights, 1.0), 5
         ),

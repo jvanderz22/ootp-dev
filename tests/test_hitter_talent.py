@@ -76,17 +76,16 @@ def test_v2_scores_hitters_with_the_talent_layer(method, snapshot_rows, model):
             assert any(label.startswith("batting talent (") for label in labels)
             changed += r.batting_score_component != base.batting_score_component
         # fielding and baserunning are fitted too (tests/test_fielding_talent.py)
-        assert any(label.startswith("fielding talent (") for label in labels)
-        assert any(label.startswith("baserunning talent (") for label in labels)
+        assert any(label.startswith("fielding (") for label in labels)
+        assert any(label.startswith("baserunning (") for label in labels)
         assert r.ledger.total() == pytest.approx(r.overall_score, abs=1e-9)
     assert changed
 
 
-def test_breakdown_carries_the_fitted_batting_score(snapshot_rows):
+def test_breakdown_carries_the_fitted_batting_score_and_war(snapshot_rows):
     for r in _rank("overall", snapshot_rows, "v2"):
-        talent = r.breakdown.get("batting", {}).get("talent")
-        if talent:
-            assert r.breakdown["batting"]["model"]["batting"] == pytest.approx(r.batting_score_component, abs=0.01)
+        if r.breakdown.get("batting", {}).get("talent"):
+            assert r.breakdown["batting"]["value"]["war"] == pytest.approx(r.position_player_score / 10, abs=0.01)
             return
     pytest.fail("no player was scored by the talent layer")
 
@@ -94,7 +93,7 @@ def test_breakdown_carries_the_fitted_batting_score(snapshot_rows):
 def test_manifest_lists_the_artifact():
     assert get_ranker("overall").manifest()["artifact_versions"] == {
         "hitter-talent": hitter_talent.ARTIFACT, "pitcher-talent": pitcher_talent.ARTIFACT,
-        "fielding-talent": "fielding_talent_v1", "running-talent": "running_talent_v1",
+        "fielding-talent": "fielding_talent_v1", "running-talent": "running_talent_v1", "value": "value_v1",
     }
     assert get_ranker("overall", "legacy").manifest()["artifact_versions"] == {}
 

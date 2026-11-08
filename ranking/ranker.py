@@ -13,13 +13,15 @@ from ranking.results import RankedResult
 from ranking.stages.demand import Demand
 from ranking.stages.legacy import LegacyModel, LegacyModifiers, TwoWay
 from ranking.stages.talent import FieldingTalent, HitterTalent, PitcherTalent, RunningTalent
+from ranking.stages.value import Value
+from ranking.value import DISPLAY_OFFSET
 from ranking.state import PlayerState
 from rankers.base_ranker import DEFAULT_BATCH_SIZE
 from scoring.runtime_components import runtime_components_scope
 
 ENGINE = "v2"
-# legacy score points until the value layer turns the ledger into WAR
-UNIT = "points"
+# v2 values players in WAR and shows 50 + 10 x WAR (ranking/value.py)
+UNIT = {"v2": "WAR points (50 + 10 x WAR)", "legacy": "points"}
 
 
 def legacy_pipeline(profile):
@@ -37,7 +39,7 @@ def v2_pipeline(profile):
         running=RunningTalent(profile),
         pitching=PitcherTalent(profile),
     )
-    return [model, LegacyModifiers(), TwoWay()], [Demand()]
+    return [model, LegacyModifiers(), Value(profile)], [Demand(offset=DISPLAY_OFFSET)]
 
 
 PIPELINES = {"v2": v2_pipeline, "legacy": legacy_pipeline}
@@ -53,7 +55,7 @@ class Ranker:
         artifacts = {}
         for stage in self.batch_stages + self.pool_stages:
             artifacts.update(getattr(stage, "artifacts", {}))
-        return build_manifest(ENGINE, self.pipeline, self.profile, UNIT, source_version, artifacts)
+        return build_manifest(ENGINE, self.pipeline, self.profile, UNIT[self.pipeline], source_version, artifacts)
 
     def rank(self, players, batch_size: int = DEFAULT_BATCH_SIZE, progress=None) -> list:
         """Score `players` (any iterable of GamePlayer) and return RankedResults
@@ -126,7 +128,10 @@ class Ranker:
         for stage in self.pool_stages:
             stage.run(results, self.profile)
         for result in results:
-            result.player_type = classify(result.position_player_score, result.pitcher_score)
+            # v2's side scores are WAR, so both can be at or below replacement;
+            # the listed position decides then
+            position = result.position if self.pipeline == "v2" else None
+            result.player_type = classify(result.position_player_score, result.pitcher_score, position)
             result.breakdown = prune_breakdown(result.breakdown, result.player_type)
         results.sort(key=lambda r: r.overall_score, reverse=True)
         for i, result in enumerate(results):

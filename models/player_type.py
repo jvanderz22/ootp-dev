@@ -11,10 +11,12 @@ PITCHER = "Pitcher"
 TWO_WAY = "Two-way"
 
 
-def classify(position_player_score, pitcher_score) -> str:
+def classify(position_player_score, pitcher_score, position=None) -> str:
     pp = position_player_score or 0
     pit = pitcher_score or 0
     hi, lo = max(pp, pit), min(pp, pit)
+    if position and hi <= 0:
+        return PITCHER if position in ("SP", "RP", "CL") else HITTER
     if hi > 0 and lo * 2 > hi:
         return TWO_WAY
     return PITCHER if pit >= pp else HITTER

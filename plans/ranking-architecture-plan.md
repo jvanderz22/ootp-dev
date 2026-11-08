@@ -26,7 +26,8 @@ next to `legacy`) and judged by `eval_rankings.py` at every step.
 | 2026-11-08 | **Pitchers ship on the fitted model even though OVR disagrees.** The stats back it: held-out runs allowed and career MLB WAR. The OVR / POT outcome looks worse, so **the draft eval now also reports career MLB WAR** next to OVR / POT.                                                                                                                                                                                                                                                                                                                                                                            |
 | 2026-11-08 | **v2 ranks on WAR internally but shows points on screen** (the value layer maps WAR back onto a 0–100 display scale).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | 2026-11-08 | ~~**Reliever value and playing time are open.**~~ Settled the same day (next row). Plain StatsPlus WAR leaves a reliever at about a third of a comparable starter, and lets playing time weigh too much.                                                                                                                                                                                                                                                                                                                                                                                                             |
-| 2026-11-08 | **5b values every player at a full-time role** (607 PA, a starter's 173 IP, a reliever's 73 IP, from the stats), not at expected playing time. **Relievers count their runs at 0.9 of full leverage** (runs saved × (1 + 0.9 × (LI − 1))), with leverage given by talent as an optimal manager would (closer ≈ 2.1–2.5 LI). StatsPlus's own WAR counts about 0.42 of it. This replaces RP ×0.82 / ×0.72. Your judgment: 2–3 relievers in the top 100 and not many more in the top 250. With the role shift in, the prototype on the live league gives 1 in the top 100 and 5 in the top 250 at 0.9 (Moya #53, Sennett #101, Yamada #111), 4 and 5 at full leverage, none at StatsPlus's 0.42; you chose 0.9. Recheck once 5b runs end to end. A pitcher can start with stamina 40+ and 3+ pitches (95% of MLB starters). |
+| 2026-11-08 | **5b values every player at a full-time role** (607 PA, a starter's 173 IP, a reliever's 73 IP, from the stats), not at expected playing time. **Relievers count their runs at 0.9 of full leverage** (runs saved × (1 + 0.9 × (LI − 1))), with leverage given by talent as an optimal manager would (closer ≈ 2.1–2.5 LI). StatsPlus's own WAR counts about 0.42 of it. This replaces RP ×0.82 / ×0.72. Your judgment: 2–3 relievers in the top 100 and not many more in the top 250. With the role shift in, the prototype on the live league gives 1 in the top 100 and 5 in the top 250 at 0.9 (Moya #53, Sennett #101, Yamada #111), 4 and 5 at full leverage, none at StatsPlus's 0.42; you chose 0.9. Rechecked end to end (with split scoring and the two-way ramp): 0 in the top 100 at 0.9 (Moya #132), 1 at full leverage (#94), 2 only at 1.2; the stats don't support more than full (top-leverage relievers pitch fewer innings: 64 IP vs 78), so **you chose full leverage, 1.0**. A pitcher can start with stamina 40+ and 3+ pitches (95% of MLB starters). |
+| 2026-11-08 | **5b open items settled:** starter-capable relievers are valued as starters, at innings set by stamina (35 is borderline, not out); the two-way rule is primary role plus a small share of the secondary role's WAR above replacement; platoon value needs a model of arm slot and pitch-mix profiles before any reliever tilt; injury proneness becomes a blanket development-layer rule (odds of never developing or a shorter career), not a per-season games-lost term. |
 | 2026-11-08 | **Defense: your position grids stay the shape; the stats translate them into runs.** StatsPlus `arm` runs are opportunity-driven (poor-range outfielders pile them up; always 0 for catchers), so they aren't fit against. OF assists per chance do track OF Arm cleanly. `opps_0`–`opps_5` are plays by difficulty (routine → impossible), a clean range signal. Infield Arm / Error / Turn DP have no stat, so they come in through the grids and position floors.                                                                                                                                                 |
 | 2026-11-08 | **Position floors, as a steep penalty over the last 5 points above the floor** (full credit from floor + 5, half at the floor, nothing a step below): SS IF Arm 45, IF Error 45, Turn DP 45; 3B IF Arm 45, IF Error 40; 2B Turn DP 40; RF OF Arm 45; CF OF Range 55; C Blocking 40, Framing 40. A 10-point ramp was tried first and moved good everyday MLB shortstops with a 50 Error or Turn DP off SS.                                                                                                                                                                                                            |
 | 2026-11-08 | **Your grids are the cross-position scale.** The best position is the highest floored grid score (as in legacy), and one line, the same at every position, turns that grid into fielding runs including the position adjustment. A 70 Range outfielder is worth more at CF than at LF, even though he'd be further above the LFs. Per-position curves (each matched to its own regulars) were tried first and valued good CFs and SSs more at easier spots.                                                                                                                                                          |
@@ -480,14 +481,14 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
 
 - Playing time, the injury → games model, positional adjustment and
   replacement level → WAR.
-- Proposed framing (2026-11-08): value each player at a full-time role
+- Framing (decided 2026-11-08): value each player at a full-time role
   (everyday player, full-time starter, full-time reliever), not at his
-  expected playing time; relievers get a leverage boost measured from the
-  stats (`li`) in place of RP ×0.82 / ×0.72; two-way = primary role plus a
-  small share of the secondary role's WAR above replacement.
-  - TODO: the potential and draft class models still need some way to apply
-    expected playing time penalties / bonuses, to punish fragile players and
-    reward durable ones (injury proneness → expected games lost).
+  expected playing time; relievers' runs count at full leverage (1.0, was 0.9) in
+  place of RP ×0.82 / ×0.72; two-way = primary role plus a small share of the
+  secondary role's WAR above replacement (confirmed; the share is set
+  below, under the two-way TODO).
+  - Injury proneness is not a per-season games-lost term here: it moves to
+    the development layer as a blanket rule (see phase 6).
 - Pitcher role (2026-11-08):
   - **Built: Stuff shifts by role with the pitch mix, measured in the game.** The
     SD org's 145 pitchers were exported once all set to SP and once all set
@@ -512,22 +513,51 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
     take too much Stuff away than too little. The pitcher fit moves each
     line's Stuff into the role it was pitched in, and refits read the two
     exports from `<data dir>/role_reference/`.
-  - **Platoon weighs more on starters** (current ratings only; split ratings
-    exist only for current players). Runs vs L and vs R from the split
-    ratings, weighted by the mix faced: starters at the actual mix (RHP 41% /
-    LHP 21% LHB), relievers tilted toward their better side (proposed 10
-    points; AI managers barely tilt, < 0.1% per rating point).
-  - Starter viability: stamina 40+ and 3+ pitches (95% of MLB starters);
-    starters with more stamina pitch deeper (5.0 IP a start at 40–44, 5.8 at
-    70+). Whether a reliever who could start is valued as one is open
-    (options A / B / C, 2026-11-08).
-    - 35 Stamina is borderline viable and shouldn't be totally discounted
+  - **Platoon weighs more on starters: needs research first** (2026-11-08).
+    Build a model of platoon value from profiles of arm slot and pitch mix
+    before setting any reliever tilt (the 10-point tilt proposal is shelved).
+    What's known: the handedness mix faced follows the throwing hand (RHP
+    45% / LHP 25% LHB as starters, 43% / 27% as relievers, MLB lines
+    2030–2042), and AI managers barely tailor it to a pitcher's own splits
+    (< 0.1% per rating point). OOTP's combined ratings are already that
+    blend of the splits (vL weighs 44% for a RHP, 28% for a LHP; Control
+    25% for both).
+  - **Built: current pitchers are scored on their vL / vR splits**
+    (2026-11-08). Each side's events are scored apart and blended at the
+    mix his role and throwing hand face (`platoon_mix` in the pitcher
+    artifact), so a weak side the rounded combined rating hides costs what
+    it should: Ben Hodge (LHP, Stuff 40 combined but 35 vs RHB) goes from
+    4.55 to 4.76 ERA as a starter. Potential and draft ratings have no
+    splits and stay on the combined ratings until the arm slot / pitch-mix
+    model exists. On the live board pitchers move a median 30 places (90th
+    percentile 119); the leverage map is refit on the same scoring.
+  - **Starter-capable relievers are valued as starters (option A, decided
+    2026-11-08)**, at innings set by stamina: starters with more stamina
+    pitch deeper (5.0 IP a start at 40–44, 5.8 at 70+). No hard cutoff at
+    40: 35 stamina is borderline viable and shouldn't be totally discounted
+    (it's 5% of MLB starters), so it gets the bottom of the innings curve;
+    3+ pitches still required.
 - Retires RP ×0.82, the batting / fielding / running weights and the two-way
   bonus.
   - TODO: figure out _something_ for the two way bonus. I don't want a decent batter to end up
     ranked above better batters just because they could be a decent AAA pitcher. We need a way to weight two way players so their secondary skillset doesn't give too much of a boost
+  - **Built (2026-11-08): the share ramps with the secondary side's WAR.**
+    Nothing at 1.75 WAR or less (a back-end starter, a bench bat), the
+    full 20% from 2.5 WAR (about a league-average full-time starter), a
+    straight line between (`ranking/value.py` `two_way_share`). A balance
+    of counting from replacement and from average: Pat Farrell (2.7 WAR as
+    an SP) keeps +5.5, Wallick / Mullins +6.9; Russ Knight (1.0) and Jeff
+    Davis (0.6) lose theirs, Chris Grady (2.2) gets +2.9, Ben Hodge (1.8)
+    +0.3.
 
 **6. Development layer**
+
+- **Injury proneness as a blanket rule (decided 2026-11-08).** Not games lost
+  in a season, but the odds that injuries keep a player from ever developing,
+  or end his career earlier (out of the league by 27 instead of 32). Fit
+  Prone against career outcomes (reaching MLB, peak WAR, last season) on
+  past classes and the archive; it punishes fragile and rewards durable
+  players in the potential and draft class rankings.
 
 - Distributions of peak WAR from past classes and the archive.
 - Retires the age, personality, scouting accuracy and draft modifiers, keeping

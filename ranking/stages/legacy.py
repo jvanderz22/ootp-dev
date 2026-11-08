@@ -53,6 +53,7 @@ class LegacyModel(BatchStage):
         pitching = self._pitching_scores(players, fitted_pit)
         rows = zip(states, batting, fitted_bat, fitted_field, fitted_run, pitching, fitted_pit)
         for state, bat, fit_bat, fit_field, fit_run, pit, fit_pit in rows:
+            state.fitted = {"batting": fit_bat, "fielding": fit_field, "running": fit_run, "pitching": fit_pit}
             self._batting(state, bat, fit_bat and fit_bat.label, fit_field, fit_run)
             self._pitching(state, pit, fit_pit)
             if fit_bat:
@@ -144,6 +145,7 @@ class LegacyModifiers(BatchStage):
                     name = modifier_name(modifier)
                     write_runtime_component(player.id, f"{side_name}.modifiers.{name}", factor)
                     product *= factor
+                    side.modifiers.append((name, factor))
                     running = state.ledger.scale(MODIFIERS, name, running, factor, side_name)
                 write_runtime_component(player.id, f"{side_name}.modifier_total", product)
                 side.score = side.model_score * product

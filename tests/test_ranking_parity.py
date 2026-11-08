@@ -70,7 +70,8 @@ def test_pre_and_post_demand_are_both_kept():
 def test_manifest_names_what_produced_the_run():
     m = get_ranker("draft_class").manifest(source_version=3)
     assert m["engine"] == "v2" and m["pipeline"] == "v2" and m["profile"] == "draft_class"
-    assert m["unit"] == "points"
+    assert m["unit"] == "WAR points (50 + 10 x WAR)"
+    assert get_ranker("draft_class", "legacy").manifest()["unit"] == "points"
     assert len(m["config_hash"]) == 12 and len(m["training_data_hash"]) == 12
     assert m["config_hash"] != get_ranker("overall").manifest()["config_hash"]
 

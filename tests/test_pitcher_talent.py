@@ -81,18 +81,19 @@ def test_a_class_without_hra_is_scored_on_movement():
 def test_v2_scores_pitchers_with_the_talent_layer():
     for r in get_ranker("draft_class").rank([GamePlayer(dict(row)) for row in _class_rows()], batch_size=45):
         labels = [line.label for line in r.ledger.lines if line.side == "pitching"]
-        assert any("talent (Stuff" in label and "runs allowed" in label for label in labels), labels
+        assert any("talent (Stuff" in label and "ERA)" in label for label in labels), labels
         assert not any(label in ("SP model", "RP model") for label in labels)
         assert r.ledger.total() == pytest.approx(r.overall_score, abs=1e-9)
-        assert r.starter_component >= 0 and r.reliever_component >= 0
 
 
-def test_a_pitcher_without_ratings_falls_back_to_legacy():
+def test_a_pitcher_without_ratings_is_priced_from_legacy_points():
     row = dict(next(r for r in _class_rows() if r["POS"] == "SP"))
     row["STU P"] = row["STU"] = ""
     (r,) = get_ranker("draft_class").rank([GamePlayer(row)], batch_size=1)
     labels = [line.label for line in r.ledger.lines if line.side == "pitching"]
-    assert {"SP model", "RP model"} & set(labels)
+    # no fitted Stuff to show, but an ERA read back through the bridge
+    assert any(" talent (" in label and "ERA)" in label and "Stuff" not in label for label in labels), labels
+    assert r.ledger.total() == pytest.approx(r.overall_score, abs=1e-9)
 
 
 @pytest.mark.parametrize("side", ["overall", "potential"])
@@ -113,8 +114,80 @@ def test_a_reliever_loses_more_stuff_as_a_starter_than_a_starter_gains_in_relief
 
 
 def test_v2_scores_a_listed_reliever_as_a_starter_on_less_stuff():
+    from ranking.profiles import DRAFT
+    from ranking.stages.talent import PitcherTalent
+
     row = dict(next(r for r in _class_rows() if r["POS"] == "SP"))
-    (sp,) = get_ranker("draft_class").rank([GamePlayer(row)], batch_size=1)
-    (rp,) = get_ranker("draft_class").rank([GamePlayer({**row, "POS": "RP"})], batch_size=1)
-    assert rp.starter_component < sp.starter_component
-    assert rp.reliever_component < sp.reliever_component
+    stage = PitcherTalent(DRAFT)
+    (sp,) = stage.score([GamePlayer(row)])
+    (rp,) = stage.score([GamePlayer({**row, "POS": "RP"})])
+    assert rp.sp_stuff < sp.sp_stuff and rp.sp_index > sp.sp_index
+    assert rp.rp_stuff < sp.rp_stuff and rp.rp_index > sp.rp_index
+
+
+# current pitching ratings, combined and per platoon side
+_CURRENT = ("stuff_ovr", "movement_ovr", "control_ovr", "hr_allowed_ovr", "pbabip_ovr")
+
+
+def _split_pitcher(throws, combined, vl=None, vr=None):
+    """A listed SP with current ratings `combined` ({field: value}) and, when
+    given, vL / vR splits."""
+    from models.game_players import PLAYER_FIELDS, split_header
+
+    row = dict(next(r for r in _class_rows() if r["POS"] == "SP"))
+    row["T"] = throws
+    row.update({PLAYER_FIELDS[f]: str(v) for f, v in combined.items()})
+    for side, ratings in (("vL", vl), ("vR", vr)):
+        if ratings:
+            row.update({split_header(f, side): str(v) for f, v in ratings.items()})
+    return GamePlayer(row)
+
+
+def _even(v):
+    return dict.fromkeys(_CURRENT, v)
+
+
+def _score(player, profile=None):
+    from ranking.profiles import CURRENT
+    from ranking.stages.talent import PitcherTalent
+
+    (scored,) = PitcherTalent(profile or CURRENT).score([player])
+    return scored
+
+
+def test_righties_face_more_left_handed_batters_than_lefties(model):
+    for role in pitcher_talent.ROLES:
+        assert model.platoon_mix[role]["R"] > model.platoon_mix[role]["L"]
+
+
+def test_splits_equal_to_the_combined_ratings_score_the_same():
+    plain = _score(_split_pitcher("Right", _even(55)))
+    split = _score(_split_pitcher("Right", _even(55), _even(55), _even(55)))
+    assert not plain.platoon and split.platoon
+    assert split.sp_era == pytest.approx(plain.sp_era) and split.rp_index == pytest.approx(plain.rp_index)
+
+
+def test_a_weak_side_costs_what_the_rounded_combined_rating_hides():
+    # a lefty starter's line (Ben Hodge, 2042): Stuff 40 combined, but 35 vs
+    # the right-handed batters he mostly faces
+    combined = {"stuff_ovr": 40, "movement_ovr": 55, "control_ovr": 40, "hr_allowed_ovr": 60, "pbabip_ovr": 50}
+    vl = {"stuff_ovr": 40, "movement_ovr": 60, "control_ovr": 45, "hr_allowed_ovr": 65, "pbabip_ovr": 50}
+    vr = {"stuff_ovr": 35, "movement_ovr": 55, "control_ovr": 40, "hr_allowed_ovr": 55, "pbabip_ovr": 50}
+    plain = _score(_split_pitcher("Left", combined))
+    split = _score(_split_pitcher("Left", combined, vl, vr))
+    assert split.sp_era > plain.sp_era + 0.1
+
+
+def test_the_side_he_faces_more_weighs_more():
+    good, bad = _even(60), _even(45)
+    strong_vr = _score(_split_pitcher("Left", _even(50), bad, good))
+    strong_vl = _score(_split_pitcher("Left", _even(50), good, bad))
+    assert strong_vr.sp_era < strong_vl.sp_era   # a lefty mostly faces right-handed batters
+
+
+def test_potential_ratings_have_no_splits():
+    from ranking.profiles import POTENTIAL
+
+    player = _split_pitcher("Right", _even(55), _even(60), _even(45))
+    assert RatingsView("potential").pitching_splits(player) is None
+    assert not _score(player, POTENTIAL).platoon
