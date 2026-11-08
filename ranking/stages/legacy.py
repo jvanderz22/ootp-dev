@@ -130,10 +130,14 @@ class LegacyModifiers(BatchStage):
 
     name = "legacy-modifiers"
 
+    def __init__(self, drop=()):
+        # modifiers (by name) a later stage replaces
+        self.drop = set(drop)
+
     def run(self, states, profile):
         sides = (
-            (BATTING, profile.shared_modifiers + profile.batting_modifiers),
-            (PITCHING, profile.shared_modifiers + profile.pitching_modifiers),
+            (BATTING, self._kept(profile.shared_modifiers + profile.batting_modifiers)),
+            (PITCHING, self._kept(profile.shared_modifiers + profile.pitching_modifiers)),
         )
         for state in states:
             player = state.player
@@ -149,6 +153,9 @@ class LegacyModifiers(BatchStage):
                     running = state.ledger.scale(MODIFIERS, name, running, factor, side_name)
                 write_runtime_component(player.id, f"{side_name}.modifier_total", product)
                 side.score = side.model_score * product
+
+    def _kept(self, modifiers) -> tuple:
+        return tuple(m for m in modifiers if modifier_name(m) not in self.drop)
 
 
 class TwoWay(BatchStage):

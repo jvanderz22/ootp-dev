@@ -7,14 +7,16 @@ replaces their points with WAR: the ledger is rewritten in display points,
 50 + 10 x WAR, and its counted lines sum to the value.
 
 The modifiers scale only WAR above replacement, so a factor below 1 can't
-lift a below-replacement player. A player a fitted talent model couldn't
+lift a below-replacement player; where potential ratings are read, the
+development factors (ranking/development.py) follow them, tapered by the
+side's WAR. A player a fitted talent model couldn't
 score (an export without BABIP, a pitcher without Stuff) is priced from his
 legacy points, read back through the talent model's points bridge.
 """
 import numpy as np
 
-from ranking import bridge, fielding_talent, hitter_talent, pitcher_talent, value
-from ranking.ledger import BATTING, MODEL, MODIFIERS, PITCHING, TWO_WAY, Ledger
+from ranking import bridge, development, fielding_talent, hitter_talent, pitcher_talent, value
+from ranking.ledger import BATTING, DEVELOPMENT, MODEL, MODIFIERS, PITCHING, TWO_WAY, Ledger
 from ranking.ratings import RatingsView
 from ranking.stages.base import BatchStage
 from scoring.runtime_components import get_runtime_components, write_runtime_component
@@ -31,6 +33,7 @@ class Value(BatchStage):
         self.hitting_model = hitter_talent.load()
         self.fielding_model = fielding_talent.load()
         self.pitching_model = pitcher_talent.load()
+        self.develops = profile.ratings == "potential"
 
     @property
     def artifacts(self) -> dict:
@@ -73,7 +76,8 @@ class Value(BatchStage):
         }
         side.best_position = field.best_position
         state.wrc_plus = wrc
-        return self._modified(state, side, sum(parts.values()), BATTING)
+        war = sum(parts.values())
+        return self._modified(state, side, war, BATTING, self._development(state, war))
 
     # -- pitchers --------------------------------------------------------------
 
@@ -109,7 +113,7 @@ class Value(BatchStage):
             war = rp_war
         write_runtime_component(player.id, "pitching.value.starter_war", sp_war if starting else 0.0)
         write_runtime_component(player.id, "pitching.value.reliever_war", rp_war)
-        return self._modified(state, side, war, PITCHING)
+        return self._modified(state, side, war, PITCHING, self._development(state, war))
 
     def _legacy_eras(self, player):
         """(SP ERA, RP ERA, RP runs index) from the legacy scorer's role points,
@@ -124,13 +128,19 @@ class Value(BatchStage):
 
     # -- both ------------------------------------------------------------------
 
+    def _development(self, state, war) -> list:
+        return development.factors(state.player, war) if self.develops else []
+
     @staticmethod
-    def _modified(state, side, war, side_name) -> float:
-        """The side's WAR after its modifiers, which scale only the part above
-        replacement; recorded as ledger lines and the side's score."""
+    def _modified(state, side, war, side_name, developing=()) -> float:
+        """The side's WAR after its modifiers and then its development factors,
+        which scale only the part above replacement; recorded as ledger lines
+        and the side's score."""
         above = SCALE * max(war, 0.0)
         for name, factor in side.modifiers:
             above = state.ledger.scale(MODIFIERS, name, above, factor, side_name)
+        for name, factor in developing:
+            above = state.ledger.scale(DEVELOPMENT, name, above, factor, side_name)
         modified = min(war, 0.0) + above / SCALE
         side.score = SCALE * modified
         write_runtime_component(state.player.id, f"{side_name}.value.war", modified)

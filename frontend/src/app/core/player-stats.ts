@@ -313,6 +313,7 @@ export interface LedgerWaterfall {
 const LEDGER_STAGE_TITLES: Record<string, string> = {
   model: 'Model',
   modifiers: 'Modifiers',
+  development: 'Development',
   'two-way': 'Two-way',
   demand: 'Demand',
 };

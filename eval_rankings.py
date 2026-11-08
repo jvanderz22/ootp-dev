@@ -206,7 +206,7 @@ def score_at_ref(ref, args):
         cmd = [
             sys.executable, str(Path(__file__).resolve()),
             "--scores-only", str(out), "--code-root", str(wt),
-            "--engine", "legacy", "--profile", args.profile, "--league", args.league,
+            "--engine", args.engine, "--profile", args.profile, "--league", args.league,
             "--snapshot", str(Path(args.snapshot).resolve()),
             "--datasets-dir", ",".join(str(Path(d).resolve()) for d in args.datasets_dirs),
             "--levels", args.levels,

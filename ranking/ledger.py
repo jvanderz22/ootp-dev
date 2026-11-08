@@ -10,6 +10,7 @@ from typing import NamedTuple
 
 MODEL = "model"
 MODIFIERS = "modifiers"
+DEVELOPMENT = "development"
 TWO_WAY = "two-way"
 DEMAND = "demand"
 

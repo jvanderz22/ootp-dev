@@ -8,6 +8,7 @@ is in, the pool stages (demand) run on the pre-demand order.
 import gc
 
 from models.player_type import classify, prune_breakdown
+from ranking import development
 from ranking.manifest import build_manifest
 from ranking.results import RankedResult
 from ranking.stages.demand import Demand
@@ -39,7 +40,10 @@ def v2_pipeline(profile):
         running=RunningTalent(profile),
         pitching=PitcherTalent(profile),
     )
-    return [model, LegacyModifiers(), Value(profile)], [Demand(offset=DISPLAY_OFFSET)]
+    # the development layer replaces the legacy makeup / injury modifiers
+    # wherever potential ratings are read
+    drop = development.REPLACES if profile.ratings == "potential" else ()
+    return [model, LegacyModifiers(drop), Value(profile)], [Demand(offset=DISPLAY_OFFSET)]
 
 
 PIPELINES = {"v2": v2_pipeline, "legacy": legacy_pipeline}

@@ -567,6 +567,40 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
   - Good Personality = more chance to meet potential
   - Good leadership = better to have in org even if they don't have high likelihood of making ML
   - Accuracy = hedging on unknowns, don't want to take risks on someone we have low confidence in
+- **Built (2026-11-08): makeup and durability factors** (`ranking/development.py`,
+  evidence from `python -m ranking.fitting.development --data-dir fly_data`).
+  Each 2033–2042 draftee is scored by v2 on draft day (model lines only) and
+  on the 2042 snapshot (current ratings at 25+, potential before, 0 once
+  gone; players who leave almost never had an MLB career: 8% played, 0.6%
+  had a 2-WAR season). With potential WAR held fixed, on classes 2033–36:
+  - Work ethic H ×1.24 / L ×0.75, intelligence H ×1.17 / L ×0.94, Fragile
+    ×0.87 on value now; career MLB WAR (2033–34) agrees and is steeper
+    (WE H ×1.56, INT H ×1.57, Fragile ×0.28). Durable is ×1.0–1.06, below
+    the legacy pitcher bonus (×1.11).
+  - Makeup matters most for 1–4 WAR prospects and about half as much at
+    4+ WAR (WE H ×1.16, INT ×1.0), the taper you asked for: you don't want
+    an otherwise mediocre prospect with maxed makeup flowing above a true
+    generational talent without it.
+  - In use (judgment, the conservative end): WE H ×1.25 / L ×0.75, INT H
+    ×1.15 / L ×0.95, Fragile ×0.75, Wrecked ×0.6, Durable ×1.03, Iron Man
+    ×1.05, at full weight up to 2.5 potential WAR, tapering to 35% at 5+.
+    They scale WAR above replacement, one ledger line each ("Development"),
+    and replace PersonalityModifier and the batter / pitcher injury
+    modifiers wherever potential ratings are read.
+  - Draft eval vs the 5b commit: about neutral on OVR / POT and career WAR
+    (the top 100 gains in 2036–37, loses a little elsewhere); in the 2042
+    class the top 13 hold, and makeup moves prospects up to ~50 places
+    inside the top 150.
+- **Age stays on your legacy table (2026-11-08)**, with the legacy draft-day
+  current-ratings modifiers as its balance for older prospects. The data
+  says older draftees realize less (22 vs 18: ×0.6 on value now) and that
+  current ratings earn some back (×1.12 per WAR of current-ratings value;
+  ready 21+ draftees realize 28% vs 20% raw), but the two outcomes disagree
+  on age (career WAR: ×2.5, as college picks reach MLB sooner), so fit age
+  and readiness together once the archive can measure peak value.
+- Scouting accuracy stays judgment: nearly every draftee in this league is
+  "Very High", so there's nothing to fit. Leadership stays judgment too
+  (org value beyond MLB outcomes).
 - Platoon items from `my-todo.txt` land here and in talent (vs L / vs R
   ratings per profile).
   - This should apply to the overall model only because undeveloped players don't have enough
