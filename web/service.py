@@ -45,7 +45,7 @@ _FLOAT_FIELDS = (
     "model_score", "position_player_score", "fielding_score_component",
     "batting_score_component", "pitcher_score", "starter_component",
     "reliever_component", "running_score_component", "raw_overall_score",
-    "pre_demand_score",
+    "pre_demand_score", "wrc_plus", "era",
 )
 
 
@@ -231,6 +231,9 @@ def _player_payload(rank, row, drafted_info, game_player=None, source=None):
     )
     if payload["type"] == "Pitcher":
         payload["best_position"] = None
+        payload["wrc_plus"] = None
+    if payload["type"] == "Hitter":
+        payload["era"] = None
     return payload
 
 

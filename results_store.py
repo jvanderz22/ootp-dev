@@ -10,7 +10,8 @@ matches the source's current version (`draft_classes.data_version` /
 
 Each result row carries the scores plus the player's score breakdown, already
 pruned to the side(s) his Hitter / Pitcher / Two-way type is judged on. A v2
-row also has the score and rank before the demand step, and the ledger.
+row also has the score and rank before the demand step, the ledger, and the
+modeled wRC+ / ERA.
 """
 import json
 from datetime import datetime, timezone
@@ -44,6 +45,8 @@ _RESULT_KEYS = {
     "demand": "demand",
     "pre_demand_score": "pre_demand_score",
     "pre_demand_rank": "pre_demand_rank",
+    "wrc_plus": "wrc_plus",
+    "era": "era",
 }
 
 # ledger deltas are stored to this many places - plenty for a waterfall, and
@@ -90,6 +93,8 @@ def result_from_scored(s) -> dict:
         "pre_demand_score": _rounded(getattr(s, "pre_demand_score", None)),
         "pre_demand_rank": getattr(s, "pre_demand_rank", None),
         "ledger": ledger_json(s.ledger) if getattr(s, "ledger", None) is not None else None,
+        "wrc_plus": getattr(s, "wrc_plus", None),
+        "era": getattr(s, "era", None),
     }
 
 

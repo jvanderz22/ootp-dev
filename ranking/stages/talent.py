@@ -21,6 +21,7 @@ from scoring.runtime_components import write_runtime_component
 class FittedBatting(NamedTuple):
     points: float
     label: str
+    wrc_plus: float
 
 
 class HitterTalent:
@@ -45,7 +46,7 @@ class HitterTalent:
         points = self.model.points(wrc_plus)
         for (i, _), wrc, pts in zip(rated, wrc_plus, points):
             write_runtime_component(players[i].id, "batting.talent.wrc_plus", float(wrc))
-            out[i] = FittedBatting(float(pts), f"batting talent ({wrc:.0f} wRC+)")
+            out[i] = FittedBatting(float(pts), f"batting talent ({wrc:.0f} wRC+)", float(wrc))
         return out
 
 
@@ -80,6 +81,8 @@ class FittedPitching(NamedTuple):
     reliever_talent: float
     sp_index: float
     rp_index: float
+    sp_era: float
+    rp_era: float
 
 
 class PitcherTalent:
@@ -111,6 +114,7 @@ class PitcherTalent:
             for name in pitcher_talent.RATINGS
         }
         index = {role: self.model.runs_index(ratings, role) for role in pitcher_talent.ROLES}
+        era = {role: self.model.era(ratings, role) for role in pitcher_talent.ROLES}
         talent = {role: self.model.points(index[role], role) for role in pitcher_talent.ROLES}
         for j, (i, _) in enumerate(group):
             player = players[i]
@@ -123,6 +127,8 @@ class PitcherTalent:
                 reliever_talent=rp,
                 sp_index=float(index["sp"][j]),
                 rp_index=float(index["rp"][j]),
+                sp_era=float(era["sp"][j]),
+                rp_era=float(era["rp"][j]),
             )
             write_runtime_component(player.id, "pitching.talent.sp_runs_index", out[i].sp_index)
             write_runtime_component(player.id, "pitching.talent.rp_runs_index", out[i].rp_index)

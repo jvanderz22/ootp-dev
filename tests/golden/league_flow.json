@@ -2176,6 +2176,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 12.57,
     "id": "1078",
     "inGameOverall": 65,
@@ -2245,7 +2246,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1078",
     "team": "Boise Bison",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 153.0
    },
    {
     "age": 23,
@@ -2258,6 +2260,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 3.68,
     "fieldingScoreComponent": 15.1,
     "id": "1034",
     "inGameOverall": 35,
@@ -2348,7 +2351,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1034",
     "team": "Pittsburgh Pirates",
     "throwHand": "Left",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 25,
@@ -2361,6 +2365,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 9.29,
     "id": "1063",
     "inGameOverall": 65,
@@ -2430,7 +2435,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1063",
     "team": "Austin Triple Armadillos Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 132.0
    },
    {
     "age": 24,
@@ -2443,6 +2449,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 34.67,
     "id": "1019",
     "inGameOverall": 55,
@@ -2512,7 +2519,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1019",
     "team": "Milwaukee Single Brewers Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 115.0
    },
    {
     "age": 19,
@@ -2525,6 +2533,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 12.52,
     "id": "1044",
     "inGameOverall": 45,
@@ -2594,7 +2603,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1044",
     "team": "Pittsburgh Double Pirates Double",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 112.0
    },
    {
     "age": 21,
@@ -2607,6 +2617,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 14.98,
     "id": "1042",
     "inGameOverall": 40,
@@ -2676,7 +2687,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1042",
     "team": "Pittsburgh Double Pirates Double",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 116.0
    },
    {
     "age": 33,
@@ -2689,6 +2701,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 27.21,
     "id": "1033",
     "inGameOverall": 50,
@@ -2758,7 +2771,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1033",
     "team": "Pittsburgh Pirates",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 102.0
    },
    {
     "age": 21,
@@ -2771,6 +2785,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 15.1,
     "id": "1037",
     "inGameOverall": 30,
@@ -2840,7 +2855,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1037",
     "team": "Pittsburgh Triple Pirates Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 107.0
    },
    {
     "age": 25,
@@ -2853,6 +2869,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.03,
     "fieldingScoreComponent": 6.97,
     "id": "1082",
     "inGameOverall": 35,
@@ -2943,7 +2960,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1082",
     "team": "Boise Bison",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 17,
@@ -2956,6 +2974,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 40.46,
     "id": "1076",
     "inGameOverall": 55,
@@ -3025,7 +3044,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1076",
     "team": null,
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 100.0
    },
    {
     "age": 23,
@@ -3038,6 +3058,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 3.79,
     "fieldingScoreComponent": 7.32,
     "id": "1043",
     "inGameOverall": 40,
@@ -3118,7 +3139,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1043",
     "team": "Pittsburgh Double Pirates Double",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 22,
@@ -3131,6 +3153,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 6.19,
     "id": "1015",
     "inGameOverall": 65,
@@ -3200,7 +3223,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1015",
     "team": "Milwaukee Double Brewers Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 112.0
    },
    {
     "age": 19,
@@ -3213,6 +3237,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 15.65,
     "id": "1103",
     "inGameOverall": 50,
@@ -3282,7 +3307,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1103",
     "team": null,
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 107.0
    },
    {
     "age": 27,
@@ -3295,6 +3321,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 15.1,
     "id": "1112",
     "inGameOverall": 50,
@@ -3364,7 +3391,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1112",
     "team": null,
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 99.0
    },
    {
     "age": 23,
@@ -3377,6 +3405,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 19.71,
     "id": "1012",
     "inGameOverall": 60,
@@ -3446,7 +3475,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1012",
     "team": "Milwaukee Triple Brewers Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 96.0
    },
    {
     "age": 25,
@@ -3459,6 +3489,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 21.73,
     "id": "1011",
     "inGameOverall": 35,
@@ -3528,7 +3559,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1011",
     "team": "Milwaukee Triple Brewers Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 94.0
    },
    {
     "age": 25,
@@ -3541,6 +3573,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 18.24,
     "id": "1053",
     "inGameOverall": 50,
@@ -3610,7 +3643,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1053",
     "team": "Austin Armadillos",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 88.0
    },
    {
     "age": 26,
@@ -3623,6 +3657,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.92,
     "id": "1007",
     "inGameOverall": 55,
@@ -3692,7 +3727,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1007",
     "team": "Milwaukee Brewers",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 92.0
    },
    {
     "age": 19,
@@ -3705,6 +3741,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 10.26,
     "id": "1077",
     "inGameOverall": 60,
@@ -3774,7 +3811,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1077",
     "team": null,
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 89.0
    },
    {
     "age": 22,
@@ -3787,6 +3825,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 2.54,
     "id": "1088",
     "inGameOverall": 65,
@@ -3856,7 +3895,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1088",
     "team": "Boise Triple Bison Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 91.0
    },
    {
     "age": 31,
@@ -3869,6 +3909,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 12.2,
     "id": "1003",
     "inGameOverall": 45,
@@ -3938,7 +3979,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1003",
     "team": "Milwaukee Brewers",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 87.0
    },
    {
     "age": 26,
@@ -3951,6 +3993,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 4.31,
     "id": "1039",
     "inGameOverall": 45,
@@ -4020,7 +4063,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1039",
     "team": "Pittsburgh Triple Pirates Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 93.0
    },
    {
     "age": 24,
@@ -4033,6 +4077,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 29.03,
     "id": "1014",
     "inGameOverall": 50,
@@ -4102,7 +4147,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1014",
     "team": "Milwaukee Double Brewers Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 84.0
    },
    {
     "age": 22,
@@ -4115,6 +4161,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 19.89,
     "id": "1069",
     "inGameOverall": 55,
@@ -4184,7 +4231,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1069",
     "team": "Austin Double Armadillos Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 81.0
    },
    {
     "age": 32,
@@ -4197,6 +4245,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.52,
     "fieldingScoreComponent": 2.46,
     "id": "1004",
     "inGameOverall": 60,
@@ -4277,7 +4326,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1004",
     "team": "Milwaukee Brewers",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 25,
@@ -4290,6 +4340,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 31.2,
     "id": "1036",
     "inGameOverall": 45,
@@ -4359,7 +4410,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1036",
     "team": "Pittsburgh Triple Pirates Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 72.0
    },
    {
     "age": 32,
@@ -4372,6 +4424,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.27,
     "fieldingScoreComponent": 7.22,
     "id": "1029",
     "inGameOverall": 35,
@@ -4452,7 +4505,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1029",
     "team": "Pittsburgh Pirates",
     "throwHand": "Left",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 28,
@@ -4465,6 +4519,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 20.47,
     "id": "1080",
     "inGameOverall": 55,
@@ -4534,7 +4589,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1080",
     "team": "Boise Bison",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 76.0
    },
    {
     "age": 22,
@@ -4547,6 +4603,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 37.62,
     "id": "1009",
     "inGameOverall": 30,
@@ -4616,7 +4673,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1009",
     "team": "Milwaukee Triple Brewers Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 72.0
    },
    {
     "age": 30,
@@ -4629,6 +4687,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.92,
     "id": "1054",
     "inGameOverall": 65,
@@ -4698,7 +4757,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1054",
     "team": "Austin Armadillos",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 78.0
    },
    {
     "age": 19,
@@ -4711,6 +4771,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.18,
     "id": "1061",
     "inGameOverall": 45,
@@ -4780,7 +4841,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1061",
     "team": "Austin Triple Armadillos Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 77.0
    },
    {
     "age": 20,
@@ -4793,6 +4855,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 49.28,
     "id": "1048",
     "inGameOverall": 65,
@@ -4862,7 +4925,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1048",
     "team": "Pittsburgh Single Pirates Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 64.0
    },
    {
     "age": 19,
@@ -4875,6 +4939,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.5,
     "fieldingScoreComponent": 10.37,
     "id": "1051",
     "inGameOverall": 45,
@@ -4960,7 +5025,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1051",
     "team": null,
     "throwHand": "Left",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 26,
@@ -4973,6 +5039,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 23.46,
     "id": "1016",
     "inGameOverall": 30,
@@ -5042,7 +5109,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1016",
     "team": "Milwaukee Double Brewers Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 71.0
    },
    {
     "age": 23,
@@ -5055,6 +5123,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 0.07,
     "id": "1093",
     "inGameOverall": 65,
@@ -5124,7 +5193,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1093",
     "team": "Boise Double Bison Double",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 78.0
    },
    {
     "age": 23,
@@ -5137,6 +5207,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.93,
     "fieldingScoreComponent": 4.15,
     "id": "1049",
     "inGameOverall": 35,
@@ -5232,7 +5303,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1049",
     "team": "Pittsburgh Single Pirates Single",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 25,
@@ -5245,6 +5317,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.92,
     "id": "1062",
     "inGameOverall": 50,
@@ -5314,7 +5387,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1062",
     "team": "Austin Triple Armadillos Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 77.0
    },
    {
     "age": 21,
@@ -5327,6 +5401,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 9.44,
     "id": "1066",
     "inGameOverall": 30,
@@ -5396,7 +5471,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1066",
     "team": "Austin Double Armadillos Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 74.0
    },
    {
     "age": 22,
@@ -5409,6 +5485,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 15.95,
     "id": "1074",
     "inGameOverall": 55,
@@ -5478,7 +5555,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1074",
     "team": "Austin Single Armadillos Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 68.0
    },
    {
     "age": 17,
@@ -5491,6 +5569,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 19.43,
     "id": "1024",
     "inGameOverall": 60,
@@ -5560,7 +5639,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1024",
     "team": null,
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 68.0
    },
    {
     "age": 27,
@@ -5573,6 +5653,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 32.54,
     "id": "1005",
     "inGameOverall": 45,
@@ -5642,7 +5723,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1005",
     "team": "Milwaukee Brewers",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 61.0
    },
    {
     "age": 29,
@@ -5655,6 +5737,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 16.07,
     "id": "1058",
     "inGameOverall": 55,
@@ -5724,7 +5807,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1058",
     "team": "Austin Armadillos",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 67.0
    },
    {
     "age": 25,
@@ -5737,6 +5821,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.65,
     "fieldingScoreComponent": 14.74,
     "id": "1017",
     "inGameOverall": 50,
@@ -5817,7 +5902,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1017",
     "team": "Milwaukee Double Brewers Double",
     "throwHand": "Left",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 20,
@@ -5830,6 +5916,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 8.63,
     "id": "1010",
     "inGameOverall": 40,
@@ -5899,7 +5986,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1010",
     "team": "Milwaukee Triple Brewers Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 70.0
    },
    {
     "age": 23,
@@ -5912,6 +6000,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.83,
     "fieldingScoreComponent": 7.92,
     "id": "1008",
     "inGameOverall": 50,
@@ -5992,7 +6081,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1008",
     "team": "Milwaukee Brewers",
     "throwHand": "Left",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 24,
@@ -6005,6 +6095,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.82,
     "fieldingScoreComponent": 8.98,
     "id": "1059",
     "inGameOverall": 65,
@@ -6090,7 +6181,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1059",
     "team": "Austin Armadillos",
     "throwHand": "Left",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 27,
@@ -6103,6 +6195,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.9,
     "fieldingScoreComponent": 9.44,
     "id": "1057",
     "inGameOverall": 65,
@@ -6193,7 +6286,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1057",
     "team": "Austin Armadillos",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 21,
@@ -6206,6 +6300,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 17.13,
     "id": "1100",
     "inGameOverall": 35,
@@ -6275,7 +6370,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1100",
     "team": "Boise Single Bison Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 62.0
    },
    {
     "age": 24,
@@ -6288,6 +6384,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 11.08,
     "id": "1084",
     "inGameOverall": 35,
@@ -6357,7 +6454,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1084",
     "team": "Boise Bison",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 65.0
    },
    {
     "age": 22,
@@ -6370,6 +6468,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.7,
     "fieldingScoreComponent": 7.92,
     "id": "1068",
     "inGameOverall": 40,
@@ -6460,7 +6559,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1068",
     "team": "Austin Double Armadillos Double",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 19,
@@ -6473,6 +6573,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 5.01,
     "id": "1038",
     "inGameOverall": 50,
@@ -6542,7 +6643,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1038",
     "team": "Pittsburgh Triple Pirates Triple",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 66.0
    },
    {
     "age": 24,
@@ -6555,6 +6657,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 21.73,
     "id": "1018",
     "inGameOverall": 45,
@@ -6624,7 +6727,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1018",
     "team": "Milwaukee Double Brewers Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 60.0
    },
    {
     "age": 23,
@@ -6637,6 +6741,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 38.35,
     "id": "1086",
     "inGameOverall": 65,
@@ -6722,7 +6827,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1086",
     "team": "Boise Bison",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -7.0
    },
    {
     "age": 32,
@@ -6735,6 +6841,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.92,
     "id": "1000",
     "inGameOverall": 65,
@@ -6804,7 +6911,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1000",
     "team": "Milwaukee Brewers",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 63.0
    },
    {
     "age": 17,
@@ -6817,6 +6925,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 5.12,
     "fieldingScoreComponent": 15.65,
     "id": "1050",
     "inGameOverall": 45,
@@ -6902,7 +7011,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1050",
     "team": null,
     "throwHand": "Left",
-    "type": "Two-way"
+    "type": "Two-way",
+    "wrcPlus": 5.0
    },
    {
     "age": 30,
@@ -6915,6 +7025,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 2.38,
     "id": "1052",
     "inGameOverall": 60,
@@ -6984,7 +7095,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1052",
     "team": "Austin Armadillos",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 65.0
    },
    {
     "age": 22,
@@ -6997,6 +7109,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 38.96,
     "id": "1035",
     "inGameOverall": 55,
@@ -7082,7 +7195,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1035",
     "team": "Pittsburgh Triple Pirates Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -7.0
    },
    {
     "age": 30,
@@ -7095,6 +7209,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 32.5,
     "id": "1032",
     "inGameOverall": 55,
@@ -7164,7 +7279,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1032",
     "team": "Pittsburgh Pirates",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 42.0
    },
    {
     "age": 24,
@@ -7177,6 +7293,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.18,
     "id": "1075",
     "inGameOverall": 45,
@@ -7246,7 +7363,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1075",
     "team": "Austin Single Armadillos Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 58.0
    },
    {
     "age": 24,
@@ -7259,6 +7377,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 8.79,
     "id": "1067",
     "inGameOverall": 30,
@@ -7328,7 +7447,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1067",
     "team": "Austin Double Armadillos Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 57.0
    },
    {
     "age": 19,
@@ -7341,6 +7461,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 31.09,
     "id": "1040",
     "inGameOverall": 35,
@@ -7410,7 +7531,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1040",
     "team": "Pittsburgh Double Pirates Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 39.0
    },
    {
     "age": 21,
@@ -7423,6 +7545,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 28.45,
     "id": "1096",
     "inGameOverall": 50,
@@ -7518,7 +7641,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1096",
     "team": "Boise Double Bison Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -1.0
    },
    {
     "age": 20,
@@ -7531,6 +7655,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 5.07,
     "fieldingScoreComponent": 28.69,
     "id": "1090",
     "inGameOverall": 35,
@@ -7611,7 +7736,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1090",
     "team": "Boise Triple Bison Triple",
     "throwHand": "Left",
-    "type": "Two-way"
+    "type": "Two-way",
+    "wrcPlus": -7.0
    },
    {
     "age": 19,
@@ -7624,6 +7750,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 15.65,
     "id": "1025",
     "inGameOverall": 40,
@@ -7693,7 +7820,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1025",
     "team": null,
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 55.0
    },
    {
     "age": 20,
@@ -7706,6 +7834,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 24.75,
     "id": "1099",
     "inGameOverall": 30,
@@ -7775,7 +7904,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1099",
     "team": "Boise Single Bison Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 22.0
    },
    {
     "age": 30,
@@ -7788,6 +7918,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 5.13,
     "fieldingScoreComponent": 20.41,
     "id": "1079",
     "inGameOverall": 60,
@@ -7883,7 +8014,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1079",
     "team": "Boise Bison",
     "throwHand": "Left",
-    "type": "Two-way"
+    "type": "Two-way",
+    "wrcPlus": -7.0
    },
    {
     "age": 21,
@@ -7896,6 +8028,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 28.69,
     "id": "1021",
     "inGameOverall": 40,
@@ -7965,7 +8098,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1021",
     "team": "Milwaukee Single Brewers Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 49.0
    },
    {
     "age": 33,
@@ -7978,6 +8112,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.22,
     "id": "1026",
     "inGameOverall": 55,
@@ -8047,7 +8182,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1026",
     "team": "Pittsburgh Pirates",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 58.0
    },
    {
     "age": 23,
@@ -8060,6 +8196,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 15.65,
     "id": "1045",
     "inGameOverall": 50,
@@ -8129,7 +8266,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1045",
     "team": "Pittsburgh Single Pirates Single",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 29.0
    },
    {
     "age": 30,
@@ -8142,6 +8280,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 19.82,
     "id": "1083",
     "inGameOverall": 45,
@@ -8211,7 +8350,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1083",
     "team": "Boise Bison",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 20.0
    },
    {
     "age": 30,
@@ -8224,6 +8364,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 23.12,
     "id": "1002",
     "inGameOverall": 35,
@@ -8314,7 +8455,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1002",
     "team": "Milwaukee Brewers",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -7.0
    },
    {
     "age": 25,
@@ -8327,6 +8469,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 21.73,
     "id": "1073",
     "inGameOverall": 50,
@@ -8417,7 +8560,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1073",
     "team": "Austin Single Armadillos Single",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -7.0
    },
    {
     "age": 25,
@@ -8430,6 +8574,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 12.75,
     "id": "1006",
     "inGameOverall": 50,
@@ -8525,7 +8670,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1006",
     "team": "Milwaukee Brewers",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -7.0
    },
    {
     "age": 21,
@@ -8538,6 +8684,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 17.99,
     "id": "1064",
     "inGameOverall": 50,
@@ -8607,7 +8754,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1064",
     "team": "Austin Triple Armadillos Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 25.0
    },
    {
     "age": 20,
@@ -8620,6 +8768,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 12.82,
     "id": "1098",
     "inGameOverall": 50,
@@ -8715,7 +8864,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1098",
     "team": "Boise Single Bison Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -7.0
    },
    {
     "age": 25,
@@ -8728,6 +8878,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 20.47,
     "id": "1046",
     "inGameOverall": 60,
@@ -8797,7 +8948,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1046",
     "team": "Pittsburgh Single Pirates Single",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 51.0
    },
    {
     "age": 23,
@@ -8810,6 +8962,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 16.07,
     "id": "1020",
     "inGameOverall": 40,
@@ -8879,7 +9032,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1020",
     "team": "Milwaukee Single Brewers Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 34.0
    },
    {
     "age": 20,
@@ -8892,6 +9046,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 5.34,
     "fieldingScoreComponent": 9.77,
     "id": "1097",
     "inGameOverall": 50,
@@ -8982,7 +9137,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1097",
     "team": "Boise Single Bison Single",
     "throwHand": "Right",
-    "type": "Two-way"
+    "type": "Two-way",
+    "wrcPlus": -7.0
    },
    {
     "age": 23,
@@ -8995,6 +9151,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 15.65,
     "id": "1060",
     "inGameOverall": 40,
@@ -9075,7 +9232,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1060",
     "team": "Austin Armadillos",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -7.0
    },
    {
     "age": 20,
@@ -9088,6 +9246,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 0.0,
     "id": "1089",
     "inGameOverall": 50,
@@ -9157,7 +9316,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1089",
     "team": "Boise Triple Bison Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 57.0
    },
    {
     "age": 24,
@@ -9170,6 +9330,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 12.52,
     "id": "1027",
     "inGameOverall": 65,
@@ -9255,7 +9416,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1027",
     "team": "Pittsburgh Pirates",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 5.0
    },
    {
     "age": 26,
@@ -9268,6 +9430,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 5.29,
     "fieldingScoreComponent": 0.07,
     "id": "1041",
     "inGameOverall": 35,
@@ -9353,7 +9516,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1041",
     "team": "Pittsburgh Double Pirates Double",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 19,
@@ -9366,6 +9530,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 12.52,
     "id": "1091",
     "inGameOverall": 65,
@@ -9456,7 +9621,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1091",
     "team": "Boise Triple Bison Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -7.0
    },
    {
     "age": 20,
@@ -9469,6 +9635,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 12.46,
     "id": "1094",
     "inGameOverall": 45,
@@ -9538,7 +9705,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1094",
     "team": "Boise Double Bison Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 41.0
    },
    {
     "age": 17,
@@ -9551,6 +9719,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 10.37,
     "id": "1102",
     "inGameOverall": 55,
@@ -9636,7 +9805,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1102",
     "team": null,
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 5.0
    },
    {
     "age": 21,
@@ -9649,6 +9819,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 9.57,
     "id": "1022",
     "inGameOverall": 40,
@@ -9744,7 +9915,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1022",
     "team": "Milwaukee Single Brewers Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 2.0
    },
    {
     "age": 24,
@@ -9757,6 +9929,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.25,
     "id": "1072",
     "inGameOverall": 45,
@@ -9826,7 +9999,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1072",
     "team": "Austin Single Armadillos Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 33.0
    },
    {
     "age": 30,
@@ -9839,6 +10013,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 9.77,
     "id": "1056",
     "inGameOverall": 45,
@@ -9929,7 +10104,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1056",
     "team": "Austin Armadillos",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -1.0
    },
    {
     "age": 31,
@@ -9942,6 +10118,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.22,
     "id": "1031",
     "inGameOverall": 30,
@@ -10011,7 +10188,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1031",
     "team": "Pittsburgh Pirates",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 20.0
    },
    {
     "age": 30,
@@ -10024,6 +10202,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 9.44,
     "id": "1030",
     "inGameOverall": 65,
@@ -10093,7 +10272,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1030",
     "team": "Pittsburgh Pirates",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 34.0
    },
    {
     "age": 19,
@@ -10106,6 +10286,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 4.31,
     "id": "1070",
     "inGameOverall": 45,
@@ -10175,7 +10356,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1070",
     "team": "Austin Double Armadillos Double",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 46.0
    },
    {
     "age": 29,
@@ -10188,6 +10370,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 4.58,
     "id": "1111",
     "inGameOverall": 65,
@@ -10273,7 +10456,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1111",
     "team": null,
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -7.0
    },
    {
     "age": 32,
@@ -10286,6 +10470,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 4.15,
     "id": "1085",
     "inGameOverall": 40,
@@ -10355,7 +10540,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1085",
     "team": "Boise Bison",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 51.0
    },
    {
     "age": 19,
@@ -10368,6 +10554,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.92,
     "id": "1071",
     "inGameOverall": 65,
@@ -10437,7 +10624,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1071",
     "team": "Austin Single Armadillos Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 53.0
    },
    {
     "age": 25,
@@ -10450,6 +10638,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.22,
     "id": "1055",
     "inGameOverall": 55,
@@ -10519,7 +10708,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1055",
     "team": "Austin Armadillos",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 28.0
    },
    {
     "age": 27,
@@ -10532,6 +10722,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 4.47,
     "id": "1081",
     "inGameOverall": 50,
@@ -10612,7 +10803,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1081",
     "team": "Boise Bison",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -1.0
    },
    {
     "age": 19,
@@ -10625,6 +10817,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 4.15,
     "id": "1095",
     "inGameOverall": 30,
@@ -10694,7 +10887,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1095",
     "team": "Boise Double Bison Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 40.0
    },
    {
     "age": 31,
@@ -10707,6 +10901,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 6.7,
     "id": "1028",
     "inGameOverall": 65,
@@ -10797,7 +10992,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1028",
     "team": "Pittsburgh Pirates",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -7.0
    },
    {
     "age": 26,
@@ -10810,6 +11006,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.18,
     "id": "1023",
     "inGameOverall": 30,
@@ -10890,7 +11087,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1023",
     "team": "Milwaukee Single Brewers Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -2.0
    },
    {
     "age": 22,
@@ -10903,6 +11101,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 2.68,
     "id": "1047",
     "inGameOverall": 45,
@@ -10983,7 +11182,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1047",
     "team": "Pittsburgh Single Pirates Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -7.0
    },
    {
     "age": 20,
@@ -10996,6 +11196,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 4.57,
     "id": "1087",
     "inGameOverall": 65,
@@ -11065,7 +11266,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1087",
     "team": "Boise Triple Bison Triple",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 45.0
    },
    {
     "age": 20,
@@ -11078,6 +11280,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 2.9,
     "id": "1013",
     "inGameOverall": 40,
@@ -11158,7 +11361,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1013",
     "team": "Milwaukee Triple Brewers Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 10.0
    },
    {
     "age": 22,
@@ -11171,6 +11375,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 0.74,
     "id": "1101",
     "inGameOverall": 50,
@@ -11261,7 +11466,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1101",
     "team": "Boise Single Bison Single",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -7.0
    },
    {
     "age": 25,
@@ -11274,6 +11480,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 0.0,
     "id": "1065",
     "inGameOverall": 30,
@@ -11343,7 +11550,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1065",
     "team": "Austin Triple Armadillos Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 23.0
    },
    {
     "age": 19,
@@ -11356,6 +11564,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 4.15,
     "id": "1092",
     "inGameOverall": 45,
@@ -11425,7 +11634,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1092",
     "team": "Boise Double Bison Double",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 44.0
    },
    {
     "age": 24,
@@ -11438,6 +11648,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 0.92,
     "id": "1001",
     "inGameOverall": 35,
@@ -11528,7 +11739,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1001",
     "team": "Milwaukee Brewers",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": -7.0
    }
   ],
   "totalRecords": 106
@@ -11546,6 +11758,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 2.71,
     "fieldingScoreComponent": 15.1,
     "id": "1034",
     "inGameOverall": 35,
@@ -11636,7 +11849,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1034",
     "team": "Pittsburgh Pirates",
     "throwHand": "Left",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 24,
@@ -11649,6 +11863,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 34.67,
     "id": "1019",
     "inGameOverall": 55,
@@ -11718,7 +11933,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1019",
     "team": "Milwaukee Single Brewers Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 188.0
    },
    {
     "age": 21,
@@ -11731,6 +11947,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 15.1,
     "id": "1037",
     "inGameOverall": 30,
@@ -11800,7 +12017,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1037",
     "team": "Pittsburgh Triple Pirates Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 183.0
    },
    {
     "age": 22,
@@ -11813,6 +12031,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 2.67,
     "fieldingScoreComponent": 7.92,
     "id": "1068",
     "inGameOverall": 40,
@@ -11903,7 +12122,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1068",
     "team": "Austin Double Armadillos Double",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 22,
@@ -11916,6 +12136,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 6.19,
     "id": "1015",
     "inGameOverall": 65,
@@ -11985,7 +12206,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1015",
     "team": "Milwaukee Double Brewers Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 158.0
    },
    {
     "age": 19,
@@ -11998,6 +12220,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 10.26,
     "id": "1077",
     "inGameOverall": 60,
@@ -12067,7 +12290,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1077",
     "team": null,
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 151.0
    },
    {
     "age": 17,
@@ -12080,6 +12304,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 40.46,
     "id": "1076",
     "inGameOverall": 55,
@@ -12149,7 +12374,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1076",
     "team": null,
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 130.0
    },
    {
     "age": 20,
@@ -12162,6 +12388,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 49.28,
     "id": "1048",
     "inGameOverall": 65,
@@ -12231,7 +12458,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1048",
     "team": "Pittsburgh Single Pirates Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 132.0
    },
    {
     "age": 27,
@@ -12244,6 +12472,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 15.1,
     "id": "1112",
     "inGameOverall": 50,
@@ -12313,7 +12542,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1112",
     "team": null,
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 131.0
    },
    {
     "age": 25,
@@ -12326,6 +12556,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 2.84,
     "fieldingScoreComponent": 14.74,
     "id": "1017",
     "inGameOverall": 50,
@@ -12406,7 +12637,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1017",
     "team": "Milwaukee Double Brewers Double",
     "throwHand": "Left",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 19,
@@ -12419,6 +12651,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 15.65,
     "id": "1103",
     "inGameOverall": 50,
@@ -12488,7 +12721,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1103",
     "team": null,
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 172.0
    },
    {
     "age": 21,
@@ -12501,6 +12735,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 14.98,
     "id": "1042",
     "inGameOverall": 40,
@@ -12570,7 +12805,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1042",
     "team": "Pittsburgh Double Pirates Double",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 133.0
    },
    {
     "age": 25,
@@ -12583,6 +12819,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 9.29,
     "id": "1063",
     "inGameOverall": 65,
@@ -12652,7 +12889,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1063",
     "team": "Austin Triple Armadillos Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 172.0
    },
    {
     "age": 19,
@@ -12665,6 +12903,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 3.12,
     "fieldingScoreComponent": 10.37,
     "id": "1051",
     "inGameOverall": 45,
@@ -12750,7 +12989,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1051",
     "team": null,
     "throwHand": "Left",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 25,
@@ -12763,6 +13003,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.92,
     "id": "1062",
     "inGameOverall": 50,
@@ -12832,7 +13073,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1062",
     "team": "Austin Triple Armadillos Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 126.0
    },
    {
     "age": 19,
@@ -12845,6 +13087,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 12.52,
     "id": "1044",
     "inGameOverall": 45,
@@ -12914,7 +13157,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1044",
     "team": "Pittsburgh Double Pirates Double",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 145.0
    },
    {
     "age": 22,
@@ -12927,6 +13171,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 2.54,
     "id": "1088",
     "inGameOverall": 65,
@@ -12996,7 +13241,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1088",
     "team": "Boise Triple Bison Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 124.0
    },
    {
     "age": 19,
@@ -13009,6 +13255,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.18,
     "id": "1061",
     "inGameOverall": 45,
@@ -13078,7 +13325,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1061",
     "team": "Austin Triple Armadillos Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 125.0
    },
    {
     "age": 22,
@@ -13091,6 +13339,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 15.95,
     "id": "1074",
     "inGameOverall": 55,
@@ -13160,7 +13409,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1074",
     "team": "Austin Single Armadillos Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 121.0
    },
    {
     "age": 24,
@@ -13173,6 +13423,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 29.03,
     "id": "1014",
     "inGameOverall": 50,
@@ -13242,7 +13493,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1014",
     "team": "Milwaukee Double Brewers Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 120.0
    },
    {
     "age": 19,
@@ -13255,6 +13507,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 3.1,
     "fieldingScoreComponent": 12.52,
     "id": "1091",
     "inGameOverall": 65,
@@ -13345,7 +13598,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1091",
     "team": "Boise Triple Bison Triple",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 23,
@@ -13358,6 +13612,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 19.71,
     "id": "1012",
     "inGameOverall": 60,
@@ -13427,7 +13682,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1012",
     "team": "Milwaukee Triple Brewers Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 145.0
    },
    {
     "age": 26,
@@ -13440,6 +13696,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 3.31,
     "fieldingScoreComponent": 7.18,
     "id": "1023",
     "inGameOverall": 30,
@@ -13520,7 +13777,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1023",
     "team": "Milwaukee Single Brewers Single",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 22,
@@ -13533,6 +13791,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 37.62,
     "id": "1009",
     "inGameOverall": 30,
@@ -13602,7 +13861,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1009",
     "team": "Milwaukee Triple Brewers Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 143.0
    },
    {
     "age": 24,
@@ -13615,6 +13875,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.18,
     "id": "1075",
     "inGameOverall": 45,
@@ -13684,7 +13945,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1075",
     "team": "Austin Single Armadillos Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 124.0
    },
    {
     "age": 25,
@@ -13697,6 +13959,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 21.73,
     "id": "1011",
     "inGameOverall": 35,
@@ -13766,7 +14029,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1011",
     "team": "Milwaukee Triple Brewers Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 136.0
    },
    {
     "age": 20,
@@ -13779,6 +14043,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 3.92,
     "fieldingScoreComponent": 9.77,
     "id": "1097",
     "inGameOverall": 50,
@@ -13869,7 +14134,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1097",
     "team": "Boise Single Bison Single",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 25,
@@ -13882,6 +14148,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 20.47,
     "id": "1046",
     "inGameOverall": 60,
@@ -13951,7 +14218,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1046",
     "team": "Pittsburgh Single Pirates Single",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 111.0
    },
    {
     "age": 26,
@@ -13964,6 +14232,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 23.46,
     "id": "1016",
     "inGameOverall": 30,
@@ -14033,7 +14302,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1016",
     "team": "Milwaukee Double Brewers Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 108.0
    },
    {
     "age": 25,
@@ -14046,6 +14316,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 31.2,
     "id": "1036",
     "inGameOverall": 45,
@@ -14115,7 +14386,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1036",
     "team": "Pittsburgh Triple Pirates Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 121.0
    },
    {
     "age": 20,
@@ -14128,6 +14400,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 24.75,
     "id": "1099",
     "inGameOverall": 30,
@@ -14197,7 +14470,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1099",
     "team": "Boise Single Bison Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 100.0
    },
    {
     "age": 17,
@@ -14210,6 +14484,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 3.87,
     "fieldingScoreComponent": 15.65,
     "id": "1050",
     "inGameOverall": 45,
@@ -14295,7 +14570,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1050",
     "team": null,
     "throwHand": "Left",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 21,
@@ -14308,6 +14584,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 17.13,
     "id": "1100",
     "inGameOverall": 35,
@@ -14377,7 +14654,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1100",
     "team": "Boise Single Bison Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 104.0
    },
    {
     "age": 22,
@@ -14390,6 +14668,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 3.37,
     "fieldingScoreComponent": 38.96,
     "id": "1035",
     "inGameOverall": 55,
@@ -14475,7 +14754,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1035",
     "team": "Pittsburgh Triple Pirates Triple",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 21,
@@ -14488,6 +14768,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 28.69,
     "id": "1021",
     "inGameOverall": 40,
@@ -14557,7 +14838,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1021",
     "team": "Milwaukee Single Brewers Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 96.0
    },
    {
     "age": 26,
@@ -14570,6 +14852,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 2.95,
     "fieldingScoreComponent": 0.07,
     "id": "1041",
     "inGameOverall": 35,
@@ -14655,7 +14938,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1041",
     "team": "Pittsburgh Double Pirates Double",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 22,
@@ -14668,6 +14952,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 19.89,
     "id": "1069",
     "inGameOverall": 55,
@@ -14737,7 +15022,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1069",
     "team": "Austin Double Armadillos Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 101.0
    },
    {
     "age": 19,
@@ -14750,6 +15036,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 4.15,
     "id": "1092",
     "inGameOverall": 45,
@@ -14819,7 +15106,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1092",
     "team": "Boise Double Bison Double",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 100.0
    },
    {
     "age": 23,
@@ -14832,6 +15120,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 3.37,
     "fieldingScoreComponent": 7.32,
     "id": "1043",
     "inGameOverall": 40,
@@ -14912,7 +15201,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1043",
     "team": "Pittsburgh Double Pirates Double",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 21,
@@ -14925,6 +15215,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 3.69,
     "fieldingScoreComponent": 28.45,
     "id": "1096",
     "inGameOverall": 50,
@@ -15020,7 +15311,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1096",
     "team": "Boise Double Bison Double",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 24,
@@ -15033,6 +15325,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 8.79,
     "id": "1067",
     "inGameOverall": 30,
@@ -15102,7 +15395,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1067",
     "team": "Austin Double Armadillos Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 106.0
    },
    {
     "age": 19,
@@ -15115,6 +15409,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 15.65,
     "id": "1025",
     "inGameOverall": 40,
@@ -15184,7 +15479,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1025",
     "team": null,
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 116.0
    },
    {
     "age": 23,
@@ -15197,6 +15493,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 15.65,
     "id": "1045",
     "inGameOverall": 50,
@@ -15266,7 +15563,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1045",
     "team": "Pittsburgh Single Pirates Single",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 101.0
    },
    {
     "age": 21,
@@ -15279,6 +15577,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 9.44,
     "id": "1066",
     "inGameOverall": 30,
@@ -15348,7 +15647,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1066",
     "team": "Austin Double Armadillos Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 133.0
    },
    {
     "age": 23,
@@ -15361,6 +15661,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 0.07,
     "id": "1093",
     "inGameOverall": 65,
@@ -15430,7 +15731,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1093",
     "team": "Boise Double Bison Double",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 114.0
    },
    {
     "age": 23,
@@ -15443,6 +15745,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 3.52,
     "fieldingScoreComponent": 4.15,
     "id": "1049",
     "inGameOverall": 35,
@@ -15538,7 +15841,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1049",
     "team": "Pittsburgh Single Pirates Single",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 26,
@@ -15551,6 +15855,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 4.31,
     "id": "1039",
     "inGameOverall": 45,
@@ -15620,7 +15925,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1039",
     "team": "Pittsburgh Triple Pirates Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 110.0
    },
    {
     "age": 20,
@@ -15633,6 +15939,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 12.46,
     "id": "1094",
     "inGameOverall": 45,
@@ -15702,7 +16009,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1094",
     "team": "Boise Double Bison Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 87.0
    },
    {
     "age": 19,
@@ -15715,6 +16023,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 5.01,
     "id": "1038",
     "inGameOverall": 50,
@@ -15784,7 +16093,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1038",
     "team": "Pittsburgh Triple Pirates Triple",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 114.0
    },
    {
     "age": 17,
@@ -15797,6 +16107,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 19.43,
     "id": "1024",
     "inGameOverall": 60,
@@ -15866,7 +16177,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1024",
     "team": null,
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 90.0
    },
    {
     "age": 20,
@@ -15879,6 +16191,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 8.63,
     "id": "1010",
     "inGameOverall": 40,
@@ -15948,7 +16261,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1010",
     "team": "Milwaukee Triple Brewers Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 97.0
    },
    {
     "age": 24,
@@ -15961,6 +16275,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 21.73,
     "id": "1018",
     "inGameOverall": 45,
@@ -16030,7 +16345,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1018",
     "team": "Milwaukee Double Brewers Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 92.0
    },
    {
     "age": 20,
@@ -16043,6 +16359,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.19,
     "fieldingScoreComponent": 28.69,
     "id": "1090",
     "inGameOverall": 35,
@@ -16123,7 +16440,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1090",
     "team": "Boise Triple Bison Triple",
     "throwHand": "Left",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 22,
@@ -16136,6 +16454,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.23,
     "fieldingScoreComponent": 0.74,
     "id": "1101",
     "inGameOverall": 50,
@@ -16226,7 +16545,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1101",
     "team": "Boise Single Bison Single",
     "throwHand": "Left",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 19,
@@ -16239,6 +16559,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 31.09,
     "id": "1040",
     "inGameOverall": 35,
@@ -16308,7 +16629,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1040",
     "team": "Pittsburgh Double Pirates Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 82.0
    },
    {
     "age": 19,
@@ -16321,6 +16643,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 4.31,
     "id": "1070",
     "inGameOverall": 45,
@@ -16390,7 +16713,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1070",
     "team": "Austin Double Armadillos Double",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 87.0
    },
    {
     "age": 17,
@@ -16403,6 +16727,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.01,
     "fieldingScoreComponent": 10.37,
     "id": "1102",
     "inGameOverall": 55,
@@ -16488,7 +16813,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1102",
     "team": null,
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 23,
@@ -16501,6 +16827,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.1,
     "fieldingScoreComponent": 7.92,
     "id": "1008",
     "inGameOverall": 50,
@@ -16581,7 +16908,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1008",
     "team": "Milwaukee Brewers",
     "throwHand": "Left",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 20,
@@ -16594,6 +16922,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 4.57,
     "id": "1087",
     "inGameOverall": 65,
@@ -16663,7 +16992,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1087",
     "team": "Boise Triple Bison Triple",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 77.0
    },
    {
     "age": 23,
@@ -16676,6 +17006,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.02,
     "fieldingScoreComponent": 15.65,
     "id": "1060",
     "inGameOverall": 40,
@@ -16756,7 +17087,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1060",
     "team": "Austin Armadillos",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 20,
@@ -16769,6 +17101,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 0.0,
     "id": "1089",
     "inGameOverall": 50,
@@ -16838,7 +17171,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1089",
     "team": "Boise Triple Bison Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 87.0
    },
    {
     "age": 21,
@@ -16851,6 +17185,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.26,
     "fieldingScoreComponent": 9.57,
     "id": "1022",
     "inGameOverall": 40,
@@ -16946,7 +17281,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1022",
     "team": "Milwaukee Single Brewers Single",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 20,
@@ -16959,6 +17295,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.35,
     "fieldingScoreComponent": 12.82,
     "id": "1098",
     "inGameOverall": 50,
@@ -17054,7 +17391,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1098",
     "team": "Boise Single Bison Single",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 25,
@@ -17067,6 +17405,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.31,
     "fieldingScoreComponent": 21.73,
     "id": "1073",
     "inGameOverall": 50,
@@ -17157,7 +17496,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1073",
     "team": "Austin Single Armadillos Single",
     "throwHand": "Left",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 22,
@@ -17170,6 +17510,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.41,
     "fieldingScoreComponent": 2.68,
     "id": "1047",
     "inGameOverall": 45,
@@ -17250,7 +17591,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1047",
     "team": "Pittsburgh Single Pirates Single",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 23,
@@ -17263,6 +17605,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 16.07,
     "id": "1020",
     "inGameOverall": 40,
@@ -17332,7 +17675,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1020",
     "team": "Milwaukee Single Brewers Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 70.0
    },
    {
     "age": 19,
@@ -17345,6 +17689,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.92,
     "id": "1071",
     "inGameOverall": 65,
@@ -17414,7 +17759,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1071",
     "team": "Austin Single Armadillos Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 68.0
    },
    {
     "age": 19,
@@ -17427,6 +17773,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 4.15,
     "id": "1095",
     "inGameOverall": 30,
@@ -17496,7 +17843,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1095",
     "team": "Boise Double Bison Double",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 64.0
    },
    {
     "age": 20,
@@ -17509,6 +17857,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 4.43,
     "fieldingScoreComponent": 2.9,
     "id": "1013",
     "inGameOverall": 40,
@@ -17589,7 +17938,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1013",
     "team": "Milwaukee Triple Brewers Triple",
     "throwHand": "Right",
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 21,
@@ -17602,6 +17952,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 17.99,
     "id": "1064",
     "inGameOverall": 50,
@@ -17671,7 +18022,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1064",
     "team": "Austin Triple Armadillos Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 70.0
    },
    {
     "age": 23,
@@ -17684,6 +18036,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": 5.01,
     "fieldingScoreComponent": 38.35,
     "id": "1086",
     "inGameOverall": 65,
@@ -17769,7 +18122,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1086",
     "team": "Boise Bison",
     "throwHand": "Right",
-    "type": "Two-way"
+    "type": "Two-way",
+    "wrcPlus": 2.0
    },
    {
     "age": 24,
@@ -17782,6 +18136,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.25,
     "id": "1072",
     "inGameOverall": 45,
@@ -17851,7 +18206,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1072",
     "team": "Austin Single Armadillos Single",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 61.0
    },
    {
     "age": 25,
@@ -17864,6 +18220,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 0.0,
     "id": "1065",
     "inGameOverall": 30,
@@ -17933,7 +18290,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1065",
     "team": "Austin Triple Armadillos Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": 66.0
    }
   ],
   "totalRecords": 73

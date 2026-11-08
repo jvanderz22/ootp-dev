@@ -78,6 +78,18 @@ def extra_base_shares(bat: pd.DataFrame, years) -> tuple:
     return float(extra / mlb.hits_in_play.sum()), float(mlb.triple.sum() / extra)
 
 
+def mlb_era(stats_dir, year: int) -> float:
+    pit = _load(stats_dir, "pitch", [year])
+    mlb = pit[pit.level_id == LEVEL_MLB]
+    return float(27 * mlb.er.sum() / mlb.outs.sum())
+
+
+def mlb_events_per_pa(bat: pd.DataFrame, year: int) -> dict:
+    """The MLB average PA as `outcomes` gives one: event -> share of PA."""
+    mlb = bat[(bat.year == year) & (bat.level_id == LEVEL_MLB)]
+    return {name: float(mlb[name].sum() / mlb.pa.sum()) for name in EVENTS}
+
+
 def mlb_runs_per_pa(bat: pd.DataFrame, weights: dict, year: int) -> float:
     mlb = bat[(bat.year == year) & (bat.level_id == LEVEL_MLB)]
     return float(runs(mlb, weights).sum() / mlb.pa.sum())

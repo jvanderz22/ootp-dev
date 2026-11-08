@@ -35,6 +35,8 @@ const PLAYER_FIELDS = gql`
     rawOverallScore
     preDemandScore
     preDemandRank
+    wrcPlus
+    era
     ratings
     source {
       className

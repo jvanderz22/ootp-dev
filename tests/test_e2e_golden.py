@@ -42,7 +42,7 @@ PLAYER_FIELDS = """
   statsPlusUrl rule5Eligible modelScore inGameOverall inGamePotential demand
   drafted draftedTeam draftedPick draftedRound draftedRoundPick
   positionPlayerScore pitcherScore battingScoreComponent fieldingScoreComponent
-  starterComponent relieverComponent runningScoreComponent rawOverallScore ratings
+  starterComponent relieverComponent runningScoreComponent rawOverallScore wrcPlus era ratings
 """
 CLASS_FIELDS = """
   name rankingMethod playerCount hasCustomOrder lastProcessed draftedCount

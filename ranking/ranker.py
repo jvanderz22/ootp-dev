@@ -109,6 +109,8 @@ class Ranker:
             breakdown=store.pop(player.id, {}) or {},
             pre_demand_score=state.value,
             ledger=state.ledger,
+            wrc_plus=None if state.wrc_plus is None else round(state.wrc_plus),
+            era=None if state.era is None else round(state.era, 2),
         )
 
     def _finish(self, results) -> list:

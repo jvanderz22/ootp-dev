@@ -78,6 +78,9 @@ type RankedPlayer {
   "v2 engine only: the score and rank before the draft demand step (null for legacy)"
   preDemandScore: Float
   preDemandRank: Int
+  "v2 engine only: the fitted talent model's wRC+ (hitters) and ERA (pitchers, in the role they're judged in), on the ranking's ratings - potential for prospects and draft classes"
+  wrcPlus: Float
+  era: Float
   ratings: JSON
   "Which stored ranking this row came from - pass it to `playerBreakdown`."
   source: RankingSource!

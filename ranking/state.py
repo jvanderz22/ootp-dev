@@ -25,3 +25,7 @@ class PlayerState:
     pitching: SideState = field(default_factory=SideState)
     ledger: Ledger = field(default_factory=Ledger)
     value: float = 0.0         # sides combined, before demand
+    # the fitted talent layers' modeled line: wRC+, and ERA in the role the
+    # pitching side is judged in (None where a legacy model scored the side)
+    wrc_plus: float = None
+    era: float = None

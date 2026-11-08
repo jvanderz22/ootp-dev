@@ -106,6 +106,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 21.73,
     "id": "1011",
     "inGameOverall": 35,
@@ -178,7 +179,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1011",
     "team": "Milwaukee Triple Brewers Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": null
    }
   ],
   "totalRecords": 1
@@ -358,6 +360,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 37.62,
     "id": "1009",
     "inGameOverall": 30,
@@ -430,7 +433,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1009",
     "team": "Milwaukee Triple Brewers Triple",
     "throwHand": "Right",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": null
    },
    {
     "age": null,
@@ -443,6 +447,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": null,
     "id": "1104",
     "inGameOverall": null,
@@ -467,7 +472,8 @@
     "statsPlusUrl": null,
     "team": null,
     "throwHand": null,
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": null,
@@ -480,6 +486,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": null,
     "id": "9999",
     "inGameOverall": null,
@@ -504,7 +511,8 @@
     "statsPlusUrl": null,
     "team": null,
     "throwHand": null,
-    "type": "Pitcher"
+    "type": "Pitcher",
+    "wrcPlus": null
    },
    {
     "age": 32,
@@ -517,6 +525,7 @@
     "draftedRound": null,
     "draftedRoundPick": null,
     "draftedTeam": null,
+    "era": null,
     "fieldingScoreComponent": 7.92,
     "id": "1000",
     "inGameOverall": 65,
@@ -589,7 +598,8 @@
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1000",
     "team": "Milwaukee Brewers",
     "throwHand": "Left",
-    "type": "Hitter"
+    "type": "Hitter",
+    "wrcPlus": null
    }
   ],
   "totalRecords": 4

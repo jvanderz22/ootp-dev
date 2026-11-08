@@ -10,13 +10,15 @@ SCORED_PLAYER_FIELDS = tuple(f.name for f in fields(ScoredPlayer))
 @dataclass
 class RankedResult(ScoredPlayer):
     """Every `ScoredPlayer` field (so existing consumers keep working), plus the
-    value and rank before the demand step as first-class fields, the final rank
-    and the ledger."""
+    value and rank before the demand step as first-class fields, the final rank,
+    the ledger, and the fitted talent layers' modeled wRC+ and ERA."""
 
     pre_demand_score: float = None
     pre_demand_rank: int = None
     rank: int = None
     ledger: Ledger = None
+    wrc_plus: float = None
+    era: float = None
 
     def scored_player_fields(self) -> dict:
         return {name: getattr(self, name) for name in SCORED_PLAYER_FIELDS}

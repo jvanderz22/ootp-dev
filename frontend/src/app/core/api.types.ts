@@ -140,6 +140,9 @@ export interface RankedPlayer {
   /** v2 engine only: the score and rank before the draft demand step */
   preDemandScore: number | null;
   preDemandRank: number | null;
+  /** v2 engine only: the fitted model's wRC+ (hitters) and ERA (pitchers) */
+  wrcPlus: number | null;
+  era: number | null;
   ratings: PlayerRatings | null;
   /** which stored ranking this row came from — pass it to `playerBreakdown` */
   source: RankingSource;

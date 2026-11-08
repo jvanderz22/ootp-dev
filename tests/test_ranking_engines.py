@@ -43,7 +43,7 @@ def test_migration_3_keeps_existing_runs_as_legacy(data_dir):
     conn.commit()
     conn.close()
 
-    assert db.query_one("PRAGMA user_version")[0] == len(db._MIGRATIONS) == 3
+    assert db.query_one("PRAGMA user_version")[0] == len(db._MIGRATIONS) == 4
     info = results_store.run_info("class", "c", "draft_class", "legacy")
     assert info["source_version"] == 3 and info["manifest"] is None
     assert results_store.run_info("class", "c", "draft_class", "v2") is None
@@ -161,3 +161,20 @@ def test_breakdown_carries_the_ledger(client):
 
 def test_download_takes_the_engine_as_a_query_param(client):
     assert client.get(f"/download/{CLASS}/upload.csv?engine=legacy").status_code == 200
+
+
+def test_v2_stores_the_modeled_line(data_dir):
+    from league_snapshot import join_rows
+    from models.game_players import GamePlayer
+    from ranking import get_ranker
+    from tests.test_league_snapshot import make_snapshot_csvs
+
+    ranked = get_ranker("overall").rank([GamePlayer(dict(r)) for r in join_rows(*make_snapshot_csvs())])
+    results_store.save_run(
+        "league", "fx", "overall", 1, [results_store.result_from_scored(s) for s in ranked], engine="v2"
+    )
+    rows = {r["id"]: r for r in results_store.load_results("league", "fx", "overall", engine="v2")}
+    hitters = [s for s in ranked if s.position not in ("SP", "RP", "CL")]
+    pitchers = [s for s in ranked if s.position in ("SP", "RP", "CL")]
+    assert hitters and all(rows[s.id]["wrc_plus"] == s.wrc_plus is not None for s in hitters)
+    assert pitchers and all(0 < rows[s.id]["era"] == s.era for s in pitchers)

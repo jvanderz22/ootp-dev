@@ -197,6 +197,8 @@ CREATE TABLE run_results (
   pre_demand_score,
   pre_demand_rank INTEGER,
   ledger TEXT,
+  wrc_plus,
+  era,
   PRIMARY KEY (scope, scope_id, method, engine, player_id),
   FOREIGN KEY (scope, scope_id, method, engine)
     REFERENCES model_runs (scope, scope_id, method, engine) ON DELETE CASCADE
@@ -263,8 +265,17 @@ def _migration_3(conn):
     _runs_by_engine(conn)
 
 
+def _migration_4(conn):
+    # v2's modeled line (ranking/stages/talent.py); legacy rows leave them NULL.
+    # A database created since has them already (`_runs_by_engine`).
+    have = {r[1] for r in conn.execute("PRAGMA table_info(run_results)")}
+    for column in ("wrc_plus", "era"):
+        if column not in have:
+            conn.execute(f"ALTER TABLE run_results ADD COLUMN {column}")
+
+
 # index i holds the step that takes the schema from version i to i + 1
-_MIGRATIONS = [_migration_1, _migration_2, _migration_3]
+_MIGRATIONS = [_migration_1, _migration_2, _migration_3, _migration_4]
 
 _conns: "dict[tuple, sqlite3.Connection]" = {}
 _conns_lock = threading.Lock()

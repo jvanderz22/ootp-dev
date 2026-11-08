@@ -32,11 +32,12 @@ from ranking.fitting.components import PARAMS, Rate
 from ranking.fitting.datasets import pitcher_rows, read_pitchers, season_snapshots
 from ranking.fitting.hitter_talent import data_hash
 from ranking.fitting.stats import (
-    LEVEL_MLB, extra_base_shares, fit_linear_weights, load_batting, mlb_runs_per_pa,
+    LEVEL_MLB, extra_base_shares, fit_linear_weights, load_batting, mlb_era, mlb_events_per_pa,
+    mlb_runs_per_pa,
 )
 from ranking.hitter_talent import ARTIFACTS_DIR, outcomes, runs_per_pa
 from ranking.pitcher_talent import (
-    ARTIFACT, COMPONENTS, MOVEMENT_COMPONENTS, ROLES, PitcherTalent,
+    ARTIFACT, COMPONENTS, MOVEMENT_COMPONENTS, ROLES, PitcherTalent, era_from,
 )
 
 # component -> (numerator, denominator, direction of its rating)
@@ -206,6 +207,10 @@ def main(argv=None):
         "extra_base_share": round(extra_base, 4),
         "triple_share": round(triples, 4),
         "mlb_runs_per_pa": round(mlb_runs_per_pa(bat, weights, latest), 5),
+        # the MLB average line's raw runs per nine -> the league's actual ERA
+        "era_scale": round(
+            mlb_era(stats_dir, latest) / era_from(mlb_events_per_pa(bat, latest), weights, 1.0), 5
+        ),
     }
     print(f"{len(rows)} rows from seasons {sorted(rows.year.unique())}; snapshots {sorted(snapshots)}")
 
@@ -235,6 +240,12 @@ def main(argv=None):
         print(f"  {'holds' if r.passed else 'not supported'}  {r.rule}: {r.detail}")
     print("\nruns allowed index, balanced (SP | RP):",
           {v: f"{ra(v, v, v, 'sp'):.0f} | {ra(v, v, v, 'rp'):.0f}" for v in (40, 50, 60, 70)})
+
+    def era(v, role):
+        return float(model.era({"stuff": v, "control": v, "hra": v, "pbabip": v}, role))
+
+    print(f"modeled ERA, balanced (SP | RP), MLB ERA {mlb_era(stats_dir, latest):.2f}:",
+          {v: f"{era(v, 'sp'):.2f} | {era(v, 'rp'):.2f}" for v in (40, 50, 60, 70)})
 
     artifact["meta"] = {
         "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),

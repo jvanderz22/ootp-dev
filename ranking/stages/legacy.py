@@ -46,6 +46,8 @@ class LegacyModel(BatchStage):
         for state, bat, fit_bat, pit, fit_pit in zip(states, batting, fitted_bat, pitching, fitted_pit):
             self._batting(state, bat, fit_bat and fit_bat.label)
             self._pitching(state, pit, fit_pit)
+            if fit_bat:
+                state.wrc_plus = fit_bat.wrc_plus
 
     def _pitching_scores(self, players, fitted):
         """[score, starter, reliever] per player: fitted where there is one, the
@@ -92,6 +94,7 @@ class LegacyModel(BatchStage):
         model = recorded.get(role, {}).get("model", 0.0)
         if fitted:
             index = fitted.sp_index if role == "starter" else fitted.rp_index
+            state.era = fitted.sp_era if role == "starter" else fitted.rp_era
             state.ledger.add(MODEL, f"{label} talent (runs allowed {index:.0f})", model, PITCHING)
             state.ledger.add(MODEL, f"{label} role (stamina, pitches)", chosen - model, PITCHING)
         else:

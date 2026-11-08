@@ -462,6 +462,28 @@ const MODELED_COLUMNS: ColumnDef[] = [
     value: model('pitcherScore'),
     fmt: fmtNum2,
   },
+  // v2 engine only: the fitted talent model's line, on the ranking's ratings
+  // (potential ones for prospects and draft classes)
+  {
+    field: 'wrcPlus',
+    header: 'wRC+',
+    title: 'Modeled wRC+ from the batting ratings (100 = MLB average)',
+    numeric: true,
+    descFirst: true,
+    group: 'Model',
+    value: model('wrcPlus'),
+    fmt: fmtInt,
+  },
+  {
+    field: 'era',
+    header: 'ERA',
+    title: 'Modeled ERA from the pitching ratings, as a starter or reliever (whichever he is judged as)',
+    numeric: true,
+    descFirst: false,
+    group: 'Model',
+    value: model('era'),
+    fmt: fmtNum2,
+  },
   {
     field: 'battingScoreComponent',
     header: 'Batting',

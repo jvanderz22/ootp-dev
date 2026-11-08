@@ -14,9 +14,11 @@ tables fit on Movement for `hr` and `hit` instead.
 
 Extra-base hits allowed aren't in the stats, so hits split at the MLB rate.
 Outcomes are valued with the hitters' linear weights, and runs allowed are an
-index: 100 is the MLB average batter's line, lower is better. Starting and
-relieving differ by a fitted role term (relievers strike out more), not by
-shifting the ratings.
+index: 100 is the MLB average batter's line, lower is better. `era` puts the
+same runs per nine innings, scaled so the MLB average line gives the league's
+ERA (which takes care of unearned runs and the outs the events leave out).
+Starting and relieving differ by a fitted role term (relievers strike out
+more), not by shifting the ratings.
 """
 import json
 from functools import lru_cache
@@ -50,6 +52,7 @@ class PitcherTalent:
         self.extra_base_share = artifact["extra_base_share"]
         self.triple_share = artifact["triple_share"]
         self.mlb_runs_per_pa = artifact["mlb_runs_per_pa"]
+        self.era_scale = artifact.get("era_scale")
         # runs allowed index -> legacy SP / RP points (ranking/bridge.py);
         # absent while fitting
         self.bridges = artifact.get("points_bridges")
@@ -70,13 +73,25 @@ class PitcherTalent:
             out[name] = table[np.clip(np.asarray(ratings[rating], dtype=int), LOW, HIGH) - LOW]
         return out
 
-    def runs_index(self, ratings: dict, role: str):
+    def events(self, ratings: dict, role: str) -> dict:
         r = self.rates(ratings, role)
-        events = outcomes(r["k"], r["bb"], r["hr"], r["hit"], self.extra_base_share, self.triple_share)
-        return 100 * runs_per_pa(events, self.weights) / self.mlb_runs_per_pa
+        return outcomes(r["k"], r["bb"], r["hr"], r["hit"], self.extra_base_share, self.triple_share)
+
+    def runs_index(self, ratings: dict, role: str):
+        return 100 * runs_per_pa(self.events(ratings, role), self.weights) / self.mlb_runs_per_pa
+
+    def era(self, ratings: dict, role: str):
+        events = self.events(ratings, role)
+        return era_from(events, self.weights, self.era_scale)
 
     def points(self, runs_index, role: str):
         return bridge.points(runs_index, self.bridges[role])
+
+
+def era_from(events: dict, weights: dict, scale: float):
+    """Runs per nine innings from per-PA events (27 outs: strikeouts and outs in
+    play), times `scale`."""
+    return scale * 27 * runs_per_pa(events, weights) / (events["k"] + events["out"])
 
 
 @lru_cache(maxsize=None)

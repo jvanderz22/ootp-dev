@@ -12,6 +12,7 @@
  "extra_base_share": 0.2639,
  "triple_share": 0.0853,
  "mlb_runs_per_pa": 0.12206,
+ "era_scale": 0.8951,
  "tables": {
   "sp": {
    "k": [
@@ -1111,7 +1112,7 @@
   }
  },
  "meta": {
-  "created_at": "2026-11-08T06:01:42+00:00",
+  "created_at": "2026-11-08T06:14:46+00:00",
   "league": "yfmlb",
   "snapshot_seasons": [
    2042
