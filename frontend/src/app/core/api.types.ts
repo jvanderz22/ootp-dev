@@ -360,3 +360,41 @@ export interface DraftedRefreshResult {
 
 export const RANKING_METHODS = ['draft_class', 'potential', 'overall'] as const;
 export type RankingMethod = (typeof RANKING_METHODS)[number];
+
+/** One player's overall score and rank under each ranking engine (the Compare
+ *  view). Ranks are each engine's own model order. */
+export interface ModelComparisonRow {
+  id: string;
+  name: string;
+  position: string | null;
+  age: number | null;
+  org: string | null;
+  level: string | null;
+  playerType: string | null;
+  legacyScore: number | null;
+  legacyRank: number | null;
+  v2Score: number | null;
+  v2Rank: number | null;
+  /** v2 minus legacy; the units differ, so a rough guide */
+  scoreDiff: number | null;
+  /** legacy rank minus v2 rank: positive when v2 ranks him higher */
+  rankDiff: number | null;
+}
+
+export interface ModelComparisonPage {
+  rows: ModelComparisonRow[];
+  totalRecords: number;
+}
+
+/** What to compare (a class, or a league + method) and how to slice it. */
+export interface ModelComparisonQuery {
+  className?: string;
+  leagueId?: string;
+  method?: string;
+  search?: string;
+  positions?: string[];
+  level?: string;
+  sort?: { field: string; order: number };
+  page: number;
+  pageSize: number;
+}

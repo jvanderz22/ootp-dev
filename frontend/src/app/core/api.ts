@@ -15,7 +15,9 @@ import {
   CHECK_LEAGUE_SNAPSHOT_FRESHNESS,
   DRAFT_CLASSES,
   LEAGUE_GAME_LEAGUES,
+  LEAGUE_LEVELS,
   LEAGUE_ORG_RANKINGS,
+  MODEL_COMPARISON,
   LEAGUE_REFRESH_STATUS,
   LEAGUE_SNAPSHOT,
   LEAGUE_SNAPSHOT_PLAYERS,
@@ -50,6 +52,8 @@ import {
   LeagueRefreshStatus,
   LeagueSnapshot,
   LeagueTeam,
+  ModelComparisonPage,
+  ModelComparisonQuery,
   OrgProspectSummary,
   RANKED_PAGE_SIZE,
   RankedPlayer,
@@ -430,6 +434,39 @@ export class ApiService {
         }),
       );
       return res.data!.playerSplits;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  /** Every player's score and rank under each engine, side by side. Backs the
+   *  Compare view; the server scores any run an engine hasn't made yet. */
+  async modelComparison(q: ModelComparisonQuery): Promise<ModelComparisonPage> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.query<{ modelComparison: ModelComparisonPage }>({
+          query: MODEL_COMPARISON,
+          variables: q,
+          fetchPolicy: 'network-only',
+        }),
+      );
+      return res.data!.modelComparison;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  /** The playing levels present in a league's snapshot, MLB first. */
+  async leagueLevels(leagueId: string): Promise<string[]> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.query<{ leagueLevels: string[] }>({
+          query: LEAGUE_LEVELS,
+          variables: { leagueId },
+          fetchPolicy: 'network-only',
+        }),
+      );
+      return res.data!.leagueLevels;
     } catch (e) {
       unwrap(e);
     }

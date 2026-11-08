@@ -4,7 +4,7 @@ from ariadne import make_executable_schema, upload_scalar
 from ariadne.scalars import ScalarType
 
 from web.resolvers.mutation import mutation
-from web.resolvers.query import query
+from web.resolvers.query import model_comparison_row, query
 
 _SDL = (Path(__file__).parent / "schema.graphql").read_text()
 
@@ -17,5 +17,5 @@ def serialize_json(value):
 
 
 schema = make_executable_schema(
-    _SDL, query, mutation, upload_scalar, json_scalar, convert_names_case=True
+    _SDL, query, mutation, model_comparison_row, upload_scalar, json_scalar, convert_names_case=True
 )

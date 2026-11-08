@@ -178,3 +178,35 @@ def test_v2_stores_the_modeled_line(data_dir):
     pitchers = [s for s in ranked if s.position in ("SP", "RP", "CL")]
     assert hitters and all(rows[s.id]["wrc_plus"] == s.wrc_plus is not None for s in hitters)
     assert pitchers and all(0 < rows[s.id]["era"] == s.era for s in pitchers)
+
+
+_COMPARE = """query($sort: ModelComparisonSort, $positions: [String!]) {
+  modelComparison(className: "%s", sort: $sort, positions: $positions, pageSize: 200) {
+    totalRecords
+    rows { id name position legacyScore legacyRank v2Score v2Rank scoreDiff rankDiff }
+  }
+}""" % CLASS
+
+
+def test_compare_view_lines_up_both_engines(client):
+    page = _gql(client, _COMPARE)["modelComparison"]
+    rows = page["rows"]
+    assert page["totalRecords"] == len(rows) == 80
+    # v2 order by default, each engine's own ranks, both complete
+    assert [r["v2Rank"] for r in rows] == list(range(1, 81))
+    assert sorted(r["legacyRank"] for r in rows) == list(range(1, 81))
+    for r in rows:
+        assert r["rankDiff"] == r["legacyRank"] - r["v2Rank"]
+        assert r["scoreDiff"] == pytest.approx(r["v2Score"] - r["legacyScore"])
+    # the same ranks the ranked table serves under each engine
+    top = {e: _gql(client, _ROWS, engine=e)["rankedPlayers"]["rows"][0]["id"] for e in ("v2", "legacy")}
+    assert top["v2"] == rows[0]["id"]
+    assert top["legacy"] == next(r["id"] for r in rows if r["legacyRank"] == 1)
+
+
+def test_compare_view_sorts_and_filters(client):
+    risers = _gql(client, _COMPARE, sort={"field": "rankDiff", "order": -1})["modelComparison"]["rows"]
+    diffs = [r["rankDiff"] for r in risers]
+    assert diffs == sorted(diffs, reverse=True)
+    pitchers = _gql(client, _COMPARE, positions=["SP", "RP"])["modelComparison"]["rows"]
+    assert pitchers and {r["position"] for r in pitchers} <= {"SP", "RP"}

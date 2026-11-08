@@ -350,6 +350,40 @@ type OrgProspectSummary {
   topProspects: [RankedPlayer!]!
 }
 
+"""
+One player's overall score and rank under each ranking engine, for the Compare
+view. Ranks are each engine's own model order (not a class's custom order).
+"""
+type ModelComparisonRow {
+  id: ID!
+  name: String!
+  position: String
+  age: Int
+  org: String
+  level: String
+  playerType: String
+  legacyScore: Float
+  legacyRank: Int
+  v2Score: Float
+  v2Rank: Int
+  "v2 minus legacy. The units differ (legacy points vs v2's 50 + 10 x WAR), so it's a rough guide."
+  scoreDiff: Float
+  "Legacy rank minus v2 rank: positive when v2 ranks him higher."
+  rankDiff: Int
+}
+
+type ModelComparisonPage {
+  rows: [ModelComparisonRow!]!
+  totalRecords: Int!
+}
+
+input ModelComparisonSort {
+  "v2Rank, legacyRank, rankDiff, v2Score, legacyScore, scoreDiff, name, age or position"
+  field: String!
+  "1 ascending, -1 descending"
+  order: Int!
+}
+
 type Query {
   draftClasses: [DraftClass!]!
   draftClass(name: String!): DraftClass
@@ -386,6 +420,22 @@ type Query {
   leagueGameLeagues(leagueId: ID!): [GameLeagueOption!]!
   "Status of the in-flight (or last) background refresh for this league."
   leagueRefreshStatus(leagueId: ID!): LeagueRefreshStatus!
+  """
+  Every player's overall score and rank under each engine, side by side: one
+  draft class (className) or one league snapshot (leagueId + method). Scores
+  any run an engine hasn't made yet, so a league's first call takes a while.
+  """
+  modelComparison(
+    className: String
+    leagueId: ID
+    method: String = "overall"
+    search: String
+    positions: [String!]
+    level: String
+    sort: ModelComparisonSort
+    page: Int = 0
+    pageSize: Int = 100
+  ): ModelComparisonPage!
   "How one player's score was built in a stored ranking (a row's `source`)."
   playerBreakdown(source: RankingSourceInput!, playerId: ID!): ScoreBreakdown
   """

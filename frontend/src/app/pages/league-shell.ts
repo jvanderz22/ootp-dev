@@ -37,6 +37,9 @@ import { TradeListStore } from '../core/trade-list-store';
         <a [routerLink]="['/league', id(), 'classes']" routerLinkActive="active"
           ><span class="long">Draft </span>Classes</a
         >
+        <a [routerLink]="['/league', id(), 'compare']" routerLinkActive="active"
+          >Compare<span class="long"> models</span></a
+        >
       </nav>
     </header>
 

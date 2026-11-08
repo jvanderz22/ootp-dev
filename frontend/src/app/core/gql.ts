@@ -693,3 +693,52 @@ export const SET_TRADE_LIST_ENTRY = gql`
   }
 `;
 
+
+export const MODEL_COMPARISON = gql`
+  query ModelComparison(
+    $className: String
+    $leagueId: ID
+    $method: String
+    $search: String
+    $positions: [String!]
+    $level: String
+    $sort: ModelComparisonSort
+    $page: Int
+    $pageSize: Int
+  ) {
+    modelComparison(
+      className: $className
+      leagueId: $leagueId
+      method: $method
+      search: $search
+      positions: $positions
+      level: $level
+      sort: $sort
+      page: $page
+      pageSize: $pageSize
+    ) {
+      totalRecords
+      rows {
+        id
+        name
+        position
+        age
+        org
+        level
+        playerType
+        legacyScore
+        legacyRank
+        v2Score
+        v2Rank
+        scoreDiff
+        rankDiff
+      }
+    }
+  }
+`;
+
+export const LEAGUE_LEVELS = gql`
+  query LeagueLevels($leagueId: ID!) {
+    leagueLevels(leagueId: $leagueId)
+  }
+`;
