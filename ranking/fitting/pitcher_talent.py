@@ -7,6 +7,12 @@ Each component rate is fit on every level at once with a level and a role
 denominator; the artifact keeps its MLB table for each role. `hr` and `hit`
 are fit a second time on Movement, for classes exported without HRA / PBABIP.
 
+PBABIP's effect is kept at PBABIP_KEEP of what the fit finds (decided
+2026-11-08): MLB BABIP spread is about what luck alone gives, so the stats
+can't size it, and you judge it to matter little. The `hit` tables (and the
+Movement `hit` tables, which carry the same effect) are shrunk toward the MLB
+average.
+
 The report: cross-validated (folds grouped by player), the spearman of the
 predicted runs allowed with the actual line inside each level and role - both
 runs from the line's own events, and runs actually charged - next to the
@@ -35,7 +41,7 @@ from ranking.fitting.stats import (
     LEVEL_MLB, extra_base_shares, fit_linear_weights, load_batting, mlb_era, mlb_events_per_pa,
     mlb_runs_per_pa,
 )
-from ranking.hitter_talent import ARTIFACTS_DIR, outcomes, runs_per_pa
+from ranking.hitter_talent import ARTIFACTS_DIR, HIGH, LOW, outcomes, runs_per_pa
 from ranking.pitcher_talent import (
     ARTIFACT, COMPONENTS, MOVEMENT_COMPONENTS, ROLES, PitcherTalent, era_from,
 )
@@ -50,6 +56,8 @@ TARGETS = {
 ROLE_SP = {"sp": 1, "rp": 0}
 TERMS = ["level_id", "sp"]
 FOLDS = 5
+# the share of the fitted PBABIP -> hits-in-play effect that is kept
+PBABIP_KEEP = 1 / 3
 REPORT_MIN_BF = 150
 
 
@@ -64,10 +72,23 @@ def _tables(rows, components) -> dict:
 
 
 def fit_tables(rows) -> dict:
-    return {
+    out = {
         "tables": _tables(rows, COMPONENTS),
         "movement_tables": _tables(rows, MOVEMENT_COMPONENTS),
     }
+    mlb = rows[(rows.level_id == LEVEL_MLB) & (rows.in_play > 0)]
+    for key, rating in (("tables", COMPONENTS["hit"]), ("movement_tables", MOVEMENT_COMPONENTS["hit"])):
+        for role in ROLES:
+            out[key][role]["hit"] = shrink(out[key][role]["hit"], mlb[rating], mlb.in_play)
+    return out
+
+
+def shrink(table, ratings, weights, keep=PBABIP_KEEP) -> list:
+    """`table` pulled toward its average over the MLB rows, keeping `keep` of
+    each rating's distance from it."""
+    table = np.asarray(table)
+    centre = np.average(table[np.clip(ratings.to_numpy(int), LOW, HIGH) - LOW], weights=weights)
+    return (centre + keep * (table - centre)).round(5).tolist()
 
 
 def predict_rows(model: PitcherTalent, rows) -> np.ndarray:
@@ -226,8 +247,8 @@ def main(argv=None):
     artifact["points_bridges"] = points_bridges(PitcherTalent(artifact), snapshots[latest])
     model = PitcherTalent(artifact)
 
-    def ra(stuff, control, movement, role):
-        ratings = {"stuff": stuff, "control": control, "hra": movement, "pbabip": movement}
+    def ra(stuff, control, movement, role, **parts):
+        ratings = {"stuff": stuff, "control": control, "hra": movement, "pbabip": movement, **parts}
         return float(model.runs_index(ratings, role))
 
     results = rules.check_pitching(ra)

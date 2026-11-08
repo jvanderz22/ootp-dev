@@ -489,7 +489,8 @@ Fielding (from the position grids):
 | **2c** ✅ | schema v3 + `results_store` fields; GraphQL ledger / pre-demand fields; card waterfall (behind v2) | goldens unchanged (legacy rows write NULLs) |
 | **3** ✅ | `RatingsView`; `fitting/datasets.py`; rules suite; hitter talent stage (BABIP / Avoid K / Gap / Power / Eye, fit to stats, monotone) with per-player legacy fallback when BABIP is missing | rules suite passes; eval vs legacy: hitter residuals by rating flatten; watchlist; draft metrics no worse |
 | **4** ✅ | Movement / Stuff composition fit; pitcher talent stage | same, pitchers |
-| **5** | value stage (WAR); retire RP multiplier, batting weights, two-way bonus | calibration vs StatsPlus WAR; ranking metrics |
+| **5a** ✅ | fielding talent (your grids floored, one line to runs incl. position adjustment) and baserunning talent (optimal managing), bridged to legacy points | MLB player-by-player vs stats: no worse than prod |
+| **5b** | value stage (WAR); retire RP multiplier, batting weights, two-way bonus. On hold: reliever value and playing time are open | calibration vs StatsPlus WAR; ranking metrics |
 | **6** | development stage (distributions, E[v], upside dial); judgment stage | draft metrics vs legacy and POT-only baseline |
 | **7** | demand stays last; pre / post in the UI | already in place from 2a / 2c |
 | **8** | switch `get_ranker_for_method` and `splits.py` to v2; regenerate goldens deliberately; delete `rankers/` and dead code | a full test pass; one release with both engines' outputs saved for comparison |

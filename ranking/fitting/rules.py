@@ -194,8 +194,9 @@ def anchors(wrc) -> dict:
     return {v: round(float(_sweep(wrc, "babip", v, base=v)), 1) for v in BALANCED_ANCHORS}
 
 
-# Pitching. Checks take `ra(stuff, control, movement, role) -> runs allowed
-# index` (100 = MLB average, lower is better; Movement sets HRA and PBABIP).
+# Pitching. Checks take `ra(stuff, control, movement, role, **parts) -> runs
+# allowed index` (100 = MLB average, lower is better; Movement sets HRA and
+# PBABIP, and `hra=` / `pbabip=` set one of them on its own).
 PITCHING_FLOOR = 30
 PITCHING_ELITE = 70
 # "emergency or no value": no better than an all-40s arm in the same role
@@ -255,8 +256,27 @@ def relievers_lean_on_stuff(ra):
                     f"-{gains['rp']:.1f} as RP vs -{gains['sp']:.1f} as SP")]
 
 
-# rule 5 became a hypothesis on 2026-11-07, which leaves no pitching rule yet
-PITCHING_RULES = ()
+def pbabip_matters_least(ra):
+    """PBABIP has little impact (decided 2026-11-08): 35 -> 65 is worth at most
+    half of what the same step in Stuff, Control or HRA is, in either role."""
+    out = []
+    for role in ("sp", "rp"):
+        gains = {
+            "stuff": ra(35, 50, 50, role) - ra(65, 50, 50, role),
+            "control": ra(50, 35, 50, role) - ra(50, 65, 50, role),
+            "hra": ra(50, 50, 50, role, hra=35) - ra(50, 50, 50, role, hra=65),
+            "pbabip": ra(50, 50, 50, role, pbabip=35) - ra(50, 50, 50, role, pbabip=65),
+        }
+        least = min(gains["stuff"], gains["control"], gains["hra"])
+        out.append(_result(
+            f"PBABIP matters least ({role.upper()})", gains["pbabip"] <= least / 2,
+            f"35 -> 65 gains: " + ", ".join(f"{k} {v:.1f}" for k, v in gains.items()),
+        ))
+    return out
+
+
+# rule 5 became a hypothesis on 2026-11-07
+PITCHING_RULES = (pbabip_matters_least,)
 PITCHING_HYPOTHESES = (pitching_floors, command_carries_weak_stuff, stuff_alone, relievers_lean_on_stuff)
 
 

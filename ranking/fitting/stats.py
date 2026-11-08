@@ -57,6 +57,31 @@ def load_pitching(stats_dir, years) -> pd.DataFrame:
     return pit
 
 
+# StatsPlus field position number -> position
+FIELD_POSITIONS = {2: "C", 3: "1B", 4: "2B", 5: "3B", 6: "SS", 7: "LF", 8: "CF", 9: "RF"}
+# stolen base / caught stealing run values for baserunning runs (wSB-style)
+SB_RUNS, CS_RUNS = 0.2, -0.4
+
+
+def load_fielding(stats_dir, years) -> pd.DataFrame:
+    """Fielding lines per stint and position, with `runs`: zone rating plus
+    framing. Opportunity-driven counts are left out (decided 2026-11-08):
+    StatsPlus's `arm` runs follow how many balls drop in front of an
+    outfielder, not his arm (and are always 0 for catchers), and assists depend
+    on chances. Arms come in through your position grids and floors."""
+    frames = [pd.read_csv(Path(stats_dir) / "field" / f"{y}.csv")
+              for y in years if (Path(stats_dir) / "field" / f"{y}.csv").exists()]
+    field = pd.concat(frames, ignore_index=True)
+    field = field[field.position.isin(list(FIELD_POSITIONS))].copy()
+    field["position"] = field.position.map(FIELD_POSITIONS)
+    field["runs"] = field.zr + field.framing
+    return field
+
+
+def baserunning_runs(bat: pd.DataFrame) -> pd.Series:
+    return bat.ubr + SB_RUNS * bat.sb + CS_RUNS * bat.cs
+
+
 def fit_linear_weights(bat: pd.DataFrame) -> dict:
     """Runs per event from team-season totals: team runs ~ event counts, no
     intercept, every level pooled."""

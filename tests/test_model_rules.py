@@ -29,8 +29,8 @@ def test_artifact_records_the_rules_it_was_fit_under():
     assert set(meta["hypotheses"]) == {r.rule for r in rules.check_hitting_hypotheses(_wrc)}
 
 
-def _ra(stuff, control, movement, role):
-    ratings = {"stuff": stuff, "control": control, "hra": movement, "pbabip": movement}
+def _ra(stuff, control, movement, role, **parts):
+    ratings = {"stuff": stuff, "control": control, "hra": movement, "pbabip": movement, **parts}
     return float(pitcher_talent.load().runs_index(ratings, role))
 
 

@@ -9,22 +9,29 @@ next to `legacy`) and judged by `eval_rankings.py` at every step.
 
 ## Decisions
 
-| Date | Decision |
-|---|---|
-| 2026-11-04 | **Unit is WAR.** Every layer outputs WAR or a WAR distribution. |
-| 2026-11-04 | **Ranking rule: expected value, with upside favored at equal EV** (see "Uncertainty and the ranking rule"). |
-| 2026-11-05 | **The decision layer is your existing demand modifier, applied as the very last step.** It already handles signability the way you want. Every draft run records each player's value both before and after it. No slot amounts or budget modelling (this replaces the 2026-11-04 slot-based design). |
-| 2026-11-05 | **The scoring models are fit from data instead of your handcrafted grids, but the same general rules apply.** The grids' rules (skill floors, power needs contact, all three pitching ratings need a floor, ...) become constraints and a rules suite every fitted model must pass. Details and the draft rule list are in `ranking-v2-technical-plan.md`. |
-| 2026-11-04 | **Your tuned values are priors and may stay** (superseded for the attribute grids on 2026-11-05; still holds for the modifier tables). They push things the direction you want. Fitted layers start from them, and explicit judgment adjustments remain as their own visible step. |
-| 2026-11-04 | **Build in parallel** (engine `v2`) and compare side by side before switching. |
-| 2026-11-04 | **Current scoring is judged on performance stats**, with OVR as the fallback and the watchlist as a sanity check. **Draft scoring is judged on holding potential**: OVR from age 25, POT now before; gone from the league = bust; baseline = draft-day POT order. |
-| 2026-11-04 | **Batting inputs are OOTP's base ratings** (BABIP, Avoid K, Gap, Power, Eye), not Contact. Contact ≈ ½ BABIP + ½ Avoid K. |
-| 2026-11-04 | The signal inventory is a report only and never fails the suite. |
-| 2026-11-07 | **The rules list is confirmed**, then **the four Power rules become hypotheses**: the Power 40 / 30 floors, "power without contact is much less valuable" and "archetypes land at similar values". The 2041–42 stats disagree with all four (see "Findings so far"). They're reported, not enforced, and re-checked as the archive grows. |
-| 2026-11-07 | **Hitter talent is built from one rate per rating** (Avoid K → K%, Eye → BB%, Power → HR per contact, BABIP → hits on balls in play, Gap → extra bases per hit), chained into a PA and valued with linear weights fit to the league's runs. It's fit on every level at once with a level term, and committed as lookup tables. |
-| 2026-11-08 | **Pitcher rule 5 (a 30 in Stuff, Movement or Control means emergency value) becomes a hypothesis.** The stats can barely test it, and the few cases weren't worthless. |
-| 2026-11-08 | **Pitchers ship on the fitted model even though OVR disagrees.** The stats back it: held-out runs allowed and career MLB WAR. The OVR / POT outcome looks worse, so **the draft eval now also reports career MLB WAR** next to OVR / POT. |
-| 2026-11-07 | **Until the value layer, fitted batting goes onto the legacy points scale by matching percentiles** over the league's hitters. Hitters keep their legacy points distribution, so phase 3 only reorders hitters among themselves; the hitter-vs-pitcher balance moves in phase 5 (WAR). |
+| Date       | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-04 | **Unit is WAR.** Every layer outputs WAR or a WAR distribution.                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 2026-11-04 | **Ranking rule: expected value, with upside favored at equal EV** (see "Uncertainty and the ranking rule").                                                                                                                                                                                                                                                                                                                                                          |
+| 2026-11-05 | **The decision layer is your existing demand modifier, applied as the very last step.** It already handles signability the way you want. Every draft run records each player's value both before and after it. No slot amounts or budget modelling (this replaces the 2026-11-04 slot-based design).                                                                                                                                                                 |
+| 2026-11-05 | **The scoring models are fit from data instead of your handcrafted grids, but the same general rules apply.** The grids' rules (skill floors, power needs contact, all three pitching ratings need a floor, ...) become constraints and a rules suite every fitted model must pass. Details and the draft rule list are in `ranking-v2-technical-plan.md`.                                                                                                           |
+| 2026-11-04 | **Your tuned values are priors and may stay** (superseded for the attribute grids on 2026-11-05; still holds for the modifier tables). They push things the direction you want. Fitted layers start from them, and explicit judgment adjustments remain as their own visible step.                                                                                                                                                                                   |
+| 2026-11-04 | **Build in parallel** (engine `v2`) and compare side by side before switching.                                                                                                                                                                                                                                                                                                                                                                                       |
+| 2026-11-04 | **Current scoring is judged on performance stats**, with OVR as the fallback and the watchlist as a sanity check. **Draft scoring is judged on holding potential**: OVR from age 25, POT now before; gone from the league = bust; baseline = draft-day POT order.                                                                                                                                                                                                    |
+| 2026-11-04 | **Batting inputs are OOTP's base ratings** (BABIP, Avoid K, Gap, Power, Eye), not Contact. Contact ≈ ½ BABIP + ½ Avoid K.                                                                                                                                                                                                                                                                                                                                            |
+| 2026-11-04 | The signal inventory is a report only and never fails the suite.                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 2026-11-07 | **The rules list is confirmed**, then **the four Power rules become hypotheses**: the Power 40 / 30 floors, "power without contact is much less valuable" and "archetypes land at similar values". The 2041–42 stats disagree with all four (see "Findings so far"). They're reported, not enforced, and re-checked as the archive grows.                                                                                                                            |
+| 2026-11-07 | **Hitter talent is built from one rate per rating** (Avoid K → K%, Eye → BB%, Power → HR per contact, BABIP → hits on balls in play, Gap → extra bases per hit), chained into a PA and valued with linear weights fit to the league's runs. It's fit on every level at once with a level term, and committed as lookup tables.                                                                                                                                       |
+| 2026-11-08 | **Pitcher rule 5 (a 30 in Stuff, Movement or Control means emergency value) becomes a hypothesis.** The stats can barely test it, and the few cases weren't worthless.                                                                                                                                                                                                                                                                                               |
+| 2026-11-08 | **Pitchers ship on the fitted model even though OVR disagrees.** The stats back it: held-out runs allowed and career MLB WAR. The OVR / POT outcome looks worse, so **the draft eval now also reports career MLB WAR** next to OVR / POT.                                                                                                                                                                                                                            |
+| 2026-11-08 | **v2 ranks on WAR internally but shows points on screen** (the value layer maps WAR back onto a 0–100 display scale).                                                                                                                                                                                                                                                                                                                                                |
+| 2026-11-08 | **Reliever value and playing time are open.** Plain StatsPlus WAR leaves a reliever at about a third of a comparable starter, and lets playing time weigh too much. Rethink before phase 5b, possibly as a later version.                                                                                                                                                                                                                                            |
+| 2026-11-08 | **Defense: your position grids stay the shape; the stats translate them into runs.** StatsPlus `arm` runs are opportunity-driven (poor-range outfielders pile them up; always 0 for catchers), so they aren't fit against. OF assists per chance do track OF Arm cleanly. `opps_0`–`opps_5` are plays by difficulty (routine → impossible), a clean range signal. Infield Arm / Error / Turn DP have no stat, so they come in through the grids and position floors. |
+| 2026-11-08 | **Position floors, as a steep penalty over the last 5 points above the floor** (full credit from floor + 5, half at the floor, nothing a step below): SS IF Arm 45, IF Error 45, Turn DP 45; 3B IF Arm 45, IF Error 40; 2B Turn DP 40; RF OF Arm 45; CF OF Range 55; C Blocking 40, Framing 40. A 10-point ramp was tried first and moved good everyday MLB shortstops with a 50 Error or Turn DP off SS. |
+| 2026-11-08 | **Your grids are the cross-position scale.** The best position is the highest floored grid score (as in legacy), and one line, the same at every position, turns that grid into fielding runs including the position adjustment. A 70 Range outfielder is worth more at CF than at LF, even though he'd be further above the LFs. Per-position curves (each matched to its own regulars) were tried first and valued good CFs and SSs more at easier spots. |
+| 2026-11-08 | **Baserunning assumes optimal managing:** steals at the attempt rate the most aggressive teams use for that Stealing grade, valued at zero (not negative) for runners below break-even. Slow runners still lose extra-base runs. Not tuned on opportunity-based stats. |
+| 2026-11-08 | **PBABIP has little impact.** The pitcher model keeps a third of the fitted PBABIP → hits-in-play effect, and a rule enforces that PBABIP 35 → 65 is worth at most half of the same step in Stuff, Control or HRA. MLB BABIP spread is about what luck alone gives, so the stats can't size it. |
+| 2026-11-07 | **Until the value layer, fitted batting goes onto the legacy points scale by matching percentiles** over the league's hitters. Hitters keep their legacy points distribution, so phase 3 only reorders hitters among themselves; the hitter-vs-pitcher balance moves in phase 5 (WAR).                                                                                                                                                                               |
 
 ## Why: what's wrong today
 
@@ -58,12 +65,12 @@ next to `legacy`) and judged by `eval_rankings.py` at every step.
 
 ### Four layers
 
-| Layer | Question it answers | Method | Replaces |
-|---|---|---|---|
-| **1. Talent** | ratings → expected rate stats (hitters: runs per PA from BABIP / Avoid K / Gap / Power / Eye; pitchers: runs per 9 innings from base components; fielding runs by position) | regression fit to StatsPlus season stats against ratings, weighted by PA / IP, monotone in each rating, held to the rules suite from your grids | the attribute grids, SP / RP pitch mix, velo, HR risk, hit profile, handedness |
-| **2. Value** | rates → WAR for a season | expected playing time (role, stamina, injury proneness as expected games lost) + positional adjustment + replacement level | RP ×0.82, the 0.73 / 0.22 / 0.05 weights, injury multipliers, two-way bonus |
-| **3. Development** | a prospect → distribution of peak WAR | fit on past classes + archived snapshots: rating growth given age, POT, work ethic, intelligence, scouting accuracy | age, personality, secondary personality, scouting accuracy, the draft overall / Stuff modifiers |
-| **4. Decision** | draft board: how does signability change it? | your `DraftDemandModifier`, unchanged, run last on the pre-demand order (see "Draft decision layer") | nothing: it moves to the end |
+| Layer              | Question it answers                                                                                                                                                         | Method                                                                                                                                          | Replaces                                                                                        |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **1. Talent**      | ratings → expected rate stats (hitters: runs per PA from BABIP / Avoid K / Gap / Power / Eye; pitchers: runs per 9 innings from base components; fielding runs by position) | regression fit to StatsPlus season stats against ratings, weighted by PA / IP, monotone in each rating, held to the rules suite from your grids | the attribute grids, SP / RP pitch mix, velo, HR risk, hit profile, handedness                  |
+| **2. Value**       | rates → WAR for a season                                                                                                                                                    | expected playing time (role, stamina, injury proneness as expected games lost) + positional adjustment + replacement level                      | RP ×0.82, the 0.73 / 0.22 / 0.05 weights, injury multipliers, two-way bonus                     |
+| **3. Development** | a prospect → distribution of peak WAR                                                                                                                                       | fit on past classes + archived snapshots: rating growth given age, POT, work ethic, intelligence, scouting accuracy                             | age, personality, secondary personality, scouting accuracy, the draft overall / Stuff modifiers |
+| **4. Decision**    | draft board: how does signability change it?                                                                                                                                | your `DraftDemandModifier`, unchanged, run last on the pre-demand order (see "Draft decision layer")                                            | nothing: it moves to the end                                                                    |
 
 Each **profile** (current, potential, draft) is one declared config: which
 ratings to read (current / potential / vs L / vs R), which layers run, and
@@ -136,6 +143,7 @@ plan, now one config per profile.
 ## Data
 
 What we have:
+
 - **Live snapshots:** `fly_data/`, the `yfmlb` and `wbf` leagues.
 - **Raw StatsPlus ratings export:** it has BABIP, HRA and PBABIP, but the
   snapshot doesn't map them yet.
@@ -144,6 +152,7 @@ What we have:
 - **`drafted_picks`.**
 
 To start collecting, because history doesn't backfill:
+
 - **A ratings snapshot archive:** one per league per season, taken on or
   after in-game April 8 (see phase 1). Pairing ratings with stats and
   learning development both need ratings history, and StatsPlus only serves
@@ -181,9 +190,9 @@ To start collecting, because history doesn't backfill:
   `yfmlb` MLB/AAA:
 
   | Contact | Avoid K ≤ 40 | Avoid K 45–50 | Avoid K 55+ |
-  |---|---|---|---|
-  | 40–45 | −6.8 | −1.4 | +2.3 |
-  | 50–55 | −6.7 | +3.0 | +6.4 |
+  | ------- | ------------ | ------------- | ----------- |
+  | 40–45   | −6.8         | −1.4          | +2.3        |
+  | 50–55   | −6.7         | +3.0          | +6.4        |
 
 - **Contact ≈ 0.50·BABIP + 0.49·Avoid K** (R² 0.967, RMSE 1.9, about
   rounding noise; potential 0.54 / 0.48; the splits match). Power adds
@@ -201,7 +210,7 @@ To start collecting, because history doesn't backfill:
     Power in the batting model and the hit-profile modifier; Speed in the
     running model and the hit-profile modifier.
   - **Draft and potential hitters:** the draft-batter modifier reads the
-    current Contact *and* Avoid K, so current Avoid K counts twice too.
+    current Contact _and_ Avoid K, so current Avoid K counts twice too.
   - **Draft and potential pitchers:** potential Stuff has 3 readers (the
     pitching models plus the draft-pitcher overall and Stuff modifiers),
     potential Movement 3, potential Control 2. This is the Aliff
@@ -210,17 +219,16 @@ To start collecting, because history doesn't backfill:
     personality modifiers, and the draft class reads Intelligence and Work
     Ethic in both personality modifiers.
   - **Phase 3, hitter talent (2026-11-07).** Fit on 2,526 player-season-level
-  rows (2042 ratings at every level, plus 2041 for veterans, hitters 24+).
-  Cross-validated with folds grouped by player, the spearman of predicted
-  with actual runs per PA (200+ PA) inside each level:
+    rows (2042 ratings at every level, plus 2041 for veterans, hitters 24+).
+    Cross-validated with folds grouped by player, the spearman of predicted
+    with actual runs per PA (200+ PA) inside each level:
 
   | Level | Rows | Fitted | Legacy |
-  |---|---|---|---|
-  | MLB | 522 | 0.693 | 0.583 |
-  | AAA | 373 | 0.563 | 0.506 |
-  | AA | 292 | 0.606 | 0.532 |
-  | A | 339 | 0.503 | 0.523 |
-
+  | ----- | ---- | ------ | ------ |
+  | MLB   | 522  | 0.693  | 0.583  |
+  | AAA   | 373  | 0.563  | 0.506  |
+  | AA    | 292  | 0.606  | 0.532  |
+  | A     | 339  | 0.503  | 0.523  |
   - **Against OVR on live MLB / AAA hitters:** spearman 0.769 → 0.831. The
     Contact ≤ 40 residual goes −6.4 → −2.7 and Avoid K ≤ 40 −6.8 → −2.9, so
     the Avoid K double count is gone. Pitchers are unchanged apart from 7
@@ -239,6 +247,7 @@ To start collecting, because history doesn't backfill:
   - **Young players are left out** (under 24). Their ratings rise during a
     season, so their stats came from lower ratings than the end-of-season
     snapshot shows, which flattens the bottom of every curve.
+
 - **Phase 4, pitcher talent (2026-11-08).**
   - **How OOTP builds the composites:** Movement ≈ 0.81·HRA + 0.18·PBABIP
     (R² 0.93; potential 0.73 / 0.24), and G/F adds nothing. Stuff ≈
@@ -253,22 +262,23 @@ To start collecting, because history doesn't backfill:
   - **Cross-validated (folds by player), against runs allowed per BF** (from
     the line's events | actually charged), 150+ BF:
 
-    | Level, role | Rows | Fitted | Legacy |
-    |---|---|---|---|
-    | MLB RP | 353 | 0.500 \| 0.433 | 0.385 \| 0.318 |
-    | MLB SP | 251 | 0.477 \| 0.335 | 0.446 \| 0.374 |
-    | AAA RP | 231 | 0.306 \| 0.234 | 0.287 \| 0.184 |
-    | AAA SP | 204 | 0.418 \| 0.312 | 0.385 \| 0.291 |
-    | AA RP | 185 | 0.228 \| 0.187 | 0.258 \| 0.228 |
-    | AA SP | 143 | 0.387 \| 0.323 | 0.350 \| 0.291 |
-    | A RP | 244 | 0.384 \| 0.272 | 0.270 \| 0.194 |
-    | A SP | 145 | 0.243 \| 0.186 | 0.150 \| 0.139 |
+    | Level, role | Rows | Fitted         | Legacy         |
+    | ----------- | ---- | -------------- | -------------- |
+    | MLB RP      | 353  | 0.500 \| 0.433 | 0.385 \| 0.318 |
+    | MLB SP      | 251  | 0.477 \| 0.335 | 0.446 \| 0.374 |
+    | AAA RP      | 231  | 0.306 \| 0.234 | 0.287 \| 0.184 |
+    | AAA SP      | 204  | 0.418 \| 0.312 | 0.385 \| 0.291 |
+    | AA RP       | 185  | 0.228 \| 0.187 | 0.258 \| 0.228 |
+    | AA SP       | 143  | 0.387 \| 0.323 | 0.350 \| 0.291 |
+    | A RP        | 244  | 0.384 \| 0.272 | 0.270 \| 0.194 |
+    | A SP        | 145  | 0.243 \| 0.186 | 0.150 \| 0.139 |
 
     The MLB SP charged-runs gap is within noise: legacy's SP score doesn't
     correlate with the fitted model's residual (−0.02), and neither do
     stamina or pitch count.
+
   - **No support for the other legacy talent factors.** Extreme-GB starters
-    allow 3.4% *more* runs than their components predict (legacy gives them
+    allow 3.4% _more_ runs than their components predict (legacy gives them
     ×1.10). Pitch count and stamina don't move runs allowed. Relievers allow
     about 5% fewer runs than their components at every G/F, which is runs
     accounting (inherited runners), not talent. Adding the pitch grades or
@@ -286,14 +296,53 @@ To start collecting, because history doesn't backfill:
     top 100 went 37 → 26 (2035), 27 → 23 (2038), 42 → 37 (2040), 23 → 25
     (2042). The bridge matches current-ratings pitchers, not potential ones;
     phase 5 (WAR) settles the balance between hitters and pitchers.
+
+  - **PBABIP shrunk to a third (2026-11-08).** At full strength PBABIP
+    35 → 65 moved a starter's ERA by 0.63, about Control's 0.69, though only
+    0.08 spearman with actual MLB BABIP. Now it's 0.21. Cross-validated MLB
+    holds (SP 0.477 → 0.482, RP 0.500 → 0.498); AA / A drop about 0.01,
+    where PBABIP still carried some signal.
+  - **Player by player against MLB 2040–42** (spearman, legacy → v2):
+    starters (83, 250+ IP) vs FIP 0.669 → 0.709, vs ERA 0.630 → 0.602, vs
+    WAR per 180 IP 0.697 → 0.747; relievers (119, 100+ IP) vs FIP 0.521 →
+    0.604, vs ERA 0.317 → 0.387, vs WAR per 65 IP 0.510 → 0.610. Modeled vs
+    actual rates: K 0.79, BB 0.85, HR per contact 0.66. Page:
+    https://claude.ai/artifact/YU9irL57XgK14YLAHuf3Lj
+- **Phase 5a, fielding and baserunning talent (2026-11-08).**
+  - **Fielding stats:** zone rating + framing only. StatsPlus `arm` runs
+    follow opportunities, and assists depend on chances. True fielding
+    spread per season (SD × √ year-to-year r): C 6.6, 1B 3.9, 2B 12.0, 3B
+    5.2, SS 12.8, LF 8.4, CF 13.3, RF 9.7 runs.
+  - **Position adjustments from StatsPlus's own WAR** (runs a season against
+    the average of all nine): C +9.2, 1B −6.2, 2B +4.0, 3B +3.7, SS +6.0,
+    LF −3.5, CF +2.3, RF −3.3, DH −12.3; 0.109 WAR per fielding run.
+  - **One line fits as well as eight:** fielding value = −11.5 + 0.362 ×
+    floored grid (R² 0.59 vs 0.58 for per-position curves). A grid of 0
+    lands at −11.5, next to DH's −12.3, without being forced there. Your
+    grids rate 3B regulars about 5 runs below their stats + adjustment, and
+    CFs about 4 above.
+  - **Player by player against MLB 2040–42** (spearman, prod → 5a): picks
+    the position he plays most 198 → 197 of 311 regulars; fielding points vs
+    actual runs + adjustment 0.801 → 0.803; baserunning vs runs per 600 PA
+    0.830 → 0.868; whole score vs WAR per 600 PA 0.589 → 0.590. Fielding is
+    mostly your grids plus the floors; its change is the unit (runs), which
+    5b needs. Page: https://claude.ai/artifact/MmBdj6gJuiFSvvZkrqwQ1X
+  - **Baserunning:** extra bases (UBR) from Speed and Baserunning; steal
+    success rises with Stealing (52% → 84%); aggressive teams attempt about
+    1.25× the league curve with no loss of success; +0.2 a steal, −0.4
+    caught, break-even about 67%. Cross-validated against baserunning runs:
+    MLB 0.784 vs legacy 0.743, AAA 0.641 / 0.591, AA 0.670 / 0.660, A 0.661
+    / 0.610.
+  - **Both prod and 5a put many everyday 3Bs at 2B (14) and LFs at RF
+    (17):** that's the grids' call, not the model's.
 - **Fixed: current pitchers read potential ratings.** The HR-risk modifier
-    keyed off potential Movement, and the knuckleball check off potential
-    pitches, even when ranking on current ratings. Both now follow the
-    scorer's ratings (fixed in legacy, so v2 has it too; goldens regenerated,
-    only the `overall` sections moved). Live MLB / AAA: 60 of 1,521 current
-    scores changed, all down (median −3%, young arms whose current Movement
-    trails their potential); SP spearman 0.887 unchanged, RP 0.846 → 0.845.
-    A test now checks the current profile reads no potential ratings.
+  keyed off potential Movement, and the knuckleball check off potential
+  pitches, even when ranking on current ratings. Both now follow the
+  scorer's ratings (fixed in legacy, so v2 has it too; goldens regenerated,
+  only the `overall` sections moved). Live MLB / AAA: 60 of 1,521 current
+  scores changed, all down (median −3%, young arms whose current Movement
+  trails their potential); SP spearman 0.887 unchanged, RP 0.846 → 0.845.
+  A test now checks the current profile reads no potential ratings.
 
 ## Phases
 
@@ -303,6 +352,7 @@ watchlist.
 **0. Evaluation harness: done** (3fcff0d).
 
 **1. Data**
+
 - ✅ **BABIP, HRA and PBABIP** (current, potential, vs L/R) map into the
   snapshot as `BABIP` / `HT P`, `HRA` / `HRA P`, `PBABIP` / `PBABIP P`
   (splits `"BABIP vL"` and so on). They're on `GamePlayer` as
@@ -311,7 +361,7 @@ watchlist.
   - **OOTP export headers, confirmed 2026-11-05** from an OOTP 27 export:
     current BABIP is `BABIP` and potential is **`HT P`** (height is the
     separate `HT` column). Checked by fit: potential Contact ≈ 0.55·`HT P`
-    + 0.49·`K P`, matching StatsPlus. The snapshot uses the same names.
+    - 0.49·`K P`, matching StatsPlus. The snapshot uses the same names.
   - The export view had no HRA / PBABIP columns. If OOTP offers them, add
     them and confirm their headers; until then draft-class pitchers have no
     Movement components.
@@ -347,6 +397,7 @@ watchlist.
 **2. `v2` skeleton, built in parallel (no score changes)**
 
 Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
+
 - ✅ **2a, the engine:** a `ranking/` package with a profile per ranking
   method, typed results, the ledger and the run manifest. Today's logic
   runs as "legacy" stages, unchanged, and the demand step runs last with
@@ -370,6 +421,7 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
   paths. Nothing called them; no scores changed.
 
 **3. Talent layer, hitters first: done** (2026-11-07)
+
 - ✅ `ranking/hitter_talent.py` (the model and its committed artifact
   `ranking/artifacts/hitter_talent_v1.json`), fit by
   `python -m ranking.fitting.hitter_talent --data-dir fly_data`, which prints
@@ -386,6 +438,7 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
   against the stats); the vs L / vs R splits (phase 6).
 
 **4. Talent layer, pitchers: done** (2026-11-08)
+
 - ✅ Composition fits (see "Findings so far").
 - ✅ `ranking/pitcher_talent.py` with artifact
   `ranking/artifacts/pitcher_talent_v1.json`, fit by
@@ -400,32 +453,51 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
   it). Kept until phase 5: stamina and the pitch-count part of the mix maps,
   as an "SP / RP role" ledger line, and the RP multiplier. The legacy scorer
   only runs for a pitcher without Stuff / Control / Movement.
-- ✅ Rules: pitcher rule 5 is now a hypothesis, which leaves no enforced
-  pitching rule. Hypotheses: H1 holds (Movement + Control carry weak Stuff;
+- ✅ Rules: pitcher rule 5 is now a hypothesis. One enforced pitching rule
+  since 2026-11-08: PBABIP matters least. Hypotheses: H1 holds (Movement + Control carry weak Stuff;
   Control alone doesn't); H2 isn't supported (80 / 40 / 40 is a decent
   starter, 92, and a so-so reliever, 94); H3 holds only barely (Stuff is
   worth −16.0 in relief vs −15.9 starting, since role is an additive term).
 - The test fixtures' BABIP / HRA / PBABIP are now derived from Contact and
   Movement, as in a real export. The legacy goldens are byte-identical.
 
-**5. Value layer**
+**5a. Talent layer, fielding and baserunning: done** (2026-11-08)
+- ✅ `ranking/fielding_talent.py` (artifact `fielding_talent_v1.json`, fit by
+  `python -m ranking.fitting.fielding_talent --data-dir fly_data`): your
+  grids, floored, pick the position; one line prices it in runs including
+  the position adjustment. Legacy's utility bonus on the floored grids.
+- ✅ `ranking/running_talent.py` (artifact `running_talent_v1.json`, fit by
+  `python -m ranking.fitting.running_talent --data-dir fly_data`): extra
+  bases plus steals under optimal managing, runs per 600 PA.
+- ✅ Both bridged onto legacy fielding / running points until 5b. Ledger
+  lines: "fielding talent (POS, runs, value with position)", "utility",
+  "baserunning talent (runs)".
+
+**5b. Value layer** (on hold: reliever value and playing time are open)
+
 - Playing time, the injury → games model, positional adjustment and
   replacement level → WAR.
 - Retires RP ×0.82, the batting / fielding / running weights and the two-way
   bonus.
+  - TODO: figure out _something_ for the two way bonus. I don't want a decent batter to end up
+    ranked above better batters just because they could be a decent AAA pitcher. We need a way to weight two way players so their secondary skillset doesn't give too much of a boost
 
 **6. Development layer**
+
 - Distributions of peak WAR from past classes and the archive.
 - Retires the age, personality, scouting accuracy and draft modifiers, keeping
   your values as priors / judgment.
+  - I don't think there's a better way to do this, but happy to be wrong here
 - Platoon items from `my-todo.txt` land here and in talent (vs L / vs R
   ratings per profile).
 
 **7. Decision layer**
+
 - The demand modifier as the last stage, with pre- and post-demand values and
   ranks stored and shown. Ranking by E[v] plus the upside dial.
 
 **8. Switch the app to `v2`**
+
 - Change `get_ranker_for_method`, regenerate the goldens deliberately, and
   delete `legacy`.
 

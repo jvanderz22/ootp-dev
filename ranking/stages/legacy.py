@@ -18,33 +18,42 @@ def batting_label(component, weight) -> str:
 class LegacyModel(BatchStage):
     """The legacy attribute-model scorers, one batched call per side.
 
-    `batting` / `pitching`, if given, are fitted talent models
-    (ranking.stages.talent) that score whoever they can; the legacy models only
-    run for the rest."""
+    `batting`, `fielding`, `running` and `pitching`, if given, are fitted
+    talent models (ranking.stages.talent) that score whoever they can; the
+    legacy models only run for the rest."""
 
     name = "legacy-model"
 
-    def __init__(self, profile, batting=None, pitching=None):
+    def __init__(self, profile, batting=None, pitching=None, fielding=None, running=None):
         self.position_player_scorer = get_position_player_scorer(profile.ratings)
         self.pitcher_scorer = get_pitcher_scorer(profile.ratings, profile.rp_multiplier)
         self.batting = batting
         self.pitching = pitching
+        self.fielding = fielding
+        self.running = running
 
     @property
     def artifacts(self) -> dict:
-        return {m.name: m.artifact for m in (self.batting, self.pitching) if m}
+        models = (self.batting, self.fielding, self.running, self.pitching)
+        return {m.name: m.artifact for m in models if m}
 
     def run(self, states, profile):
         players = [s.player for s in states]
         none = [None] * len(players)
         fitted_bat = self.batting.score(players) if self.batting else none
+        fitted_field = self.fielding.score(players) if self.fielding else none
+        fitted_run = self.running.score(players) if self.running else none
         fitted_pit = self.pitching.score(players) if self.pitching else none
         batting = self.position_player_scorer.score_many(
-            players, batting_scores=[f and f.points for f in fitted_bat]
+            players,
+            batting_scores=[f and f.points for f in fitted_bat],
+            fielding=[f and (f.points, f.utility, f.best_position) for f in fitted_field],
+            running_scores=[f and f.points for f in fitted_run],
         )
         pitching = self._pitching_scores(players, fitted_pit)
-        for state, bat, fit_bat, pit, fit_pit in zip(states, batting, fitted_bat, pitching, fitted_pit):
-            self._batting(state, bat, fit_bat and fit_bat.label)
+        rows = zip(states, batting, fitted_bat, fitted_field, fitted_run, pitching, fitted_pit)
+        for state, bat, fit_bat, fit_field, fit_run, pit, fit_pit in rows:
+            self._batting(state, bat, fit_bat and fit_bat.label, fit_field, fit_run)
             self._pitching(state, pit, fit_pit)
             if fit_bat:
                 state.wrc_plus = fit_bat.wrc_plus
@@ -69,17 +78,25 @@ class LegacyModel(BatchStage):
         return out
 
     @staticmethod
-    def _batting(state, result, fitted_label=None):
-        overall, batting, fielding, running, best_position = result
+    def _batting(state, result, fitted_label=None, fielding=None, running=None):
+        overall, batting, field, run, best_position = result
         side = state.batting
         side.model_score = overall
-        side.components = {"batting": batting, "fielding": fielding, "running": running}
+        side.components = {"batting": batting, "fielding": field, "running": run}
         side.best_position = best_position
         for component, weight in BATTING_WEIGHTS:
-            label = batting_label(component, weight)
+            value = side.components[component] * weight
             if component == "batting" and fitted_label:
-                label = f"{fitted_label} x{weight}"
-            state.ledger.add(MODEL, label, side.components[component] * weight, BATTING)
+                state.ledger.add(MODEL, f"{fitted_label} x{weight}", value, BATTING)
+            elif component == "fielding" and fielding:
+                state.ledger.add(MODEL, f"fielding talent ({fielding.best_position}, {fielding.runs:+.0f}"
+                                 f" runs, {fielding.value:+.0f} with position) x{weight}",
+                                 fielding.points * weight, BATTING)
+                state.ledger.add(MODEL, f"utility x{weight}", fielding.utility * weight, BATTING)
+            elif component == "running" and running:
+                state.ledger.add(MODEL, f"baserunning talent ({running.runs:+.1f} runs) x{weight}", value, BATTING)
+            else:
+                state.ledger.add(MODEL, batting_label(component, weight), value, BATTING)
 
     @staticmethod
     def _pitching(state, result, fitted=None):

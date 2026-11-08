@@ -4,7 +4,11 @@ A profile scores on current ("overall") or potential ratings; every fitted
 stage asks the view instead of picking GamePlayer attributes itself, so no
 stage can read the wrong side by accident.
 """
+import numpy as np
+
+from ranking.fielding_talent import RATINGS as FIELDING
 from ranking.hitter_talent import RATINGS as HITTING
+from ranking.running_talent import RATINGS as RUNNING
 from ranking.pitcher_talent import RATINGS as PITCHING
 
 # rating -> GamePlayer attribute, per profile `ratings`
@@ -39,15 +43,24 @@ class RatingsView:
         return values
 
     def pitching(self, player):
-        """The base pitching ratings, with `hra` / `pbabip` None when the class
-        doesn't have them; None when Stuff, Control or Movement is missing
-        (GamePlayer reads a blank one as 0)."""
-        values = {name: getattr(player, self.attrs[name]) for name in PITCHING}
-        if any(not values[name] for name in PITCHING if name not in _MOVEMENT_PARTS):
-            return None
+        """The base pitching ratings. Movement is read only when its parts (HRA,
+        PBABIP) aren't there, and they're None then; None when Stuff, Control or
+        the Movement side is missing (GamePlayer reads a blank one as 0)."""
+        values = {name: getattr(player, self.attrs[name]) for name in ("stuff", "control", *_MOVEMENT_PARTS)}
         if any(values[name] is None for name in _MOVEMENT_PARTS):
-            values.update(dict.fromkeys(_MOVEMENT_PARTS))
+            values.update(dict.fromkeys(_MOVEMENT_PARTS), movement=getattr(player, self.attrs["movement"]))
+        else:
+            values["movement"] = None
+        if not values["stuff"] or not values["control"] or not (values["movement"] or values["hra"]):
+            return None
         return values
+
+    def fielding(self, players) -> dict:
+        """{rating: array} of the fielding ratings (one value each: no potential side)."""
+        return {r: np.array([getattr(p, r) for p in players]) for r in FIELDING}
+
+    def running(self, players) -> dict:
+        return {r: np.array([getattr(p, r) for p in players]) for r in RUNNING}
 
     def stamina(self, player) -> int:
         return player.stamina

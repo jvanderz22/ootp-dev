@@ -85,7 +85,7 @@ def test_explain_shows_both_engines_ledgers(capsys):
     assert "legacy" in out and "v2" in out
     assert "the legacy-pipeline ledger gives" not in out  # it reproduces legacy
     score_line = next(line for line in out.splitlines() if line.strip().startswith("score"))
-    assert score_line.split()[1:] == [f"{target.overall_score:.2f}"] * 2
+    assert score_line.split()[2] == f"{target.overall_score:.2f}"  # legacy, then v2
     assert "change" in out
 
 

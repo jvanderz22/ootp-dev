@@ -12,12 +12,20 @@ from pathlib import Path
 
 import pandas as pd
 
-from ranking.fitting.stats import load_batting, load_pitching
+from ranking.fitting.stats import baserunning_runs, load_batting, load_fielding, load_pitching
 
 PITCHER_POSITIONS = ("SP", "RP", "CL")
 # snapshot column -> talent rating, current ratings
 HITTING_COLUMNS = {"BABIP": "babip", "K's": "avoid_k", "GAP": "gap", "POW": "power", "EYE": "eye"}
 PITCHING_COLUMNS = {"STU": "stuff", "CONT": "control", "HRA": "hra", "PBABIP": "pbabip", "MOV": "movement"}
+# named as GamePlayer names them (one value each: there's no potential side)
+FIELDING_COLUMNS = {
+    "C ARM": "c_arm", "C ABI": "c_blocking", "C FRM": "c_framing",
+    "IF RNG": "if_range", "IF ARM": "if_arm", "IF ERR": "if_error", "TDP": "turn_dp",
+    "OF RNG": "of_range", "OF ARM": "of_arm", "OF ERR": "of_error",
+}
+RUNNING_COLUMNS = {"SPE": "speed", "STE": "steal", "RUN": "running_ability"}
+MIN_INNINGS = 50
 # A veteran's ratings barely move in a year, so a snapshot also stands in for
 # his season before.
 VETERAN_AGE = 29
@@ -63,6 +71,10 @@ def read_pitchers(path) -> pd.DataFrame:
     return _read(path, True, PITCHING_COLUMNS)
 
 
+def read_fielders(path) -> pd.DataFrame:
+    return _read(path, False, {**FIELDING_COLUMNS, **RUNNING_COLUMNS})
+
+
 def _join(snapshots, lines, read, min_age, min_count, count) -> pd.DataFrame:
     """Each snapshot's players joined to their lines that season (and the
     season before, for veterans, when it has no snapshot of its own)."""
@@ -98,3 +110,24 @@ def pitcher_rows(snapshots: dict, stats_dir, min_age=MIN_AGE, min_bf=MIN_PA) -> 
     lines = pit.groupby(["player_id", "year", "level_id"])[list(PITCHING_COUNTS)].sum().reset_index()
     lines["sp"] = (lines.gs >= STARTER_SHARE * lines.g).astype(int)
     return _join(snapshots, lines, read_pitchers, min_age, min_bf, "bf")
+
+
+def fielding_rows(snapshots: dict, stats_dir, min_age=MIN_AGE, min_innings=MIN_INNINGS) -> pd.DataFrame:
+    """Fielding runs (ranking.fitting.stats.load_fielding) per player, season,
+    level and position, joined to the snapshot's fielding ratings."""
+    field = load_fielding(stats_dir, _seasons(snapshots))
+    lines = field.groupby(["player_id", "year", "level_id", "position"])[
+        ["ip", "runs", "zr", "framing", "a", "e", "tc"]
+    ].sum().reset_index()
+    return _join(snapshots, lines, read_fielders, min_age, min_innings, "ip")
+
+
+def running_rows(snapshots: dict, stats_dir, min_age=MIN_AGE, min_pa=MIN_PA) -> pd.DataFrame:
+    """Baserunning runs (UBR plus steals) per player, season and level, joined
+    to the snapshot's running ratings."""
+    bat = load_batting(stats_dir, _seasons(snapshots))
+    bat["baserunning"] = baserunning_runs(bat)
+    lines = bat.groupby(["player_id", "year", "level_id"])[
+        ["pa", "baserunning", "ubr", "sb", "cs", "single", "bb"]
+    ].sum().reset_index()
+    return _join(snapshots, lines, read_fielders, min_age, min_pa, "pa")

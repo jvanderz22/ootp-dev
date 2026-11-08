@@ -1,7 +1,7 @@
-"""The fitted talent layer (phases 3 and 4). `LegacyModel` asks it for each
-batch's batting and pitching scores: it scores every player whose base ratings
-are there, and the legacy models score the rest (old class formats without
-BABIP).
+"""The fitted talent layer (phases 3, 4 and 5a). `LegacyModel` asks it for each
+batch's batting, fielding, baserunning and pitching scores: it scores every
+player whose base ratings are there, and the legacy models score the rest (old
+class formats without BABIP).
 
 Until the value layer turns everything into WAR, fitted talent is put on the
 legacy models' 0-100 scales through the artifacts' points bridges, so the
@@ -12,9 +12,10 @@ from typing import NamedTuple
 
 import numpy as np
 
-from ranking import hitter_talent, pitcher_talent
+from ranking import fielding_talent, hitter_talent, pitcher_talent, running_talent
 from ranking.ratings import RatingsView
 from scoring.pitcher_scorer import rp_stamina_modifier_map, sp_stamina_modifier_map
+from scoring.position_player_scorer import utility_bonus
 from scoring.runtime_components import write_runtime_component
 
 
@@ -132,3 +133,65 @@ class PitcherTalent:
             )
             write_runtime_component(player.id, "pitching.talent.sp_runs_index", out[i].sp_index)
             write_runtime_component(player.id, "pitching.talent.rp_runs_index", out[i].rp_index)
+
+
+class FittedFielding(NamedTuple):
+    points: float           # best position, on legacy's best-position scale
+    utility: float          # legacy's utility bonus, on the floored grids
+    best_position: str
+    runs: float             # fielding runs per season at the best position
+    value: float            # those plus the position's adjustment
+
+
+class FieldingTalent:
+    name = "fielding-talent"
+
+    def __init__(self, profile, model=None):
+        self.ratings = RatingsView(profile.ratings)
+        self.model = model or fielding_talent.load()
+
+    @property
+    def artifact(self) -> str:
+        return self.model.version
+
+    def score(self, players) -> list:
+        """A FittedFielding per player (every player has fielding ratings)."""
+        if not players:
+            return []
+        floored = fielding_talent.floored_grids(fielding_talent.grid_scores(players), self.ratings.fielding(players))
+        value, best, runs = self.model.best(floored)
+        points = self.model.points(value)
+        out = []
+        for j, player in enumerate(players):
+            scores = {pos: float(floored[pos][j]) for pos in fielding_talent.POSITIONS}
+            out.append(FittedFielding(
+                float(points[j]), float(utility_bonus(scores)), best[j], float(runs[j]), float(value[j]),
+            ))
+            write_runtime_component(player.id, "batting.talent.fielding_runs", float(runs[j]))
+        return out
+
+
+class FittedRunning(NamedTuple):
+    points: float
+    runs: float             # baserunning runs per 600 PA
+
+
+class RunningTalent:
+    name = "running-talent"
+
+    def __init__(self, profile, model=None):
+        self.ratings = RatingsView(profile.ratings)
+        self.model = model or running_talent.load()
+
+    @property
+    def artifact(self) -> str:
+        return self.model.version
+
+    def score(self, players) -> list:
+        if not players:
+            return []
+        runs = self.model.runs(self.ratings.running(players))
+        points = self.model.points(runs)
+        for player, r in zip(players, runs):
+            write_runtime_component(player.id, "batting.talent.baserunning_runs", float(r))
+        return [FittedRunning(float(p), float(r)) for p, r in zip(points, runs)]

@@ -64,6 +64,9 @@ _VIEWS = {
     "pitching": ("pitching talent", "pitching"),
     "pitch_count": ("pitching talent", "pitching"),
     "stamina": ("pitching talent", "pitching"),
+    # the floors gate your position grids: one component with them
+    "fielding": ("fielding models", "batting"),
+    "running": ("baserunning talent", "batting"),
 }
 _READER_SIDES = {
     name: side for name, side in (*_MODELS.values(), _FIELDING, *_SCORERS.values(), *_VIEWS.values())
