@@ -22,8 +22,11 @@ def test_draft_reads_are_attributed_to_their_readers():
     assert inv.reads["AgeModifier"] == {"Age"}
     assert {"CON P", "K P", "POW P"} <= inv.reads["batting model"]
     assert "SctAcc" in inv.reads["ScoutingAccuracyModifier"]
-    # the SP / RP what-if copies read both Stuffs only to shift them
-    assert not {"STU", "STU P"} & inv.reads["pitcher scorer (role adjustments)"]
+    # the fitted talent layers read the profile's side only
+    assert {"STU P", "MOV P", "CONT P", "STM"} <= inv.reads["pitching talent"]
+    assert not {"STU", "MOV", "CONT"} & inv.reads["pitching talent"]
+    # every pitcher is scored by the fitted model, so the legacy pitcher scorer never runs
+    assert "pitcher scorer (role adjustments)" not in inv.reads
 
 
 def test_flags_composites_and_repeat_reads_by_side():

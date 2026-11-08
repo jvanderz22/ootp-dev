@@ -3,16 +3,16 @@ plans/ranking-v2-technical-plan.md): every ScoredPlayer field, breakdown and
 order - plus a ledger that sums to the score and first-class pre-demand fields.
 
 `legacy` is held to it everywhere, for good (it's how the eval explains a
-legacy score). `v2` scores hitters with the fitted talent stage (phase 3) when
-their BABIP is there, so it's held to it only where it isn't - the draft-class
-fixtures, which are an old-format export - which is also its fallback test."""
+legacy score). `v2` scores with the fitted talent layers (phases 3 and 4), so
+it's held only to the bookkeeping here; tests/test_hitter_talent.py and
+tests/test_pitcher_talent.py cover what it scores."""
 import csv
 import io
 
 import pytest
 
 from models.game_players import GamePlayer
-from ranking import PIPELINES, PROFILES, get_ranker
+from ranking import PROFILES, get_ranker
 from ranking.results import SCORED_PLAYER_FIELDS
 from rankers.get_ranker import get_ranker_for_method
 from tests.e2e_fixtures import make_draft_class_csv
@@ -34,12 +34,11 @@ def _fields(scored):
     return {name: getattr(scored, name) for name in SCORED_PLAYER_FIELDS}
 
 
-@pytest.mark.parametrize("pipeline", sorted(PIPELINES))
 @pytest.mark.parametrize("method", sorted(PROFILES))
 @pytest.mark.parametrize("seed", [7, 11, 23])
-def test_v2_matches_legacy_on_a_draft_class(method, seed, pipeline):
+def test_legacy_pipeline_matches_legacy_on_a_draft_class(method, seed):
     # a batch size that doesn't divide the class exercises the batch boundary
-    legacy, v2 = _rank_both(method, _class_rows(seed), batch_size=45, pipeline=pipeline)
+    legacy, v2 = _rank_both(method, _class_rows(seed), batch_size=45, pipeline="legacy")
     assert [_fields(s) for s in v2] == [_fields(s) for s in legacy]
 
 
@@ -57,7 +56,7 @@ def test_ledger_sums_to_the_score(method):
 
 
 def test_pre_and_post_demand_are_both_kept():
-    legacy, v2 = _rank_both("draft_class", _class_rows(7), batch_size=1500)
+    legacy, v2 = _rank_both("draft_class", _class_rows(7), batch_size=1500, pipeline="legacy")
     by_id = {r.id: r for r in v2}
     for r in legacy:
         mine = by_id[r.id]

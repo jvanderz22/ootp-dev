@@ -49,9 +49,14 @@ def _ranked(engine, classes):
 
 
 def test_pool_parity_is_clean_for_matching_engines():
-    classes = _class()
-    head, base = _ranked("v2", classes), _ranked("legacy", classes)
-    m = eval_rankings.pool_parity(head["draft"]["yfmlb-2040-draft"], base["draft"]["yfmlb-2040-draft"])
+    from models.game_players import GamePlayer
+    from ranking import get_ranker
+
+    rows = _class()["yfmlb-2040-draft"]
+    base = _ranked("legacy", _class())["draft"]["yfmlb-2040-draft"]
+    # v2's legacy pipeline reproduces the legacy rankers
+    head = get_ranker("draft_class", "legacy").rank([GamePlayer(dict(r)) for r in rows], batch_size=60)
+    m = eval_rankings.pool_parity(head, base)
     assert m["n"] == 60 and m["rows"] == 0 and m["order_from"] is None and not m["fields"]
 
 

@@ -64,6 +64,23 @@ def _current(rng, potential):
     return max(20, potential - rng.choice([0, 5, 10, 15, 20, 25]))
 
 
+def _scale(value):
+    return str(min(80, max(20, int(round(value / 5)) * 5)))
+
+
+def _composite_parts(row):
+    """BABIP, HRA and PBABIP consistent with the composites OOTP builds from
+    them (Contact ~ (BABIP + Avoid K) / 2, Movement ~ 0.8 HRA + 0.2 PBABIP, see
+    fit_contact.py and the plans), the way a real export has them. Derived, so
+    the random draws - and every rating the legacy models read - stay as they were."""
+    for pot in ("", "Pot"):
+        contact, avoid_k = int(row[f"{pot}Cntct"]), int(row[f"{pot}Ks"])
+        row[f"{pot}BABIP"] = _scale(2 * contact - avoid_k)
+        movement = int(row[f"{pot}Mov"])
+        row[f"{pot}HRA"] = _scale(movement)
+        row[f"{pot}PBABIP"] = _scale(movement)
+
+
 def _name(rng, i):
     return f"{FIRST_NAMES[i % len(FIRST_NAMES)]} {rng.choice(LAST_NAMES)}"
 
@@ -219,6 +236,7 @@ def _api_ratings_row(rng, pid, pos, **over):
         "Ovr": str(_grade(rng, 30, 65)), "Pot": str(_grade(rng, 40, 75)),
     })
     row["PotVel"] = row["Vel"]
+    _composite_parts(row)
     row.update(over)
     return row
 

@@ -6,7 +6,8 @@ Two groups: rules, which a model that fails doesn't ship with, and hypotheses,
 which are reported but never enforced - a grid rule the stats haven't backed
 yet. A hypothesis is promoted to a rule only once the data supports it.
 
-Each check takes `wrc(babip, avoid_k, gap, power, eye) -> wRC+` and returns a
+Hitting checks take `wrc(babip, avoid_k, gap, power, eye) -> wRC+`, pitching
+checks `ra(stuff, control, movement, role)`, and each returns a
 Result. The fit script records both groups in the artifact;
 tests/test_model_rules.py holds the committed artifact to the rules.
 """
@@ -191,3 +192,77 @@ def check_hitting_hypotheses(wrc) -> list:
 
 def anchors(wrc) -> dict:
     return {v: round(float(_sweep(wrc, "babip", v, base=v)), 1) for v in BALANCED_ANCHORS}
+
+
+# Pitching. Checks take `ra(stuff, control, movement, role) -> runs allowed
+# index` (100 = MLB average, lower is better; Movement sets HRA and PBABIP).
+PITCHING_FLOOR = 30
+PITCHING_ELITE = 70
+# "emergency or no value": no better than an all-40s arm in the same role
+EMERGENCY = 40
+
+
+def pitching_floors(ra):
+    """H (was rule 5). All three need to clear a floor: Stuff, Movement or
+    Control at 30 means emergency or no value, whatever the others. The stats
+    can barely test it (2026-11-07): about 5 MLB / AAA pitchers had one of them
+    at 30 or below with the other two at 55+, none for Movement, and they
+    weren't worthless (charged-runs index 90-115)."""
+    out = []
+    for role in ("sp", "rp"):
+        emergency = ra(EMERGENCY, EMERGENCY, EMERGENCY, role)
+        for rating in ("stuff", "control", "movement"):
+            ratings = dict.fromkeys(("stuff", "control", "movement"), PITCHING_ELITE)
+            ratings[rating] = PITCHING_FLOOR
+            value = ra(**ratings, role=role)
+            out.append(_result(
+                f"floor: {rating} {PITCHING_FLOOR} ({role.upper()})",
+                value >= emergency,
+                f"{value:.0f} with the others at {PITCHING_ELITE}, vs {emergency:.0f} for an all-40s arm",
+            ))
+    return out
+
+
+def command_carries_weak_stuff(ra):
+    """H1. Elite Movement + Control can carry weak Stuff as a starter (35 / 80 /
+    80 ~ a #2-3 starter), but elite Control alone can't (40 / 40 / 80 ~ little
+    value)."""
+    carried = ra(stuff=35, control=80, movement=80, role="sp")
+    alone = ra(stuff=40, control=80, movement=40, role="sp")
+    return [
+        _result("H1 Movement + Control carry weak Stuff (SP)", carried <= 90,
+                f"35 / 80 / 80 -> {carried:.0f} (a #2-3 starter: <= 90)"),
+        _result("H1 Control alone doesn't (SP)", alone >= 100,
+                f"40 / 80 / 40 -> {alone:.0f} (little value: >= 100)"),
+    ]
+
+
+def stuff_alone(ra):
+    """H2. Elite Stuff alone isn't enough as a starter (80 / 40 / 40 ~ a spot
+    starter) but is probably a good reliever."""
+    sp = ra(stuff=80, control=40, movement=40, role="sp")
+    rp = ra(stuff=80, control=40, movement=40, role="rp")
+    return [
+        _result("H2 Stuff alone isn't a starter", sp >= 100, f"80 / 40 / 40 as SP -> {sp:.0f} (>= 100)"),
+        _result("H2 Stuff alone is a good reliever", rp <= 90, f"as RP -> {rp:.0f} (<= 90)"),
+    ]
+
+
+def relievers_lean_on_stuff(ra):
+    """H3. Relievers lean more on Stuff than starters do."""
+    gains = {role: ra(50, 50, 50, role) - ra(70, 50, 50, role) for role in ("sp", "rp")}
+    return [_result("H3 Stuff 50 -> 70 is worth more in relief", gains["rp"] > gains["sp"],
+                    f"-{gains['rp']:.1f} as RP vs -{gains['sp']:.1f} as SP")]
+
+
+# rule 5 became a hypothesis on 2026-11-07, which leaves no pitching rule yet
+PITCHING_RULES = ()
+PITCHING_HYPOTHESES = (pitching_floors, command_carries_weak_stuff, stuff_alone, relievers_lean_on_stuff)
+
+
+def check_pitching(ra) -> list:
+    return [result for rule in PITCHING_RULES for result in rule(ra)]
+
+
+def check_pitching_hypotheses(ra) -> list:
+    return [result for rule in PITCHING_HYPOTHESES for result in rule(ra)]

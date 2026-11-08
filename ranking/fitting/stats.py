@@ -1,5 +1,5 @@
-"""Season batting stats from `league_stats/` (see league_stats.py), as event
-counts, and the run value of each event fit from them."""
+"""Season stats from `league_stats/` (see league_stats.py), as event counts, and
+the run value of each event fit from the batting side."""
 from pathlib import Path
 
 import numpy as np
@@ -15,19 +15,23 @@ LEVEL_MLB = 1
 EVENTS = ("single", "double", "triple", "hr", "bb", "k", "out")
 
 
+def _load(stats_dir, kind, years) -> pd.DataFrame:
+    frames = []
+    for year in years:
+        path = Path(stats_dir) / kind / f"{year}.csv"
+        if path.exists():
+            frames.append(pd.read_csv(path))
+    if not frames:
+        raise FileNotFoundError(f"no {kind} stats for {list(years)} under {stats_dir}")
+    stats = pd.concat(frames, ignore_index=True)
+    return stats[stats.split_id == OVERALL_SPLIT].copy()
+
+
 def load_batting(stats_dir, years) -> pd.DataFrame:
     """Every player-team stint of `years` at every level, overall split, with
     event counts added. Unintentional walks and HBP count as `bb`; intentional
     walks are left out, as the batter has no say in them."""
-    frames = []
-    for year in years:
-        path = Path(stats_dir) / "bat" / f"{year}.csv"
-        if path.exists():
-            frames.append(pd.read_csv(path))
-    if not frames:
-        raise FileNotFoundError(f"no batting stats for {list(years)} under {stats_dir}")
-    bat = pd.concat(frames, ignore_index=True)
-    bat = bat[bat.split_id == OVERALL_SPLIT].copy()
+    bat = _load(stats_dir, "bat", years)
     bat["single"] = bat.h - bat.d - bat.t - bat.hr
     bat["double"] = bat.d
     bat["triple"] = bat.t
@@ -41,6 +45,18 @@ def load_batting(stats_dir, years) -> pd.DataFrame:
     return bat
 
 
+def load_pitching(stats_dir, years) -> pd.DataFrame:
+    """The pitching side of the same events, per stint. StatsPlus has no
+    doubles / triples allowed, so there's no extra-base split."""
+    pit = _load(stats_dir, "pitch", years)
+    pit["bb"] = pit.bb - pit.iw + pit.hp
+    pit["contact"] = pit.bf - pit.k - pit.bb - pit.iw
+    pit["hr"] = pit.hra
+    pit["in_play"] = pit.contact - pit.hr
+    pit["hits_in_play"] = pit.ha - pit.hra
+    return pit
+
+
 def fit_linear_weights(bat: pd.DataFrame) -> dict:
     """Runs per event from team-season totals: team runs ~ event counts, no
     intercept, every level pooled."""
@@ -52,6 +68,14 @@ def fit_linear_weights(bat: pd.DataFrame) -> dict:
 
 def runs(frame: pd.DataFrame, weights: dict) -> pd.Series:
     return sum(frame[name] * weights[name] for name in EVENTS)
+
+
+def extra_base_shares(bat: pd.DataFrame, years) -> tuple:
+    """MLB (extra-base hits per non-HR hit, triples per extra-base hit) over
+    `years` - what a pitcher's hits are split by, lacking his own."""
+    mlb = bat[bat.year.isin(list(years)) & (bat.level_id == LEVEL_MLB)]
+    extra = mlb.double.sum() + mlb.triple.sum()
+    return float(extra / mlb.hits_in_play.sum()), float(mlb.triple.sum() / extra)
 
 
 def mlb_runs_per_pa(bat: pd.DataFrame, weights: dict, year: int) -> float:

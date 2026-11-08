@@ -64,8 +64,9 @@ def test_engines_store_separate_runs(fixture_class):
     process_class(fixture_class)
     v2 = results_store.class_results(fixture_class, with_breakdown=True, engine="v2")
     legacy = results_store.class_results(fixture_class, with_breakdown=True, engine="legacy")
-    assert [r["id"] for r in v2] == [r["id"] for r in legacy]
-    assert [r["model_score"] for r in v2] == [r["model_score"] for r in legacy]
+    # the same players, scored by different engines
+    assert {r["id"] for r in v2} == {r["id"] for r in legacy}
+    assert [r["model_score"] for r in v2] != [r["model_score"] for r in legacy]
     # v2 adds the pre-demand fields and the ledger; legacy has neither
     assert all(r["pre_demand_rank"] for r in v2)
     assert all(r["pre_demand_score"] is None and r["ledger"] is None for r in legacy)
@@ -138,7 +139,6 @@ def test_the_header_picks_the_engine(client):
     legacy = _gql(client, _ROWS, engine="legacy")["rankedPlayers"]["rows"]
     assert {r["source"]["engine"] for r in v2} == {"v2"}
     assert {r["source"]["engine"] for r in legacy} == {"legacy"}
-    assert [r["modelScore"] for r in v2] == [r["modelScore"] for r in legacy]
     assert all(r["preDemandRank"] for r in v2)
     assert all(r["preDemandScore"] is None for r in legacy)
     # an unknown engine falls back to the default

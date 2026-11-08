@@ -22,6 +22,8 @@ next to `legacy`) and judged by `eval_rankings.py` at every step.
 | 2026-11-04 | The signal inventory is a report only and never fails the suite. |
 | 2026-11-07 | **The rules list is confirmed**, then **the four Power rules become hypotheses**: the Power 40 / 30 floors, "power without contact is much less valuable" and "archetypes land at similar values". The 2041–42 stats disagree with all four (see "Findings so far"). They're reported, not enforced, and re-checked as the archive grows. |
 | 2026-11-07 | **Hitter talent is built from one rate per rating** (Avoid K → K%, Eye → BB%, Power → HR per contact, BABIP → hits on balls in play, Gap → extra bases per hit), chained into a PA and valued with linear weights fit to the league's runs. It's fit on every level at once with a level term, and committed as lookup tables. |
+| 2026-11-08 | **Pitcher rule 5 (a 30 in Stuff, Movement or Control means emergency value) becomes a hypothesis.** The stats can barely test it, and the few cases weren't worthless. |
+| 2026-11-08 | **Pitchers ship on the fitted model even though OVR disagrees.** The stats back it: held-out runs allowed and career MLB WAR. The OVR / POT outcome looks worse, so **the draft eval now also reports career MLB WAR** next to OVR / POT. |
 | 2026-11-07 | **Until the value layer, fitted batting goes onto the legacy points scale by matching percentiles** over the league's hitters. Hitters keep their legacy points distribution, so phase 3 only reorders hitters among themselves; the hitter-vs-pitcher balance moves in phase 5 (WAR). |
 
 ## Why: what's wrong today
@@ -164,6 +166,9 @@ To start collecting, because history doesn't backfill:
 - **Engine reports (2b):** `--parity` (every field, two engines),
   `--explain <player>` (ledgers side by side) and `--signals` (which parts
   read each rating).
+- **Draft on career MLB WAR (2026-11-08):** a second table judges the same
+  pre-demand order on each draftee's MLB WAR (batting + pitching) through
+  the last season on disk, 0 if he never got there.
 - **To add:** the `potential` profile and calibration once stats exist.
 
 ## Findings so far
@@ -234,6 +239,53 @@ To start collecting, because history doesn't backfill:
   - **Young players are left out** (under 24). Their ratings rise during a
     season, so their stats came from lower ratings than the end-of-season
     snapshot shows, which flattens the bottom of every curve.
+- **Phase 4, pitcher talent (2026-11-08).**
+  - **How OOTP builds the composites:** Movement ≈ 0.81·HRA + 0.18·PBABIP
+    (R² 0.93; potential 0.73 / 0.24), and G/F adds nothing. Stuff ≈
+    0.49·best pitch + 0.31·second + 0.13·third (R² 0.93), and velocity adds
+    almost nothing. So legacy's pitch-mix maps counted the pitches a second
+    time on top of Stuff.
+  - **MLB punishes low Movement much harder than the minors do.** Inside
+    MLB, HR per contact goes .045 at Movement 50 → .056 at 45 → .068 at 40
+    → .080 at 35. MLB's HR rate is about 2.5× AAA's, which hid this in
+    pooled MLB / AAA tables. The fitted model follows MLB, so it's much
+    harsher on low Movement than legacy or OOTP's OVR.
+  - **Cross-validated (folds by player), against runs allowed per BF** (from
+    the line's events | actually charged), 150+ BF:
+
+    | Level, role | Rows | Fitted | Legacy |
+    |---|---|---|---|
+    | MLB RP | 353 | 0.500 \| 0.433 | 0.385 \| 0.318 |
+    | MLB SP | 251 | 0.477 \| 0.335 | 0.446 \| 0.374 |
+    | AAA RP | 231 | 0.306 \| 0.234 | 0.287 \| 0.184 |
+    | AAA SP | 204 | 0.418 \| 0.312 | 0.385 \| 0.291 |
+    | AA RP | 185 | 0.228 \| 0.187 | 0.258 \| 0.228 |
+    | AA SP | 143 | 0.387 \| 0.323 | 0.350 \| 0.291 |
+    | A RP | 244 | 0.384 \| 0.272 | 0.270 \| 0.194 |
+    | A SP | 145 | 0.243 \| 0.186 | 0.150 \| 0.139 |
+
+    The MLB SP charged-runs gap is within noise: legacy's SP score doesn't
+    correlate with the fitted model's residual (−0.02), and neither do
+    stamina or pitch count.
+  - **No support for the other legacy talent factors.** Extreme-GB starters
+    allow 3.4% *more* runs than their components predict (legacy gives them
+    ×1.10). Pitch count and stamina don't move runs allowed. Relievers allow
+    about 5% fewer runs than their components at every G/F, which is runs
+    accounting (inherited runners), not talent. Adding the pitch grades or
+    velocity to the K model doesn't help consistently.
+  - **Against OVR on live MLB / AAA:** SP 0.886 → 0.892, with the Stuff and
+    Control residuals flattening; RP 0.853 → 0.822, because the model weights
+    Movement far above OVR (residual +16.6 at Movement 65+).
+  - **Draft classes**, scored on Movement since the exports have no HRA /
+    PBABIP: worse against OVR / POT (within-POT 0.05–0.24 → 0.01–0.16).
+    Against career MLB WAR they're better in every class with MLB time
+    (2033–37 pitchers 0.045 / 0.162 / 0.258 / 0.080 / 0.031 → 0.081 / 0.189 /
+    0.287 / 0.099 / 0.051, and the top-100 WAR is up). Watchlist: Aliff
+    #28 → #9.
+  - **Watch:** draft boards hold fewer pitchers. Pitchers in the pre-demand
+    top 100 went 37 → 26 (2035), 27 → 23 (2038), 42 → 37 (2040), 23 → 25
+    (2042). The bridge matches current-ratings pitchers, not potential ones;
+    phase 5 (WAR) settles the balance between hitters and pitchers.
 - **Fixed: current pitchers read potential ratings.** The HR-risk modifier
     keyed off potential Movement, and the knuckleball check off potential
     pitches, even when ranking on current ratings. Both now follow the
@@ -333,10 +385,28 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
 - Not done yet: `eval_rankings.py --hypotheses` (re-checking hypotheses
   against the stats); the vs L / vs R splits (phase 6).
 
-**4. Talent layer, pitchers**
-- First, fit how Movement (and Stuff) is built from its parts.
-- Then the same approach as hitters. This handles the leftover SP grid,
-  RP pitch-map and draft Stuff-stacking items.
+**4. Talent layer, pitchers: done** (2026-11-08)
+- ✅ Composition fits (see "Findings so far").
+- ✅ `ranking/pitcher_talent.py` with artifact
+  `ranking/artifacts/pitcher_talent_v1.json`, fit by
+  `python -m ranking.fitting.pitcher_talent --data-dir fly_data`. Four
+  chained rates (Stuff → K%, Control → BB%, HRA → HR per contact, PBABIP →
+  hits on balls in play), each with level and role terms, tabulated for MLB
+  starters and relievers. A second pair of `hr` / `hit` tables on Movement
+  serves classes without HRA / PBABIP.
+- ✅ In `v2`, `LegacyModel` takes pitching from the fitted model. Dropped:
+  the SP / RP grids, GB-type, HR-risk, knuckleball and grade-based pitch-mix
+  factors, and the Stuff −10 / +5 role shift (the fitted role term replaces
+  it). Kept until phase 5: stamina and the pitch-count part of the mix maps,
+  as an "SP / RP role" ledger line, and the RP multiplier. The legacy scorer
+  only runs for a pitcher without Stuff / Control / Movement.
+- ✅ Rules: pitcher rule 5 is now a hypothesis, which leaves no enforced
+  pitching rule. Hypotheses: H1 holds (Movement + Control carry weak Stuff;
+  Control alone doesn't); H2 isn't supported (80 / 40 / 40 is a decent
+  starter, 92, and a so-so reliever, 94); H3 holds only barely (Stuff is
+  worth −16.0 in relief vs −15.9 starting, since role is an additive term).
+- The test fixtures' BABIP / HRA / PBABIP are now derived from Contact and
+  Movement, as in a real export. The legacy goldens are byte-identical.
 
 **5. Value layer**
 - Playing time, the injury → games model, positional adjustment and

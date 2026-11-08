@@ -2,17 +2,15 @@
 
     python -m ranking.fitting.hitter_talent --data-dir fly_data
 
-Each component rate is fit on every level at once as
-logit(rate) = f(its rating) + g(level), weighted by its denominator: f is
-monotone in the rating, and the level term soaks up the competition and run
-environment, so low-rated players in the low minors pin down the bottom of each
-curve. The artifact keeps f + g(MLB) as a table per rating.
+Each component rate is fit on every level at once with a level term (see
+ranking/fitting/components.py), weighted by its denominator; the artifact keeps
+its MLB table.
 
 The report: cross-validated (folds grouped by player, so a player's seasons
 stay together), the spearman of predicted runs per PA with the actual line
 inside each level, next to the legacy batting model's on the same rows; then
-the rules suite and the hypotheses. A new artifact replaces the committed one only if both hold up
-and eval_rankings.py agrees.
+the rules suite and the hypotheses. A new artifact replaces the committed one
+only if both hold up and eval_rankings.py agrees.
 """
 import argparse
 import csv
@@ -25,19 +23,19 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import xgboost as xgb
 from scipy.stats import spearmanr
 from sklearn.model_selection import GroupKFold
 
 from context import default_base_dir
+from ranking import bridge
 from ranking.fitting import rules
+from ranking.fitting.components import PARAMS, Rate
 from ranking.fitting.datasets import hitter_rows, read_hitters, season_snapshots
 from ranking.fitting.stats import (
     LEVEL_MLB, fit_linear_weights, load_batting, mlb_runs_per_pa, runs,
 )
 from ranking.hitter_talent import (
-    ARTIFACT, ARTIFACTS_DIR, COMPONENTS, HIGH, LOW, RATINGS, HitterTalent, outcomes,
-    runs_per_pa,
+    ARTIFACT, ARTIFACTS_DIR, COMPONENTS, RATINGS, HitterTalent, outcomes, runs_per_pa,
 )
 
 # component -> (numerator, denominator, direction of its rating)
@@ -48,53 +46,24 @@ TARGETS = {
     "hit": ("hits_in_play", "in_play", 1),
     "xbh": ("extra_base", "hits_in_play", 1),
 }
-PARAMS = dict(
-    objective="reg:logistic", n_estimators=300, max_depth=2, learning_rate=0.05,
-    min_child_weight=100, reg_lambda=1.0,
-    # rating and level never share a tree: an additive logit
-    interaction_constraints="[[0],[1]]",
-)
 FOLDS = 5
 REPORT_MIN_PA = 200
-BRIDGE_KNOTS = 101
-TABLE = np.arange(LOW, HIGH + 1)
-
-
-def fit_component(rows, name) -> np.ndarray:
-    num, den, sign = TARGETS[name]
-    rows = rows[rows[den] > 0]
-    rating = COMPONENTS[name]
-    model = xgb.XGBRegressor(
-        **PARAMS,
-        monotone_constraints=f"({sign},0)",
-        base_score=float(rows[num].sum() / rows[den].sum()),
-    )
-    model.fit(rows[[rating, "level_id"]].to_numpy(float), rows[num] / rows[den], sample_weight=rows[den])
-    return model.predict(np.column_stack([TABLE, np.full(len(TABLE), LEVEL_MLB)]).astype(float))
 
 
 def fit_tables(rows) -> dict:
-    return {name: fit_component(rows, name).round(5).tolist() for name in COMPONENTS}
+    return {
+        name: Rate(rows, COMPONENTS[name], num, den, sign, ["level_id"]).table(level_id=LEVEL_MLB)
+        for name, (num, den, sign) in TARGETS.items()
+    }
 
 
 def points_bridge(model: HitterTalent, snapshot_path) -> dict:
-    """A monotone wRC+ -> legacy batting points map that leaves the league's
-    hitters' batting points distributed exactly as the legacy model has them:
-    the fitted model only reorders hitters among themselves, and their balance
-    against pitchers waits for the value layer (WAR). Knots are matching
-    percentiles of the two, over every hitter in the snapshot."""
+    """wRC+ -> legacy batting points, matched by percentile over every hitter in
+    the snapshot (see ranking/bridge.py)."""
     hitters = read_hitters(snapshot_path)
     wrc = model.wrc_plus({r: hitters[r].to_numpy() for r in RATINGS})
     legacy = list(legacy_scores(snapshot_path, hitters.player_id).values())
-    q = np.linspace(0, 100, BRIDGE_KNOTS)
-    knots, points = np.percentile(wrc, q), np.percentile(legacy, q)
-    # equal knots (a floor of identical players) would make np.interp ambiguous
-    keep = np.concatenate([[True], np.diff(knots) > 1e-9])
-    return {
-        "method": f"percentiles of {len(hitters)} snapshot hitters",
-        "wrc_plus": np.round(knots[keep], 3).tolist(),
-        "points": np.round(points[keep], 3).tolist(),
-    }
+    return {"method": f"percentiles of {len(hitters)} snapshot hitters", **bridge.fit(wrc, legacy)}
 
 
 def triple_share(bat) -> float:
@@ -144,9 +113,9 @@ def report(rows, artifact_base, snapshots) -> dict:
     return out
 
 
-def data_hash(snapshots, stats_dir, years) -> str:
+def data_hash(snapshots, stats_dir, years, kinds=("bat",)) -> str:
     digest = hashlib.sha256()
-    paths = list(snapshots.values()) + [Path(stats_dir) / "bat" / f"{y}.csv" for y in years]
+    paths = list(snapshots.values()) + [Path(stats_dir) / k / f"{y}.csv" for k in kinds for y in years]
     for path in paths:
         if Path(path).exists():
             digest.update(Path(path).read_bytes())

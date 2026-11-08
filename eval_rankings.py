@@ -15,7 +15,10 @@ current: the overall (current-ratings) ranking of a league snapshot's MLB / AAA
 draft: every past draft class re-scored, against how its players turned out in
   the snapshot: OVR once they're 25+, POT now before that, and 20 (a bust) for
   anyone no longer in it. The baseline is ordering the class by draft-day POT.
-  Model order is pre-demand - demand is about signability, not talent.
+  Model order is pre-demand - demand is about signability, not talent. When the
+  league's season stats are there (league_stats.py), a second table judges the
+  same order on career MLB WAR (batting + pitching), 0 for anyone who never got
+  there.
 
 An engine is a way of producing scores: `legacy` is today's rankers. A new
 ranking architecture registers next to it in ENGINES, so both can be scored from
@@ -289,6 +292,24 @@ def draft_outcome(snap_row):
     return pot
 
 
+def read_career_war(stats_dir):
+    """{player ID: MLB WAR summed over every season on disk}, batting and
+    pitching; None when there are no stats."""
+    stats_dir = Path(stats_dir)
+    war, found = {}, False
+    for kind in ("bat", "pitch"):
+        for path in sorted((stats_dir / kind).glob("*.csv")):
+            found = True
+            with open(path, newline="") as f:
+                for r in csv.DictReader(f):
+                    if r.get("split_id") == "1" and r.get("level_id") == "1":
+                        war[r["player_id"]] = war.get(r["player_id"], 0.0) + float(r.get("war") or 0)
+    if not found:
+        return None
+    last = max(int(p.stem) for p in (stats_dir / "bat").glob("*.csv"))
+    return {"war": war, "through": last}
+
+
 def top_k_mean(keys, outcomes, k):
     """Mean outcome of the top `k` by `keys`, with players tied at the cut-off
     counted fractionally (draft POT ties a lot)."""
@@ -346,6 +367,26 @@ def draft_metrics(scores, rows, snapshot):
         "rho_model": spearman(model, outcome),
         "rho_pot": spearman(pot, outcome),
         "rho_within_pot": within_bucket_rho(model, outcome, pot),
+        "top_model": top_k_mean(model, outcome, TOP_K),
+        "top_pot": top_k_mean(pot, outcome, TOP_K),
+    }
+
+
+def war_metrics(scores, rows, war):
+    """The class's pre-demand order against career MLB WAR."""
+    model, pot, outcome = [], [], []
+    for r in rows:
+        draft_pot = _int(r.get("POT"))
+        if r["ID"] not in scores or draft_pot is None:
+            continue
+        model.append(scores[r["ID"]])
+        pot.append(draft_pot)
+        outcome.append(war.get(r["ID"], 0.0))
+    return {
+        "n": len(outcome),
+        "reached": sum(o != 0 for o in outcome) / len(outcome) if outcome else None,
+        "rho_model": spearman(model, outcome),
+        "rho_pot": spearman(pot, outcome),
         "top_model": top_k_mean(model, outcome, TOP_K),
         "top_pot": top_k_mean(pot, outcome, TOP_K),
     }
@@ -418,7 +459,7 @@ def print_movement(label, head, base, snapshot, top=300):
             print(f"    {name:<24} rank {br[p]:>5} → {hr[p]:<5} score {base[p]:6.1f} → {head[p]:6.1f}")
 
 
-def print_draft(head, base, classes, snapshot):
+def print_draft(head, base, classes, snapshot, career_war=None):
     print(
         f"\n== draft: outcome = OVR at {ARRIVAL_AGE}+, POT now before, {BUST} if gone;"
         f" model order is pre-demand"
@@ -440,6 +481,25 @@ def print_draft(head, base, classes, snapshot):
             f" {fmt(m['busts'], '4.0%'):>5} |  {col('rho_model', '.2f'):>13}  {fmt(m['rho_pot'], '.2f'):>8}"
             f" |  {col('rho_within_pot', '.2f'):>13}  |  {col('top_model', '.1f'):>16}  {fmt(m['top_pot'], '.1f'):>8}"
         )
+    if career_war:
+        print(
+            f"\n== draft: outcome = career MLB WAR through {career_war['through']}"
+            " (0 if never in MLB); model order is pre-demand"
+        )
+        print(f"class        n  any WAR | whole class: model    POT-only | top {TOP_K} mean WAR: model  POT-only")
+        for name, rows in classes.items():
+            m = war_metrics(head[name], rows, career_war["war"])
+            b = war_metrics(base[name], rows, career_war["war"]) if base is not None else None
+
+            def col(key, spec):
+                return pair(m[key], b[key] if b else _NO_BASE, spec)
+
+            year = re.search(r"\d{4}", name)
+            print(
+                f"{year[0] if year else name:<8} {m['n']:>5}  {fmt(m['reached'], '4.0%'):>7}"
+                f" |  {col('rho_model', '.2f'):>13}  {fmt(m['rho_pot'], '.2f'):>8}"
+                f" |  {col('top_model', '.2f'):>18}  {fmt(m['top_pot'], '.2f'):>8}"
+            )
     if base is not None:
         moved = [
             name for name in classes
@@ -813,7 +873,8 @@ def main(argv=None):
     if "current" in head:
         print_current(head["current"], base and base["current"], pool, snapshot)
     if "draft" in head:
-        print_draft(head["draft"], base and base["draft"], classes, snapshot)
+        career_war = read_career_war(data_root / "league_stats" / args.league)
+        print_draft(head["draft"], base and base["draft"], classes, snapshot, career_war)
     print_watchlist(head, base, pool, classes, snapshot)
 
 

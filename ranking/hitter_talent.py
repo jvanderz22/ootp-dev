@@ -23,6 +23,8 @@ from pathlib import Path
 
 import numpy as np
 
+from ranking import bridge
+
 ARTIFACTS_DIR = Path(__file__).resolve().parent / "artifacts"
 ARTIFACT = "hitter_talent_v1"
 
@@ -61,11 +63,9 @@ class HitterTalent:
         self.weights = artifact["linear_weights"]
         self.triple_share = artifact["triple_share"]
         self.mlb_runs_per_pa = artifact["mlb_runs_per_pa"]
-        # wRC+ -> the legacy batting model's points, until the value layer puts
-        # everything in WAR (absent while fitting)
-        bridge = artifact.get("points_bridge") or {}
-        self.points_knots = np.asarray(bridge.get("wrc_plus", []))
-        self.points_values = np.asarray(bridge.get("points", []))
+        # wRC+ -> the legacy batting model's points (ranking/bridge.py); absent
+        # while fitting
+        self.bridge = artifact.get("points_bridge")
 
     @classmethod
     def from_file(cls, path) -> "HitterTalent":
@@ -85,15 +85,7 @@ class HitterTalent:
         return 100 * runs_per_pa(events, self.weights) / self.mlb_runs_per_pa
 
     def points(self, wrc_plus):
-        """wRC+ on the legacy batting model's 0-100 scale, extended past the
-        bridge's ends along its end slopes and floored at 0."""
-        x, y = self.points_knots, self.points_values
-        value = np.interp(wrc_plus, x, y)
-        hi_slope = (y[-1] - y[-2]) / (x[-1] - x[-2])
-        lo_slope = (y[1] - y[0]) / (x[1] - x[0])
-        value = np.where(wrc_plus > x[-1], y[-1] + (wrc_plus - x[-1]) * hi_slope, value)
-        value = np.where(wrc_plus < x[0], y[0] + (wrc_plus - x[0]) * lo_slope, value)
-        return np.maximum(value, 0.0)
+        return bridge.points(wrc_plus, self.bridge)
 
 
 @lru_cache(maxsize=None)

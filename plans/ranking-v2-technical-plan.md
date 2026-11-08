@@ -392,6 +392,15 @@ PA / IP. Monotone; few rounds, chosen by CV grouped by season.
     cross-validate better (MLB 0.693 vs 0.667).
   - Folds are grouped by player for now. A season split isn't possible yet:
     2041 only has veterans.
+- **Pitchers, as built (2026-11-08):** the same structure, per batter faced.
+  Stuff → K%, Control → BB + HBP, HRA → HR per contact, PBABIP → hits per
+  ball in play, each with a level and a role (SP / RP) term, tabulated for
+  MLB in both roles. Extra-base hits allowed aren't in the stats, so a
+  pitcher's hits split at the MLB batting rate. Runs allowed are an index
+  (100 = the MLB average line). The legacy points come from two percentile
+  bridges, one per role, over the snapshot's pitchers. Each is matched to
+  the legacy role score with the kept role factor (stamina, pitch count, RP
+  multiplier) taken out, so v2's SP and RP scores are spread like legacy's.
 
 **Value:** mostly deterministic formulas, with parameters fit from the stats:
 - WAR = (runs above average + positional adjustment + replacement runs) ×
@@ -427,7 +436,8 @@ terms):
 4. **One weak tool costs less than two:** a single 35 next to 65s still
    rates as an above-average bat.
 
-Pitching (from the SP / RP grids):
+Pitching (from the SP / RP grids; rule 5 became a hypothesis on 2026-11-08,
+since the stats can barely test it):
 5. **All three need to clear a floor:** Stuff, Movement or Control at 30 or
    below means emergency or no value, whatever the others.
 
@@ -478,7 +488,7 @@ Fielding (from the position grids):
 | **2b** ✅ | `--parity`, `--explain`, `--signals` (reads traced, not declared) | report only |
 | **2c** ✅ | schema v3 + `results_store` fields; GraphQL ledger / pre-demand fields; card waterfall (behind v2) | goldens unchanged (legacy rows write NULLs) |
 | **3** ✅ | `RatingsView`; `fitting/datasets.py`; rules suite; hitter talent stage (BABIP / Avoid K / Gap / Power / Eye, fit to stats, monotone) with per-player legacy fallback when BABIP is missing | rules suite passes; eval vs legacy: hitter residuals by rating flatten; watchlist; draft metrics no worse |
-| **4** | Movement / Stuff composition fit; pitcher talent stage | same, pitchers |
+| **4** ✅ | Movement / Stuff composition fit; pitcher talent stage | same, pitchers |
 | **5** | value stage (WAR); retire RP multiplier, batting weights, two-way bonus | calibration vs StatsPlus WAR; ranking metrics |
 | **6** | development stage (distributions, E[v], upside dial); judgment stage | draft metrics vs legacy and POT-only baseline |
 | **7** | demand stays last; pre / post in the UI | already in place from 2a / 2c |

@@ -1,0 +1,84 @@
+"""The pitcher talent model: base pitching ratings -> expected MLB rates -> runs
+allowed, as a starter and as a reliever.
+
+Each rating drives one rate per batter faced, the mirror of the hitters':
+
+    k     strikeouts per BF                   Stuff
+    bb    unintentional walks + HBP per BF    Control
+    hr    home runs per contact               HRA
+    hit   non-HR hits per ball in play        PBABIP
+
+Movement is OOTP's composite of HRA and PBABIP (~0.8 / 0.2), so it isn't read
+when they are. Classes exported without HRA / PBABIP (the draft view) use
+tables fit on Movement for `hr` and `hit` instead.
+
+Extra-base hits allowed aren't in the stats, so hits split at the MLB rate.
+Outcomes are valued with the hitters' linear weights, and runs allowed are an
+index: 100 is the MLB average batter's line, lower is better. Starting and
+relieving differ by a fitted role term (relievers strike out more), not by
+shifting the ratings.
+"""
+import json
+from functools import lru_cache
+from pathlib import Path
+
+import numpy as np
+
+from ranking import bridge
+from ranking.hitter_talent import ARTIFACTS_DIR, HIGH, LOW, outcomes, runs_per_pa
+
+ARTIFACT = "pitcher_talent_v1"
+
+COMPONENTS = {"k": "stuff", "bb": "control", "hr": "hra", "hit": "pbabip"}
+MOVEMENT_COMPONENTS = {"hr": "movement", "hit": "movement"}
+RATINGS = ("stuff", "control", "hra", "pbabip", "movement")
+ROLES = ("sp", "rp")
+
+
+class PitcherTalent:
+    def __init__(self, artifact: dict):
+        self.version = artifact["version"]
+        self.tables = {
+            role: {name: np.asarray(t) for name, t in tables.items()}
+            for role, tables in artifact["tables"].items()
+        }
+        self.movement_tables = {
+            role: {name: np.asarray(t) for name, t in tables.items()}
+            for role, tables in artifact["movement_tables"].items()
+        }
+        self.weights = artifact["linear_weights"]
+        self.extra_base_share = artifact["extra_base_share"]
+        self.triple_share = artifact["triple_share"]
+        self.mlb_runs_per_pa = artifact["mlb_runs_per_pa"]
+        # runs allowed index -> legacy SP / RP points (ranking/bridge.py);
+        # absent while fitting
+        self.bridges = artifact.get("points_bridges")
+
+    @classmethod
+    def from_file(cls, path) -> "PitcherTalent":
+        return cls(json.loads(Path(path).read_text()))
+
+    def rates(self, ratings: dict, role: str) -> dict:
+        """Component rates for `ratings` ({rating: int or array}) in `role`.
+        Without `hra` / `pbabip` (None), `hr` and `hit` come from Movement."""
+        movement = ratings.get("hra") is None or ratings.get("pbabip") is None
+        out = {}
+        for name, rating in COMPONENTS.items():
+            table = self.tables[role][name]
+            if movement and name in MOVEMENT_COMPONENTS:
+                rating, table = MOVEMENT_COMPONENTS[name], self.movement_tables[role][name]
+            out[name] = table[np.clip(np.asarray(ratings[rating], dtype=int), LOW, HIGH) - LOW]
+        return out
+
+    def runs_index(self, ratings: dict, role: str):
+        r = self.rates(ratings, role)
+        events = outcomes(r["k"], r["bb"], r["hr"], r["hit"], self.extra_base_share, self.triple_share)
+        return 100 * runs_per_pa(events, self.weights) / self.mlb_runs_per_pa
+
+    def points(self, runs_index, role: str):
+        return bridge.points(runs_index, self.bridges[role])
+
+
+@lru_cache(maxsize=None)
+def load(name: str = ARTIFACT) -> PitcherTalent:
+    return PitcherTalent.from_file(ARTIFACTS_DIR / f"{name}.json")

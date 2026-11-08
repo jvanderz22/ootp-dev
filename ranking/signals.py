@@ -59,7 +59,12 @@ _SCORERS = {
 }
 # the fitted layers read through ranking/ratings.py: RatingsView method -> reader
 _RATINGS_FILE = os.path.join(_ROOT, "ranking", "ratings.py")
-_VIEWS = {"hitting": ("batting talent", "batting")}
+_VIEWS = {
+    "hitting": ("batting talent", "batting"),
+    "pitching": ("pitching talent", "pitching"),
+    "pitch_count": ("pitching talent", "pitching"),
+    "stamina": ("pitching talent", "pitching"),
+}
 _READER_SIDES = {
     name: side for name, side in (*_MODELS.values(), _FIELDING, *_SCORERS.values(), *_VIEWS.values())
 }
