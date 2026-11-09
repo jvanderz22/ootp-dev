@@ -112,6 +112,10 @@ class RatingsView:
     def stamina(self, player) -> int:
         return player.stamina
 
+    def control(self, player) -> int:
+        """Control on the profile's side (0 when not exported)."""
+        return getattr(player, self.attrs["control"]) or 0
+
     def pitch_grades(self, player) -> list:
         """His best pitch grades, best first (ranking.pitcher_talent.top_pitches)."""
         pitches = player.get_pitches() if self.ratings == "potential" else player.get_ovr_pitches()

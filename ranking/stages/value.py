@@ -59,33 +59,51 @@ class Value(BatchStage):
 
     # -- hitters ---------------------------------------------------------------
 
-    def _hitting(self, state) -> float:
+    def hitter_reads(self, state) -> dict:
+        """His talent as the fitted models read it, before calibration: wRC+
+        (and each side's, when known), fielding value at his best position
+        (runs with the position), legacy's utility bonus in runs, and
+        baserunning runs per 600 PA."""
         fitted, side = state.fitted, state.batting
         batting = fitted["batting"]
+        sides = None
         if batting and batting.wrc_vl is not None:
             # the season his two sides make (his blended splits, or the
-            # expected ones), so the platoon line below adds up with it
+            # expected ones), so the platoon line adds up with it
+            sides = {"vL": batting.wrc_vl, "vR": batting.wrc_vr}
             vs_lhp = self.hitting_model.platoon_mix[batting.bats]
             wrc = vs_lhp * batting.wrc_vl + (1 - vs_lhp) * batting.wrc_vr
         elif batting:
             wrc = batting.wrc_plus
         else:
             wrc = float(bridge.talent(side.components["batting"], self.hitting_model.bridge))
-        pa = self.model.hitter_pa
-        batting_runs = (wrc / 100 - 1) * self.hitting_model.mlb_runs_per_pa * pa
         field = fitted["fielding"]
         # legacy's utility bonus, in runs: what it adds through the fielding bridge
         utility = float(bridge.talent(field.points + field.utility, self.fielding_model.bridge)
                         - bridge.talent(field.points, self.fielding_model.bridge))
-        running = fitted["running"].runs * pa / 600
-        parts = self.model.hitting(batting_runs, field.value + utility, running)
-        platoon = self._platoon(fitted["batting"], parts, pa)
+        return {"wrc": wrc, "sides": sides, "fielding": field.value, "utility": utility,
+                "baserunning": fitted["running"].runs}
+
+    def _hitting(self, state) -> float:
+        fitted, side = state.fitted, state.batting
+        batting, field = fitted["batting"], fitted["fielding"]
+        reads, cal = self.hitter_reads(state), self.model.calibrated
+        wrc = float(cal("wrc_plus", reads["wrc"]))
+        sides = reads["sides"] and {s: float(cal("wrc_plus", w)) for s, w in reads["sides"].items()}
+        fielding = float(cal("fielding", reads["fielding"]))
+        utility = float(cal("fielding", reads["fielding"] + reads["utility"])) - fielding
+        pa = self.model.hitter_pa
+        batting_runs = (wrc / 100 - 1) * self.hitting_model.mlb_runs_per_pa * pa
+        running = float(cal("baserunning", reads["baserunning"])) * pa / 600
+        parts = self.model.hitting(batting_runs, fielding + utility, running)
+        platoon = self._platoon(sides, batting and batting.bats, parts, pa)
         utility_war = self.model.hitter["per_defense_run"] * utility
+        runs = fielding - self.fielding_model.position_adjustment[field.best_position]
         ledger = state.ledger
-        splits = " on his vL / vR splits" if fitted["batting"] and fitted["batting"].platoon else ""
+        splits = " on his vL / vR splits" if batting and batting.platoon else ""
         ledger.add(MODEL, f"batting talent ({wrc:.0f} wRC+{splits}, {batting_runs:+.1f} runs)",
                    SCALE * parts["batting"], BATTING)
-        ledger.add(MODEL, f"fielding ({field.best_position}, {field.runs:+.0f} runs, {field.value:+.0f} with position)",
+        ledger.add(MODEL, f"fielding ({field.best_position}, {runs:+.0f} runs, {fielding:+.0f} with position)",
                    SCALE * (parts["fielding"] - utility_war), BATTING)
         ledger.add(MODEL, f"utility ({utility:+.1f} runs)", SCALE * utility_war, BATTING)
         ledger.add(MODEL, f"baserunning ({running:+.1f} runs)", SCALE * parts["running"], BATTING)
@@ -108,23 +126,34 @@ class Value(BatchStage):
             developing.append(development.switch_hitter(war))
         return self._modified(state, side, war, BATTING, developing)
 
-    def _platoon(self, batting, parts, pa):
+    def _platoon(self, sides, bats, parts, pa):
         """(WAR the platoon takes off, {side: share of starts}) for a hitter
-        whose vs-L / vs-R lines are known, or None when nothing changes. A
-        side's WAR rate is his season at that side's wRC+; he starts it in
-        proportion to that rate over an average regular's (the allowance)."""
-        if batting is None or batting.wrc_vl is None:
+        whose vs-L / vs-R wRC+ (`sides`) are known, or None when nothing
+        changes. A side's WAR rate is his season at that side's wRC+; he
+        starts it in proportion to that rate over an average regular's (the
+        allowance)."""
+        if sides is None:
             return None
         rest = parts["fielding"] + parts["running"] + parts["allowance"]
         per_run = self.model.hitter["per_batting_run"] * self.hitting_model.mlb_runs_per_pa * pa
-        rate = {"vL": per_run * (batting.wrc_vl / 100 - 1) + rest, "vR": per_run * (batting.wrc_vr / 100 - 1) + rest}
+        rate = {s: per_run * (w / 100 - 1) + rest for s, w in sides.items()}
         starts = {s: float(np.clip(w / parts["allowance"], 0.0, 1.0)) for s, w in rate.items()}
-        share = {"vL": self.hitting_model.platoon_mix[batting.bats]}
+        share = {"vL": self.hitting_model.platoon_mix[bats]}
         share["vR"] = 1 - share["vL"]
         lost = -sum(share[s] * (1 - starts[s]) * rate[s] for s in rate)
         return (lost, starts) if abs(lost) > 1e-9 else None
 
     # -- pitchers --------------------------------------------------------------
+
+    def pitcher_reads(self, state) -> dict:
+        """{"sp" | "rp": ERA, "rates": his starter rates} as the fitted model
+        reads him (or the legacy scorer through the bridges, without rates),
+        before calibration."""
+        fitted = state.fitted["pitching"]
+        if fitted:
+            return {"sp": fitted.sp_era, "rp": fitted.rp_era, "rates": fitted.sp_rates}
+        sp_era, rp_era, _ = self._legacy_eras(state.player)
+        return {"sp": sp_era, "rp": rp_era, "rates": None}
 
     def _pitching(self, state) -> float:
         player, side, fitted = state.player, state.pitching, state.fitted["pitching"]
@@ -139,37 +168,45 @@ class Value(BatchStage):
             stuff, splits, split, estimated = {"sp": "", "rp": ""}, "", {"sp": 0.0, "rp": 0.0}, False
         sp_index = fitted.sp_index if fitted else 100.0   # no split without a fit: unused
         stamina, pitches = self.ratings.stamina(player), self.ratings.pitch_count(player)
-        innings = self.model.starter_innings(stamina, pitches)
         # his matchups: index is linear in the events, so moving `tilt` of his
-        # batters to one side moves it by tilt x split; ERA in step
+        # batters to one side moves it by tilt x split; ERA in step. Leverage
+        # reads the talent-scale index (its map is by talent percentile); runs
+        # saved read the calibrated ERA.
         tilt = {role: value.matchup_tilt(split[role]) for role in split}
         sp_matched = sp_index + tilt["sp"] * abs(split["sp"])
         rp_matched = rp_index - tilt["rp"] * abs(split["rp"])
-        starting = self.model.starting(sp_era * sp_matched / sp_index, innings) if innings else None
-        sp_normal = self.model.starting(sp_era, innings) if innings else None
-        normal = self.model.relieving(rp_era, rp_index)
-        relieving = self.model.relieving(rp_era * rp_matched / rp_index, rp_matched)
+        cal = self.model.calibrated
+        era = {
+            "sp": float(cal("era", sp_era, "sp")), "rp": float(cal("era", rp_era, "rp")),
+            "sp matched": float(cal("era", sp_era * sp_matched / sp_index, "sp")),
+            "rp matched": float(cal("era", rp_era * rp_matched / rp_index, "rp")),
+        }
+        innings = self.model.starter_innings(stamina, pitches, fitted and fitted.sp_rates)
+        starting = self.model.starting(era["sp matched"], innings) if innings else None
+        sp_normal = self.model.starting(era["sp"], innings) if innings else None
+        normal = self.model.relieving(era["rp"], rp_index)
+        relieving = self.model.relieving(era["rp matched"], rp_matched)
         how = "estimated from slot and pitches" if estimated else "on his splits"
         sp_war = sum(starting.values()) if starting else None
         rp_war = sum(relieving.values())
         side.components = {"starter": SCALE * sp_war if starting else 0.0, "reliever": SCALE * rp_war}
         ledger = state.ledger
         if starting and sp_war >= rp_war:
-            state.era = sp_era
-            ledger.add(MODEL, f"SP talent ({stuff['sp']}{sp_era:.2f} ERA{splits})", SCALE * sp_normal["runs"], PITCHING)
+            state.era = era["sp"]
+            ledger.add(MODEL, f"SP talent ({stuff['sp']}{era['sp']:.2f} ERA{splits})", SCALE * sp_normal["runs"], PITCHING)
             if tilt["sp"] > 0:
-                gap = sp_era * abs(split["sp"]) / sp_index
+                gap = (era["sp matched"] - era["sp"]) / tilt["sp"]
                 ledger.add(MODEL, f"SP matchups (+{tilt['sp']:.0%} of batters on his weak side, {gap:.2f} ERA split {how})",
                            SCALE * (starting["runs"] - sp_normal["runs"]), PITCHING)
             ledger.add(MODEL, f"SP innings (stamina {stamina}, {innings:.0f} IP)", SCALE * starting["innings"], PITCHING)
             war = sp_war
         else:
-            state.era = rp_era
+            state.era = era["rp"]
             leverage = float(self.model.leverage(rp_index))
-            ledger.add(MODEL, f"RP talent ({stuff['rp']}{rp_era:.2f} ERA{splits})", SCALE * normal["runs"], PITCHING)
+            ledger.add(MODEL, f"RP talent ({stuff['rp']}{era['rp']:.2f} ERA{splits})", SCALE * normal["runs"], PITCHING)
             ledger.add(MODEL, f"RP leverage (LI {leverage:.2f})", SCALE * normal["leverage"], PITCHING)
             if tilt["rp"] > 0:
-                gap = rp_era * abs(split["rp"]) / rp_index
+                gap = (era["rp"] - era["rp matched"]) / tilt["rp"]
                 ledger.add(MODEL, f"RP matchups (+{tilt['rp']:.0%} of batters on his strong side, {gap:.2f} ERA split {how})",
                            SCALE * (rp_war - normal["runs"] - normal["leverage"] - normal["innings"]), PITCHING)
             ledger.add(MODEL, f"RP innings ({self.model.workloads['reliever_ip']:.0f} IP)",
@@ -177,7 +214,10 @@ class Value(BatchStage):
             war = rp_war
         write_runtime_component(player.id, "pitching.value.starter_war", sp_war if starting else 0.0)
         write_runtime_component(player.id, "pitching.value.reliever_war", rp_war)
-        return self._modified(state, side, war, PITCHING, self._development(state, war))
+        control = self.ratings.control(player)
+        floor = value.control_floor(control)
+        floors = [(f"Control floor (Control {control}, x{floor:.2f})", floor)] if floor < 1 else []
+        return self._modified(state, side, war, PITCHING, self._development(state, war), floors)
 
     def _legacy_eras(self, player):
         """(SP ERA, RP ERA, RP runs index) from the legacy scorer's role points,
@@ -196,11 +236,13 @@ class Value(BatchStage):
         return development.factors(state.player, war) if self.develops else []
 
     @staticmethod
-    def _modified(state, side, war, side_name, developing=()) -> float:
-        """The side's WAR after its modifiers and then its development factors,
-        which scale only the part above replacement; recorded as ledger lines
-        and the side's score."""
+    def _modified(state, side, war, side_name, developing=(), floors=()) -> float:
+        """The side's WAR after its floors, its modifiers and then its
+        development factors, which scale only the part above replacement;
+        recorded as ledger lines and the side's score."""
         above = SCALE * max(war, 0.0)
+        for name, factor in floors:
+            above = state.ledger.scale(MODEL, name, above, factor, side_name)
         for name, factor in side.modifiers:
             above = state.ledger.scale(MODIFIERS, name, above, factor, side_name)
         for name, factor in developing:

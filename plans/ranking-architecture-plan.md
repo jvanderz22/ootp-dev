@@ -703,6 +703,133 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
     a 19-point split, −0.26 WAR). Starters in the top 300: 169 → 164
     current, 101 → 95 potential, 149 → 146 in the 2042 class.
 
+**Open TODOs from the 2026-11-08 reviews**
+
+- ✅ **calibrate hitters against pitchers at the top end** (built
+  2026-11-08, see below). Found: v2's full-time
+  WAR against 2042 regulars' actual WAR (scaled to the role):
+  - Starters are compressed: actual WAR runs 1.37× predicted, and actual
+    ERA 1.3× predicted ERA (spread 0.92 vs 0.43). The top 10 predicted
+    starters are 0.5 WAR low.
+  - Innings per start come from stamina only, but better starters go
+    deeper: IP / start correlates 0.53 with WAR.
+  - Hitters are spread too wide: actual is 0.85× predicted. The top 10
+    predicted are 0.6 WAR high, most at CF (−0.65) and SS (−0.41).
+  - Relievers' top 10 are 0.6 high.
+  - On potential ratings it's worse, because the tables extrapolate past
+    what the data covers. Top hitters reach 8–11 WAR at 185–208 wRC+,
+    pitchers top out near 8; the top 25 is 88% hitters (legacy 52%), and
+    the 10th-best pitcher ranks 62nd. On current ratings the top 25 is 60%
+    hitters against 76% in actual 2042 WAR, so the issue is the spread, not
+    the share.
+  - Proposed: a calibration step in the value layer. Stretch pitchers' runs
+    saved, shrink hitters' WAR above average, let IP / start rise with
+    talent, and cap or curve the rate tables beyond the rated range they
+    were fit on. Fit it on 2042 regulars now (with the caveat that the
+    December ratings came after that season), and refit on 2043
+    (`plans/ranking-archive-plan.md`).
+  - **Built:** the value artifact's `calibration`, fit by
+    `ranking.fitting.value` on 2042 MLB regulars as actual = a + b ×
+    predicted:
+    - wRC+ (b 0.97), fielding value with the position (0.92), baserunning
+      (0.83), and each role's ERA against FIP (SP 1.07, RP 1.10);
+    - the value stage reads them before turning talent into WAR. Leverage
+      still reads the talent-scale index, since its map is by talent
+      percentile.
+  - Diagnosed on the way:
+    - Batting was nearly calibrated already.
+    - Fielding and baserunning were spread too wide; CF and 2B came out
+      too high.
+    - The starters' shortfall at the top was mostly innings and the capped
+      tables (next TODO), not ERA spread.
+  - Regulars after (predicted vs actual, top 10): starters 5.12 vs 5.47
+    (were 5.00), hitters 5.19 vs 5.06 (were 5.65). Means now match for both.
+  - Relievers' top end is still high (2.85 vs 2.08). Part of that is your
+    full leverage: StatsPlus's WAR counts 42% of it.
+- TODO: **Brendan Brewer and Randy Intravaia** (SD, AAA) rank far lower in
+  v2 than legacy in production (v2 #611 / #632 at 51.0 / 45.3 points,
+  legacy #83 / #204). Locally (2042-11 snapshot, current code) they're
+  ~2 WAR regulars:
+  - current ratings: v2 #516 / #659, legacy #104 / #187;
+  - potential: v2 #407 / #89, legacy #252 / #126 (Intravaia's 126 wRC+
+    plus high work ethic and intelligence).
+  - The production numbers don't match: check which build and snapshot
+    produced them, then re-check both on the live data.
+- ✅ **pitcher ratings at the extremes** (built 2026-11-08, see the end of
+  this item). Two cases:
+  - **The top is capped.** The pitcher tables go flat where data run out:
+    HR per contact at HRA 68, hits in play at PBABIP 63, walks at Control
+    73, while the hitter tables keep rising to 75–80. Andy Spinner (Stuff
+    60, Control 65, HRA 80) has had five straight 7–9 WAR seasons at a
+    2.4–2.8 ERA over 190–228 IP. The model has him at 2.93 ERA and 5.8 WAR,
+    behind Tim Webb (Stuff 65, stamina 70; never above 7.1 WAR).
+    - Continuing the flat tails at the slope below puts HRA 80 at 0.025 HR
+      per contact (Spinner's actual: 0.024) and him at 2.68 ERA. Doing the
+      same for hitters overshoots (David Avelar 6.8 → 8.4 WAR against 5.2
+      actual), so tails for pitchers only.
+    - Even then, no flat pitcher weight puts Spinner first: Webb stays
+      above him at every weight. Your anchor (Spinner is the best player in
+      the league, in a tier of his own) needs the model to value command and
+      HR suppression more against Stuff and stamina. Spinner also goes
+      deeper than his stamina says (6.6 IP / start at stamina 55).
+  - **The bottom isn't punished.** Henry MacGregor (2042 class, 18, SP;
+    Stuff 65, Movement 55, Control 30 potential; OVR 20 / POT 40) is #63
+    pre-demand: 4.15 ERA as a starter, 167 IP, 3.3 WAR. The model charges
+    his 14.3% walk rate about 0.6 ERA, his Stuff wins most of it back, and
+    nothing shortens a wild starter's outings. Pitcher rule 5 (a 30 means
+    emergency value) was demoted to a hypothesis on 2026-11-07 because the
+    stats can barely test it (30-Control pitchers rarely reach MLB).
+    Options: re-promote it as a floor like the position floors, or tie
+    innings per start to walks.
+  - Then set the pitcher-vs-hitter balance by feel, anchored on Spinner
+    (2026-11-08).
+  - **Built (your calls, 2026-11-08):**
+    - **Tails, pitchers only.** Flat pitcher table tops continue at the
+      logit slope of the 15 points below (`extend_tail` in
+      `ranking.fitting.pitcher_talent`).
+    - **Starters' depth from efficiency.** You asked whether stamina was
+      overrated. The data say no: its slope holds at 0.022 IP / start per
+      point with walks in the model. What was missing is efficiency: walks
+      correlate 0.51 with pitches per inning. Innings per start now fit on
+      stamina plus the starter's predicted strikeouts, walks and home runs
+      per PA (R² 0.21 → 0.37); per unit of rate, walks −12.9 IP / start,
+      HR −18.7, K +0.6.
+    - **A Control floor, like the position floors:** full value from 35,
+      half at 30, nothing at 25 (`value.control_floor`, a "Control floor"
+      ledger line). A floor at 35 zeroed MacGregor (#492), which you
+      judged overkill for a potential rating.
+    - **No pitcher-vs-hitter weight.** A weight of ×1.10 on starters would
+      have put Spinner first; you chose none.
+  - Result on current ratings:
+    - Spinner is the best pitcher in the league and #2 overall: 6.29 WAR at
+      a 2.72 ERA (actual 2.4–2.8), 193 IP. Webb is 6.22, Avelar #1 at 6.84.
+    - The top 25 is 52% hitters.
+    - MacGregor is #232 in the 2042 class (1.49 WAR).
+- TODO: **legacy logic still running in v2 that nobody has decided on**
+  (from the legacy coverage review):
+  - `BatterHitProfileModifier`, in every v2 profile: never tested, and it
+    reads Power and Speed a second time. Test batted-ball type and pull
+    tendencies against wRC+ / baserunning residuals, then fit it, keep it
+    as judgment, or drop it.
+  - `DraftPitcherStuffModifier` (potential, draft): potential Stuff again
+    on top of the talent model, the Aliff stacking item. Test it on the
+    draft eval or drop it.
+  - `PitcherVelocityModifier` (potential, draft): velocity on top of Stuff,
+    untested. `ranking.fitting.development` can test it now, potential WAR
+    held fixed.
+  - Durability is one table for hitters and pitchers. Legacy was much
+    harsher on pitchers (Fragile ×0.6 vs ×0.8, Durable ×1.11 vs ×1.035).
+    Fit the factors by side.
+  - Legacy weighted makeup more for younger players
+    (`PersonalityModifier`'s age weight); the development factors dropped
+    that without a test. Fit work ethic / intelligence by age band.
+  - The knuckleball ×1.15 was dropped without its own test (9
+    knuckleballers in the league, 1 in the 2042 class). Check their
+    residuals, or accept it as too thin to fit.
+  - Minor: `DraftSecondaryPersonalityModifier` counts low work ethic and
+    low intelligence among its "bad traits", which overlaps the
+    development factors for players with 4+ bad traits.
+
 **7. Decision layer**
 
 - The demand modifier as the last stage, with pre- and post-demand values and
@@ -712,6 +839,26 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
 
 - Change `get_ranker_for_method`, regenerate the goldens deliberately, and
   delete `legacy`.
+- TODO: **rework the org rankings page for v2** (`web/org_rankings.py`,
+  `print_org_summaries.py`). A farm system's score is a convex points curve
+  summed over its prospects' `model_score`, tuned to the legacy points
+  scale: nothing below 58, steep up to 120. Under v2 that score is
+  50 + 10 × WAR, so 58 is ~0.8 potential WAR and the curve's weights mean
+  something else. Re-express it in potential WAR, e.g. value above a floor
+  with the same top-heavy shape, and check the order of systems against the
+  legacy page before switching.
+- TODO: **the L/R card's split scores** (`scoring/splits.py`) are legacy
+  scorers under both engines. Re-run v2's talent and value on each side.
+- TODO: **kept modifiers still key off legacy points.** `AgeModifier` and
+  `DraftSecondaryPersonalityModifier` weight by the side's model score
+  through `RankGradiatedModel`, which v2 feeds the bridged legacy points.
+  Re-express those weights in WAR, or keep the bridges, before legacy goes.
+- TODO: **what deleting `legacy` must keep:**
+  - your grids in `attribute_models/`: the fielding grids are v2's fielding
+    shape, and the batting grid is the fallback for exports without BABIP;
+  - the legacy pitcher scorer, for rows without Stuff / Control / Movement;
+  - the modifiers v2 still applies;
+  - `DraftDemandModifier`.
 
 ## Open questions
 

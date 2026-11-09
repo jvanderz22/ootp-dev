@@ -98,3 +98,46 @@ def test_a_marginal_other_side_earns_no_two_way_credit():
     assert value.two_way_share(2.7) == value.TWO_WAY_SHARE
     between = value.two_way_share((value.TWO_WAY_FLOOR + value.TWO_WAY_FULL) / 2)
     assert between == pytest.approx(value.TWO_WAY_SHARE / 2)
+
+
+# -- calibration, starters' depth and the Control floor (2026-11-08) ----------
+
+def test_calibration_is_a_line_per_read(model):
+    for name in ("wrc_plus", "fielding", "baserunning"):
+        a, b = model.calibration[name]
+        assert model.calibrated(name, 10) == pytest.approx(a + 10 * b)
+    for role in ("sp", "rp"):
+        a, b = model.calibration["era"][role]
+        assert model.calibrated("era", 4.0, role) == pytest.approx(a + 4 * b)
+    assert value.ValueModel({**_bare(model), "calibration": None}).calibrated("wrc_plus", 123) == 123
+
+
+def _bare(model):
+    return {"version": model.version, "hitter": model.hitter, "pitcher": model.pitcher,
+            "workloads": model.workloads, "leverage": model.leverage_map}
+
+
+def test_efficient_starters_go_deeper_than_their_stamina(model):
+    typical = model.workloads["ip_per_start"]["rates_at"]
+    stingy = {**typical, "bb": typical["bb"] - 0.02, "hr": typical["hr"] - 0.008}
+    wild = {**typical, "bb": typical["bb"] + 0.05}
+    assert model.starter_innings(55, 4, stingy) > model.starter_innings(55, 4) > model.starter_innings(55, 4, wild)
+    assert model.starter_innings(55, 4, typical) == pytest.approx(model.starter_innings(55, 4))
+
+
+def test_control_floor_halves_at_the_floor_and_zeroes_a_step_below():
+    f = value.CONTROL_FLOOR
+    assert value.control_floor(f + value.FLOOR_RAMP) == 1
+    assert value.control_floor(f) == pytest.approx(0.5)
+    assert value.control_floor(f - value.FLOOR_RAMP) == 0
+
+
+def test_a_wild_pitcher_keeps_none_of_his_value_above_replacement():
+    from tests.test_pitcher_talent import _split_pitcher
+
+    wild = _split_pitcher("Right", {"stuff_ovr": 70, "movement_ovr": 60, "control_ovr": 25,
+                                    "hr_allowed_ovr": 60, "pbabip_ovr": 55})
+    (r,) = get_ranker("overall").rank([wild])
+    (line,) = [l for l in r.ledger.lines if l.label.startswith("Control floor")]
+    assert line.side == "pitching" and "x0.00" in line.label
+    assert r.pitcher_score <= 0

@@ -191,3 +191,21 @@ def test_potential_ratings_have_no_splits():
     player = _split_pitcher("Right", _even(55), _even(60), _even(45))
     assert RatingsView("potential").pitching_splits(player) is None
     assert not _score(player, POTENTIAL).platoon
+
+
+def test_tables_keep_improving_to_the_top_of_the_scale(model):
+    # a table that ran out of data is continued, not left flat (HRA 80 beats 70)
+    for role in pitcher_talent.ROLES:
+        for name, t in model.tables[role].items():
+            assert DIRECTION[name] * (t[-1] - t[-11]) > 0, (role, name)
+
+
+def test_a_flat_top_is_continued_at_the_slope_below():
+    from ranking.fitting.pitcher_talent import extend_tail
+
+    flat = [0.05 - 0.001 * i for i in range(40)] + [0.011] * 21
+    extended = extend_tail(flat)
+    assert extended[:40] == pytest.approx(flat[:40], abs=1e-5)
+    assert np.all(np.diff(extended[39:]) < 0)
+    rising = list(np.linspace(0.1, 0.3, 61))
+    assert extend_tail(rising) == pytest.approx(rising, abs=1e-5)

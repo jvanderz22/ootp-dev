@@ -28,6 +28,13 @@ a ridge fit on the latest snapshot's pitchers who have splits, scored as the
 talent stage scores them; it stands in where there are no splits (potential
 ratings, draft classes).
 
+Where a table goes flat at the top because the data run out (few pitchers
+rate that high), it's continued at the slope of the TAIL_LOOKBACK points
+below, in logit (decided 2026-11-08): the fit had HR per contact flat from HRA
+68, so Andy Spinner's 80 earned nothing past a 68; continued, HRA 80 gives
+0.025 against his actual 0.024. Pitchers only - the hitter tables keep rising
+on their own, and continuing theirs overshot.
+
 PBABIP's effect is kept at PBABIP_KEEP of what the fit finds (decided
 2026-11-08): MLB BABIP spread is about what luck alone gives, so the stats
 can't size it, and you judge it to matter little. The `hit` tables (and the
@@ -84,6 +91,7 @@ TERMS = ["level_id", "sp"]
 FOLDS = 5
 # the share of the fitted PBABIP -> hits-in-play effect that is kept
 PBABIP_KEEP = 1 / 3
+TAIL_LOOKBACK = 15
 ROLE_SHIFT_MARGIN = 0.75
 # side -> (Stuff column, pitch grade columns) in an OOTP export
 ROLE_SHIFT_SIDES = {
@@ -162,7 +170,26 @@ def fit_tables(rows) -> dict:
     for key, rating in (("tables", COMPONENTS["hit"]), ("movement_tables", MOVEMENT_COMPONENTS["hit"])):
         for role in ROLES:
             out[key][role]["hit"] = shrink(out[key][role]["hit"], mlb[rating], mlb.in_play)
+    for key in ("tables", "movement_tables"):
+        for role in ROLES:
+            out[key][role] = {name: extend_tail(t) for name, t in out[key][role].items()}
     return out
+
+
+def extend_tail(table, lookback=TAIL_LOOKBACK) -> list:
+    """`table` with a flat top (the data ran out) continued at the logit slope
+    of the `lookback` ratings below where it went flat."""
+    t = np.asarray(table, dtype=float).copy()
+    flat = len(t) - 1
+    while flat > 0 and abs(t[flat] - t[flat - 1]) < 1e-9:
+        flat -= 1
+    if flat == len(t) - 1 or flat < lookback:
+        return t.round(5).tolist()
+    logit = np.log(t / (1 - t))
+    slope = (logit[flat] - logit[flat - lookback]) / lookback
+    steps = np.arange(1, len(t) - flat)
+    t[flat + 1:] = 1 / (1 + np.exp(-(logit[flat] + slope * steps)))
+    return t.round(5).tolist()
 
 
 def shrink(table, ratings, weights, keep=PBABIP_KEEP) -> list:

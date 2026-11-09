@@ -106,6 +106,12 @@ refit the talent models until the 2043 season is over and pulled.
   exists"): score the April 2043 ratings, then compare with each player's
   2043 StatsPlus WAR, rescaled to a full-time role. This is the first
   out-of-sample check of the whole talent → WAR chain.
+- **The value calibration refits on 2043.** It was fit on 2042 regulars on
+  2026-11-08: wRC+, fielding, baserunning, each role's ERA against FIP, and
+  innings per start on stamina plus the starter's predicted rates. The
+  December 2042 ratings were taken after the season they were fit on, so
+  check that April 2043 ratings give the same lines, and fit on both seasons
+  if they hold.
 - **The leverage map** (`value_v1`) refits on 2043 bullpens.
 - **The innings-per-start curve by stamina** refits on 2043 starts.
 - **Judgment calls the stats can inform but don't decide:** full leverage

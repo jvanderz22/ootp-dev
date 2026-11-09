@@ -147,11 +147,9 @@ SEASON_PA = 600
 DH = "DH"
 
 
-def hitter_war(stats_dir, years) -> dict:
-    """StatsPlus's MLB hitter WAR taken apart: WAR per batting run (linear
-    weights against the league), per defense run (zone rating + framing + arm
-    + baserunning, as StatsPlus counts them) and an allowance per SEASON_PA at
-    the position he played most (DH when he never took the field)."""
+def hitter_seasons(stats_dir, years) -> pd.DataFrame:
+    """MLB hitter seasons: PA, WAR, linear-weights runs (`lw`), the league's
+    runs per PA, batting runs against it and baserunning runs."""
     bat = load_batting(stats_dir, years)
     weights = fit_linear_weights(bat)
     mlb = bat[bat.level_id == LEVEL_MLB].copy()
@@ -162,6 +160,15 @@ def hitter_war(stats_dir, years) -> dict:
         pa=("pa", "sum"), lw=("lw", "sum"), war=("war", "sum"), baserunning=("baserunning", "sum"),
     ).reset_index().join(league, on="year")
     hitters["batting"] = hitters.lw - hitters.league * hitters.pa
+    return hitters
+
+
+def hitter_war(stats_dir, years) -> dict:
+    """StatsPlus's MLB hitter WAR taken apart: WAR per batting run (linear
+    weights against the league), per defense run (zone rating + framing + arm
+    + baserunning, as StatsPlus counts them) and an allowance per SEASON_PA at
+    the position he played most (DH when he never took the field)."""
+    hitters = hitter_seasons(stats_dir, years)
     field = pd.concat(
         pd.read_csv(Path(stats_dir) / "field" / f"{y}.csv") for y in years
         if (Path(stats_dir) / "field" / f"{y}.csv").exists()

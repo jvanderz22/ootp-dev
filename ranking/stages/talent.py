@@ -142,6 +142,9 @@ class FittedPitching(NamedTuple):
     sp_split: float = 0.0
     rp_split: float = 0.0
     split_estimated: bool = False
+    # his strikeouts, walks and home runs per PA as a starter: how efficient
+    # he is, which sets how deep he goes (ranking/value.py starter_innings)
+    sp_rates: dict = None
 
 
 class PitcherTalent:
@@ -202,6 +205,7 @@ class PitcherTalent:
                 sp_split=float(split["sp"][j]),
                 rp_split=float(split["rp"][j]),
                 split_estimated=not platoon[j] and predicted[j] != 0,
+                sp_rates={e: float(np.asarray(events["sp"][e])[j]) for e in ("k", "bb", "hr")},
             )
             write_runtime_component(player.id, "pitching.talent.sp_runs_index", out[i].sp_index)
             write_runtime_component(player.id, "pitching.talent.rp_runs_index", out[i].rp_index)

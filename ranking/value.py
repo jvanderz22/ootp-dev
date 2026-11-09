@@ -27,6 +27,28 @@ the innings each pitches - a set cost by split, not a share of his value -
 and the better of the two roles moves a big-split starter to the bullpen
 when that's worth more.
 
+Each talent read is calibrated against what MLB regulars actually did
+(`calibration`, fit by ranking.fitting.value on the snapshot's season):
+actual = a + b x predicted, for wRC+, fielding value (runs with the
+position), baserunning runs, and each role's ERA (against FIP, which
+StatsPlus's WAR runs on). The talent models rank well but their spread was
+off - fielding and baserunning too wide, pitchers too narrow and starters
+too optimistic. A starter's innings per start come from his stamina and how
+efficient he is - his walks, strikeouts and home runs per PA (walks drive
+pitches per inning): a stingy starter goes deeper than his stamina says.
+
+A pitcher's value above replacement is floored on Control (decided
+2026-11-08, your pitcher rule 5 back as a floor like the position floors):
+full from CONTROL_FLOOR + FLOOR_RAMP, half at CONTROL_FLOOR, nothing a step
+below it. MLB pitchers at Control 30 or less were below replacement in 2042
+(-0.8 WAR per 100 IP); 31-35 barely above (+0.3), 36-40 +0.5. A floor at 35
+zeroed a Control-30 prospect (Henry MacGregor, #63 -> #492), too much for a
+potential rating, so it sits at 30: half value there (#232).
+
+No extra weight on pitchers against hitters (your call, 2026-11-08): with
+the tables' tails continued and starters' depth from their efficiency, Andy
+Spinner is the best pitcher in the league and #2 overall on current ratings.
+
 A two-way player gets his better side plus a share of the other side's WAR
 above replacement (`two_way_share`): none while the other side is only
 marginal (TWO_WAY_FLOOR WAR or less - a back-end starter, a bench bat), the
@@ -50,6 +72,7 @@ LEVERAGE_WEIGHT = 1.0   # full leverage, the most the stats support
 TWO_WAY_SHARE = 0.2
 TWO_WAY_FLOOR, TWO_WAY_FULL = 1.75, 2.5   # the other side's WAR
 MATCHUP_TILT, FULL_TILT_SPLIT = 0.20, 20.0
+CONTROL_FLOOR, FLOOR_RAMP = 30, 5
 STARTER_MIN_STAMINA = 35   # borderline, at the bottom of the innings curve
 STARTER_MIN_PITCHES = 3
 DISPLAY_OFFSET, DISPLAY_SCALE = 50.0, 10.0
@@ -59,6 +82,12 @@ PLATOON_REPLACES = ("BatterHandednessModifier",)
 
 def points(war):
     return DISPLAY_OFFSET + DISPLAY_SCALE * np.asarray(war)
+
+
+def control_floor(control) -> float:
+    """The share of a pitcher's value above replacement his Control keeps."""
+    ramp = (control - (CONTROL_FLOOR - FLOOR_RAMP)) / (2 * FLOOR_RAMP)
+    return float(np.clip(ramp, 0.0, 1.0))
 
 
 def two_way_share(other_war) -> float:
@@ -81,6 +110,8 @@ class ValueModel:
         self.pitcher = artifact["pitcher"]
         self.workloads = artifact["workloads"]
         self.leverage_map = artifact["leverage"]
+        # {"wrc_plus" | "fielding" | "baserunning": [a, b], "era": {role: [a, b]}}
+        self.calibration = artifact.get("calibration")
 
     @classmethod
     def from_file(cls, path) -> "ValueModel":
@@ -102,12 +133,26 @@ class ValueModel:
             "allowance": h["allowance_600"] * share,
         }
 
-    def starter_innings(self, stamina, pitches) -> float:
-        """A full-time starter's innings, or 0 when he can't start."""
+    def calibrated(self, name, predicted, role=None):
+        """`predicted` (wRC+, fielding value, baserunning runs, or `role`'s
+        ERA) on the scale MLB regulars actually played at."""
+        fit = (self.calibration or {}).get(name)
+        if fit is None:
+            return predicted
+        a, b = fit[role] if role else fit
+        return a + b * np.asarray(predicted)
+
+    def starter_innings(self, stamina, pitches, rates=None) -> float:
+        """A full-time starter's innings, from his stamina and his starter
+        `rates` ({"k" | "bb" | "hr": per PA}; league-typical when None), or 0
+        when he can't start."""
         if stamina < STARTER_MIN_STAMINA or pitches < STARTER_MIN_PITCHES:
             return 0.0
         per_start = self.workloads["ip_per_start"]
-        return self.workloads["starts"] * (per_start["intercept"] + per_start["per_stamina"] * stamina)
+        ip = per_start["intercept"] + per_start["per_stamina"] * stamina
+        for event, per in per_start.get("per_rate", {}).items():
+            ip += per * ((rates or per_start["rates_at"])[event] - per_start["rates_at"][event])
+        return self.workloads["starts"] * ip
 
     def leverage(self, rp_index):
         m = self.leverage_map

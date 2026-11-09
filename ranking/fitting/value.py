@@ -18,6 +18,15 @@ Everything is StatsPlus's own WAR taken apart, on MLB lines:
   talent as an optimal manager would - the best reliever in the snapshot's
   MLB bullpens (scored as the talent stage scores him, splits and all) gets
   the top of the leverage distribution, and so on down.
+- calibration: the snapshot's players scored as the value stage reads them
+  (before calibration), against their MLB season that year - weighted least
+  squares of actual on predicted for wRC+ (linear weights against the
+  league), fielding value with the position (the WAR left after batting,
+  baserunning and the allowance, in defense runs), baserunning runs per
+  600 PA, and each role's ERA against FIP. Regulars only: CALIBRATION_PA,
+  starters CALIBRATION_SP_IP, relievers CALIBRATION_RP_IP. Then starters'
+  innings per start are refit on stamina and the starter's predicted
+  strikeouts, walks and home runs per PA together.
 """
 import argparse
 import json
@@ -33,11 +42,11 @@ from context import default_base_dir
 from ranking.fitting.datasets import season_snapshots
 from ranking.fitting.hitter_talent import data_hash
 from ranking.fitting.pitcher_talent import _players
-from ranking.fitting.stats import LEVEL_MLB, hitter_war, load_batting, load_pitching
+from ranking.fitting.stats import LEVEL_MLB, hitter_seasons, hitter_war, load_batting, load_pitching
 from ranking.hitter_talent import ARTIFACTS_DIR
 from ranking.stages.talent import PitcherTalent
 from ranking.value import (
-    ARTIFACT, LEVERAGE_WEIGHT, STARTER_MIN_PITCHES, STARTER_MIN_STAMINA, TWO_WAY_FLOOR, TWO_WAY_FULL, TWO_WAY_SHARE,
+    ARTIFACT, CONTROL_FLOOR, FLOOR_RAMP, ValueModel, LEVERAGE_WEIGHT, STARTER_MIN_PITCHES, STARTER_MIN_STAMINA, TWO_WAY_FLOOR, TWO_WAY_FULL, TWO_WAY_SHARE,
 )
 from scoring.runtime_components import runtime_components_scope
 
@@ -51,6 +60,11 @@ STARTER_SHARE = 0.5
 RELIEF_SHARE = 0.2
 # leverage-map knots: talent percentiles among MLB relievers
 LEVERAGE_KNOTS = np.linspace(0.01, 0.99, 50)
+CALIBRATION_PA = 300
+CALIBRATION_SP_IP, CALIBRATION_RP_IP = 60, 30
+# what sets a starter's depth beyond stamina: walks most (they drive pitches
+# per inning), then home runs and strikeouts
+STARTER_RATES = ("k", "bb", "hr")
 
 
 def pitching_lines(stats_dir, years) -> pd.DataFrame:
@@ -123,6 +137,91 @@ def leverage_map(p, snapshot_path) -> dict:
             "relievers": int(len(index)), "relief_seasons": int(len(relief))}
 
 
+def _wls(x, y, w) -> list:
+    """[a, b] of y = a + b x, weighted."""
+    x, y, w = (np.asarray(v, dtype=float) for v in (x, y, w))
+    design = np.column_stack([np.ones_like(x), x]) * np.sqrt(w)[:, None]
+    a, b = np.linalg.lstsq(design, y * np.sqrt(w), rcond=None)[0]
+    return [round(float(a), 4), round(float(b), 4)]
+
+
+def _reads(model, snapshot_path, player_ids) -> dict:
+    """{player_id: (hitter reads, pitcher reads)} as the current-ratings
+    value stage reads them, before calibration."""
+    from ranking.profiles import CURRENT
+    from ranking.stages.legacy import LegacyModel
+    from ranking.stages.talent import FieldingTalent, HitterTalent, RunningTalent
+    from ranking.stages.value import Value
+    from ranking.state import PlayerState
+
+    players = _players(snapshot_path, player_ids)
+    stage = LegacyModel(CURRENT, batting=HitterTalent(CURRENT), fielding=FieldingTalent(CURRENT),
+                        running=RunningTalent(CURRENT), pitching=PitcherTalent(CURRENT))
+    value_stage = Value(CURRENT, model=model)
+    with runtime_components_scope():
+        states = [PlayerState(p) for p in players]
+        stage.run(states, CURRENT)
+        return {int(s.player.id): (value_stage.hitter_reads(s), value_stage.pitcher_reads(s)) for s in states}
+
+
+def calibration(model, stats_dir, snapshot_path, season, lines) -> tuple:
+    """(calibration, starters' innings per start on stamina and his rates,
+    report): see the module docstring."""
+    hitters = hitter_seasons(stats_dir, range(season - YEARS + 1, season + 1))
+    hitters = hitters[(hitters.year == season) & (hitters.pa >= CALIBRATION_PA)].copy()
+    snap = pd.read_csv(snapshot_path, low_memory=False, usecols=["ID", "POS", "STM"]).rename(columns={"ID": "player_id"})
+    hitters = hitters[hitters.player_id.isin(snap[~snap.POS.isin(["SP", "RP", "CL"])].player_id)]
+    season_lines = lines[lines.year == season]
+    pitchers = season_lines.groupby(["player_id", "role"]).agg(
+        ip=("ip", "sum"), hr=("hr", "sum"), bb=("bb", "sum"), k=("k", "sum")).reset_index()
+    ids = set(hitters.player_id) | set(pitchers.player_id) | set(lines[lines.year >= season - 1].player_id)
+    reads = _reads(model, snapshot_path, ids)
+
+    h, per_run, per_defense = model.hitter, model.hitter["per_batting_run"], model.hitter["per_defense_run"]
+    hitters = hitters[hitters.player_id.isin(reads)]
+    hit = pd.DataFrame([reads[i][0] for i in hitters.player_id], index=hitters.index)
+    actual_wrc = 100 * hitters.lw / hitters.pa / hitters.league
+    full = model.hitter_pa / hitters.pa
+    # what his WAR leaves for fielding and the position, in defense runs a full season
+    fielding = (hitters.war - per_run * hitters.batting - per_defense * hitters.baserunning) * full
+    fielding = (fielding - h["allowance_600"] * model.hitter_pa / 600) / per_defense
+    out = {
+        "wrc_plus": _wls(hit.wrc, actual_wrc, hitters.pa),
+        "fielding": _wls(hit.fielding + hit.utility, fielding, hitters.pa),
+        "baserunning": _wls(hit.baserunning, hitters.baserunning / hitters.pa * 600, hitters.pa),
+        "era": {},
+    }
+    lg = season_lines[["er", "outs", "hr", "bb", "k"]].sum()
+    lg_ip = lg.outs / 3
+    fip_c = 9 * lg.er / lg_ip - (13 * lg.hr + 3 * lg.bb - 2 * lg.k) / lg_ip
+    report = {"hitters": len(hitters)}
+    for role, min_ip in (("sp", CALIBRATION_SP_IP), ("rp", CALIBRATION_RP_IP)):
+        g = pitchers[(pitchers.role == role) & (pitchers.ip >= min_ip) & pitchers.player_id.isin(reads)]
+        predicted = [reads[i][1][role] for i in g.player_id]
+        fip = (13 * g.hr + 3 * g.bb - 2 * g.k) / g.ip + fip_c
+        out["era"][role] = _wls(predicted, fip, g.ip)
+        report[role] = len(g)
+
+    # starters' depth: stamina and how efficient he is, the snapshot's seasons
+    seasons = lines[lines.year >= season - 1].groupby(["player_id", "year"]).agg(
+        g=("g", "sum"), gs=("gs", "sum"), ip=("ip", "sum")).reset_index()
+    starts = seasons[(seasons.gs >= STAMINA_FIT_STARTS) & (seasons.gs >= 0.8 * seasons.g)]
+    starts = starts[starts.player_id.map(lambda i: i in reads and reads[i][1]["rates"] is not None)]
+    starts = starts.merge(snap[["player_id", "STM"]], on="player_id")
+    starts["STM"] = pd.to_numeric(starts.STM, errors="coerce")
+    starts = starts.dropna(subset=["STM"])
+    rates = pd.DataFrame([reads[i][1]["rates"] for i in starts.player_id], index=starts.index)[list(STARTER_RATES)]
+    rates_at = {e: round(float(np.average(rates[e], weights=starts.gs)), 5) for e in STARTER_RATES}
+    w = np.sqrt(starts.gs.to_numpy(float))
+    design = np.column_stack([np.ones(len(starts)), starts.STM, *(rates[e] - rates_at[e] for e in STARTER_RATES)])
+    coef = np.linalg.lstsq(design * w[:, None], (starts.ip / starts.gs).to_numpy(float) * w, rcond=None)[0]
+    ip_per_start = {"intercept": round(float(coef[0]), 4), "per_stamina": round(float(coef[1]), 5),
+                    "per_rate": {e: round(float(c), 3) for e, c in zip(STARTER_RATES, coef[2:])},
+                    "rates_at": rates_at}
+    report["starters"] = len(starts)
+    return out, ip_per_start, report
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--league", default="yfmlb")
@@ -146,6 +245,7 @@ def main(argv=None):
     work = workloads(load_batting(stats_dir, years), lines, snapshot)
     leverage = leverage_map(lines, snapshot)
     allowance = float(np.mean(list(hitters["allowance_600"].values())))
+    # (calibration below)
 
     artifact = {
         "version": ARTIFACT,
@@ -157,10 +257,15 @@ def main(argv=None):
         "workloads": work,
         "leverage": leverage,
     }
+    fit, ip_per_start, counts = calibration(ValueModel(artifact), stats_dir, snapshot, max(snapshots), lines)
+    artifact["calibration"] = fit
+    artifact["workloads"]["ip_per_start"] = ip_per_start
     ips = artifact["workloads"]["ip_per_start"]
+    print(f"calibration (actual = a + b x predicted; {counts}): {json.dumps(fit)}")
     print(json.dumps({k: v for k, v in artifact.items() if k != "leverage"}, indent=1))
-    print("starter IP by stamina:", {s: round(work["starts"] * (ips["intercept"] + ips["per_stamina"] * s))
-                                     for s in (35, 40, 50, 60, 70, 80)})
+    print("starter IP by stamina, league-typical rates:",
+          {s: round(work["starts"] * (ips["intercept"] + ips["per_stamina"] * s)) for s in (35, 40, 50, 60, 70, 80)},
+          f"per rate {ips['per_rate']} at {ips['rates_at']}")
     print("leverage by reliever runs index:", {round(i): round(l, 2) for i, l in
                                                zip(leverage["runs_index"][::7], leverage["leverage"][::7])})
     artifact["meta"] = {
@@ -171,7 +276,8 @@ def main(argv=None):
         "data_hash": data_hash({max(snapshots): snapshot}, stats_dir, years, kinds=("bat", "pitch", "field")),
         "judgment": {"leverage_weight": LEVERAGE_WEIGHT, "two_way_share": TWO_WAY_SHARE,
                      "two_way_ramp_war": [TWO_WAY_FLOOR, TWO_WAY_FULL],
-                     "starter_min_stamina": STARTER_MIN_STAMINA, "starter_min_pitches": STARTER_MIN_PITCHES},
+                     "starter_min_stamina": STARTER_MIN_STAMINA, "starter_min_pitches": STARTER_MIN_PITCHES,
+                     "control_floor": [CONTROL_FLOOR, FLOOR_RAMP]},
     }
     if args.dry_run:
         return
