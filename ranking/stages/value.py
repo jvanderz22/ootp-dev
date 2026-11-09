@@ -32,6 +32,9 @@ from ranking.stages.base import BatchStage
 from scoring.runtime_components import get_runtime_components, write_runtime_component
 
 SCALE = value.DISPLAY_SCALE
+# the legacy modifiers that are personality, so also count below replacement
+# (the development factors replace PersonalityModifier wherever potential is read)
+BELOW_REPLACEMENT = ("PersonalityModifier", "DraftSecondaryPersonalityModifier")
 
 
 class Value(BatchStage):
@@ -102,6 +105,7 @@ class Value(BatchStage):
         utility_war = self.model.hitter["per_defense_run"] * utility
         ledger = state.ledger
         splits = " on his vL / vR splits" if batting and batting.platoon else ""
+        splits += ", BABIP from Contact" if batting and batting.babip_implied else ""
         ledger.add(MODEL, f"batting talent ({wrc:.0f} wRC+{splits}, {batting_runs:+.1f} runs)",
                    SCALE * parts["batting"], BATTING)
         ledger.add(MODEL, f"fielding ({field.best_position}, {runs:+.0f} runs, {fielding:+.0f} with position)",
@@ -109,7 +113,11 @@ class Value(BatchStage):
         ledger.add(MODEL, f"utility ({utility:+.1f} runs)", SCALE * utility_war, BATTING)
         ledger.add(MODEL, f"baserunning ({running:+.1f} runs)", SCALE * parts["running"], BATTING)
         ledger.add(MODEL, f"position player allowance ({pa:.0f} PA)", SCALE * parts["allowance"], BATTING)
-        if platoon:
+        if platoon and not any(platoon[1].values()):
+            # below replacement on both sides: no starts to credit, so he's
+            # valued at his full-time WAR, which keeps the bottom ordered
+            ledger.add(MODEL, "platoon (no starts: below replacement on both sides)", 0.0, BATTING)
+        elif platoon:
             war_lost, starts = platoon
             ledger.add(MODEL, f"platoon (starts {starts['vR']:.0%} vs RHP, {starts['vL']:.0%} vs LHP)",
                        SCALE * war_lost, BATTING)
@@ -239,16 +247,29 @@ class Value(BatchStage):
     @staticmethod
     def _modified(state, side, war, side_name, developing=(), floors=()) -> float:
         """The side's WAR after its floors, its modifiers and then its
-        development factors, which scale only the part above replacement;
-        recorded as ledger lines and the side's score."""
-        above = SCALE * max(war, 0.0)
+        development factors, which scale the part above replacement. Below
+        replacement only his personality counts (decided 2026-11-08), in
+        reverse: the development factors and BELOW_REPLACEMENT modifiers
+        divide the deficit, so good makeup shrinks it. Recorded as ledger
+        lines and the side's score."""
+        if war < 0:
+            below = SCALE * war
+            personality = [(MODIFIERS, n, f) for n, f in side.modifiers if n in BELOW_REPLACEMENT]
+            for stage, name, factor in personality + [(DEVELOPMENT, n, f) for n, f in developing]:
+                if factor > 0:
+                    below = state.ledger.scale(stage, name, below, 1 / factor, side_name)
+            modified = below / SCALE
+            side.score = SCALE * modified
+            write_runtime_component(state.player.id, f"{side_name}.value.war", modified)
+            return modified
+        above = SCALE * war
         for name, factor in floors:
             above = state.ledger.scale(MODEL, name, above, factor, side_name)
         for name, factor in side.modifiers:
             above = state.ledger.scale(MODIFIERS, name, above, factor, side_name)
         for name, factor in developing:
             above = state.ledger.scale(DEVELOPMENT, name, above, factor, side_name)
-        modified = min(war, 0.0) + above / SCALE
+        modified = above / SCALE
         side.score = SCALE * modified
         write_runtime_component(state.player.id, f"{side_name}.value.war", modified)
         return modified

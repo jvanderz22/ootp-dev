@@ -51,9 +51,24 @@ def test_a_regular_on_both_sides_isnt_platooned():
     assert not any(_platoon(ranked[b, 65]) for b in ("Left", "Right", "Switch"))
 
 
-def test_a_bat_below_replacement_on_both_sides_sits():
+def test_a_bat_below_replacement_on_both_sides_is_valued_at_his_full_time_war():
+    # no starts to credit, but the bottom of the board stays ordered (decided 2026-11-08)
     ranked = _ranked("potential")
-    assert all(_war(ranked[b, 45]) == pytest.approx(0, abs=0.01) for b in ("Left", "Right", "Switch"))
+    for b in ("Left", "Right", "Switch"):
+        assert _war(ranked[b, 45]) < 0
+        assert [line.delta for line in _platoon(ranked[b, 45])] == [0.0]
+
+
+def test_below_replacement_good_makeup_shrinks_the_deficit():
+    def war(**makeup):
+        player = _hitter("Right", 45, 900100)
+        player = GamePlayer({**player.attrs(), **makeup})
+        (r,) = get_ranker("potential").rank([player])
+        return _war(r)
+
+    plain, good, poor = war(), war(WE="H", INT="H"), war(WE="L")
+    assert poor < plain < good < 0
+    assert good == pytest.approx(plain / (1.25 * 1.15), rel=0.01)
 
 
 def test_switch_hitting_prospects_get_a_lineup_flexibility_factor():

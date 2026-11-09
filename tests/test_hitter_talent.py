@@ -59,9 +59,14 @@ def test_ratings_view_reads_the_profiles_side(snapshot_rows):
     assert potential["babip"] == player.babip and potential["power"] == player.power
 
 
-def test_ratings_view_needs_babip(snapshot_rows):
+def test_without_babip_the_view_reads_the_one_contact_implies(snapshot_rows):
+    # Contact is about half BABIP and half Avoid K (every draft-class export lacks BABIP)
     row = dict(next(r for r in snapshot_rows if r.get("BABIP")))
-    row["BABIP"] = ""
+    row.update({"BABIP": "", "CON": "55", "K's": "60", "HT P": "", "CON P": "70", "K P": "50"})
+    player = GamePlayer(row)
+    assert RatingsView("overall").hitting(player)["babip"] == 50
+    assert RatingsView("potential").hitting(player)["babip"] == 80   # 90, held to the scale
+    row.update({"CON": "", "K's": ""})
     assert RatingsView("overall").hitting(GamePlayer(row)) is None
 
 

@@ -8,6 +8,7 @@ import numpy as np
 
 from models.game_players import SPLIT_SIDES
 from ranking.fielding_talent import RATINGS as FIELDING
+from ranking.hitter_talent import HIGH, LOW
 from ranking.hitter_talent import RATINGS as HITTING
 from ranking.running_talent import RATINGS as RUNNING
 from ranking.pitcher_talent import RATINGS as PITCHING
@@ -27,6 +28,10 @@ _ATTRS = {
         "hra": "hr_allowed", "pbabip": "pbabip",
     },
 }
+# OOTP's Contact is about half BABIP and half Avoid K, so an export without
+# BABIP (every draft-class export) is scored on the BABIP those two imply:
+# 2 x Contact - Avoid K is within 5 of the real one for 95-99% of hitters
+_CONTACT = {"overall": "contact_ovr", "potential": "contact"}
 # Movement's parts; a class exported without them is scored on Movement
 _MOVEMENT_PARTS = ("hra", "pbabip")
 # arm slot as exported (a league snapshot's names, a class's codes)
@@ -43,12 +48,21 @@ class RatingsView:
         self.attrs = _ATTRS[ratings]
 
     def hitting(self, player):
-        """The base batting ratings, or None when any is missing (e.g. a class
-        exported before BABIP was)."""
+        """The base batting ratings, or None when any is missing. BABIP, when
+        it isn't exported, is the one Contact and Avoid K imply."""
         values = {name: getattr(player, self.attrs[name]) for name in HITTING}
+        if values["babip"] is None:
+            values["babip"] = self.implied_babip(player)
         if any(v is None for v in values.values()):
             return None
         return values
+
+    def implied_babip(self, player):
+        """2 x Contact - Avoid K on the scale, or None without both."""
+        contact, avoid_k = getattr(player, _CONTACT[self.ratings]), getattr(player, self.attrs["avoid_k"])
+        if not contact or not avoid_k:
+            return None
+        return int(np.clip(2 * contact - avoid_k, LOW, HIGH))
 
     def pitching(self, player):
         """The base pitching ratings. Movement is read only when its parts (HRA,

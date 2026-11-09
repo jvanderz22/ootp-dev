@@ -28,6 +28,7 @@ class FittedBatting(NamedTuple):
     bats: str = None        # "R" / "L" / "S"; None when not exported
     wrc_vl: float = None    # vs left- / right-handed pitchers: his splits, or
     wrc_vr: float = None    # the expected ones for his hand (None without one)
+    babip_implied: bool = False  # BABIP not exported: the one Contact and Avoid K imply
 
 
 class HitterTalent:
@@ -57,8 +58,9 @@ class HitterTalent:
         for j, ((i, _), wrc, pts) in enumerate(zip(rated, wrc_plus, points)):
             write_runtime_component(players[i].id, "batting.talent.wrc_plus", float(wrc))
             vl, vr = (None if np.isnan(w[j]) else float(w[j]) for w in (side_wrc["vL"], side_wrc["vR"]))
+            implied = getattr(players[i], self.ratings.attrs["babip"]) is None
             out[i] = FittedBatting(float(pts), f"batting talent ({wrc:.0f} wRC+)", float(wrc), bool(real[j]),
-                                   bats[j], vl, vr)
+                                   bats[j], vl, vr, implied)
         return out
 
     def _sides(self, hitters, bats, ratings, events):
