@@ -7,6 +7,10 @@ contribution is recorded so a
 ranking explains itself. It's built in parallel to the current code (engine `v2`
 next to `legacy`) and judged by `eval_rankings.py` at every step.
 
+The work that waits on more archived seasons (talent refits with a season
+holdout, value calibration, the hypotheses re-check, development fit on
+rating growth) is tracked in `plans/ranking-archive-plan.md`.
+
 ## Decisions
 
 | Date       | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
