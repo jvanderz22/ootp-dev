@@ -9,11 +9,23 @@ taken apart by ranking.fitting.value:
               + per defense run x (fielding value with its position adjustment
               + baserunning runs) + the position-player allowance
     starter   per run x runs saved against the league ERA + per nine innings,
-              over starts x innings a start by stamina; he needs
+              over starts x innings a start by stamina, at the matchups
+              lineups give him (`matchup_tilt`); he needs
               STARTER_MIN_STAMINA and STARTER_MIN_PITCHES
     reliever  the same over a reliever's innings, his runs saved counted at
               LEVERAGE_WEIGHT of the leverage his talent earns him (an optimal
-              manager gives the best reliever the biggest spots)
+              manager gives the best reliever the biggest spots), and at the
+              matchups you'd give him (`matchup_tilt`)
+
+Matchups follow a pitcher's split (2026-11-08): none for an even split,
+MATCHUP_TILT of the batters moved at FULL_TILT_SPLIT (runs index, about the
+95th percentile of the snapshot's pitchers) and above, a straight ramp
+between. A reliever is used the way you use him, so they move to his strong
+side; a starter can't pick his batters and lineups stack his weak side, so
+they move there. A big split costs a starter what it earns a reliever, by
+the innings each pitches - a set cost by split, not a share of his value -
+and the better of the two roles moves a big-split starter to the bullpen
+when that's worth more.
 
 A two-way player gets his better side plus a share of the other side's WAR
 above replacement (`two_way_share`): none while the other side is only
@@ -37,6 +49,7 @@ ARTIFACT = "value_v1"
 LEVERAGE_WEIGHT = 1.0   # full leverage, the most the stats support
 TWO_WAY_SHARE = 0.2
 TWO_WAY_FLOOR, TWO_WAY_FULL = 1.75, 2.5   # the other side's WAR
+MATCHUP_TILT, FULL_TILT_SPLIT = 0.20, 20.0
 STARTER_MIN_STAMINA = 35   # borderline, at the bottom of the innings curve
 STARTER_MIN_PITCHES = 3
 DISPLAY_OFFSET, DISPLAY_SCALE = 50.0, 10.0
@@ -52,6 +65,13 @@ def two_way_share(other_war) -> float:
     """The share of his other side's WAR a two-way player is credited."""
     ramp = (other_war - TWO_WAY_FLOOR) / (TWO_WAY_FULL - TWO_WAY_FLOOR)
     return TWO_WAY_SHARE * float(np.clip(ramp, 0.0, 1.0))
+
+
+def matchup_tilt(split) -> float:
+    """The share of a pitcher's batters moved to his strong side (relieving) or
+    his weak side (starting), for a split of `split` runs index (either
+    direction)."""
+    return MATCHUP_TILT * float(np.clip(abs(split) / FULL_TILT_SPLIT, 0.0, 1.0))
 
 
 class ValueModel:

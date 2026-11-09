@@ -12,7 +12,9 @@ average regular's - every start at average or better, none at replacement - so
 a bat that's average only against right-handers becomes the strong side of a
 platoon (~73% of PA) and one average only against left-handers the short side.
 What he loses is the "platoon" ledger line; a hitter at least average on both
-sides has none.
+sides has none. A pitcher's split moves his matchups (`value.matchup_tilt`):
+a reliever faces his strong side more, the way you'd use him, and a starter
+his weak side, as lineups stack it - the "RP / SP matchups" lines.
 
 The modifiers scale only WAR above replacement, so a factor below 1 can't
 lift a below-replacement player; where potential ratings are read, the
@@ -130,27 +132,46 @@ class Value(BatchStage):
             sp_era, rp_era, rp_index = fitted.sp_era, fitted.rp_era, fitted.rp_index
             stuff = {"sp": f"Stuff {fitted.sp_stuff:.0f} as SP, ", "rp": f"Stuff {fitted.rp_stuff:.0f} as RP, "}
             splits = " on his vL / vR splits" if fitted.platoon else ""
+            split = {"sp": fitted.sp_split, "rp": fitted.rp_split}
+            estimated = fitted.split_estimated
         else:
             sp_era, rp_era, rp_index = self._legacy_eras(player)
-            stuff, splits = {"sp": "", "rp": ""}, ""
+            stuff, splits, split, estimated = {"sp": "", "rp": ""}, "", {"sp": 0.0, "rp": 0.0}, False
+        sp_index = fitted.sp_index if fitted else 100.0   # no split without a fit: unused
         stamina, pitches = self.ratings.stamina(player), self.ratings.pitch_count(player)
         innings = self.model.starter_innings(stamina, pitches)
-        starting = self.model.starting(sp_era, innings) if innings else None
-        relieving = self.model.relieving(rp_era, rp_index)
+        # his matchups: index is linear in the events, so moving `tilt` of his
+        # batters to one side moves it by tilt x split; ERA in step
+        tilt = {role: value.matchup_tilt(split[role]) for role in split}
+        sp_matched = sp_index + tilt["sp"] * abs(split["sp"])
+        rp_matched = rp_index - tilt["rp"] * abs(split["rp"])
+        starting = self.model.starting(sp_era * sp_matched / sp_index, innings) if innings else None
+        sp_normal = self.model.starting(sp_era, innings) if innings else None
+        normal = self.model.relieving(rp_era, rp_index)
+        relieving = self.model.relieving(rp_era * rp_matched / rp_index, rp_matched)
+        how = "estimated from slot and pitches" if estimated else "on his splits"
         sp_war = sum(starting.values()) if starting else None
         rp_war = sum(relieving.values())
         side.components = {"starter": SCALE * sp_war if starting else 0.0, "reliever": SCALE * rp_war}
         ledger = state.ledger
         if starting and sp_war >= rp_war:
             state.era = sp_era
-            ledger.add(MODEL, f"SP talent ({stuff['sp']}{sp_era:.2f} ERA{splits})", SCALE * starting["runs"], PITCHING)
+            ledger.add(MODEL, f"SP talent ({stuff['sp']}{sp_era:.2f} ERA{splits})", SCALE * sp_normal["runs"], PITCHING)
+            if tilt["sp"] > 0:
+                gap = sp_era * abs(split["sp"]) / sp_index
+                ledger.add(MODEL, f"SP matchups (+{tilt['sp']:.0%} of batters on his weak side, {gap:.2f} ERA split {how})",
+                           SCALE * (starting["runs"] - sp_normal["runs"]), PITCHING)
             ledger.add(MODEL, f"SP innings (stamina {stamina}, {innings:.0f} IP)", SCALE * starting["innings"], PITCHING)
             war = sp_war
         else:
             state.era = rp_era
             leverage = float(self.model.leverage(rp_index))
-            ledger.add(MODEL, f"RP talent ({stuff['rp']}{rp_era:.2f} ERA{splits})", SCALE * relieving["runs"], PITCHING)
-            ledger.add(MODEL, f"RP leverage (LI {leverage:.2f})", SCALE * relieving["leverage"], PITCHING)
+            ledger.add(MODEL, f"RP talent ({stuff['rp']}{rp_era:.2f} ERA{splits})", SCALE * normal["runs"], PITCHING)
+            ledger.add(MODEL, f"RP leverage (LI {leverage:.2f})", SCALE * normal["leverage"], PITCHING)
+            if tilt["rp"] > 0:
+                gap = rp_era * abs(split["rp"]) / rp_index
+                ledger.add(MODEL, f"RP matchups (+{tilt['rp']:.0%} of batters on his strong side, {gap:.2f} ERA split {how})",
+                           SCALE * (rp_war - normal["runs"] - normal["leverage"] - normal["innings"]), PITCHING)
             ledger.add(MODEL, f"RP innings ({self.model.workloads['reliever_ip']:.0f} IP)",
                        SCALE * relieving["innings"], PITCHING)
             war = rp_war

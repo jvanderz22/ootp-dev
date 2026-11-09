@@ -11,7 +11,7 @@ from ranking.fielding_talent import RATINGS as FIELDING
 from ranking.hitter_talent import RATINGS as HITTING
 from ranking.running_talent import RATINGS as RUNNING
 from ranking.pitcher_talent import RATINGS as PITCHING
-from ranking.pitcher_talent import top_pitches
+from ranking.pitcher_talent import SPLIT_PITCHES, top_pitches
 
 # rating -> GamePlayer attribute, per profile `ratings`
 _ATTRS = {
@@ -29,6 +29,12 @@ _ATTRS = {
 }
 # Movement's parts; a class exported without them is scored on Movement
 _MOVEMENT_PARTS = ("hra", "pbabip")
+# arm slot as exported (a league snapshot's names, a class's codes)
+_SLOTS = {
+    "normal": "normal", "3/4": "normal",
+    "over the top": "over the top", "ott": "over the top",
+    "sidearm": "sidearm", "side": "sidearm", "submarine": "sidearm", "sub": "sidearm",
+}
 
 
 class RatingsView:
@@ -110,6 +116,17 @@ class RatingsView:
         """His best pitch grades, best first (ranking.pitcher_talent.top_pitches)."""
         pitches = player.get_pitches() if self.ratings == "potential" else player.get_ovr_pitches()
         return top_pitches([getattr(player, p) for p in pitches])
+
+    def pitch_mix(self, player) -> dict:
+        """{pitch: grade} of the pitches he throws, named as SPLIT_PITCHES."""
+        suffix = "" if self.ratings == "potential" else "_ovr"
+        return {p: g for p in SPLIT_PITCHES if (g := getattr(player, p + suffix))}
+
+    @staticmethod
+    def arm_slot(player) -> str:
+        """"normal" / "over the top" / "sidearm" (submarine counts as sidearm);
+        normal when not exported."""
+        return _SLOTS.get((player.arm_slot or "").strip().lower(), "normal")
 
     def pitch_count(self, player) -> int:
         pitches = player.get_pitches() if self.ratings == "potential" else player.get_ovr_pitches()

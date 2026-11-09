@@ -135,6 +135,13 @@ class FittedPitching(NamedTuple):
     sp_stuff: float         # Stuff in each role: displayed is the listed role's
     rp_stuff: float
     platoon: bool           # scored on his vL / vR splits
+    # runs index he's better by in each role against same-handed batters than
+    # opposite-handed ones (negative: a reverse split), from his splits or
+    # else predicted from hand, slot and pitch mix (`split_estimated`; the
+    # relief split stands in for both roles)
+    sp_split: float = 0.0
+    rp_split: float = 0.0
+    split_estimated: bool = False
 
 
 class PitcherTalent:
@@ -170,7 +177,9 @@ class PitcherTalent:
         listed_sp = np.array([players[i].position == "SP" for i, _ in group])
         stuff = self.model.role_stuff(ratings["stuff"], top, listed_sp, self.ratings.ratings)
         events = {role: self.model.events({**ratings, "stuff": stuff[role]}, role) for role in pitcher_talent.ROLES}
-        platoon = self._platoon(players, group, top, listed_sp, events)
+        predicted = self._predicted_split(players, group)
+        split = {role: predicted.copy() for role in pitcher_talent.ROLES}
+        platoon = self._platoon(players, group, top, listed_sp, events, split)
         index = {role: self.model.index_of(events[role]) for role in pitcher_talent.ROLES}
         era = {role: self.model.era_of(events[role]) for role in pitcher_talent.ROLES}
         talent = {role: self.model.points(index[role], role) for role in pitcher_talent.ROLES}
@@ -190,14 +199,33 @@ class PitcherTalent:
                 sp_stuff=float(stuff["sp"][j]),
                 rp_stuff=float(stuff["rp"][j]),
                 platoon=bool(platoon[j]),
+                sp_split=float(split["sp"][j]),
+                rp_split=float(split["rp"][j]),
+                split_estimated=not platoon[j] and predicted[j] != 0,
             )
             write_runtime_component(player.id, "pitching.talent.sp_runs_index", out[i].sp_index)
             write_runtime_component(player.id, "pitching.talent.rp_runs_index", out[i].rp_index)
 
-    def _platoon(self, players, group, top, listed_sp, events) -> np.ndarray:
+    def _predicted_split(self, players, group) -> np.ndarray:
+        """Each pitcher's relief split as predicted from his hand, slot and pitch
+        mix; 0 without a throwing hand (or a predictor)."""
+        out = np.zeros(len(group))
+        hands = [(j, self.ratings.throws(players[i])) for j, (i, _) in enumerate(group)]
+        hands = [(j, hand) for j, hand in hands if hand]
+        if hands and self.model.split_fit:
+            features = [
+                pitcher_talent.split_features(hand, self.ratings.arm_slot(players[group[j][0]]),
+                                              self.ratings.pitch_mix(players[group[j][0]]))
+                for j, hand in hands
+            ]
+            out[[j for j, _ in hands]] = self.model.predicted_split(features)
+        return out
+
+    def _platoon(self, players, group, top, listed_sp, events, role_split) -> np.ndarray:
         """Puts each role's events against its batters, vL and vR scored apart,
         in `events` for the pitchers whose splits are there (and on the group's
-        side of HRA / Movement); returns which ones."""
+        side of HRA / Movement), and each role's split in `role_split`; returns
+        which ones."""
         hra = group[0][1]["hra"] is not None
         rows, sides, throws = [], [], []
         for j, (i, _) in enumerate(group):
@@ -220,6 +248,9 @@ class PitcherTalent:
                  for side, r in by_side.items()}
         for role in pitcher_talent.ROLES:
             in_role = {side: {**r, "stuff": stuff[side][role]} for side, r in by_side.items()}
+            index = {side: self.model.runs_index(r, role) for side, r in in_role.items()}
+            lefty = np.array(throws) == "L"
+            role_split[role][rows] = np.where(lefty, index["vR"] - index["vL"], index["vL"] - index["vR"])
             blended = self.model.platoon_events(in_role, role, self.model.lhb_share(role, throws))
             for name, value in blended.items():
                 events[role][name] = np.asarray(events[role][name], dtype=float).copy()

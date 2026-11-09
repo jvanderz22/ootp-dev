@@ -22,6 +22,12 @@ hand faces - is read off MLB lines' vs-L / vs-R batters faced; it blends a
 pitcher's split scores (ranking/pitcher_talent.py). The throwing hand is the
 latest snapshot's.
 
+The split predictor - a pitcher's relief split (how much better he is against
+same-handed batters, in runs index) from his hand, arm slot and pitch mix - is
+a ridge fit on the latest snapshot's pitchers who have splits, scored as the
+talent stage scores them; it stands in where there are no splits (potential
+ratings, draft classes).
+
 PBABIP's effect is kept at PBABIP_KEEP of what the fit finds (decided
 2026-11-08): MLB BABIP spread is about what luck alone gives, so the stats
 can't size it, and you judge it to matter little. The `hit` tables (and the
@@ -45,7 +51,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
-from sklearn.model_selection import GroupKFold
+from sklearn.linear_model import RidgeCV
+from sklearn.model_selection import GroupKFold, KFold, cross_val_predict
 
 from context import default_base_dir
 from ranking import bridge
@@ -61,7 +68,8 @@ from ranking.fitting.stats import (
 )
 from ranking.hitter_talent import ARTIFACTS_DIR, HIGH, LOW, outcomes, runs_per_pa
 from ranking.pitcher_talent import (
-    ARTIFACT, COMPONENTS, MOVEMENT_COMPONENTS, ROLES, SHIFT_PITCHES, PitcherTalent, era_from, top_pitches,
+    ARTIFACT, COMPONENTS, MOVEMENT_COMPONENTS, ROLES, SHIFT_PITCHES, SPLIT_FEATURES, PitcherTalent, era_from,
+    split_features, top_pitches,
 )
 
 # component -> (numerator, denominator, direction of its rating)
@@ -245,6 +253,42 @@ def points_bridges(model: PitcherTalent, snapshot_path) -> dict:
     return out
 
 
+SPLIT_ALPHAS = np.logspace(-2, 4, 25)
+
+
+def split_gap(model: PitcherTalent, snapshot_path) -> dict:
+    """The split predictor: a ridge fit of each snapshot pitcher's relief split
+    (from his vL / vR ratings, as the talent stage scores it) on
+    `split_features`, with its cross-validated R2."""
+    from ranking.profiles import CURRENT
+    from ranking.ratings import RatingsView
+    from ranking.stages.talent import PitcherTalent as Stage
+    from scoring.runtime_components import runtime_components_scope
+
+    pitchers = read_pitchers(snapshot_path)
+    players = _players(snapshot_path, pitchers.player_id)
+    view = RatingsView("overall")
+    with runtime_components_scope():
+        scored = Stage(CURRENT, model=model).score(players)
+    x, y = [], []
+    for p, f in zip(players, scored):
+        if f is not None and f.platoon:
+            x.append(split_features(view.throws(p), view.arm_slot(p), view.pitch_mix(p)))
+            y.append(f.rp_split)
+    x, y = np.asarray(x, dtype=float), np.asarray(y)
+    oof = cross_val_predict(RidgeCV(alphas=SPLIT_ALPHAS), x, y, cv=KFold(FOLDS, shuffle=True, random_state=0))
+    fit = RidgeCV(alphas=SPLIT_ALPHAS).fit(x, y)
+    return {
+        "features": list(SPLIT_FEATURES),
+        "intercept": round(float(fit.intercept_), 4),
+        "coef": [round(float(c), 4) for c in fit.coef_],
+        "alpha": round(float(fit.alpha_), 3),
+        "pitchers": len(y),
+        "cv_r2": round(float(1 - ((y - oof) ** 2).sum() / ((y - y.mean()) ** 2).sum()), 3),
+        "split_percentiles": {q: round(float(np.percentile(np.abs(y), q)), 1) for q in (50, 75, 90, 95, 99)},
+    }
+
+
 def report(rows, artifact_base, snapshots) -> dict:
     """Cross-validated fitted vs legacy, inside each level and role."""
     oof = np.zeros(len(rows))
@@ -336,6 +380,10 @@ def main(argv=None):
 
     artifact = {**artifact_base, **fit_tables(rows)}
     artifact["points_bridges"] = points_bridges(PitcherTalent(artifact), snapshots[latest])
+    artifact["split_gap"] = split_gap(PitcherTalent(artifact), snapshots[latest])
+    split = artifact["split_gap"]
+    print(f"\nsplit predictor ({split['pitchers']} pitchers with splits): cross-validated R2 {split['cv_r2']},"
+          f" |split| percentiles {split['split_percentiles']}")
     model = PitcherTalent(artifact)
 
     def ra(stuff, control, movement, role, **parts):

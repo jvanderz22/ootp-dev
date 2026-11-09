@@ -671,13 +671,33 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
   - Board effect vs the 5b–6 commits: hitters' share of the top 100 barely
     moves; lefties drop a median ~27 places in the top 500 (the ×1.04 gone),
     switch hitters −55 on current ratings, −6 as prospects.
-- **Next: relievers get matchups under your usage** (decided 2026-11-08).
-  A starter faces both sides at the normal mix; as a reliever, a big-split
-  arm faces his strong side more, scaled with his split: no tilt for an
-  even split, up to +20 points of strong-side batters for the biggest
-  splits. Current pitchers use their real splits, potential and draft ones
-  the gap predicted from slot, velocity and pitch mix. The value layer's
-  better-of-SP-and-RP then moves big-split arms to relief more often.
+- **Built (2026-11-08): pitchers' matchups follow their split.**
+  - A pitcher's split is how much better he is against same-handed batters
+    than opposite-handed ones, in runs index, in each role. Current pitchers
+    use their real splits. Potential and draft pitchers get one predicted
+    from hand, arm slot and pitch mix: a ridge fit on the snapshot's 7,078
+    pitchers with splits (`split_gap` in the pitcher artifact,
+    cross-validated R² 0.41, 0.47–0.51 for relievers). Sidearm adds ~6
+    points, sinker and slider grades widen it, a good changeup closes it.
+    Velocity added nothing, so it's left out (old classes export it in
+    another format anyway). |split| percentiles: median 0.7, 90th 16,
+    95th 20.
+  - The tilt is a straight ramp: none for an even split, 20% of the batters
+    moved at a split of 20 (about the 95th percentile) and above. A reliever
+    gets them on his strong side, the way you'd use him: an "RP matchups"
+    ledger line. A starter can't pick his batters and lineups stack his weak
+    side, so he gets the mirror (your choice over a share-of-value discount,
+    which hit big-split aces hardest): an "SP matchups" line. The cost is
+    set by the split and the innings, not by how good he is.
+  - The better of SP and RP then moves a big-split back-end starter to the
+    bullpen. Current pitchers in the top 1000 don't flip: 180 starter
+    innings outweigh 73 relief innings. 6 marginal arms in the 2042 class
+    do.
+  - Board effect: big-split closers gain up to ~0.4–0.8 WAR (Eddie Graham
+    268 → 154, Josh Sennett 153 → 83 on current ratings). The biggest-split
+    starters lose up to ~0.4 WAR (90th percentile ~35 places; Andy Godwin,
+    a 19-point split, −0.26 WAR). Starters in the top 300: 169 → 164
+    current, 101 → 95 potential, 149 → 146 in the 2042 class.
 
 **7. Decision layer**
 

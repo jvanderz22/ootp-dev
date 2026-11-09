@@ -154,7 +154,11 @@ read. It replaces `stuff` vs `stuff_ovr`, `get_pitches()` vs
   score each side and blend at the hand's mix (`platoon_mix` in the hitter /
   pitcher artifacts). Hitters without splits get `HitterTalent.expected_sides`
   (per hand and rating, OOTP's weight on vL and a gap that grows with the
-  rating); the value stage platoons hitters on their side wRC+.
+  rating); the value stage platoons hitters on their side wRC+. Pitchers
+  carry a split per role (`FittedPitching.sp_split` / `rp_split`): from
+  their real splits, or else `PitcherTalent.predicted_split` on
+  `split_features` (hand, `arm_slot`, `pitch_mix`). The value stage tilts
+  each role's matchups by it (`value.matchup_tilt`).
 - Legacy stages don't use it (they call the legacy scorers, which keep their
   own `type`). It arrives with the first new stage in phase 3.
 
@@ -497,7 +501,7 @@ Fielding (from the position grids):
 | **3** ✅ | `RatingsView`; `fitting/datasets.py`; rules suite; hitter talent stage (BABIP / Avoid K / Gap / Power / Eye, fit to stats, monotone) with per-player legacy fallback when BABIP is missing | rules suite passes; eval vs legacy: hitter residuals by rating flatten; watchlist; draft metrics no worse |
 | **4** ✅ | Movement / Stuff composition fit; pitcher talent stage | same, pitchers |
 | **5a** ✅ | fielding talent (your grids floored, one line to runs incl. position adjustment) and baserunning talent (optimal managing), bridged to legacy points | MLB player-by-player vs stats: no worse than prod |
-| **5b** ✅ | value stage (WAR at a full-time role: 607 PA, starter innings by stamina, 73 IP relief at full leverage); retires RP multiplier, batting weights, two-way bonus (now a ramped share); current pitchers and hitters scored on their splits; hitters platooned by side (replaces the handedness modifier); next: reliever matchups scaled by split | calibration vs StatsPlus WAR; ranking metrics |
+| **5b** ✅ | value stage (WAR at a full-time role: 607 PA, starter innings by stamina, 73 IP relief at full leverage); retires RP multiplier, batting weights, two-way bonus (now a ramped share); current pitchers and hitters scored on their splits; hitters platooned by side (replaces the handedness modifier); pitcher matchups scaled by split (real, or predicted from slot and pitch mix): relievers toward their strong side, starters their weak side | calibration vs StatsPlus WAR; ranking metrics |
 | **6** (part) | development stage: fitted makeup / durability factors tapered by potential WAR, switch-hitter factor for prospects; outcome distributions (P90 / P75 / E[v]) tested and dropped (no better top 100 than the board value) | draft metrics vs legacy and POT-only baseline |
 | **7** | demand stays last; pre / post in the UI | already in place from 2a / 2c |
 | **8** | switch `get_ranker_for_method` and `splits.py` to v2; regenerate goldens deliberately; delete `rankers/` and dead code | a full test pass; one release with both engines' outputs saved for comparison |

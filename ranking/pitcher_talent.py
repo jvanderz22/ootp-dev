@@ -29,6 +29,14 @@ Current ratings come with platoon splits in a league snapshot. A pitcher who
 has them is scored on each side's events, blended at the share of left-handed
 batters his role and throwing hand face (`platoon_mix`, fit on MLB lines), so
 a pitcher with one bad side isn't flattered by the rounded combined rating.
+
+A pitcher's split - how much better he is in relief against his strong side
+than the other, in runs index - is read off those splits, or predicted from
+his hand, arm slot and pitch mix where there are none (potential ratings,
+draft classes): a ridge fit on the snapshot's pitchers' real splits
+(`split_features`, cross-validated R2 about 0.4). Sidearmers and sinker /
+slider arms split big, a good changeup evens it out. The value layer uses it
+for relief matchups.
 """
 import json
 from functools import lru_cache
@@ -47,12 +55,30 @@ RATINGS = ("stuff", "control", "hra", "pbabip", "movement")
 ROLES = ("sp", "rp")
 # pitches the role shift reads, best first
 SHIFT_PITCHES = 4
+# the split predictor's pitches (GamePlayer's potential-grade attributes)
+SPLIT_PITCHES = (
+    "fastball", "changeup", "curveball", "slider", "sinker", "splitter",
+    "cutter", "forkball", "circlechange", "screwball", "knuckleball", "knucklecurve",
+)
+SPLIT_FEATURES = (
+    "lefty", "over the top", "sidearm", "lefty sidearm",
+    *SPLIT_PITCHES, *(f"has {p}" for p in SPLIT_PITCHES),
+)
 
 
 def top_pitches(grades) -> list:
     """The best SHIFT_PITCHES grades, best first, 0 for a pitch he lacks."""
     top = sorted((g for g in grades if g), reverse=True)[:SHIFT_PITCHES]
     return top + [0] * (SHIFT_PITCHES - len(top))
+
+
+def split_features(throws: str, slot: str, mix: dict) -> list:
+    """The split predictor's inputs (SPLIT_FEATURES): his throwing hand ("R" /
+    "L"), arm slot ("normal" / "over the top" / "sidearm") and {pitch: grade}
+    of the pitches he throws."""
+    lefty, sidearm = throws == "L", slot == "sidearm"
+    grades = [mix.get(p, 0) for p in SPLIT_PITCHES]
+    return [lefty, slot == "over the top", sidearm, lefty and sidearm, *grades, *(g > 0 for g in grades)]
 
 
 class PitcherTalent:
@@ -75,6 +101,8 @@ class PitcherTalent:
         self.role_shift = artifact.get("role_shift")
         # {role: {"R" | "L": share of batters faced who bat left}}
         self.platoon_mix = artifact.get("platoon_mix")
+        # {"features", "intercept", "coef", ...}: the split predictor
+        self.split_fit = artifact.get("split_gap")
         # runs allowed index -> legacy SP / RP points (ranking/bridge.py);
         # absent while fitting
         self.bridges = artifact.get("points_bridges")
@@ -127,6 +155,13 @@ class PitcherTalent:
         scored apart and blended at `lhb_share`."""
         vl, vr = self.events(sides["vL"], role), self.events(sides["vR"], role)
         return {k: lhb_share * vl[k] + (1 - lhb_share) * vr[k] for k in vl}
+
+    def predicted_split(self, features):
+        """Relief runs index he's better by against same-handed batters than
+        opposite-handed ones, from rows of `split_features`; negative for a
+        reverse split."""
+        fit = self.split_fit
+        return fit["intercept"] + np.asarray(features, dtype=float) @ np.asarray(fit["coef"])
 
     def runs_index(self, ratings: dict, role: str):
         return self.index_of(self.events(ratings, role))
