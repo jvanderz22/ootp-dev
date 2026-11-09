@@ -574,9 +574,12 @@ const SPLIT_SCORES_FIELDS = gql`
     power
     eye
     avoidK
+    babip
     stuff
     movement
     control
+    hra
+    pbabip
   }
 `;
 

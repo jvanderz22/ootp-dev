@@ -101,27 +101,30 @@
             <h4>Batting</h4>
             <ng-container *ngTemplateOutlet="splitToggle" />
           </div>
-          <div class="rating-grid">
-            <ng-container *ngTemplateOutlet="ratingHead" />
-            @if (splitMode()) {
-              <ng-container *ngTemplateOutlet="splitGrid; context: { $implicit: 'batting' }" />
-            } @else {
-              @for (r of battingSkillRows(p); track r.label) {
-                <div class="rating">
-                  <span>{{ r.label }}</span>
-                  <i>{{ r.current ?? '—' }}</i>
-                  <b>{{ r.potential ?? '—' }}</b>
+          <div class="rating-cols">
+            <div class="rating-grid single">
+              <ng-container *ngTemplateOutlet="ratingHead" />
+              @if (splitMode()) {
+                <ng-container *ngTemplateOutlet="splitGrid; context: { $implicit: 'batting' }" />
+              } @else {
+                @for (r of battingSkillRows(p); track r.label) {
+                  <div class="rating" [class.part]="r.part">
+                    <span>{{ r.label }}</span>
+                    <i>{{ r.current ?? '—' }}</i>
+                    <b>{{ r.potential ?? '—' }}</b>
+                  </div>
+                }
+              }
+            </div>
+            <div class="rating-grid single">
+              <div class="rating rating-head one"><span class="col-label">Running</span></div>
+              @for (s of speedRows(p); track s[0]) {
+                <div class="rating one">
+                  <span>{{ s[0] }}</span>
+                  <b>{{ s[1] ?? '—' }}</b>
                 </div>
               }
-            }
-          </div>
-          <div class="stat-grid tight">
-            @for (s of speedRows(p); track s[0]) {
-              <div class="stat">
-                <span>{{ s[0] }}</span
-                ><b>{{ s[1] ?? '—' }}</b>
-              </div>
-            }
+            </div>
           </div>
         </section>
       }
@@ -146,25 +149,30 @@
             <h4>Pitching</h4>
             <ng-container *ngTemplateOutlet="splitToggle" />
           </div>
-          <div class="rating-grid">
-            <ng-container *ngTemplateOutlet="ratingHead" />
-            @if (splitMode()) {
-              <ng-container *ngTemplateOutlet="splitGrid; context: { $implicit: 'pitching' }" />
-            } @else {
-              @for (r of pitchingSkillRows(p); track r.label) {
-                <div class="rating">
-                  <span>{{ r.label }}</span>
-                  <i>{{ r.current ?? '—' }}</i>
-                  <b>{{ r.potential ?? '—' }}</b>
-                </div>
+          <div class="rating-cols">
+            <div class="rating-grid single">
+              <ng-container *ngTemplateOutlet="ratingHead" />
+              @if (splitMode()) {
+                <ng-container *ngTemplateOutlet="splitGrid; context: { $implicit: 'pitching' }" />
+              } @else {
+                @for (r of pitchingSkillRows(p); track r.label) {
+                  <div class="rating" [class.part]="r.part">
+                    <span>{{ r.label }}</span>
+                    <i>{{ r.current ?? '—' }}</i>
+                    <b>{{ r.potential ?? '—' }}</b>
+                  </div>
+                }
               }
-            }
-          </div>
-          <div class="stat-grid tight">
-            @for (m of pitchingMiscRows(p); track m[0]) {
-              <div class="stat">
-                <span>{{ m[0] }}</span
-                ><b>{{ m[1] }}</b>
+            </div>
+            @if (pitchingMiscRows(p).length) {
+              <div class="rating-grid single">
+                <div class="rating rating-head one"><span class="col-label">Profile</span></div>
+                @for (m of pitchingMiscRows(p); track m[0]) {
+                  <div class="rating one">
+                    <span>{{ m[0] }}</span>
+                    <b>{{ m[1] }}</b>
+                  </div>
+                }
               </div>
             }
           </div>
@@ -388,7 +396,7 @@
       <span class="muted split-note">No split ratings in this snapshot — refresh it from StatsPlus.</span>
     } @else {
       @for (r of splitRows(splits(), side); track r.label) {
-        <div class="rating lr">
+        <div class="rating lr" [class.part]="r.part">
           <span>{{ r.label }}</span>
           <i>{{ r.combined ?? '—' }}</i>
           <b [class]="splitTone(r.vsL, r.combined)">{{ r.vsL ?? '—' }}</b>

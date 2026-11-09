@@ -254,9 +254,12 @@ export interface SplitScores {
   power: number | null;
   eye: number | null;
   avoidK: number | null;
+  babip: number | null;
   stuff: number | null;
   movement: number | null;
   control: number | null;
+  hra: number | null;
+  pbabip: number | null;
 }
 
 /** vs-L / vs-R overalls (live-league players only), with `combined` scored the
@@ -305,6 +308,10 @@ export interface PlayerRatings {
     stuffCur: number | null;
     movementCur: number | null;
     controlCur: number | null;
+    hra: number | null;
+    hraCur: number | null;
+    pbabip: number | null;
+    pbabipCur: number | null;
     stamina: number | null;
     velocity: string | null;
     groundballType: string | null;

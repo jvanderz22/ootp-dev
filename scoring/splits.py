@@ -40,9 +40,12 @@ def _payload(player: GamePlayer, batting, pitching) -> dict:
         "power": player.power_ovr,
         "eye": player.eye_ovr,
         "avoid_k": player.avoid_k_ovr,
+        "babip": player.babip_ovr,
         "stuff": player.stuff_ovr,
         "movement": player.movement_ovr,
         "control": player.control_ovr,
+        "hra": player.hr_allowed_ovr,
+        "pbabip": player.pbabip_ovr,
     }
 
 

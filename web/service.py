@@ -150,6 +150,9 @@ def _ratings_payload(gp):
             "powerCur": gp.power_ovr,
             "eyeCur": gp.eye_ovr,
             "avoidKCur": gp.avoid_k_ovr,
+            # Contact's parts (Contact ~ BABIP + Avoid K); None in old exports
+            "babip": gp.babip,
+            "babipCur": gp.babip_ovr,
             "speed": gp.speed,
             "steal": gp.steal,
             "running": gp.running_ability,
@@ -173,6 +176,11 @@ def _ratings_payload(gp):
             "stuffCur": gp.stuff_ovr,
             "movementCur": gp.movement_ovr,
             "controlCur": gp.control_ovr,
+            # Movement's parts (Movement ~ HRA + PBABIP); None in old exports
+            "hra": gp.hr_allowed,
+            "hraCur": gp.hr_allowed_ovr,
+            "pbabip": gp.pbabip,
+            "pbabipCur": gp.pbabip_ovr,
             "stamina": gp.stamina,
             "velocity": gp.velocity or None,
             "groundballType": gp.groundball_type or None,

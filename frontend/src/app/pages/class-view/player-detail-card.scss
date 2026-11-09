@@ -120,7 +120,20 @@
 .rating b { font-variant-numeric: tabular-nums; }
 .rating i { color: var(--text-dim); font-style: normal; font-variant-numeric: tabular-nums; }
 .rating-head { color: var(--text-dim); }
-.rating-head b, .rating-head i { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+.rating-head b, .rating-head i, .rating-head .col-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+/* the ratings in one column so cur / pot line up, the side stats beside them */
+.rating-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 2px 16px;
+  align-items: start;
+}
+.rating-grid.single { grid-template-columns: 1fr; }
+.rating-grid.single > .rating:not(.lr):not(.one) { grid-template-columns: 1fr repeat(2, 2.25rem); }
+.rating-grid.single > .rating > i, .rating-grid.single > .rating > b { text-align: right; }
+.rating.one { grid-template-columns: 1fr auto; }
+/* a composite's parts (Contact = BABIP + Avoid K, Movement = HRA + PBABIP) */
+.rating.part span { padding-left: 12px; font-size: 11px; }
 
 /* modifier sub-groups: prefix stripped, indented, no overflow */
 .modifier-group {

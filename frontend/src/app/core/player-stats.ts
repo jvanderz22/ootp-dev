@@ -16,6 +16,14 @@ export interface RatingRow {
   label: string;
   potential: number | null;
   current: number | null;
+  /** one of the parts OOTP builds the row above it from (Contact, Movement) */
+  part?: boolean;
+}
+
+/** Drops a composite's part rows the export doesn't carry (old classes have
+ *  no BABIP / HRA / PBABIP). */
+function withParts(rows: RatingRow[]): RatingRow[] {
+  return rows.filter((r) => !r.part || r.current != null || r.potential != null);
 }
 
 // ---------------------------------------------------------- player typing
@@ -111,13 +119,14 @@ export function makeupRows(p: RankedPlayer): [string, string][] {
 export function battingSkillRows(p: RankedPlayer): RatingRow[] {
   const b = p.ratings?.batting;
   if (!b) return [];
-  return [
+  return withParts([
     { label: 'Contact', potential: b['contact'], current: b['contactCur'] },
-    { label: 'Avoid K', potential: b['avoidK'], current: b['avoidKCur'] },
+    { label: 'BABIP', potential: b['babip'], current: b['babipCur'], part: true },
+    { label: 'Avoid K', potential: b['avoidK'], current: b['avoidKCur'], part: true },
     { label: 'Gap', potential: b['gap'], current: b['gapCur'] },
     { label: 'Power', potential: b['power'], current: b['powerCur'] },
     { label: 'Eye', potential: b['eye'], current: b['eyeCur'] },
-  ];
+  ]);
 }
 
 export function speedRows(p: RankedPlayer): [string, number | null][] {
@@ -146,11 +155,13 @@ export function fieldingRows(p: RankedPlayer): [string, number][] {
 export function pitchingSkillRows(p: RankedPlayer): RatingRow[] {
   const pt = p.ratings?.pitching;
   if (!pt) return [];
-  return [
+  return withParts([
     { label: 'Stuff', potential: pt.stuff, current: pt.stuffCur },
     { label: 'Movement', potential: pt.movement, current: pt.movementCur },
+    { label: 'HR allowed', potential: pt.hra, current: pt.hraCur, part: true },
+    { label: 'PBABIP', potential: pt.pbabip, current: pt.pbabipCur, part: true },
     { label: 'Control', potential: pt.control, current: pt.controlCur },
-  ];
+  ]);
 }
 
 export function pitchingMiscRows(p: RankedPlayer): [string, string][] {
@@ -176,20 +187,24 @@ export interface SplitRow {
   combined: number | null;
   vsL: number | null;
   vsR: number | null;
+  part?: boolean;
 }
 
-// Same order as battingSkillRows / pitchingSkillRows.
-const BATTING_SPLIT_SPEC: [string, keyof SplitScores][] = [
+// Same order as battingSkillRows / pitchingSkillRows; `true` marks a part.
+const BATTING_SPLIT_SPEC: [string, keyof SplitScores, boolean?][] = [
   ['Contact', 'contact'],
-  ['Avoid K', 'avoidK'],
+  ['BABIP', 'babip', true],
+  ['Avoid K', 'avoidK', true],
   ['Gap', 'gap'],
   ['Power', 'power'],
   ['Eye', 'eye'],
 ];
 
-const PITCHING_SPLIT_SPEC: [string, keyof SplitScores][] = [
+const PITCHING_SPLIT_SPEC: [string, keyof SplitScores, boolean?][] = [
   ['Stuff', 'stuff'],
   ['Movement', 'movement'],
+  ['HR allowed', 'hra', true],
+  ['PBABIP', 'pbabip', true],
   ['Control', 'control'],
 ];
 
@@ -197,12 +212,15 @@ const PITCHING_SPLIT_SPEC: [string, keyof SplitScores][] = [
 export function splitRows(s: PlayerSplits | null | undefined, side: 'batting' | 'pitching'): SplitRow[] {
   if (!s) return [];
   const spec = side === 'batting' ? BATTING_SPLIT_SPEC : PITCHING_SPLIT_SPEC;
-  return spec.map(([label, key]) => ({
-    label,
-    combined: s.combined[key],
-    vsL: s.vsL[key],
-    vsR: s.vsR[key],
-  }));
+  return spec
+    .map(([label, key, part]) => ({
+      label,
+      combined: s.combined[key] as number | null,
+      vsL: s.vsL[key] as number | null,
+      vsR: s.vsR[key] as number | null,
+      part,
+    }))
+    .filter((r) => !r.part || r.combined != null || r.vsL != null || r.vsR != null);
 }
 
 // ------------------------------------------------------- score breakdown

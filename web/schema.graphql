@@ -224,9 +224,14 @@ type SplitScores {
   power: Int
   eye: Int
   avoidK: Int
+  "with Avoid K, what Contact is made of"
+  babip: Int
   stuff: Int
   movement: Int
   control: Int
+  "HR allowed and PBABIP: what Movement is made of"
+  hra: Int
+  pbabip: Int
 }
 
 "vs-L / vs-R overalls, plus `combined` scored the same way for comparison."
