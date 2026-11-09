@@ -61,9 +61,9 @@ class Value(BatchStage):
 
     def hitter_reads(self, state) -> dict:
         """His talent as the fitted models read it, before calibration: wRC+
-        (and each side's, when known), fielding value at his best position
-        (runs with the position), legacy's utility bonus in runs, and
-        baserunning runs per 600 PA."""
+        (and each side's, when known), fielding runs at his best position
+        (against an average fielder there), legacy's utility bonus in runs,
+        and baserunning runs per 600 PA."""
         fitted, side = state.fitted, state.batting
         batting = fitted["batting"]
         sides = None
@@ -81,8 +81,8 @@ class Value(BatchStage):
         # legacy's utility bonus, in runs: what it adds through the fielding bridge
         utility = float(bridge.talent(field.points + field.utility, self.fielding_model.bridge)
                         - bridge.talent(field.points, self.fielding_model.bridge))
-        return {"wrc": wrc, "sides": sides, "fielding": field.value, "utility": utility,
-                "baserunning": fitted["running"].runs}
+        return {"wrc": wrc, "sides": sides, "fielding": field.runs, "position": field.best_position,
+                "utility": utility, "baserunning": fitted["running"].runs}
 
     def _hitting(self, state) -> float:
         fitted, side = state.fitted, state.batting
@@ -90,15 +90,16 @@ class Value(BatchStage):
         reads, cal = self.hitter_reads(state), self.model.calibrated
         wrc = float(cal("wrc_plus", reads["wrc"]))
         sides = reads["sides"] and {s: float(cal("wrc_plus", w)) for s, w in reads["sides"].items()}
-        fielding = float(cal("fielding", reads["fielding"]))
-        utility = float(cal("fielding", reads["fielding"] + reads["utility"])) - fielding
+        position = reads["position"]
+        runs = float(self.model.fielding_runs(reads["fielding"], position))
+        fielding = runs + self.fielding_model.position_adjustment[position] + self.model.position_shift(position)
+        utility = float(self.model.fielding_runs(reads["fielding"] + reads["utility"], position)) - runs
         pa = self.model.hitter_pa
         batting_runs = (wrc / 100 - 1) * self.hitting_model.mlb_runs_per_pa * pa
         running = float(cal("baserunning", reads["baserunning"])) * pa / 600
         parts = self.model.hitting(batting_runs, fielding + utility, running)
         platoon = self._platoon(sides, batting and batting.bats, parts, pa)
         utility_war = self.model.hitter["per_defense_run"] * utility
-        runs = fielding - self.fielding_model.position_adjustment[field.best_position]
         ledger = state.ledger
         splits = " on his vL / vR splits" if batting and batting.platoon else ""
         ledger.add(MODEL, f"batting talent ({wrc:.0f} wRC+{splits}, {batting_runs:+.1f} runs)",

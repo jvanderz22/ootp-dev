@@ -35,6 +35,7 @@ rating growth) is tracked in `plans/ranking-archive-plan.md`.
 | 2026-11-08 | **Defense: your position grids stay the shape; the stats translate them into runs.** StatsPlus `arm` runs are opportunity-driven (poor-range outfielders pile them up; always 0 for catchers), so they aren't fit against. OF assists per chance do track OF Arm cleanly. `opps_0`–`opps_5` are plays by difficulty (routine → impossible), a clean range signal. Infield Arm / Error / Turn DP have no stat, so they come in through the grids and position floors.                                                                                                                                                 |
 | 2026-11-08 | **Position floors, as a steep penalty over the last 5 points above the floor** (full credit from floor + 5, half at the floor, nothing a step below): SS IF Arm 45, IF Error 45, Turn DP 45; 3B IF Arm 45, IF Error 40; 2B Turn DP 40; RF OF Arm 45; CF OF Range 55; C Blocking 40, Framing 40. A 10-point ramp was tried first and moved good everyday MLB shortstops with a 50 Error or Turn DP off SS.                                                                                                                                                                                                            |
 | 2026-11-08 | **Your grids are the cross-position scale.** The best position is the highest floored grid score (as in legacy), and one line, the same at every position, turns that grid into fielding runs including the position adjustment. A 70 Range outfielder is worth more at CF than at LF, even though he'd be further above the LFs. Per-position curves (each matched to its own regulars) were tried first and valued good CFs and SSs more at easier spots.                                                                                                                                                          |
+| 2026-11-08 | **CF is graded on Range, in v2 only** (`fielding_talent.cf_grid`; legacy keeps its grid). MLB CF zone runs are nearly all Range (+2.2 runs a point; Arm −0.1, Error +0.2), and the legacy grid stepped evenly in Range while paying a good Arm and Error up to +19. Your rule: Range 60 or less can't start in CF, 65 is playable but below average, 70 good, 75 very good. Arm adds or takes a grid point per 5 outside 45–60, Error takes one per 5 at 30 or below. Calibrated runs by Range 60 / 65 / 70 / 75: −18 / −5 / +7 / +13 (MLB actual −22 / −7 / +8 / +11). The architecture behind it (hand-labelled grids as the cross-position scale) is up for revisiting (TODO below). |
 | 2026-11-08 | **Baserunning assumes optimal managing:** steals at the attempt rate the most aggressive teams use for that Stealing grade, valued at zero (not negative) for runners below break-even. Slow runners still lose extra-base runs. Not tuned on opportunity-based stats.                                                                                                                                                                                                                                                                                                                                               |
 | 2026-11-08 | **PBABIP has little impact.** The pitcher model keeps a third of the fitted PBABIP → hits-in-play effect, and a rule enforces that PBABIP 35 → 65 is worth at most half of the same step in Stuff, Control or HRA. MLB BABIP spread is about what luck alone gives, so the stats can't size it.                                                                                                                                                                                                                                                                                                                      |
 | 2026-11-07 | **Until the value layer, fitted batting goes onto the legacy points scale by matching percentiles** over the league's hitters. Hitters keep their legacy points distribution, so phase 3 only reorders hitters among themselves; the hitter-vs-pitcher balance moves in phase 5 (WAR).                                                                                                                                                                                                                                                                                                                               |
@@ -731,8 +732,13 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
   - **Built:** the value artifact's `calibration`, fit by
     `ranking.fitting.value` on 2042 MLB regulars as actual = a + b ×
     predicted:
-    - wRC+ (b 0.97), fielding value with the position (0.92), baserunning
-      (0.83), and each role's ERA against FIP (SP 1.07, RP 1.10);
+    - wRC+ (b 0.97), baserunning (0.83), and each role's ERA against FIP
+      (SP 1.07, RP 1.10);
+    - fielding in two parts (2026-11-08, replacing one line at 0.92): the
+      runs within a position against MLB zone runs + framing (one stretch,
+      1.24, and a level per position: CFs were credited ~6 runs high, 3Bs
+      ~6 low), and a shift per position adjustment from regulars' WAR (3B
+      −5.6, 2B −3.1, LF −2.0, the rest within a run);
     - the value stage reads them before turning talent into WAR. Leverage
       still reads the talent-scale index, since its map is by talent
       percentile.
@@ -755,6 +761,21 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
     plus high work ethic and intelligence).
   - The production numbers don't match: check which build and snapshot
     produced them, then re-check both on the live data.
+  - Brewer (CF, Range 70 / Arm 55 / Error 50; +14 zone runs a season,
+    3.6 WAR in 2042) was 1.75 WAR after the split fielding calibration. Of
+    his ~12-run gap, ~2 was the legacy CF grid charging his Arm / Error,
+    ~4 its Range curve under-crediting every Range-70 CF, and ~6 him
+    beating CFs with his ratings. With v2's CF grade (decision above) he's
+    2.14 WAR, #376 current.
+- TODO: **revisit the fielding architecture.** v2's defense still rests on
+  your hand-labelled grids (an XGBoost fit to ~60 rows per position) as
+  the shape within a position and the scale across positions; the data
+  only sets one grid → runs line and a calibration that can't reshape a
+  position's curve. CF showed the grid can be the wrong shape. Options: fit
+  each position's curve on its ratings against zone runs (with your rules
+  as constraints, as for hitting), keeping the grids only for ratings with
+  no stat (IF Arm / Error, Turn DP); or explicit per-position rules like
+  CF's.
 - ✅ **pitcher ratings at the extremes** (built 2026-11-08, see the end of
   this item). Two cases:
   - **The top is capped.** The pitcher tables go flat where data run out:

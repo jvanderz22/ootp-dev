@@ -82,8 +82,11 @@ refit the talent models until the 2043 season is over and pulled.
   BABIP spread is about what luck gives (2026-11-08). See whether two
   seasons can size it.
 - **Fielding** is the part you're most skeptical of. A second season of
-  `zr` / `framing` tests whether one line (−11.5 + 0.362 × grid) still
-  prices every position, and whether the position floors still hold.
+  `zr` / `framing` tests whether one line (−11.4 + 0.357 × grid) still
+  prices every position, and whether the position floors still hold. Check
+  v2's CF grade (`cf_grid`) on its Range steps, and whether the fielding
+  calibration's within-position stretch (1.24) and per-position levels
+  hold.
 - **Points bridges and platoon mixes** refit with the artifacts. The mixes
   come from 2030–2042 stats and won't move much.
 

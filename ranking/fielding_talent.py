@@ -2,7 +2,13 @@
 
 Your grids (attribute_models/*_attribute_model.py) stay the shape of defense:
 at each position, the grid score decides who the better fielder is, and it
-already weighs Arm, Error and Turn DP the way you want. Two things go on top:
+already weighs Arm, Error and Turn DP the way you want. CF is the exception
+(decided 2026-11-08): MLB centre fielders' zone runs are nearly all Range, and
+the legacy grid stepped up evenly in Range and paid a good Arm and Error up to
++19. v2 grades CF on your rule instead (cf_grid): Range 60 or less can't start
+there, 65 is playable but below average, 70 good, 75 very good; Arm adds or
+takes a little only outside 45-60, and Error only at 30 or below. Legacy keeps
+its grid. Two things go on top:
 
 - Position floors (decided 2026-11-08): below a floor a player can't be
   trusted at the position. The grid score is scaled down over the last
@@ -49,6 +55,11 @@ RATINGS = (
 )
 # a step below the floor is where the factor reaches 0
 BELOW_FLOOR = 5
+# v2's CF grade on your grids' scale: (Range, grade), straight between
+CF_RANGE = ((50, 0), (55, 3), (60, 10), (65, 40), (70, 68), (75, 82), (80, 94))
+CF_ARM_BAND = (45, 60)      # outside it, CF_STEP per 5 points of Arm
+CF_ERROR_FROM = 35          # below it, CF_STEP off per 5 points of Error
+CF_STEP = 1.0
 
 
 def floor_factor(position, ratings: dict):
@@ -105,12 +116,25 @@ def load(name: str = ARTIFACT) -> FieldingTalent:
     return FieldingTalent.from_file(ARTIFACTS_DIR / f"{name}.json")
 
 
+def cf_grid(ratings: dict):
+    """v2's CF grade: Range on CF_RANGE, with Arm and Error only at the edges."""
+    rng, arm, error = (np.asarray(ratings[r], float) for r in ("of_range", "of_arm", "of_error"))
+    grade = np.interp(rng, *zip(*CF_RANGE))
+    low, high = CF_ARM_BAND
+    grade += CF_STEP * (np.maximum(arm - high, 0) - np.maximum(low - arm, 0)) / 5
+    grade -= CF_STEP * np.maximum(CF_ERROR_FROM - error, 0) / 5
+    return np.maximum(grade, 0.0)
+
+
 def grid_scores(players) -> dict:
-    """{position: your grid's score for each player} (legacy fielding models)."""
+    """{position: your grid's score for each player} (legacy fielding models;
+    CF is cf_grid)."""
     from scoring.model_cache import get_position_player_scorer
 
     models = get_position_player_scorer("overall").fielding_models_map
-    return {pos: np.asarray(models[pos].predict_many(players)) for pos in POSITIONS}
+    grids = {pos: np.asarray(models[pos].predict_many(players)) for pos in POSITIONS if pos != "CF"}
+    grids["CF"] = cf_grid(ratings_of(players))
+    return {pos: grids[pos] for pos in POSITIONS}
 
 
 def ratings_of(players) -> dict:

@@ -102,3 +102,23 @@ def test_v2_ledger_shows_fielding_utility_and_baserunning():
         assert any(label.startswith("utility (") for label in labels)
         assert any(label.startswith("fielding (") for label in labels)
         assert r.ledger.total() == pytest.approx(r.overall_score, abs=1e-9)
+
+
+def _cf(rng, arm=55, error=55):
+    return fielding_talent.cf_grid({"of_range": [rng], "of_arm": [arm], "of_error": [error]})[0]
+
+
+def test_cf_is_range_first():
+    # 60 can't start, 65 playable, 70 good, 75 very good: each step is worth more than any arm or glove
+    grades = [_cf(r) for r in (55, 60, 65, 70, 75, 80)]
+    assert grades == sorted(grades)
+    assert _cf(65, 80, 80) < _cf(70, 45, 35) and _cf(60, 80, 80) < _cf(65, 45, 35)
+
+
+def test_cf_arm_and_error_only_count_at_the_edges():
+    assert _cf(70, 45) == _cf(70, 50) == _cf(70, 60) == _cf(70)
+    assert _cf(70, 40) < _cf(70) < _cf(70, 65)
+    assert _cf(70, error=35) == _cf(70, error=80) == _cf(70)
+    assert _cf(70, error=30) < _cf(70)
+    # and even there, a little
+    assert _cf(70) - _cf(70, 30, 25) < 6 and _cf(70, 80) - _cf(70) < 6

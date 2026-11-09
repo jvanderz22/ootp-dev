@@ -29,11 +29,17 @@ when that's worth more.
 
 Each talent read is calibrated against what MLB regulars actually did
 (`calibration`, fit by ranking.fitting.value on the snapshot's season):
-actual = a + b x predicted, for wRC+, fielding value (runs with the
-position), baserunning runs, and each role's ERA (against FIP, which
-StatsPlus's WAR runs on). The talent models rank well but their spread was
-off - fielding and baserunning too wide, pitchers too narrow and starters
-too optimistic. A starter's innings per start come from his stamina and how
+actual = a + b x predicted, for wRC+, baserunning runs, and each role's ERA
+(against FIP, which StatsPlus's WAR runs on). Fielding is calibrated within
+each position, apart from the position's adjustment (2026-11-08): fielding
+runs against an average fielder there = the position's level + one pooled
+stretch x predicted. Within a position the grids' runs were too compressed
+(real fielders spread ~1.2x wider), while some positions' levels were off
+(MLB centre fielders ~6 runs too high, third basemen ~6 too low); fit
+together with the adjustments, they had shrunk every good defender. Each
+position's adjustment then shifts by what its regulars' WAR says it's worth. The
+talent models rank well but their spread was off - baserunning too wide,
+pitchers too narrow and starters too optimistic. A starter's innings per start come from his stamina and how
 efficient he is - his walks, strikeouts and home runs per PA (walks drive
 pitches per inning): a stingy starter goes deeper than his stamina says.
 
@@ -110,7 +116,9 @@ class ValueModel:
         self.pitcher = artifact["pitcher"]
         self.workloads = artifact["workloads"]
         self.leverage_map = artifact["leverage"]
-        # {"wrc_plus" | "fielding" | "baserunning": [a, b], "era": {role: [a, b]}}
+        # {"wrc_plus" | "baserunning": [a, b], "era": {role: [a, b]},
+        #  "fielding": {"per_run": b, "by_position": {position: a},
+        #               "position_shift": {position: runs}}}
         self.calibration = artifact.get("calibration")
 
     @classmethod
@@ -134,13 +142,26 @@ class ValueModel:
         }
 
     def calibrated(self, name, predicted, role=None):
-        """`predicted` (wRC+, fielding value, baserunning runs, or `role`'s
-        ERA) on the scale MLB regulars actually played at."""
+        """`predicted` (wRC+, baserunning runs, or `role`'s ERA) on the scale
+        MLB regulars actually played at."""
         fit = (self.calibration or {}).get(name)
         if fit is None:
             return predicted
         a, b = fit[role] if role else fit
         return a + b * np.asarray(predicted)
+
+    def fielding_runs(self, runs, position) -> float:
+        """Fielding runs against an average fielder at `position`, as MLB
+        fielders there actually played to them."""
+        fit = (self.calibration or {}).get("fielding")
+        if fit is None:
+            return runs
+        return fit["by_position"][position] + fit["per_run"] * runs
+
+    def position_shift(self, position) -> float:
+        """Runs to add to `position`'s adjustment, from what MLB regulars
+        there were worth beyond it."""
+        return ((self.calibration or {}).get("fielding") or {}).get("position_shift", {}).get(position, 0.0)
 
     def starter_innings(self, stamina, pitches, rates=None) -> float:
         """A full-time starter's innings, from his stamina and his starter

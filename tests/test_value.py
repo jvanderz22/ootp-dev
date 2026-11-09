@@ -103,9 +103,13 @@ def test_a_marginal_other_side_earns_no_two_way_credit():
 # -- calibration, starters' depth and the Control floor (2026-11-08) ----------
 
 def test_calibration_is_a_line_per_read(model):
-    for name in ("wrc_plus", "fielding", "baserunning"):
+    for name in ("wrc_plus", "baserunning"):
         a, b = model.calibration[name]
         assert model.calibrated(name, 10) == pytest.approx(a + 10 * b)
+    # fielding: within the position (a level each, one stretch), apart from its adjustment
+    field = model.calibration["fielding"]
+    assert model.fielding_runs(5, "CF") == pytest.approx(field["by_position"]["CF"] + 5 * field["per_run"])
+    assert model.position_shift("SS") == field["position_shift"]["SS"]
     for role in ("sp", "rp"):
         a, b = model.calibration["era"][role]
         assert model.calibrated("era", 4.0, role) == pytest.approx(a + 4 * b)

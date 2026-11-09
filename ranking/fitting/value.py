@@ -21,9 +21,14 @@ Everything is StatsPlus's own WAR taken apart, on MLB lines:
 - calibration: the snapshot's players scored as the value stage reads them
   (before calibration), against their MLB season that year - weighted least
   squares of actual on predicted for wRC+ (linear weights against the
-  league), fielding value with the position (the WAR left after batting,
-  baserunning and the allowance, in defense runs), baserunning runs per
-  600 PA, and each role's ERA against FIP. Regulars only: CALIBRATION_PA,
+  league), baserunning runs per 600 PA, and each role's ERA against FIP.
+  Fielding is fit within position, apart from the position adjustment:
+  every MLB fielder's zone rating + framing per season at each position he
+  played CALIBRATION_FIELD_INNINGS+ over the snapshot's two seasons, against
+  the fielding model's runs for him there - one stretch, a level per
+  position. Then each position's adjustment is shifted by what regulars who
+  played their best position most were worth there beyond it (the WAR left
+  after batting, baserunning and the allowance). Regulars only: CALIBRATION_PA,
   starters CALIBRATION_SP_IP, relievers CALIBRATION_RP_IP. Then starters'
   innings per start are refit on stamina and the starter's predicted
   strikeouts, walks and home runs per PA together.
@@ -42,7 +47,9 @@ from context import default_base_dir
 from ranking.fitting.datasets import season_snapshots
 from ranking.fitting.hitter_talent import data_hash
 from ranking.fitting.pitcher_talent import _players
-from ranking.fitting.stats import LEVEL_MLB, hitter_seasons, hitter_war, load_batting, load_pitching
+from ranking.fitting.stats import (
+    LEVEL_MLB, hitter_seasons, hitter_war, load_batting, load_fielding, load_pitching,
+)
 from ranking.hitter_talent import ARTIFACTS_DIR
 from ranking.stages.talent import PitcherTalent
 from ranking.value import (
@@ -62,6 +69,8 @@ RELIEF_SHARE = 0.2
 LEVERAGE_KNOTS = np.linspace(0.01, 0.99, 50)
 CALIBRATION_PA = 300
 CALIBRATION_SP_IP, CALIBRATION_RP_IP = 60, 30
+CALIBRATION_FIELD_INNINGS = 400
+MIN_POSITION_REGULARS = 10
 # what sets a starter's depth beyond stamina: walks most (they drive pitches
 # per inning), then home runs and strikeouts
 STARTER_RATES = ("k", "bb", "hr")
@@ -164,6 +173,60 @@ def _reads(model, snapshot_path, player_ids) -> dict:
         return {int(s.player.id): (value_stage.hitter_reads(s), value_stage.pitcher_reads(s)) for s in states}
 
 
+def fielding_calibration(stats_dir, snapshot_path, season) -> dict:
+    """{"per_run", "by_position"}: MLB fielders' runs at each position they
+    played CALIBRATION_FIELD_INNINGS+ (zone rating + framing per season, the
+    snapshot's seasons) against the fielding model's runs for them there -
+    one stretch for all positions, a level per position."""
+    from models.game_players import GamePlayer
+    from ranking import fielding_talent
+
+    field = load_fielding(stats_dir, range(season - 1, season + 1))
+    field = field[field.level_id == LEVEL_MLB].groupby(["player_id", "position"]).agg(
+        ip=("ip", "sum"), runs=("runs", "sum")).reset_index()
+    snap = pd.read_csv(snapshot_path, low_memory=False, usecols=["ID"]).rename(columns={"ID": "player_id"})
+    field = field[(field.ip >= CALIBRATION_FIELD_INNINGS) & field.player_id.isin(snap.player_id)].copy()
+    ids = sorted(set(field.player_id))
+    players = _players(snapshot_path, ids)
+    model = fielding_talent.load()
+    floored = fielding_talent.floored_grids(fielding_talent.grid_scores(players), fielding_talent.ratings_of(players))
+    predicted = model.runs(floored)
+    row = {int(p.id): i for i, p in enumerate(players)}
+    field["predicted"] = [float(predicted[pos][row[pid]]) for pid, pos in zip(field.player_id, field.position)]
+    field["actual"] = field.runs / field.ip * fielding_talent.SEASON_INNINGS
+    positions = list(fielding_talent.POSITIONS)
+    w = np.sqrt(field.ip.to_numpy(float))
+    design = np.column_stack([field.predicted] + [(field.position == p).astype(float) for p in positions])
+    coef = np.linalg.lstsq(design * w[:, None], field.actual.to_numpy(float) * w, rcond=None)[0]
+    return {"per_run": round(float(coef[0]), 4),
+            "by_position": {p: round(float(c), 3) for p, c in zip(positions, coef[1:])},
+            "fielders": int(len(field))}
+
+
+def position_shift(model, fielding, hitters, hit, stats_dir, season) -> dict:
+    """{position: runs to add to its adjustment}: for regulars who played
+    their best position most, what their WAR leaves for fielding and the
+    position (after batting, baserunning and the allowance, in defense runs
+    a full season) against the calibrated fielding runs plus the position's
+    adjustment."""
+    from ranking import fielding_talent
+
+    adjustment = fielding_talent.load().position_adjustment
+    field = load_fielding(stats_dir, [season])
+    field = field[field.level_id == LEVEL_MLB].sort_values("ip").groupby("player_id").tail(1)
+    played = dict(zip(field.player_id, field.position))
+    h, per_run, per_defense = model.hitter, model.hitter["per_batting_run"], model.hitter["per_defense_run"]
+    full = model.hitter_pa / hitters.pa
+    actual = (hitters.war - per_run * hitters.batting - per_defense * hitters.baserunning) * full
+    actual = (actual - h["allowance_600"] * model.hitter_pa / 600) / per_defense
+    runs = fielding["per_run"] * (hit.fielding + hit.utility) + hit.position.map(fielding["by_position"])
+    predicted = runs + hit.position.map(adjustment)
+    own = hitters.player_id.map(played) == hit.position
+    gap = (actual - predicted)[own]
+    return {pos: round(float(np.average(gap[hit.position[own] == pos], weights=hitters.pa[own][hit.position[own] == pos])), 2)
+            for pos in fielding["by_position"] if (hit.position[own] == pos).sum() >= MIN_POSITION_REGULARS}
+
+
 def calibration(model, stats_dir, snapshot_path, season, lines) -> tuple:
     """(calibration, starters' innings per start on stamina and his rates,
     report): see the module docstring."""
@@ -177,20 +240,16 @@ def calibration(model, stats_dir, snapshot_path, season, lines) -> tuple:
     ids = set(hitters.player_id) | set(pitchers.player_id) | set(lines[lines.year >= season - 1].player_id)
     reads = _reads(model, snapshot_path, ids)
 
-    h, per_run, per_defense = model.hitter, model.hitter["per_batting_run"], model.hitter["per_defense_run"]
     hitters = hitters[hitters.player_id.isin(reads)]
     hit = pd.DataFrame([reads[i][0] for i in hitters.player_id], index=hitters.index)
     actual_wrc = 100 * hitters.lw / hitters.pa / hitters.league
-    full = model.hitter_pa / hitters.pa
-    # what his WAR leaves for fielding and the position, in defense runs a full season
-    fielding = (hitters.war - per_run * hitters.batting - per_defense * hitters.baserunning) * full
-    fielding = (fielding - h["allowance_600"] * model.hitter_pa / 600) / per_defense
     out = {
         "wrc_plus": _wls(hit.wrc, actual_wrc, hitters.pa),
-        "fielding": _wls(hit.fielding + hit.utility, fielding, hitters.pa),
+        "fielding": fielding_calibration(stats_dir, snapshot_path, season),
         "baserunning": _wls(hit.baserunning, hitters.baserunning / hitters.pa * 600, hitters.pa),
         "era": {},
     }
+    out["fielding"]["position_shift"] = position_shift(model, out["fielding"], hitters, hit, stats_dir, season)
     lg = season_lines[["er", "outs", "hr", "bb", "k"]].sum()
     lg_ip = lg.outs / 3
     fip_c = 9 * lg.er / lg_ip - (13 * lg.hr + 3 * lg.bb - 2 * lg.k) / lg_ip
