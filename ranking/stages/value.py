@@ -71,7 +71,7 @@ class Value(BatchStage):
         self.hitting_model = hitter_talent.load()
         self.fielding_model = fielding_talent.load()
         self.pitching_model = pitcher_talent.load()
-        self.develops = profile.ratings == "potential"
+        self.develops = profile.ratings == "potential" and profile.development
         drop = {*value.PLATOON_REPLACES, *(development.REPLACES if self.develops else ())}
         self.modifiers = {
             side: [in_war(m, side) for m in profile.shared_modifiers + own if modifier_name(m) not in drop]

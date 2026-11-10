@@ -51,6 +51,7 @@ _FLOAT_FIELDS = (
     "batting_score_component", "pitcher_score", "starter_component",
     "reliever_component", "running_score_component", "raw_overall_score",
     "pre_demand_score", "wrc_plus", "era", "sp_era", "rp_era", "ip", "replacement",
+    "ceiling_war", "full_time_war",
 )
 
 
@@ -251,6 +252,7 @@ def _player_payload(rank, row, drafted_info, game_player=None, source=None):
         for field in ("era", *_PITCHING_SIDE):
             payload[field] = None
     payload["role"] = row.get("role") or None
+    payload["full_time_role"] = row.get("full_time_role") or None
     payload.update(_war_fields(payload))
     return payload
 
@@ -1595,7 +1597,7 @@ async def refresh_league_snapshot(league_id: str):
     return await anyio.to_thread.run_sync(start_league_refresh, league_id)
 
 
-_METHOD_LABELS = {"overall": "current", "potential": "potential"}
+_METHOD_LABELS = {"overall": "Current", "potential": "Prospects"}
 
 
 def _refresh_league_snapshot_sync(league_id: str):
@@ -1628,10 +1630,10 @@ def _refresh_league_snapshot_sync(league_id: str):
         def _progress(done, _label=label, _step=step):
             pct = f" — {done:,} of {total:,}" if total else f" — {done:,}"
             _set_refresh_progress(
-                league_id, f"Scoring the {_label} model ({_step}){pct} players"
+                league_id, f"Scoring {_label} ({_step}){pct} players"
             )
 
-        _set_refresh_progress(league_id, f"Scoring the {label} model ({step})…")
+        _set_refresh_progress(league_id, f"Scoring {label} ({step})…")
         try:
             league_snapshot.ranked_rows(ctx, method, progress=_progress)
         except Exception:  # a transient scorer failure shouldn't fail the refresh

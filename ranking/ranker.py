@@ -10,6 +10,7 @@ import gc
 from models.player_type import classify, prune_breakdown
 from ranking.manifest import build_manifest
 from ranking.results import RankedResult
+from ranking.stages.companion import Companion
 from ranking.stages.demand import Demand
 from ranking.stages.legacy import LegacyModel, LegacyModifiers, TwoWay
 from ranking.stages.talent import Talent
@@ -31,10 +32,11 @@ def legacy_pipeline(profile, league=None):
 
 
 # Engine v2's pipeline: the fitted talent models, then WAR (with the modifiers
-# and the two sides combined), then demand. `legacy` keeps reproducing the
-# legacy rankers (with a ledger) for comparison.
+# and the two sides combined), and any companion profiles; then demand.
+# `legacy` keeps reproducing the legacy rankers (with a ledger) for comparison.
 def v2_pipeline(profile, league=None):
-    return [Talent(profile), Value(profile, league=league)], [Demand(offset=DISPLAY_OFFSET)]
+    companions = [Companion(key, p, league) for key, p in profile.companions]
+    return [Talent(profile), Value(profile, league=league), *companions], [Demand(offset=DISPLAY_OFFSET)]
 
 
 PIPELINES = {"v2": v2_pipeline, "legacy": legacy_pipeline}
@@ -45,6 +47,10 @@ def _league_replacement(ledger):
     without one (ranking/value.py)."""
     lines = [line for line in ledger.lines if line.label == "league replacement" and ledger.counted(line)]
     return round(-sum(line.delta for line in lines) / value.DISPLAY_SCALE, 3) if lines else None
+
+
+def _war(companion):
+    return None if companion is None else round(companion.war, 2)
 
 
 class Ranker:
@@ -128,6 +134,9 @@ class Ranker:
             rp_era=None if state.rp_era is None else round(state.rp_era, 2),
             ip=None if state.innings is None else round(state.innings),
             replacement=_league_replacement(state.ledger),
+            ceiling_war=_war(state.companions.get("ceiling")),
+            full_time_war=_war(state.companions.get("full_time")),
+            full_time_role=getattr(state.companions.get("full_time"), "role", None),
         )
 
     def _finish(self, results) -> list:

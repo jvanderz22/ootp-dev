@@ -87,6 +87,11 @@ type RankedPlayer {
   war: Float
   "v2 engine on current ratings only: his WAR above the league's own replacement for his spot - what the ranking is on (war minus the spot's price)"
   surplusWar: Float
+  "v2 engine on the league's boards only: his WAR as an everyday player if he reaches his potential ratings (no development odds or adjustments)"
+  ceilingWar: Float
+  "v2 engine on current ratings only: his WAR in a full-time role (an everyday player, a rotation starter, or a reliever at the leverage his stuff earns), before the roster sets his spot; and that role"
+  fullTimeWar: Float
+  fullTimeRole: String
   "v2 engine only, a hitter's parts of it: batting (with the playing-time credit), fielding (with position and utility), baserunning"
   battingWar: Float
   fieldingWar: Float

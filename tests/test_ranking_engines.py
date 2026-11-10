@@ -43,7 +43,7 @@ def test_migration_3_keeps_existing_runs_as_legacy(data_dir):
     conn.commit()
     conn.close()
 
-    assert db.query_one("PRAGMA user_version")[0] == len(db._MIGRATIONS) == 7
+    assert db.query_one("PRAGMA user_version")[0] == len(db._MIGRATIONS) == 8
     info = results_store.run_info("class", "c", "draft_class", "legacy")
     assert info["source_version"] == 3 and info["manifest"] is None
     assert results_store.run_info("class", "c", "draft_class", "v2") is None
@@ -237,6 +237,11 @@ def test_v2_stores_the_modeled_line(data_dir):
     pitchers = [s for s in ranked if s.position in ("SP", "RP", "CL")]
     assert hitters and all(rows[s.id]["wrc_plus"] == s.wrc_plus is not None for s in hitters)
     assert pitchers and all(0 < rows[s.id]["era"] == s.era for s in pitchers)
+    # and his ceiling, his potential ratings' full-time WAR
+    assert all(rows[s.id]["ceiling_war"] == s.ceiling_war is not None for s in ranked)
+    # and his WAR and role in a full-time role
+    assert all(rows[s.id]["full_time_war"] == s.full_time_war is not None for s in ranked)
+    assert all(rows[s.id]["full_time_role"] == s.full_time_role is not None for s in ranked)
 
 
 _COMPARE = """query($sort: RankedPlayerSort, $filter: RankedPlayerFilter) {

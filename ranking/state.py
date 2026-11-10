@@ -46,3 +46,6 @@ class PlayerState:
     # the fitted talent layers' outputs by side ("batting", "fielding",
     # "running", "pitching"; None where a legacy model scored it)
     fitted: dict = None
+    # his WAR and role on each of the profile's companions, by key (e.g.
+    # "ceiling"; ranking/stages/companion.py)
+    companions: dict = field(default_factory=dict)

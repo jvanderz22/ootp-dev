@@ -151,6 +151,13 @@ export interface RankedPlayer {
   /** v2 on current ratings: WAR above the league's own replacement for his
    *  spot, what the rank is on (war minus the spot's price); null elsewhere */
   surplusWar: number | null;
+  /** v2 on the league's boards: his WAR as an everyday player if he reaches
+   *  his potential ratings; null elsewhere */
+  ceilingWar: number | null;
+  /** v2 on current ratings: his WAR in a full-time role, before the roster
+   *  sets his spot, and that role (a position, SP or RP); null elsewhere */
+  fullTimeWar: number | null;
+  fullTimeRole: string | null;
   battingWar: number | null;
   fieldingWar: number | null;
   runningWar: number | null;

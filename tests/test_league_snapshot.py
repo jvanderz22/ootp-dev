@@ -349,6 +349,8 @@ def test_ranked_rows_shape_and_order(built_ctx, method):
     assert scores == sorted(scores, reverse=True)
     # snapshot has no demand source
     assert all(r["demand"] == "" for r in rows)
+    # every league board carries his ceiling
+    assert all(r["ceiling_war"] is not None for r in rows)
 
 
 def test_potential_ranking_excludes_established_mlb_players(data_dir, snapshot_csvs):

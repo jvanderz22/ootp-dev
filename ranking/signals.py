@@ -14,7 +14,7 @@ import contextlib
 import io
 import os
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from models.game_players import PLAYER_FIELDS, GamePlayer
 from models.scored_player import ScoredPlayer
@@ -214,9 +214,14 @@ def _tracing(reads):
 
 
 def inventory(ranker, players) -> Inventory:
-    """Rank `players` (GamePlayers) with `ranker`, recording what each part read."""
+    """Rank `players` (GamePlayers) with `ranker`, recording what each part
+    read. A companion profile (the ceiling) is its own scoring, with its own
+    reads, so it's left out."""
+    from ranking.ranker import Ranker
+
     players = list(players)
     inv = Inventory(ranker.profile, len(players))
+    ranker = Ranker(replace(ranker.profile, companions=()), ranker.pipeline, ranker.league)
     with _tracing(inv.reads), contextlib.redirect_stdout(io.StringIO()):
         ranker.rank(players, batch_size=max(len(players), 1))
     return inv

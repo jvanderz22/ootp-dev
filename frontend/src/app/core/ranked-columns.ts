@@ -735,6 +735,10 @@ const surplusCol = (group: ColGroup) =>
     group,
   );
 
+/** His potential ratings' WAR in a full-time role (the league's boards). */
+export const CEILING_TITLE = 'His WAR as an everyday player if he reaches his potential ratings.';
+const ceilingCol = (group: ColGroup) => warCol('ceilingWar', 'Ceiling', CEILING_TITLE, group);
+
 const ROLE_COLUMN: ColumnDef = {
   field: 'role',
   header: 'Role',
@@ -809,6 +813,7 @@ const V2_VIEW_COLUMNS: Record<ClassView, ColumnDef[]> = {
     WAR_COLUMN,
     field_('wrcPlus'),
     surplusCol('Model'),
+    ceilingCol('Model'),
     ...BATTING_COLUMNS,
   ],
   pitching: [
@@ -817,6 +822,7 @@ const V2_VIEW_COLUMNS: Record<ClassView, ColumnDef[]> = {
     field_('era'),
     ...V2_PITCHING_MODEL,
     surplusCol('Model'),
+    ceilingCol('Model'),
     ...PITCHING_COLUMNS,
   ],
   compare: VIEW_COLUMNS.compare,
@@ -841,14 +847,15 @@ const DROPPED_IN_LEAGUE = new Set([
 /** Columns for a view in a given context and engine. `'league'` drops the
  *  demand / drafted columns and the player-type tag, and inserts Org / Level
  *  right after Pos; under v2 it drops the score too (no demand step, so it's
- *  just his WAR in points). */
+ *  just his WAR in points). A class drops the Ceiling, which only the
+ *  league's boards carry. */
 export function viewColumns(
   view: ClassView,
   context: 'class' | 'league' = 'class',
   engine: RankingEngine = 'v2',
 ): ColumnDef[] {
   const base = COLUMNS_BY_ENGINE[engine][view];
-  if (context !== 'league') return base;
+  if (context !== 'league') return base.filter((c) => c.field !== 'ceilingWar');
   const dropped = engine === 'v2' && view !== 'compare' ? new Set([...DROPPED_IN_LEAGUE, 'modelScore']) : DROPPED_IN_LEAGUE;
   // Drop the drafted/demand columns and the Type tag; Pos stays sticky right
   // after Name, with Org (3-letter code) and Level slotted in just after it.

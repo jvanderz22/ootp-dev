@@ -3,7 +3,8 @@
 Everything that differs between the current, potential and draft-class rankings
 lives here, instead of across scorer `type` branches, ranker subclasses,
 constructor arguments and overridden methods. The profiles below reproduce the
-legacy rankers in `rankers/` exactly; the parity test holds them to that.
+legacy rankers in `rankers/` exactly; the parity test holds them to that. The
+full-time profile and the ceiling are v2's own, with no legacy counterpart.
 """
 import hashlib
 import inspect
@@ -58,6 +59,12 @@ class ScoringProfile:
     # v2: value WAR above the league's own replacement by role
     # (ranking/value.py), not StatsPlus's
     league_replacement: bool = False
+    # v2: the development factors (ranking/development.py) follow potential
+    # ratings; off, potential ratings are valued as they stand
+    development: bool = True
+    # v2: (key, profile) pairs each player is also scored on, alongside this
+    # profile (ranking/stages/companion.py) - e.g. his ceiling
+    companions: tuple = ()
 
     def without(self, *modifiers) -> "ScoringProfile":
         """This profile minus `modifiers` (matched by name) on every side."""
@@ -87,14 +94,21 @@ class ScoringProfile:
             "two_way_threshold": self.two_way_threshold,
             "two_way_bonus": self.two_way_bonus,
             "league_replacement": self.league_replacement,
+            "development": self.development,
+            "companions": {key: profile.describe() for key, profile in self.companions},
         }
 
     def config_hash(self) -> str:
         return hashlib.sha256(json.dumps(self.describe(), sort_keys=True).encode()).hexdigest()[:12]
 
 
+# His potential ratings' WAR in a full-time role: the model lines alone, with
+# no modifiers or development factors - what reaching his potential is worth.
+# Scored alongside the league's boards as his ceiling, never ranked on its own.
+CEILING = ScoringProfile(name="ceiling", ratings="potential", development=False)
+
 # Current ratings (legacy OverallRanker).
-CURRENT = ScoringProfile(
+_CURRENT = ScoringProfile(
     name="overall",
     ratings="overall",
     batting_modifiers=(BatterHandednessModifier, BatterHitProfileModifier(True)),
@@ -103,6 +117,15 @@ CURRENT = ScoringProfile(
     # draft boards stay on StatsPlus's until the draft odds settle theirs
     league_replacement=True,
 )
+
+# Current ratings at a full-time role: talent and value only, with none of the
+# roster pricing - no league replacement, no part-time playing time, and
+# relievers at the leverage their talent earns. The draft odds score readiness
+# and outcome A on it, and the Current card shows it beside his value. v2
+# only; the legacy engine has no such ranker.
+FULL_TIME = replace(_CURRENT, name="full_time", league_replacement=False)
+
+CURRENT = replace(_CURRENT, companions=(("ceiling", CEILING), ("full_time", FULL_TIME)))
 
 # Potential ratings for the league's rookies (legacy OverallPotentialRanker).
 POTENTIAL = ScoringProfile(
@@ -121,6 +144,7 @@ POTENTIAL = ScoringProfile(
         PitcherVelocityModifier,
         PitcherInjuryModifier,
     ),
+    companions=(("ceiling", CEILING),),
 )
 
 # A draft class (legacy DraftClassRanker).
@@ -140,5 +164,6 @@ DRAFT = ScoringProfile(
     two_way_threshold=2.2,
 )
 
-# keyed by ranking method, as `rankers.get_ranker.RANKERS` is
-PROFILES = {p.name: p for p in (CURRENT, POTENTIAL, DRAFT)}
+# keyed by ranking method, as `rankers.get_ranker.RANKERS` is (full_time has
+# no legacy ranker)
+PROFILES = {p.name: p for p in (CURRENT, FULL_TIME, POTENTIAL, DRAFT)}

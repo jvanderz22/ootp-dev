@@ -26,9 +26,17 @@ import { RankedTableComponent } from '../class-view/ranked-table';
 
 type Method = 'overall' | 'potential';
 
-const METHODS: { label: string; value: Method }[] = [
-  { label: 'Current', value: 'overall' },
-  { label: 'Potential', value: 'potential' },
+const METHODS: { label: string; value: Method; title: string }[] = [
+  {
+    label: 'Current',
+    value: 'overall',
+    title: 'Next season on his current ratings: WAR over what the league gives away free at his roster spot',
+  },
+  {
+    label: 'Prospects',
+    value: 'potential',
+    title: 'Players with under a year of MLB service, on their potential ratings',
+  },
 ];
 
 /** Top-level grouping. "By org" carries a second dropdown (Full org / one of the
@@ -59,7 +67,7 @@ function defaultQuery(): RankedQuery {
 
 /**
  * Live league snapshot view: the whole player pool pulled from StatsPlus, ranked
- * by the "current" or "potential" model, optionally narrowed to one org or one
+ * by Current or (rookies only) Prospects, optionally narrowed to one org or one
  * roster team. Fetch/filter/sort/infinite-scroll mirror `class-view.ts`, against
  * `leagueSnapshotPlayers` instead of `rankedPlayers`, and it reuses the
  * class-view ranked table unchanged.
@@ -89,6 +97,7 @@ function defaultQuery(): RankedQuery {
               type="button"
               [class.active]="method() === m.value"
               [disabled]="loading()"
+              [title]="m.title"
               (click)="setMethod(m.value)"
             >{{ m.label }}</button>
           }

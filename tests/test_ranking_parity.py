@@ -14,7 +14,7 @@ import pytest
 from models.game_players import GamePlayer
 from ranking import PROFILES, get_ranker
 from ranking.results import SCORED_PLAYER_FIELDS
-from rankers.get_ranker import get_ranker_for_method
+from rankers.get_ranker import RANKERS, get_ranker_for_method
 from tests.e2e_fixtures import make_draft_class_csv
 from tests.test_league_snapshot import make_snapshot_csvs
 from league_snapshot import join_rows
@@ -30,11 +30,15 @@ def _rank_both(method, rows, batch_size, pipeline="v2"):
     return legacy, v2
 
 
+# the methods the legacy engine has a ranker for (v2's full-time profile has none)
+LEGACY_METHODS = sorted(set(PROFILES) & set(RANKERS))
+
+
 def _fields(scored):
     return {name: getattr(scored, name) for name in SCORED_PLAYER_FIELDS}
 
 
-@pytest.mark.parametrize("method", sorted(PROFILES))
+@pytest.mark.parametrize("method", LEGACY_METHODS)
 @pytest.mark.parametrize("seed", [7, 11, 23])
 def test_legacy_pipeline_matches_legacy_on_a_draft_class(method, seed):
     # a batch size that doesn't divide the class exercises the batch boundary
@@ -50,7 +54,7 @@ def test_legacy_pipeline_matches_legacy_on_a_snapshot(method):
 
 @pytest.mark.parametrize("method", sorted(PROFILES))
 def test_ledger_sums_to_the_score(method):
-    _, v2 = _rank_both(method, _class_rows(7), batch_size=1500)
+    v2 = get_ranker(method).rank([GamePlayer(dict(r)) for r in _class_rows(7)], batch_size=1500)
     for r in v2:
         assert r.ledger.total() == pytest.approx(r.overall_score, abs=1e-9), r.ledger.as_list()
 

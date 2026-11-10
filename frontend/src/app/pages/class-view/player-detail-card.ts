@@ -37,6 +37,7 @@ import {
   typeSeverity,
   valueBuild,
 } from '../../core/player-stats';
+import { CEILING_TITLE } from '../../core/ranked-columns';
 
 /** The expanded-row content (and, on phones, the full-screen panel's). Under
  *  v2 it reads top-down as verdict -> why -> evidence: a band with his value
@@ -157,6 +158,34 @@ export class PlayerDetailCardComponent {
   protected readonly build = computed(() => valueBuild(this.breakdown()));
 
   protected readonly isV2 = computed(() => this.player().source.engine === 'v2');
+
+  protected readonly ceilingTitle = CEILING_TITLE;
+
+  /** Current ratings: his WAR in a full-time role, beside his value - shown
+   *  where the roster gives him a different job: a part-time bat, a bullpen
+   *  slot's leverage, or the pen over the rotation (or back). */
+  protected readonly fullTime = computed(() => {
+    const p = this.player();
+    const b = this.breakdown();
+    const war = this.build()?.war ?? p.war;
+    if (p.fullTimeWar == null || war == null || !b) return null;
+    const partTime = b.ledger.some((l) => l.counted && l.label === 'playing time');
+    const pen = p.role === 'RP' && Math.abs(p.fullTimeWar - war) >= 0.05;
+    if (!partTime && !pen && p.fullTimeRole === p.role) return null;
+    const role = p.fullTimeRole;
+    const [label, note] =
+      role === 'SP'
+        ? ['As a rotation starter', 'a full turn every fifth day']
+        : role === 'RP'
+          ? ['As a reliever', 'at the leverage his stuff earns']
+          : ['As an everyday player', `a regular's PA at ${role ?? 'his position'}`];
+    return {
+      war: p.fullTimeWar,
+      label,
+      note,
+      title: 'His WAR if he had the job full-time, before the roster sets his role - for reference, not counted',
+    };
+  });
 
   /** The v2 verdict band. It reads the table row, so it's there before the
    *  breakdown lands; the breakdown then adds the role he's valued in and

@@ -1,5 +1,8 @@
 """Phase 5b: the value layer - talent -> WAR at a full-time role, shown as
 50 + 10 x WAR."""
+import csv
+import io
+
 import numpy as np
 import pytest
 
@@ -11,6 +14,7 @@ from ranking.ledger import Ledger
 from ranking.state import PlayerState
 from ranking.stages.demand import Demand
 from ranking.stages.value import Value
+from tests.e2e_fixtures import make_draft_class_csv
 from tests.test_league_snapshot import make_snapshot_csvs
 
 
@@ -204,19 +208,66 @@ def test_two_way_never_takes_off_for_a_side_below_the_league_price():
     assert state.value == pytest.approx(value.points(3.0))
 
 
-def test_current_ratings_without_the_league_replacement_are_statsplus_scale():
-    # the draft odds score outcome A and readiness this way (plans/draft-odds-plan.md)
+def test_the_full_time_profile_is_current_ratings_without_roster_pricing():
+    # the Current card's full-time line, and the draft odds' outcome A and
+    # readiness (plans/draft-odds-plan.md): the potential and draft boards' conventions
+    from ranking.profiles import CURRENT, FULL_TIME
+
+    differ = {k for k, v in FULL_TIME.describe().items() if CURRENT.describe()[k] != v}
+    assert differ == {"name", "league_replacement", "companions"} and not FULL_TIME.companions
+    full_time = get_ranker("full_time")
+    stage = next(s for s in full_time.batch_stages if isinstance(s, Value))
+    assert stage.replacement is None and "replacement" not in full_time.manifest()["artifact_versions"]
+    for r in full_time.rank([GamePlayer(dict(r)) for r in join_rows(*make_snapshot_csvs())]):
+        assert not [line for line in r.ledger.lines if line.label in ("league replacement", "playing time")]
+        # a reliever's leverage is his talent's, not a bullpen spot's
+        assert all(line.note is None for line in r.ledger.lines if line.label == "leverage")
+        assert r.replacement is None
+
+
+def test_the_ceiling_is_his_potential_ratings_alone():
+    from ranking.ledger import DEVELOPMENT, MODIFIERS
+    from ranking.profiles import CEILING
+    from ranking.ranker import Ranker
+
+    rows = join_rows(*make_snapshot_csvs())
+    alone = {r.id: r for r in Ranker(CEILING).rank([GamePlayer(dict(r)) for r in rows])}
+    assert not any(line.stage in (MODIFIERS, DEVELOPMENT) for r in alone.values() for line in r.ledger.lines)
+    for method in ("overall", "potential"):
+        for r in get_ranker(method).rank([GamePlayer(dict(r)) for r in rows]):
+            war = (alone[r.id].pre_demand_score - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE
+            assert r.ceiling_war == pytest.approx(war, abs=0.006), (method, r.name)
+    # the draft board's ceiling is its own model lines (the draft odds, step C)
+    draft = csv.DictReader(io.StringIO(make_draft_class_csv(n=40, seed=7)))
+    assert all(r.ceiling_war is None for r in get_ranker("draft_class").rank([GamePlayer(r) for r in draft]))
+
+
+def test_current_ratings_carry_his_full_time_war(ranked):
+    rows = join_rows(*make_snapshot_csvs())
+    full_time = {r.id: r for r in get_ranker("full_time").rank([GamePlayer(dict(r)) for r in rows])}
+    for r in ranked:
+        alone = full_time[r.id]
+        assert r.full_time_war == pytest.approx((alone.pre_demand_score - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE, abs=0.006)
+        assert r.full_time_role == alone.role
+        if r.replacement is not None and r.role == alone.role and not [
+            line for line in r.ledger.lines if line.label == "playing time" and r.ledger.counted(line)
+        ] and r.role not in ("RP",):
+            # an everyday bat or a starter: the roster takes only its price
+            war = (r.pre_demand_score - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE + r.replacement
+            assert r.full_time_war == pytest.approx(war, abs=0.02), r.name
+    assert get_ranker("potential").rank([GamePlayer(dict(r)) for r in rows])[0].full_time_war is None
+
+
+def test_the_ceiling_leaves_the_card_alone(ranked):
+    # the companion scores in its own breakdown scope
     from dataclasses import replace
 
     from ranking.profiles import CURRENT
     from ranking.ranker import Ranker
 
-    plain = Ranker(replace(CURRENT, league_replacement=False))
-    stage = next(s for s in plain.batch_stages if isinstance(s, Value))
-    assert stage.replacement is None
-    for r in plain.rank([GamePlayer(dict(r)) for r in join_rows(*make_snapshot_csvs())]):
-        assert not [line for line in r.ledger.lines if line.label in ("league replacement", "playing time")]
-        assert all(line.note is None for line in r.ledger.lines if line.label == "leverage")
+    plain = Ranker(replace(CURRENT, companions=())).rank(
+        [GamePlayer(dict(r)) for r in join_rows(*make_snapshot_csvs())], batch_size=500)
+    assert [(r.id, r.breakdown, r.overall_score) for r in plain] == [(r.id, r.breakdown, r.overall_score) for r in ranked]
 
 
 def test_a_reliever_picks_fewer_matchups_in_a_busier_spot():

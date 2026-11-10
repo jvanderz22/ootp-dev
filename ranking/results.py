@@ -29,6 +29,13 @@ class RankedResult(ScoredPlayer):
     # spot's price), so his WAR on StatsPlus's scale is his value plus this;
     # None where the profile values him over StatsPlus's replacement
     replacement: float = None
+    # his potential ratings' WAR in a full-time role (ranking.profiles.CEILING);
+    # None where the profile doesn't score it
+    ceiling_war: float = None
+    # current ratings: his WAR and role in a full-time role, before the roster
+    # sets his spot (ranking.profiles.FULL_TIME); None elsewhere
+    full_time_war: float = None
+    full_time_role: str = None
 
     def scored_player_fields(self) -> dict:
         return {name: getattr(self, name) for name in SCORED_PLAYER_FIELDS}
