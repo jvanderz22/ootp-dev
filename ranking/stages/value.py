@@ -25,7 +25,7 @@ replacement, with a ledger line saying so.
 """
 import numpy as np
 
-from ranking import bridge, development, fielding_talent, hitter_talent, pitcher_talent, value
+from ranking import development, fielding_talent, hitter_talent, pitcher_talent, value
 from ranking.ledger import BATTING, DEVELOPMENT, MODEL, MODIFIERS, PITCHING, TWO_WAY, Ledger
 from ranking.ratings import RatingsView
 from ranking.stages.base import BatchStage
@@ -65,8 +65,8 @@ class Value(BatchStage):
     def hitter_reads(self, state) -> dict:
         """His talent as the fitted models read it, before calibration: wRC+
         (and each side's, when known), fielding runs at his best position
-        (against an average fielder there), legacy's utility bonus in runs,
-        and baserunning runs per 600 PA. None without a batting fit."""
+        (against an average fielder there), the utility WAR, and baserunning
+        runs per 600 PA. None without a batting fit."""
         fitted, side = state.fitted, state.batting
         batting = fitted["batting"]
         if batting is None:
@@ -81,11 +81,8 @@ class Value(BatchStage):
         else:
             wrc = batting.wrc_plus
         field = fitted["fielding"]
-        # legacy's utility bonus, in runs: what it adds through the fielding bridge
-        utility = float(bridge.talent(field.points + field.utility, self.fielding_model.bridge)
-                        - bridge.talent(field.points, self.fielding_model.bridge))
         return {"wrc": wrc, "sides": sides, "fielding": field.runs, "position": field.best_position,
-                "utility": utility, "baserunning": fitted["running"].runs}
+                "utility": field.utility_war, "baserunning": fitted["running"].runs}
 
     def _hitting(self, state) -> float:
         fitted, side = state.fitted, state.batting
@@ -98,22 +95,21 @@ class Value(BatchStage):
         sides = reads["sides"] and {s: float(cal("wrc_plus", w)) for s, w in reads["sides"].items()}
         position = reads["position"]
         runs = float(self.model.fielding_runs(reads["fielding"], position))
-        fielding = runs + self.fielding_model.position_adjustment[position] + self.model.position_shift(position)
-        utility = float(self.model.fielding_runs(reads["fielding"] + reads["utility"], position)) - runs
+        fielding = float(self.model.fielding_value(runs, self.fielding_model.position_adjustment[position]))
         pa = self.model.hitter_pa
         batting_runs = (wrc / 100 - 1) * self.hitting_model.mlb_runs_per_pa * pa
         running = float(cal("baserunning", reads["baserunning"])) * pa / 600
-        parts = self.model.hitting(batting_runs, fielding + utility, running)
+        parts = {**self.model.hitting(batting_runs, fielding, running), "utility": reads["utility"]}
         platoon = self._platoon(sides, batting and batting.bats, parts, pa)
-        utility_war = self.model.hitter["per_defense_run"] * utility
         ledger = state.ledger
         splits = " on his vL / vR splits" if batting and batting.platoon else ""
         splits += ", BABIP from Contact" if batting and batting.babip_implied else ""
         ledger.add(MODEL, f"batting talent ({wrc:.0f} wRC+{splits}, {batting_runs:+.1f} runs)",
                    SCALE * parts["batting"], BATTING)
         ledger.add(MODEL, f"fielding ({field.best_position}, {runs:+.0f} runs, {fielding:+.0f} with position)",
-                   SCALE * (parts["fielding"] - utility_war), BATTING)
-        ledger.add(MODEL, f"utility ({utility:+.1f} runs)", SCALE * utility_war, BATTING)
+                   SCALE * parts["fielding"], BATTING)
+        if field.covers:
+            ledger.add(MODEL, f"utility (covers {', '.join(field.covers)})", SCALE * parts["utility"], BATTING)
         ledger.add(MODEL, f"baserunning ({running:+.1f} runs)", SCALE * parts["running"], BATTING)
         ledger.add(MODEL, f"position player allowance ({pa:.0f} PA)", SCALE * parts["allowance"], BATTING)
         if platoon and not any(platoon[1].values()):
@@ -127,7 +123,7 @@ class Value(BatchStage):
             parts["platoon"] = war_lost
         side.components = {
             "batting": SCALE * (parts["batting"] + parts["allowance"] + parts.get("platoon", 0.0)),
-            "fielding": SCALE * parts["fielding"],
+            "fielding": SCALE * (parts["fielding"] + parts["utility"]),
             "running": SCALE * parts["running"],
         }
         side.best_position = field.best_position
@@ -146,7 +142,7 @@ class Value(BatchStage):
         allowance)."""
         if sides is None:
             return None
-        rest = parts["fielding"] + parts["running"] + parts["allowance"]
+        rest = parts["fielding"] + parts["utility"] + parts["running"] + parts["allowance"]
         per_run = self.model.hitter["per_batting_run"] * self.hitting_model.mlb_runs_per_pa * pa
         rate = {s: per_run * (w / 100 - 1) + rest for s, w in sides.items()}
         starts = {s: float(np.clip(w / parts["allowance"], 0.0, 1.0)) for s, w in rate.items()}

@@ -173,6 +173,162 @@ What that says:
   - the draft eval is no worse;
   - you review the board movers before it ships.
 
+#### Findings and decisions (2026-11-09)
+
+**Seeded tables.** Each position's tables are fit on zone runs (plus framing
+for C), on MLB and AAA lines with 300+ innings, with a level term. They're
+monotone piecewise-linear with knots at 40 / 50 / 60 / 70. Each one takes the
+strongest smoothing within 2% of the best cross-validated error, and
+continues at its average slope outside the 5–95% range of MLB regulars.
+Measured out of fold, they match or beat the grids at every position. Runs
+of error per season against MLB lines:
+
+| | C | 1B | 2B | 3B | SS | LF | CF | RF |
+|---|---|---|---|---|---|---|---|---|
+| Tables (out of fold) | 5.8 | 3.4 | 7.8 | 5.6 | 5.6 | 4.7 | 6.4 | 4.2 |
+| Grids (CF is `cf_grid`) | 5.9 | 3.8 | 7.9 | 6.4 | 5.9 | 6.3 | 6.3 | 6.6 |
+
+What they say:
+- **Catchers:** Framing is nearly everything, about 5 runs per 5-point step.
+- **1B:** under ±3 runs from every rating.
+- **2B and SS:** Range dominates.
+- **3B:** Arm is the main rating (typical 70; Arm 50 is −17 runs).
+- **The outfield:** Range is nearly everything, with Arm and Error at ±4 or
+  less.
+- **Smoothing (your call):** LF and RF go flat from Range 60 to 70, which
+  looks like noise, so their seeds get more smoothing.
+
+**Turn DP.** A double play is worth 0.33 runs: run expectancy for a DP
+instead of a force-out averages about 0.31 (0.41 with no outs, 0.22 with
+one), scaled to this league's 0.122 runs per PA.
+
+| Turn DP | 30 | 35 | 40 | 45 | 50 | 55 | 60 | 70 |
+|---|---|---|---|---|---|---|---|---|
+| 2B DP per 1,350 innings | 74 | 72 | 75 | **91** | 93 | 98 | 106 | 104 |
+| SS DP per 1,350 innings | — | 60 | 65 | 67 | **77** | 82 | 86 | 82 |
+
+Those are MLB, AAA and AA lines from 2041–42 with 150+ innings. The drop is
+at 40–45 for 2B and 45–50 for SS.
+- **Floors (your call):** 2B 35, SS 40.
+- **The DP table** keeps the data's drop instead of smoothing it away, so a
+  40 at 2B still costs about 6 runs.
+
+**Catcher Arm and Blocking.** The data's weights stand, about 0.5 and 1.4
+runs per step (your call). Hard floors: Arm 40 (nothing at 35) and Blocking
+45 (nothing at 40).
+
+**Outfield Arm.** StatsPlus's arm runs can't measure runners held:
+
+| Per point of Arm, per season | LF | CF | RF |
+|---|---|---|---|
+| Arm runs, controlling for Range and chances | +0.05 | +0.20 | −0.01 |
+| Assists | +0.16 | +0.17 | +0.15 |
+
+So the weights are judgment (your call), like CF's edges:
+- **CF:** ±0.5 runs per step outside 45–60.
+- **LF:** half of CF, since arm matters even less in LF than in CF.
+- **RF:** about three times CF, ±1.4 runs per step.
+
+**CF's Range curve** stays your rule. The seeded table agrees at 60–70
+(−21 / −7 / +7 against −18 / −5 / +7) and flattens at 75 (+8 against +13),
+but that rests on only five MLB players at Range 75.
+
+**Position adjustments: from MLB usage, not StatsPlus's WAR** (your call).
+- **The problem.** Each table measures runs against the average fielder at
+  its own position. StatsPlus's adjustments put SS only 2 runs above 2B. With
+  them, the tables pick a regular's actual position for 54% of 2041–42 MLB
+  regulars (the grids manage 62%), and send 37 of 42 shortstops to 2B: a
+  Range-70 SS is +15 runs against the average 2B but +5 against the average
+  SS. A true SS should be worth the most at SS.
+- **Tried and dropped: the classic positional spectrum.** Its adjustments
+  were built from how far each position's regulars field above the average
+  at the other positions. It picked right for only 48%: the 1B table is
+  flat, so everyone looks fine at first.
+- **What works.** One adjustment per position, fit with a multinomial logit
+  so the tables plus the adjustments reproduce where OOTP's managers play
+  regulars (400+ innings at their main position; the fit's temperature is
+  6.5 runs). Fit on 2041, it picks right for 67% of the held-out 2042
+  season.
+- **The pure usage fit is about twice as wide as StatsPlus's** (SS 15 runs
+  above 2B), which would move a regular's WAR by up to ±1. You chose a
+  **light pull toward the WAR adjustments**:
+  - 65% agreement;
+  - SS 13.5 runs above 2B;
+  - changes against StatsPlus of C +1.6, 1B −6.9, 2B −3.8, 3B +0.4, SS +7.7,
+    LF −4.0, CF +5.4 and RF −1.7 runs;
+  - the regulars' average kept where StatsPlus has it, so overall hitter WAR
+    doesn't move.
+
+  The same adjustments both pick the position and value him there.
+- **The calibration's position shift goes.** It refit each position's level
+  to StatsPlus's WAR and would undo this.
+
+| Pull toward WAR | Picks main position | SS − 2B | Biggest change vs WAR |
+|---|---|---|---|
+| none (pure usage) | 66% | +15 runs | 8.9 runs |
+| **light (chosen)** | 65% | +14 | 7.7 |
+| medium | 62% | +11 | 5.9 |
+| heavy | 56% | +4 | 1.3 |
+| StatsPlus WAR as-is | 54% | +2 | — |
+
+**The final fit** (on the final tables, with your judged overlays, the extra
+smoothing and the DP table) needs much less from the adjustments. Even pure
+usage moves them at most 4 runs from StatsPlus's, so the pull barely matters
+there.
+- **Shortstops.** SS still came out only 9 runs above 2B, and just 38% of
+  MLB shortstops were worth the most at SS. So the fit adds your principle
+  as a rule (`TRUE_SHARE`): at least three-quarters of MLB shortstops must be
+  worth more at SS than at 2B or 3B. That raises SS by 2.7 runs.
+- **CF gets no such rule.** The centre fielders who go to a corner are
+  mostly Range 60–65, which your CF rule says can't start there.
+
+The final adjustments, against StatsPlus's:
+
+| | C | 1B | 2B | 3B | SS | LF | CF | RF |
+|---|---|---|---|---|---|---|---|---|
+| Final | +7.8 | −6.4 | −0.2 | +2.2 | +11.4 | −3.9 | +4.5 | −3.4 |
+| StatsPlus | +9.2 | −6.2 | +4.0 | +3.7 | +6.0 | −3.5 | +2.3 | −3.3 |
+
+The real model, floors and all, places 65% of 2041–42 MLB regulars at their
+actual position (grids 62%), including 52 of 79 shortstops (30 before).
+
+**The value calibration** comes out nearly the identity:
+- one stretch of 0.99;
+- every position's level within 1.4 runs;
+- one shared level of −0.21 runs, which keeps regulars' fielding and
+  position at what their WAR leaves on average.
+
+The old per-position shift is gone.
+
+**After review (2026-11-09):**
+- **Reanchored a little (your call):** Avelar may stay ahead, but Spinner
+  should lead the rest. Against StatsPlus's WAR, fielding plus position ran
+  ~0.76× as wide as predicted, and the top 10 hitters came out at 5.77 WAR
+  predicted against 5.21 actual. So the shared level became one line for
+  every position, `fielding_value` = 0.30 + 0.81 × (runs + adjustment). The
+  same stretch everywhere keeps each player's best position. The top 10
+  hitters are now 5.62 against 5.21.
+- **The board after:**
+  - Avelar #1 (7.26), Spinner #2 (6.29), Webb #3, Goughler #6 (5.91).
+  - Brewer 2.22 (#359), Intravaia 2.05 (#451).
+  - Hitters in the top 25 go from 11 to 13, and in the top 100 from 55 to
+    57.
+  - Catchers lose about 0.45 WAR on average: a lower C adjustment, and the
+    stretch hits their large one hardest.
+- **The catcher Arm floor drops to 35** (your call). At 40 it cost good
+  framers most of their value: Contreras (Framing 70, Blocking 65, Arm 40)
+  went 1.99 → 0.38 WAR, and Alvarez (70 / 70 / 40) 3.78 → 2.34. Now they're
+  1.88 and 3.52.
+- **The best position is v2's pick from the ratings,** not the export's
+  listed position. Prospects who field poorly everywhere are cheapest at 1B,
+  so they're valued as first basemen (in the 2042 class, 36 listed LF, 29 2B
+  and 8 C). Fine by you.
+
+**Utility** becomes its own flexibility line in WAR, sized at first like
+legacy's bonus on the live board: 0.07 WAR on average across the top 400
+hitters, 0.19 at the 90th percentile, 0.36 at most. It credits each other
+position a player can cover, most for SS and CF.
+
 ### 3. A native model stage (no points)
 
 - Replace `LegacyModel` and the points bridges with a v2 talent → value path.

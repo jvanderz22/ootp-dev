@@ -33,12 +33,11 @@ actual = a + b x predicted, for wRC+, baserunning runs, and each role's ERA
 (against FIP, which StatsPlus's WAR runs on). Fielding is calibrated within
 each position, apart from the position's adjustment (2026-11-08): fielding
 runs against an average fielder there = the position's level + one pooled
-stretch x predicted. Within a position the grids' runs were too compressed
-(real fielders spread ~1.2x wider), while some positions' levels were off
-(MLB centre fielders ~6 runs too high, third basemen ~6 too low); fit
-together with the adjustments, they had shrunk every good defender. Each
-position's adjustment then shifts by what its regulars' WAR says it's worth. The
-talent models rank well but their spread was off - baserunning too wide,
+stretch x predicted. The adjustments themselves aren't refit to StatsPlus's
+WAR: they come from where managers play regulars (ranking/fielding_talent.py,
+2026-11-09); one line shared by every position puts runs plus adjustment
+where regulars' WAR does (it spreads them ~0.76x as wide), the same stretch
+everywhere so each player's best position stays his best. The talent models rank well but their spread was off - baserunning too wide,
 pitchers too narrow and starters too optimistic. A starter's innings per start come from his stamina and how
 efficient he is - his walks, strikeouts and home runs per PA (walks drive
 pitches per inning): a stingy starter goes deeper than his stamina says.
@@ -117,8 +116,7 @@ class ValueModel:
         self.workloads = artifact["workloads"]
         self.leverage_map = artifact["leverage"]
         # {"wrc_plus" | "baserunning": [a, b], "era": {role: [a, b]},
-        #  "fielding": {"per_run": b, "by_position": {position: a},
-        #               "position_shift": {position: runs}}}
+        #  "fielding": {"per_run": b, "by_position": {position: a}, "value": [a, b]}}
         self.calibration = artifact.get("calibration")
 
     @classmethod
@@ -158,10 +156,13 @@ class ValueModel:
             return runs
         return fit["by_position"][position] + fit["per_run"] * runs
 
-    def position_shift(self, position) -> float:
-        """Runs to add to `position`'s adjustment, from what MLB regulars
-        there were worth beyond it."""
-        return ((self.calibration or {}).get("fielding") or {}).get("position_shift", {}).get(position, 0.0)
+    def fielding_value(self, runs, adjustment) -> float:
+        """Calibrated fielding runs plus the position's adjustment, on the line
+        MLB regulars' WAR puts them (the same stretch at every position)."""
+        fit = ((self.calibration or {}).get("fielding") or {}).get("value")
+        if fit is None:
+            return runs + adjustment
+        return fit[0] + fit[1] * (runs + adjustment)
 
     def starter_innings(self, stamina, pitches, rates=None) -> float:
         """A full-time starter's innings, from his stamina and his starter

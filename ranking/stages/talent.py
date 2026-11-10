@@ -14,9 +14,9 @@ import numpy as np
 
 from models.game_players import SPLIT_SIDES
 from ranking import fielding_talent, hitter_talent, pitcher_talent, running_talent
+from ranking import value as value_model
 from ranking.ratings import RatingsView
 from scoring.pitcher_scorer import rp_stamina_modifier_map, sp_stamina_modifier_map
-from scoring.position_player_scorer import utility_bonus
 from scoring.runtime_components import write_runtime_component
 
 
@@ -275,10 +275,12 @@ class PitcherTalent:
 
 class FittedFielding(NamedTuple):
     points: float           # best position, on legacy's best-position scale
-    utility: float          # legacy's utility bonus, on the floored grids
+    utility: float          # utility_war on legacy's points scale, for its shell
     best_position: str
     runs: float             # fielding runs per season at the best position
     value: float            # those plus the position's adjustment
+    utility_war: float = 0.0    # roster flexibility (fielding_talent.utility)
+    covers: tuple = ()          # the other positions credited for it
 
 
 class FieldingTalent:
@@ -296,14 +298,18 @@ class FieldingTalent:
         """A FittedFielding per player (every player has fielding ratings)."""
         if not players:
             return []
-        floored = fielding_talent.floored_grids(fielding_talent.grid_scores(players), self.ratings.fielding(players))
-        value, best, runs = self.model.best(floored)
+        ratings = {r: np.asarray(v, float) for r, v in self.ratings.fielding(players).items()}
+        value, best, runs = self.model.best(ratings)
+        covers = self.model.covers(ratings)
         points = self.model.points(value)
+        # the legacy shell's utility points: the flexibility WAR as defense runs
+        per_run = value_model.load().hitter["per_defense_run"]
         out = []
         for j, player in enumerate(players):
-            scores = {pos: float(floored[pos][j]) for pos in fielding_talent.POSITIONS}
+            war, credited = fielding_talent.utility({p for p, c in covers.items() if c[j]}, best[j])
+            shell = float(self.model.points(value[j] + war / per_run) - points[j])
             out.append(FittedFielding(
-                float(points[j]), float(utility_bonus(scores)), best[j], float(runs[j]), float(value[j]),
+                float(points[j]), shell, best[j], float(runs[j]), float(value[j]), war, tuple(credited),
             ))
             write_runtime_component(player.id, "batting.talent.fielding_runs", float(runs[j]))
         return out

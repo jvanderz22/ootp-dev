@@ -126,7 +126,7 @@ def fielding_rows(snapshots: dict, stats_dir, min_age=MIN_AGE, min_innings=MIN_I
     level and position, joined to the snapshot's fielding ratings."""
     field = load_fielding(stats_dir, _seasons(snapshots))
     lines = field.groupby(["player_id", "year", "level_id", "position"])[
-        ["ip", "runs", "zr", "framing", "a", "e", "tc"]
+        ["ip", "runs", "zr", "framing", "a", "e", "tc", "dp"]
     ].sum().reset_index()
     return _join(snapshots, lines, read_fielders, min_age, min_innings, "ip")
 

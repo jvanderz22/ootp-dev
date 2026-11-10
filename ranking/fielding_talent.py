@@ -1,31 +1,30 @@
-"""The fielding talent model: your position grids -> fielding runs per season.
+"""The fielding talent model: ratings -> fielding runs per season at each
+position, from lookup tables (decided 2026-11-09; plans/xgboost-phaseout-plan.md,
+step 2).
 
-Your grids (attribute_models/*_attribute_model.py) stay the shape of defense:
-at each position, the grid score decides who the better fielder is, and it
-already weighs Arm, Error and Turn DP the way you want. CF is the exception
-(decided 2026-11-08): MLB centre fielders' zone runs are nearly all Range, and
-the legacy grid stepped up evenly in Range and paid a good Arm and Error up to
-+19. v2 grades CF on your rule instead (cf_grid): Range 60 or less can't start
-there, 65 is playable but below average, 70 good, 75 very good; Arm adds or
-takes a little only outside 45-60, and Error only at 30 or below. Legacy keeps
-its grid. Two things go on top:
+Each position has a table per rating it reads: runs per season (SEASON_INNINGS)
+against the average fielder there, at every 5-point step, straight between
+steps. A position's runs are the sum of its tables. The stats seed them
+(ranking/fitting/fielding_talent.py: zone runs, framing for C, double plays for
+2B and SS), and your judgment replaces a table where the stats can't measure it
+(JUDGED): CF's Range curve, and outfield Arm, which StatsPlus's arm runs don't
+track (about three times CF's weight in RF, half of it in LF).
 
-- Position floors (decided 2026-11-08): below a floor a player can't be
-  trusted at the position. The grid score is scaled down over the last
-  FLOOR_RAMP points above the floor, to half at the floor itself and to
-  nothing below it (ratings move in steps of 5). A wider ramp moved everyday
-  MLB shortstops with a 50 Error or Turn DP, good ones by zone rating, off SS.
-- One line, the same at every position, turning a floored grid score into
-  fielding value: runs per season (SEASON_INNINGS) including the position's
-  adjustment, fit to MLB zone rating + framing plus StatsPlus's adjustments.
+Position floors (decided 2026-11-08, moved 2026-11-09; a catcher's Arm at 35,
+since Arm 40 cost good framers like Contreras most of their value): below a floor a player
+can't be trusted at the position. His value there falls toward a DH's over the
+last FLOOR_RAMP points above the floor: half at the floor itself, a DH's one
+step below it (ratings move in steps of 5).
 
-Your grids already compare positions on one scale (a 70 Range outfielder grades
-higher at CF than at LF, because CF is worth more; decided 2026-11-08), so the
-best position is the highest floored grid score, as in legacy, and it is also
-the most valuable. A grid of 0 ("can't play there") comes out about at DH.
+The value of a position is its runs plus its adjustment. The adjustments come
+from where OOTP's managers play regulars, pulled lightly toward StatsPlus's
+(decided 2026-11-09): StatsPlus's put SS only 2 runs above 2B, so a true SS
+came out worth more at 2B. The best position is the most valuable one, so the
+same adjustments pick a player's position and value him there.
 
-The utility bonus is legacy's (scoring/position_player_scorer.py), on the
-floored grid scores: a position below its floor doesn't count toward it.
+Utility (decided 2026-11-09) is roster flexibility, not runs: WAR for other
+positions a player can cover - one in the middle infield (SS over 2B), one in
+the outfield (CF over RF over LF), and 3B - sized by you (UTILITY_WAR).
 """
 import json
 from functools import lru_cache
@@ -36,30 +35,54 @@ import numpy as np
 from ranking import bridge
 from ranking.hitter_talent import ARTIFACTS_DIR
 
-ARTIFACT = "fielding_talent_v1"
+ARTIFACT = "fielding_talent_v2"
 POSITIONS = ("C", "1B", "2B", "3B", "SS", "LF", "CF", "RF")
 SEASON_INNINGS = 1350
-# position -> {rating: floor}
-FLOORS = {
-    "SS": {"if_arm": 45, "if_error": 45, "turn_dp": 45},
-    "3B": {"if_arm": 45, "if_error": 40},
-    "2B": {"turn_dp": 40},
-    "RF": {"of_arm": 45},
-    "CF": {"of_range": 55},
-    "C": {"c_blocking": 40, "c_framing": 40},
-}
-FLOOR_RAMP = 5
+STEPS = tuple(range(20, 81, 5))
 RATINGS = (
     "c_arm", "c_blocking", "c_framing", "if_range", "if_arm", "if_error", "turn_dp",
     "of_range", "of_arm", "of_error",
 )
+# position -> {rating: floor}
+FLOORS = {
+    "SS": {"if_arm": 45, "if_error": 45, "turn_dp": 40},
+    "3B": {"if_arm": 45, "if_error": 40},
+    "2B": {"turn_dp": 35},
+    "RF": {"of_arm": 45},
+    "CF": {"of_range": 55},
+    "C": {"c_arm": 35, "c_blocking": 45, "c_framing": 40},
+}
+FLOOR_RAMP = 5
 # a step below the floor is where the factor reaches 0
 BELOW_FLOOR = 5
-# v2's CF grade on your grids' scale: (Range, grade), straight between
-CF_RANGE = ((50, 0), (55, 3), (60, 10), (65, 40), (70, 68), (75, 82), (80, 94))
-CF_ARM_BAND = (45, 60)      # outside it, CF_STEP per 5 points of Arm
-CF_ERROR_FROM = 35          # below it, CF_STEP off per 5 points of Error
-CF_STEP = 1.0
+
+
+def _edges(per_step, low=45, high=60):
+    """Runs at STEPS: `per_step` per 5 points above `high`, the same off per 5
+    points below `low`, 0 between."""
+    return [per_step * (max(s - high, 0) - max(low - s, 0)) / 5 for s in STEPS]
+
+
+# your judgment where the stats can't measure it: {position: {rating: runs at STEPS}}
+JUDGED = {
+    "CF": {
+        # your CF rule (2026-11-08): 60 or less can't start, 65 playable but below
+        # average, 70 good, 75 very good - the runs it came to, calibrated
+        "of_range": [-23.0] * 7 + [-22.0, -19.0, -6.0, 7.0, 13.0, 18.0],
+        "of_arm": _edges(0.5),
+        # Error only at 30 or below
+        "of_error": [-1.5, -1.0, -0.5] + [0.0] * 10,
+    },
+    "LF": {"of_arm": _edges(0.25)},
+    "RF": {"of_arm": _edges(1.5)},
+}
+# utility: WAR for each other position he covers - clears its floors and
+# fields it no worse than COVER_RUNS against its average
+COVER_RUNS = -10.0
+UTILITY_WAR = {"SS": 0.15, "2B": 0.08, "3B": 0.08, "CF": 0.15, "RF": 0.05, "LF": 0.04}
+UTILITY_GROUPS = (("SS", "2B"), ("3B",), ("CF", "RF", "LF"))
+# 3B's credit when he's a shortstop or covers SS
+SS_COVERS_3B = 0.5
 
 
 def floor_factor(position, ratings: dict):
@@ -67,48 +90,83 @@ def floor_factor(position, ratings: dict):
     one, 0 below it."""
     factor = np.ones(len(next(iter(ratings.values()))))
     for rating, floor in FLOORS.get(position, {}).items():
-        ramp = (np.asarray(ratings[rating]) - (floor - BELOW_FLOOR)) / (FLOOR_RAMP + BELOW_FLOOR)
+        ramp = (np.asarray(ratings[rating], float) - (floor - BELOW_FLOOR)) / (FLOOR_RAMP + BELOW_FLOOR)
         factor = np.minimum(factor, np.clip(ramp, 0, 1))
     return factor
-
-
-def floored_grids(grids: dict, ratings: dict) -> dict:
-    """{position: grid score scaled by its floor factor}."""
-    return {pos: np.asarray(grids[pos]) * floor_factor(pos, ratings) for pos in POSITIONS}
 
 
 class FieldingTalent:
     def __init__(self, artifact: dict):
         self.version = artifact["version"]
-        self.intercept = artifact["value_line"]["intercept"]
-        self.slope = artifact["value_line"]["slope"]
+        self.tables = {
+            pos: {rating: np.asarray(JUDGED.get(pos, {}).get(rating, t), float) for rating, t in tables.items()}
+            for pos, tables in artifact["tables"].items()
+        }
+        for pos, judged in JUDGED.items():
+            for rating, t in judged.items():
+                self.tables[pos].setdefault(rating, np.asarray(t, float))
         self.position_adjustment = artifact["position_adjustment"]
-        # best-position runs -> legacy fielding points; absent while fitting
+        self.dh_adjustment = artifact["dh_adjustment"]
+        # best-position value -> legacy fielding points; absent while fitting
         self.bridge = artifact.get("points_bridge")
 
     @classmethod
     def from_file(cls, path) -> "FieldingTalent":
         return cls(json.loads(Path(path).read_text()))
 
-    def value(self, floored: dict) -> dict:
-        """{position: fielding runs per season there, plus its adjustment}."""
-        return {pos: self.intercept + self.slope * np.asarray(floored[pos]) for pos in POSITIONS}
+    def unfloored(self, ratings: dict) -> dict:
+        """{position: runs per season there against its average fielder}."""
+        return {pos: sum(np.interp(np.asarray(ratings[r], float), STEPS, t) for r, t in tables.items())
+                for pos, tables in self.tables.items()}
 
-    def runs(self, floored: dict) -> dict:
-        """{position: fielding runs per season against an average fielder there}."""
-        return {pos: v - self.position_adjustment[pos] for pos, v in self.value(floored).items()}
+    def value(self, ratings: dict) -> dict:
+        """{position: runs there plus its adjustment}, falling toward a DH's
+        below its floors."""
+        out = {}
+        for pos, runs in self.unfloored(ratings).items():
+            f = floor_factor(pos, ratings)
+            out[pos] = f * (runs + self.position_adjustment[pos]) + (1 - f) * self.dh_adjustment
+        return out
 
-    def best(self, floored: dict):
-        """(value at the best position, that position, his fielding runs there).
-        The best position has the highest floored grid score."""
-        index = np.column_stack([floored[pos] for pos in POSITIONS]).argmax(axis=1)
+    def runs(self, ratings: dict) -> dict:
+        """{position: runs against its average fielder, after its floors}."""
+        return {pos: v - self.position_adjustment[pos] for pos, v in self.value(ratings).items()}
+
+    def best(self, ratings: dict):
+        """(value at the best position, that position, his runs there): the
+        most valuable position."""
+        value = self.value(ratings)
+        index = np.column_stack([value[pos] for pos in POSITIONS]).argmax(axis=1)
         best = [POSITIONS[i] for i in index]
-        value = self.intercept + self.slope * np.array([floored[pos][j] for j, pos in enumerate(best)])
+        top = np.array([value[pos][j] for j, pos in enumerate(best)])
         adjustment = np.array([self.position_adjustment[pos] for pos in best])
-        return value, best, value - adjustment
+        return top, best, top - adjustment
+
+    def covers(self, ratings: dict) -> dict:
+        """{position: whether each player can cover it}."""
+        runs = self.unfloored(ratings)
+        return {pos: (floor_factor(pos, ratings) >= 1) & (runs[pos] >= COVER_RUNS) for pos in POSITIONS}
 
     def points(self, value):
         return bridge.points(value, self.bridge)
+
+
+def utility(covers: set, best: str) -> tuple:
+    """(WAR, the positions credited) for a player whose best position is
+    `best` and who covers `covers`."""
+    war, credited = 0.0, []
+    for group in UTILITY_GROUPS:
+        # within a group only a position above his own counts
+        above = group[:group.index(best)] if best in group else group
+        pos = next((p for p in above if p in covers), None)
+        if pos is None:
+            continue
+        credit = UTILITY_WAR[pos]
+        if pos == "3B" and (best == "SS" or "SS" in credited):
+            credit *= SS_COVERS_3B
+        war += credit
+        credited.append(pos)
+    return war, credited
 
 
 @lru_cache(maxsize=None)
@@ -116,26 +174,14 @@ def load(name: str = ARTIFACT) -> FieldingTalent:
     return FieldingTalent.from_file(ARTIFACTS_DIR / f"{name}.json")
 
 
-def cf_grid(ratings: dict):
-    """v2's CF grade: Range on CF_RANGE, with Arm and Error only at the edges."""
-    rng, arm, error = (np.asarray(ratings[r], float) for r in ("of_range", "of_arm", "of_error"))
-    grade = np.interp(rng, *zip(*CF_RANGE))
-    low, high = CF_ARM_BAND
-    grade += CF_STEP * (np.maximum(arm - high, 0) - np.maximum(low - arm, 0)) / 5
-    grade -= CF_STEP * np.maximum(CF_ERROR_FROM - error, 0) / 5
-    return np.maximum(grade, 0.0)
-
-
 def grid_scores(players) -> dict:
-    """{position: your grid's score for each player} (legacy fielding models;
-    CF is cf_grid)."""
+    """{position: your legacy grid's score for each player}: only for fitting
+    the points bridge to legacy's scale."""
     from scoring.model_cache import get_position_player_scorer
 
     models = get_position_player_scorer("overall").fielding_models_map
-    grids = {pos: np.asarray(models[pos].predict_many(players)) for pos in POSITIONS if pos != "CF"}
-    grids["CF"] = cf_grid(ratings_of(players))
-    return {pos: grids[pos] for pos in POSITIONS}
+    return {pos: np.asarray(models[pos].predict_many(players)) for pos in POSITIONS}
 
 
 def ratings_of(players) -> dict:
-    return {r: np.array([getattr(p, r) for p in players]) for r in RATINGS}
+    return {r: np.array([getattr(p, r) or 0 for p in players], float) for r in RATINGS}

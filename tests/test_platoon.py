@@ -53,15 +53,15 @@ def test_a_regular_on_both_sides_isnt_platooned():
 
 def test_a_bat_below_replacement_on_both_sides_is_valued_at_his_full_time_war():
     # no starts to credit, but the bottom of the board stays ordered (decided 2026-11-08)
-    ranked = _ranked("potential")
+    ranked = _ranked("potential", levels=(40,))
     for b in ("Left", "Right", "Switch"):
-        assert _war(ranked[b, 45]) < 0
-        assert [line.delta for line in _platoon(ranked[b, 45])] == [0.0]
+        assert _war(ranked[b, 40]) < 0
+        assert [line.delta for line in _platoon(ranked[b, 40])] == [0.0]
 
 
 def test_below_replacement_good_makeup_shrinks_the_deficit():
     def war(**makeup):
-        player = _hitter("Right", 45, 900100)
+        player = _hitter("Right", 40, 900100)
         player = GamePlayer({**player.attrs(), **makeup})
         (r,) = get_ranker("potential").rank([player])
         return _war(r)
