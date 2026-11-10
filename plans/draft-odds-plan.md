@@ -387,6 +387,35 @@ This replaces "Order of work" below. Nothing gets built until you say so.
    existing golden flows don't move. Deploy when you ask.
 
 **B. The fit, on the full-time scale**
+
+*Steps 1–3 done 2026-11-10 (script uncommitted, artifact in a scratchpad,
+not in `ranking/artifacts/`).*
+- **The refit barely moved,** as expected: the full-time profile reproduces
+  the values the 2026-11-09 fit was made on. On A, at 3 WAR potential, for a
+  21-year-old hitter with 0 readiness:
+  - potential exponent +1.16
+  - readiness ×1.33 per WAR
+  - SP ×0.62, RP ×1.13 (wide)
+  - age 18 / 19 / 20 / 22+: ×1.52 / ×1.71 / ×1.47 / ×0.54
+  - age ≤19 × potential −0.49, age 22+ × potential +0.23
+  - WE H / L ×1.45 / ×0.64, INT H / L ×1.13 / ×0.75
+  - fragile ×0.71, durable ×1.05
+- **The ship checks now judge the board as it would ship:** the fit times
+  the lines it doesn't replace, then the balance. Those lines are Stuff,
+  velocity, scouting accuracy, secondary personality, batted-ball profile
+  and switch hitter (`KEPT` in the script). With them on, the balance is
+  **pitchers ×0.93** (×0.89 without).
+- **Pitcher share,** classes 2033–41: 47 / 44 / 49 / 52 / 59%. Every bucket
+  passes (the board today: 38 / 55 / 52 / 58 / 58%).
+- **Held out, one class at a time:**
+
+  | | rho | top 25 | top 50 | top 100 |
+  |---|---|---|---|---|
+  | A: board | 0.366 | 1.50 | 1.27 | 1.08 |
+  | A: fit | **0.407** | **1.54** | **1.34** | **1.09** |
+  | B: board | 0.325 | 4.56 | 3.53 | 2.37 |
+  | B: fit | **0.370** | **4.86** | **3.59** | **2.42** |
+
 1. **Restore** `ranking/fitting/draft_odds.py` from the stash. Readiness
    and outcome A come from the `full_time` profile. Drop
    `LEAGUE_REPLACEMENT` and the label exclusion. The ceiling still comes
