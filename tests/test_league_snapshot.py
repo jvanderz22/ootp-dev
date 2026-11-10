@@ -538,7 +538,12 @@ def test_player_splits_scores_each_side(data_dir):
 
     assert s["vs_l"]["contact"] == 70 and s["vs_r"]["contact"] == 45
     assert s["combined"]["contact"] == 55
-    assert s["vs_l"]["batter_score"] > s["combined"]["batter_score"] > s["vs_r"]["batter_score"]
+    # v2's read of each side follows the ratings
+    assert s["vs_l"]["wrc_plus"] > s["combined"]["wrc_plus"] > s["vs_r"]["wrc_plus"]
+
+    p = service.player_splits({"league_id": "yfmlb"}, "100")
+    assert p["combined"]["era_role"] in ("SP", "RP")
+    assert all(p[side]["era"] > 0 for side in ("combined", "vs_l", "vs_r"))
 
 
 def test_player_splits_unavailable(data_dir):

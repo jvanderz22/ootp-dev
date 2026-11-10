@@ -210,6 +210,9 @@
 .rating b.up { color: var(--ok); }
 .rating b.down { color: var(--danger); }
 .split-note { font-size: 12px; }
+/* v2's read of the side (wRC+ / ERA) above the ratings it comes from */
+.rating.lr.model { border-bottom-style: solid; }
+.rating.lr.model span { color: var(--text); }
 
 /* trade-list entry editors (Trade Targets page only) */
 .tl-entry {

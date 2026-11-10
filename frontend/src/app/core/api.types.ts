@@ -244,11 +244,11 @@ export interface ScoreBreakdown {
 /** The current-ratings model on one side of a platoon split, plus the
  *  ratings it scored. A batter's split is vs LHP / RHP, a pitcher's vs LHB / RHB. */
 export interface SplitScores {
-  batterScore: number;
-  battingModel: number;
-  pitcherScore: number;
-  starterScore: number;
-  relieverScore: number;
+  /** engine v2's wRC+ on this side (null without a fit on his splits) */
+  wrcPlus: number | null;
+  /** engine v2's ERA on this side, in his listed role (`eraRole`) */
+  era: number | null;
+  eraRole: string | null;
   contact: number | null;
   gap: number | null;
   power: number | null;
@@ -262,8 +262,8 @@ export interface SplitScores {
   pbabip: number | null;
 }
 
-/** vs-L / vs-R overalls (live-league players only), with `combined` scored the
- *  same way for comparison. */
+/** vs-L / vs-R ratings and v2's read of each side (live-league players only),
+ *  with `combined` for comparison. */
 export interface PlayerSplits {
   combined: SplitScores;
   vsL: SplitScores;

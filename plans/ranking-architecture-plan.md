@@ -782,6 +782,9 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
   as constraints, as for hitting), keeping the grids only for ratings with
   no stat (IF Arm / Error, Turn DP); or explicit per-position rules like
   CF's.
+  - Planned in `plans/xgboost-phaseout-plan.md`, step 2. Zone runs turn
+    out to carry IF Arm and Error at 3B and SS. Turn DP shows in double
+    plays only. Catcher Arm and Blocking show in nothing.
 - ✅ **pitcher ratings at the extremes** (built 2026-11-08, see the end of
   this item). Two cases:
   - **The top is capped.** The pitcher tables go flat where data run out:
@@ -866,6 +869,10 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
 
 - Change `get_ranker_for_method`, regenerate the goldens deliberately, and
   delete `legacy`.
+  - **Deferred** (your call, 2026-11-08). Legacy stays runnable beside v2
+    for the foreseeable future, so you can compare both over a few drafts.
+    Until then, v2 only stops depending on it
+    (`plans/xgboost-phaseout-plan.md`, steps 1–3).
 - TODO: **rework the org rankings page for v2** (`web/org_rankings.py`,
   `print_org_summaries.py`). A farm system's score is a convex points curve
   summed over its prospects' `model_score`, tuned to the legacy points
@@ -887,6 +894,8 @@ Steps 2a–2c are in `plans/ranking-v2-technical-plan.md`.
   - the legacy pitcher scorer, for rows without Stuff / Control / Movement;
   - the modifiers v2 still applies;
   - `DraftDemandModifier`.
+  - Plan for retiring the grids, the fallbacks and the points shell:
+    `plans/xgboost-phaseout-plan.md` (2026-11-08).
 
 ## Open questions
 

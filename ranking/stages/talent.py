@@ -147,6 +147,9 @@ class FittedPitching(NamedTuple):
     # his strikeouts, walks and home runs per PA as a starter: how efficient
     # he is, which sets how deep he goes (ranking/value.py starter_innings)
     sp_rates: dict = None
+    # {"sp" | "rp": {"vL" | "vR": ERA}} against left- / right-handed batters,
+    # on his splits (None without them)
+    side_era: dict = None
 
 
 class PitcherTalent:
@@ -184,7 +187,8 @@ class PitcherTalent:
         events = {role: self.model.events({**ratings, "stuff": stuff[role]}, role) for role in pitcher_talent.ROLES}
         predicted = self._predicted_split(players, group)
         split = {role: predicted.copy() for role in pitcher_talent.ROLES}
-        platoon = self._platoon(players, group, top, listed_sp, events, split)
+        side_era = {role: {side: np.full(len(group), np.nan) for side in SPLIT_SIDES} for role in pitcher_talent.ROLES}
+        platoon = self._platoon(players, group, top, listed_sp, events, split, side_era)
         index = {role: self.model.index_of(events[role]) for role in pitcher_talent.ROLES}
         era = {role: self.model.era_of(events[role]) for role in pitcher_talent.ROLES}
         talent = {role: self.model.points(index[role], role) for role in pitcher_talent.ROLES}
@@ -208,6 +212,8 @@ class PitcherTalent:
                 rp_split=float(split["rp"][j]),
                 split_estimated=not platoon[j] and predicted[j] != 0,
                 sp_rates={e: float(np.asarray(events["sp"][e])[j]) for e in ("k", "bb", "hr")},
+                side_era={role: {side: float(e[j]) for side, e in by_side.items()} for role, by_side in side_era.items()}
+                if platoon[j] else None,
             )
             write_runtime_component(player.id, "pitching.talent.sp_runs_index", out[i].sp_index)
             write_runtime_component(player.id, "pitching.talent.rp_runs_index", out[i].rp_index)
@@ -227,11 +233,11 @@ class PitcherTalent:
             out[[j for j, _ in hands]] = self.model.predicted_split(features)
         return out
 
-    def _platoon(self, players, group, top, listed_sp, events, role_split) -> np.ndarray:
+    def _platoon(self, players, group, top, listed_sp, events, role_split, side_era) -> np.ndarray:
         """Puts each role's events against its batters, vL and vR scored apart,
         in `events` for the pitchers whose splits are there (and on the group's
-        side of HRA / Movement), and each role's split in `role_split`; returns
-        which ones."""
+        side of HRA / Movement), each role's split in `role_split` and each
+        side's ERA in `side_era`; returns which ones."""
         hra = group[0][1]["hra"] is not None
         rows, sides, throws = [], [], []
         for j, (i, _) in enumerate(group):
@@ -254,7 +260,10 @@ class PitcherTalent:
                  for side, r in by_side.items()}
         for role in pitcher_talent.ROLES:
             in_role = {side: {**r, "stuff": stuff[side][role]} for side, r in by_side.items()}
-            index = {side: self.model.runs_index(r, role) for side, r in in_role.items()}
+            side_events = {side: self.model.events(r, role) for side, r in in_role.items()}
+            index = {side: self.model.index_of(e) for side, e in side_events.items()}
+            for side, e in side_events.items():
+                side_era[role][side][rows] = self.model.era_of(e)
             lefty = np.array(throws) == "L"
             role_split[role][rows] = np.where(lefty, index["vR"] - index["vL"], index["vL"] - index["vR"])
             blended = self.model.platoon_events(in_role, role, self.model.lhb_share(role, throws))

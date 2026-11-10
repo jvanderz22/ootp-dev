@@ -1,40 +1,21 @@
-"""Platoon-split overalls: the current-ratings model re-run on a player's vs-L
-and vs-R ratings (see `GamePlayer.with_split`), for the detail card.
+"""Platoon splits for the detail card: a live-league player's vs-L and vs-R
+ratings (see `GamePlayer.with_split`), and engine v2's read of each side next
+to his combined one - wRC+ for a hitter, ERA in his listed role for a pitcher,
+both calibrated as the value stage reads them (ranking/stages/value.py).
 
-Fielding and running have no split, so a batter's split score moves only through
-the batting model; a pitcher's moves through stuff / movement / control. The
-modifiers are the current ranking's (`OverallRanker`) minus
-`BatterHandednessModifier` - its platoon bump is exactly what a split already
-measures. `combined` is scored the same way so the three are comparable.
+The combined wRC+ is his two sides blended at his batting hand's mix, as the
+value stage blends them; the combined ERA is the talent stage's, which blends
+the sides at his role's mix of batters.
 """
 from models.game_players import SPLIT_SIDES, GamePlayer
-from modifiers.batter_handedness_modifier import BatterHandednessModifier
-from rankers.overall_ranker import OverallRanker
-from scoring.model_cache import get_pitcher_scorer, get_position_player_scorer
+from ranking import value
+from ranking.profiles import CURRENT
+from ranking.stages.talent import HitterTalent, PitcherTalent
 from scoring.runtime_components import runtime_components_scope
 
-_BATTER_MODIFIERS = tuple(
-    m for m in OverallRanker.position_player_modifiers if m is not BatterHandednessModifier
-)
-_PITCHER_MODIFIERS = tuple(OverallRanker.pitcher_modifiers)
 
-
-def _modifier(modifiers, player, score) -> float:
-    total = 1
-    for modifier in modifiers:
-        total *= modifier.calculate_player_modifier(player, score)
-    return total
-
-
-def _payload(player: GamePlayer, batting, pitching) -> dict:
-    batter_score, batting_model = batting[0], batting[1]
-    pitcher_score, starter, reliever = pitching
+def _ratings(player: GamePlayer) -> dict:
     return {
-        "batter_score": round(batter_score * _modifier(_BATTER_MODIFIERS, player, batter_score), 2),
-        "batting_model": round(batting_model, 2),
-        "pitcher_score": round(pitcher_score * _modifier(_PITCHER_MODIFIERS, player, pitcher_score), 2),
-        "starter_score": round(starter, 2),
-        "reliever_score": round(reliever, 2),
         "contact": player.contact_ovr,
         "gap": player.gap_ovr,
         "power": player.power_ovr,
@@ -49,20 +30,43 @@ def _payload(player: GamePlayer, batting, pitching) -> dict:
     }
 
 
+def _wrc_plus(player: GamePlayer) -> dict:
+    """{"combined" | "vL" | "vR": wRC+}, or {} without a fit on his splits."""
+    stage = HitterTalent(CURRENT)
+    (fit,) = stage.score([player])
+    if fit is None or not fit.platoon:
+        return {}
+    vs_lhp = stage.model.platoon_mix[fit.bats]
+    raw = {"vL": fit.wrc_vl, "vR": fit.wrc_vr}
+    raw["combined"] = vs_lhp * raw["vL"] + (1 - vs_lhp) * raw["vR"]
+    return {side: round(float(value.load().calibrated("wrc_plus", w))) for side, w in raw.items()}
+
+
+def _era(player: GamePlayer):
+    """(role, {"combined" | "vL" | "vR": ERA}) in his listed role, or
+    (None, {}) without a fit on his splits."""
+    (fit,) = PitcherTalent(CURRENT).score([player])
+    if fit is None or fit.side_era is None:
+        return None, {}
+    role = "sp" if player.position == "SP" else "rp"
+    raw = {**fit.side_era[role], "combined": fit.sp_era if role == "sp" else fit.rp_era}
+    return role, {side: round(float(value.load().calibrated("era", e, role)), 2) for side, e in raw.items()}
+
+
 def score_splits(player: GamePlayer):
-    """`{"combined", "vL", "vR"}` -> scores + the ratings they came from, or None
-    when the player's row carries no split ratings."""
+    """`{"combined", "vL", "vR"}` -> the ratings on that side plus v2's wRC+
+    and ERA there, or None when the player's row carries no split ratings."""
     variants = {side: player.with_split(side) for side in SPLIT_SIDES}
     if any(v is None for v in variants.values()):
         return None
     variants = {"combined": player, **variants}
-    players = list(variants.values())
-    # a private scope: the scorers' breakdown writes must not leak into a
+    # a private scope: the talent stages' breakdown writes must not leak into a
     # concurrent ranking run's (or the shared fallback) store
     with runtime_components_scope():
-        batting = get_position_player_scorer("overall").score_many(players)
-        pitching = get_pitcher_scorer("overall").score_many(players)
+        wrc = _wrc_plus(player)
+        role, era = _era(player)
     return {
-        key: _payload(p, b, pt)
-        for key, p, b, pt in zip(variants, players, batting, pitching)
+        side: {**_ratings(p), "wrc_plus": wrc.get(side), "era": era.get(side),
+               "era_role": role and role.upper()}
+        for side, p in variants.items()
     }

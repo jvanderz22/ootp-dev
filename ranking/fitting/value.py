@@ -240,7 +240,7 @@ def calibration(model, stats_dir, snapshot_path, season, lines) -> tuple:
     ids = set(hitters.player_id) | set(pitchers.player_id) | set(lines[lines.year >= season - 1].player_id)
     reads = _reads(model, snapshot_path, ids)
 
-    hitters = hitters[hitters.player_id.isin(reads)]
+    hitters = hitters[hitters.player_id.map(lambda i: i in reads and reads[i][0] is not None)]
     hit = pd.DataFrame([reads[i][0] for i in hitters.player_id], index=hitters.index)
     actual_wrc = 100 * hitters.lw / hitters.pa / hitters.league
     out = {
@@ -255,7 +255,8 @@ def calibration(model, stats_dir, snapshot_path, season, lines) -> tuple:
     fip_c = 9 * lg.er / lg_ip - (13 * lg.hr + 3 * lg.bb - 2 * lg.k) / lg_ip
     report = {"hitters": len(hitters)}
     for role, min_ip in (("sp", CALIBRATION_SP_IP), ("rp", CALIBRATION_RP_IP)):
-        g = pitchers[(pitchers.role == role) & (pitchers.ip >= min_ip) & pitchers.player_id.isin(reads)]
+        g = pitchers[(pitchers.role == role) & (pitchers.ip >= min_ip)
+                     & pitchers.player_id.map(lambda i: i in reads and reads[i][1] is not None)]
         predicted = [reads[i][1][role] for i in g.player_id]
         fip = (13 * g.hr + 3 * g.bb - 2 * g.k) / g.ip + fip_c
         out["era"][role] = _wls(predicted, fip, g.ip)
@@ -265,7 +266,7 @@ def calibration(model, stats_dir, snapshot_path, season, lines) -> tuple:
     seasons = lines[lines.year >= season - 1].groupby(["player_id", "year"]).agg(
         g=("g", "sum"), gs=("gs", "sum"), ip=("ip", "sum")).reset_index()
     starts = seasons[(seasons.gs >= STAMINA_FIT_STARTS) & (seasons.gs >= 0.8 * seasons.g)]
-    starts = starts[starts.player_id.map(lambda i: i in reads and reads[i][1]["rates"] is not None)]
+    starts = starts[starts.player_id.map(lambda i: i in reads and reads[i][1] is not None)]
     starts = starts.merge(snap[["player_id", "STM"]], on="player_id")
     starts["STM"] = pd.to_numeric(starts.STM, errors="coerce")
     starts = starts.dropna(subset=["STM"])

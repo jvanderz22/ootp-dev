@@ -86,13 +86,14 @@ def test_v2_scores_pitchers_with_the_talent_layer():
         assert r.ledger.total() == pytest.approx(r.overall_score, abs=1e-9)
 
 
-def test_a_pitcher_without_ratings_is_priced_from_legacy_points():
+def test_a_pitcher_without_ratings_is_valued_at_replacement():
     row = dict(next(r for r in _class_rows() if r["POS"] == "SP"))
     row["STU P"] = row["STU"] = ""
     (r,) = get_ranker("draft_class").rank([GamePlayer(row)], batch_size=1)
     labels = [line.label for line in r.ledger.lines if line.side == "pitching"]
-    # no fitted Stuff to show, but an ERA read back through the bridge
-    assert any(" talent (" in label and "ERA)" in label and "Stuff" not in label for label in labels), labels
+    # no legacy scorer behind it: the side says why it's worth replacement
+    assert any("no pitching ratings" in label for label in labels), labels
+    assert not any(" talent (" in label for label in labels)
     assert r.ledger.total() == pytest.approx(r.overall_score, abs=1e-9)
 
 

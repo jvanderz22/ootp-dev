@@ -214,11 +214,12 @@ left- / right-handed pitching, a pitcher's vs left- / right-handed batters. The
 ratings are the ones scored (the split's, or the combined current ratings).
 """
 type SplitScores {
-  batterScore: Float!
-  battingModel: Float!
-  pitcherScore: Float!
-  starterScore: Float!
-  relieverScore: Float!
+  "engine v2's wRC+ on this side (combined: both sides blended at his hand's mix); null without a fit on his splits"
+  wrcPlus: Int
+  "engine v2's ERA on this side in his listed role (eraRole)"
+  era: Float
+  "SP or RP: the role `era` is in"
+  eraRole: String
   contact: Int
   gap: Int
   power: Int
@@ -234,7 +235,7 @@ type SplitScores {
   pbabip: Int
 }
 
-"vs-L / vs-R overalls, plus `combined` scored the same way for comparison."
+"vs-L / vs-R ratings and v2's read of each side, plus `combined` for comparison."
 type PlayerSplits {
   combined: SplitScores!
   vsL: SplitScores!

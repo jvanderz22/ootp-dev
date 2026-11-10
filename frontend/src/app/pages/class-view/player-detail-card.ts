@@ -101,9 +101,14 @@ export class PlayerDetailCardComponent {
   private splitsFor: RankedPlayerRow | null = null;
 
   /** Colour a split cell against the combined current rating. */
-  protected splitTone(v: number | null, combined: number | null): string {
+  protected splitTone(v: number | null, combined: number | null, lowerBetter = false): string {
     if (v == null || combined == null || v === combined) return '';
-    return v > combined ? 'up' : 'down';
+    return v > combined !== lowerBetter ? 'up' : 'down';
+  }
+
+  protected splitValue(v: number | null, decimals?: number): string {
+    if (v == null) return '—';
+    return decimals ? v.toFixed(decimals) : String(v);
   }
 
   constructor() {

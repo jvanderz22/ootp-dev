@@ -862,11 +862,11 @@ def test_player_splits_query(client):
 
     q = (
         "query($s: RankingSourceInput!, $p: ID!) { playerSplits(source: $s, playerId: $p) "
-        "{ combined { contact batterScore } vsL { contact batterScore } vsR { contact batterScore } } }"
+        "{ combined { contact wrcPlus } vsL { contact wrcPlus } vsR { contact wrcPlus } } }"
     )
     splits = gql(client, q, s={"leagueId": lid, "method": "overall"}, p="200")["playerSplits"]
     assert [splits[k]["contact"] for k in ("combined", "vsL", "vsR")] == [55, 70, 45]
-    assert splits["vsL"]["batterScore"] > splits["vsR"]["batterScore"]
+    assert splits["vsL"]["wrcPlus"] > splits["vsR"]["wrcPlus"]
 
     draft = gql(client, q, s={"className": "nope", "method": "overall"}, p="200")
     assert draft["playerSplits"] is None

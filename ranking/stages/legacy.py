@@ -19,8 +19,10 @@ class LegacyModel(BatchStage):
     """The legacy attribute-model scorers, one batched call per side.
 
     `batting`, `fielding`, `running` and `pitching`, if given, are fitted
-    talent models (ranking.stages.talent) that score whoever they can; the
-    legacy models only run for the rest."""
+    talent models (ranking.stages.talent) that score whoever they can. In v2,
+    which gives all four, a player one can't read scores 0 there (the value
+    stage values that side at replacement), so the legacy models never run;
+    without them (the legacy pipeline) the legacy models score everyone."""
 
     name = "legacy-model"
 
@@ -46,7 +48,7 @@ class LegacyModel(BatchStage):
         fitted_pit = self.pitching.score(players) if self.pitching else none
         batting = self.position_player_scorer.score_many(
             players,
-            batting_scores=[f and f.points for f in fitted_bat],
+            batting_scores=[f.points if f else 0.0 for f in fitted_bat] if self.batting else None,
             fielding=[f and (f.points, f.utility, f.best_position) for f in fitted_field],
             running_scores=[f and f.points for f in fitted_run],
         )
@@ -61,13 +63,13 @@ class LegacyModel(BatchStage):
 
     def _pitching_scores(self, players, fitted):
         """[score, starter, reliever] per player: fitted where there is one, the
-        legacy scorer for the rest."""
-        rest = [i for i, f in enumerate(fitted) if f is None]
+        legacy scorer for the rest (0 in v2, which has a fitted model)."""
+        rest = [] if self.pitching else [i for i, f in enumerate(fitted) if f is None]
         legacy = iter(self.pitcher_scorer.score_many([players[i] for i in rest]) if rest else [])
         out = []
         for player, fit in zip(players, fitted):
             if fit is None:
-                out.append(next(legacy))
+                out.append([0.0, 0.0, 0.0] if self.pitching else next(legacy))
                 continue
             for role, talent, score in (("starter", fit.starter_talent, fit.starter),
                                         ("reliever", fit.reliever_talent, fit.reliever)):

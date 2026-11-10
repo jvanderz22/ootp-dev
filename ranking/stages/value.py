@@ -16,12 +16,12 @@ sides has none. A pitcher's split moves his matchups (`value.matchup_tilt`):
 a reliever faces his strong side more, the way you'd use him, and a starter
 his weak side, as lineups stack it - the "RP / SP matchups" lines.
 
-The modifiers scale only WAR above replacement, so a factor below 1 can't
-lift a below-replacement player; where potential ratings are read, the
-development factors (ranking/development.py) follow them, tapered by the
-side's WAR. A player a fitted talent model couldn't
-score (an export without BABIP, a pitcher without Stuff) is priced from his
-legacy points, read back through the talent model's points bridge.
+The modifiers scale only WAR above replacement; where potential ratings are
+read, the development factors (ranking/development.py) follow them, tapered
+by the side's WAR. Below replacement only his personality counts, dividing
+the deficit (`_modified`). A side a fitted talent model can't read (no
+batting ratings, a pitcher without Stuff or Control) is valued at
+replacement, with a ledger line saying so.
 """
 import numpy as np
 
@@ -29,7 +29,7 @@ from ranking import bridge, development, fielding_talent, hitter_talent, pitcher
 from ranking.ledger import BATTING, DEVELOPMENT, MODEL, MODIFIERS, PITCHING, TWO_WAY, Ledger
 from ranking.ratings import RatingsView
 from ranking.stages.base import BatchStage
-from scoring.runtime_components import get_runtime_components, write_runtime_component
+from scoring.runtime_components import write_runtime_component
 
 SCALE = value.DISPLAY_SCALE
 # the legacy modifiers that are personality, so also count below replacement
@@ -66,20 +66,20 @@ class Value(BatchStage):
         """His talent as the fitted models read it, before calibration: wRC+
         (and each side's, when known), fielding runs at his best position
         (against an average fielder there), legacy's utility bonus in runs,
-        and baserunning runs per 600 PA."""
+        and baserunning runs per 600 PA. None without a batting fit."""
         fitted, side = state.fitted, state.batting
         batting = fitted["batting"]
+        if batting is None:
+            return None
         sides = None
-        if batting and batting.wrc_vl is not None:
+        if batting.wrc_vl is not None:
             # the season his two sides make (his blended splits, or the
             # expected ones), so the platoon line adds up with it
             sides = {"vL": batting.wrc_vl, "vR": batting.wrc_vr}
             vs_lhp = self.hitting_model.platoon_mix[batting.bats]
             wrc = vs_lhp * batting.wrc_vl + (1 - vs_lhp) * batting.wrc_vr
-        elif batting:
-            wrc = batting.wrc_plus
         else:
-            wrc = float(bridge.talent(side.components["batting"], self.hitting_model.bridge))
+            wrc = batting.wrc_plus
         field = fitted["fielding"]
         # legacy's utility bonus, in runs: what it adds through the fielding bridge
         utility = float(bridge.talent(field.points + field.utility, self.fielding_model.bridge)
@@ -91,6 +91,9 @@ class Value(BatchStage):
         fitted, side = state.fitted, state.batting
         batting, field = fitted["batting"], fitted["fielding"]
         reads, cal = self.hitter_reads(state), self.model.calibrated
+        if reads is None:
+            side.best_position = field.best_position
+            return self._unrated(state, side, BATTING, ("batting", "fielding", "running"), "batting")
         wrc = float(cal("wrc_plus", reads["wrc"]))
         sides = reads["sides"] and {s: float(cal("wrc_plus", w)) for s, w in reads["sides"].items()}
         position = reads["position"]
@@ -156,26 +159,21 @@ class Value(BatchStage):
 
     def pitcher_reads(self, state) -> dict:
         """{"sp" | "rp": ERA, "rates": his starter rates} as the fitted model
-        reads him (or the legacy scorer through the bridges, without rates),
-        before calibration."""
+        reads him, before calibration; None without a fit."""
         fitted = state.fitted["pitching"]
-        if fitted:
-            return {"sp": fitted.sp_era, "rp": fitted.rp_era, "rates": fitted.sp_rates}
-        sp_era, rp_era, _ = self._legacy_eras(state.player)
-        return {"sp": sp_era, "rp": rp_era, "rates": None}
+        if fitted is None:
+            return None
+        return {"sp": fitted.sp_era, "rp": fitted.rp_era, "rates": fitted.sp_rates}
 
     def _pitching(self, state) -> float:
         player, side, fitted = state.player, state.pitching, state.fitted["pitching"]
-        if fitted:
-            sp_era, rp_era, rp_index = fitted.sp_era, fitted.rp_era, fitted.rp_index
-            stuff = {"sp": f"Stuff {fitted.sp_stuff:.0f} as SP, ", "rp": f"Stuff {fitted.rp_stuff:.0f} as RP, "}
-            splits = " on his vL / vR splits" if fitted.platoon else ""
-            split = {"sp": fitted.sp_split, "rp": fitted.rp_split}
-            estimated = fitted.split_estimated
-        else:
-            sp_era, rp_era, rp_index = self._legacy_eras(player)
-            stuff, splits, split, estimated = {"sp": "", "rp": ""}, "", {"sp": 0.0, "rp": 0.0}, False
-        sp_index = fitted.sp_index if fitted else 100.0   # no split without a fit: unused
+        if fitted is None:
+            return self._unrated(state, side, PITCHING, ("starter", "reliever"), "pitching")
+        sp_era, rp_era, rp_index, sp_index = fitted.sp_era, fitted.rp_era, fitted.rp_index, fitted.sp_index
+        stuff = {"sp": f"Stuff {fitted.sp_stuff:.0f} as SP, ", "rp": f"Stuff {fitted.rp_stuff:.0f} as RP, "}
+        splits = " on his vL / vR splits" if fitted.platoon else ""
+        split = {"sp": fitted.sp_split, "rp": fitted.rp_split}
+        estimated = fitted.split_estimated
         stamina, pitches = self.ratings.stamina(player), self.ratings.pitch_count(player)
         # his matchups: index is linear in the events, so moving `tilt` of his
         # batters to one side moves it by tilt x split; ERA in step. Leverage
@@ -190,7 +188,7 @@ class Value(BatchStage):
             "sp matched": float(cal("era", sp_era * sp_matched / sp_index, "sp")),
             "rp matched": float(cal("era", rp_era * rp_matched / rp_index, "rp")),
         }
-        innings = self.model.starter_innings(stamina, pitches, fitted and fitted.sp_rates)
+        innings = self.model.starter_innings(stamina, pitches, fitted.sp_rates)
         starting = self.model.starting(era["sp matched"], innings) if innings else None
         sp_normal = self.model.starting(era["sp"], innings) if innings else None
         normal = self.model.relieving(era["rp"], rp_index)
@@ -228,18 +226,16 @@ class Value(BatchStage):
         floors = [(f"Control floor (Control {control}, x{floor:.2f})", floor)] if floor < 1 else []
         return self._modified(state, side, war, PITCHING, self._development(state, war), floors)
 
-    def _legacy_eras(self, player):
-        """(SP ERA, RP ERA, RP runs index) from the legacy scorer's role points,
-        through the fitted model's bridges; ERA scales with the index."""
-        recorded = (get_runtime_components(player.id) or {}).get(PITCHING, {})
-        index = {
-            role: float(bridge.talent(recorded.get(name, {}).get("model", 0.0), self.pitching_model.bridges[role]))
-            for role, name in (("sp", "starter"), ("rp", "reliever"))
-        }
-        era = self.model.pitcher["league_era"]
-        return era * index["sp"] / 100, era * index["rp"] / 100, index["rp"]
-
     # -- both ------------------------------------------------------------------
+
+    @staticmethod
+    def _unrated(state, side, side_name, components, what) -> float:
+        """A side no fitted model can read: valued at replacement."""
+        state.ledger.add(MODEL, f"no {what} ratings the model can read (valued at replacement)", 0.0, side_name)
+        side.components = dict.fromkeys(components, 0.0)
+        side.score = 0.0
+        write_runtime_component(state.player.id, f"{side_name}.value.war", 0.0)
+        return 0.0
 
     def _development(self, state, war) -> list:
         return development.factors(state.player, war) if self.develops else []

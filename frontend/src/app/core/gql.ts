@@ -564,11 +564,9 @@ export const PLAYER_BREAKDOWN = gql`
 
 const SPLIT_SCORES_FIELDS = gql`
   fragment SplitScoresFields on SplitScores {
-    batterScore
-    battingModel
-    pitcherScore
-    starterScore
-    relieverScore
+    wrcPlus
+    era
+    eraRole
     contact
     gap
     power
