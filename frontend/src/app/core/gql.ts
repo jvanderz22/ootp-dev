@@ -39,6 +39,7 @@ const PLAYER_FIELDS = gql`
     era
     role
     war
+    surplusWar
     battingWar
     fieldingWar
     runningWar

@@ -723,7 +723,17 @@ const warCol = (
   fmt: fmtNum2,
 });
 
-const WAR_COLUMN = warCol('war', 'WAR', 'v2 value in WAR over replacement, before the demand step', 'Model');
+const WAR_COLUMN = warCol('war', 'WAR', 'v2 WAR on StatsPlus’s scale, before the demand step', 'Model');
+
+/** What the rank is on for current ratings: his WAR above the league's own
+ *  replacement for his spot (blank where the two are the same). */
+const surplusCol = (group: ColGroup) =>
+  warCol(
+    'surplusWar',
+    'Surplus WAR',
+    'WAR above what the league gives away free at his spot (WAR minus the spot’s price) - what the rank is on',
+    group,
+  );
 
 const ROLE_COLUMN: ColumnDef = {
   field: 'role',
@@ -760,6 +770,7 @@ const V2_MODELED_COLUMNS: ColumnDef[] = [
   warCol('runningWar', 'Run', 'Baserunning WAR'),
   warCol('starterWar', 'SP', 'WAR as a starter'),
   warCol('relieverWar', 'RP', 'WAR as a reliever (the better of SP / RP counts)'),
+  surplusCol('WAR'),
   DEMAND_COLUMN,
   ...DRAFT_COLUMNS,
 ];
@@ -793,12 +804,19 @@ const V2_PITCHING_MODEL: ColumnDef[] = [
 
 const V2_VIEW_COLUMNS: Record<ClassView, ColumnDef[]> = {
   modeled: [...V2_LEAD, ...V2_MODELED_COLUMNS],
-  batting: [...V2_LEAD.filter((c) => c.field !== 'type'), WAR_COLUMN, field_('wrcPlus'), ...BATTING_COLUMNS],
+  batting: [
+    ...V2_LEAD.filter((c) => c.field !== 'type'),
+    WAR_COLUMN,
+    field_('wrcPlus'),
+    surplusCol('Model'),
+    ...BATTING_COLUMNS,
+  ],
   pitching: [
     ...V2_LEAD.filter((c) => c.field !== 'type'),
     WAR_COLUMN,
     field_('era'),
     ...V2_PITCHING_MODEL,
+    surplusCol('Model'),
     ...PITCHING_COLUMNS,
   ],
   compare: VIEW_COLUMNS.compare,

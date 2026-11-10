@@ -301,7 +301,7 @@
   <ng-template #valueBuildTpl>
     <div class="section-head">
       <h4>Value build</h4>
-      <span class="muted vb-unit">WAR over replacement</span>
+      <span class="muted vb-unit">WAR</span>
     </div>
     @if (build(); as vb) {
       @if (breakdown()?.splits?.length) {
@@ -327,6 +327,15 @@
         <div class="vb-total">
           <span>Value</span><b>{{ vb.war | number: '1.2-2' }} WAR</b>
         </div>
+        @if (vb.surplus != null) {
+          @for (s of vb.replacement; track $index) {
+            <ng-container *ngTemplateOutlet="vbRow; context: { $implicit: s }" />
+          }
+          <div class="vb-total">
+            <span title="WAR above what the league gives away free at his spot - what the rank is on">Surplus WAR</span
+            ><b>{{ vb.surplus | number: '1.2-2' }} WAR</b>
+          </div>
+        }
         @if (vb.demand.length) {
           <div class="vb-stage">Demand</div>
           @for (s of vb.demand; track $index) {

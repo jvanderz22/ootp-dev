@@ -203,6 +203,7 @@ CREATE TABLE run_results (
   sp_era,
   rp_era,
   ip,
+  replacement,
   PRIMARY KEY (scope, scope_id, method, engine, player_id),
   FOREIGN KEY (scope, scope_id, method, engine)
     REFERENCES model_runs (scope, scope_id, method, engine) ON DELETE CASCADE
@@ -295,8 +296,17 @@ def _migration_6(conn):
             conn.execute(f"ALTER TABLE run_results ADD COLUMN {column}")
 
 
+def _migration_7(conn):
+    # v2 on current ratings: the WAR the league's replacement takes off
+    # (ranking/value.py); other rows leave it NULL. A database created since
+    # has it already.
+    have = {r[1] for r in conn.execute("PRAGMA table_info(run_results)")}
+    if "replacement" not in have:
+        conn.execute("ALTER TABLE run_results ADD COLUMN replacement")
+
+
 # index i holds the step that takes the schema from version i to i + 1
-_MIGRATIONS = [_migration_1, _migration_2, _migration_3, _migration_4, _migration_5, _migration_6]
+_MIGRATIONS = [_migration_1, _migration_2, _migration_3, _migration_4, _migration_5, _migration_6, _migration_7]
 
 _conns: "dict[tuple, sqlite3.Connection]" = {}
 _conns_lock = threading.Lock()

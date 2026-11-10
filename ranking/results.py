@@ -25,6 +25,10 @@ class RankedResult(ScoredPlayer):
     sp_era: float = None
     rp_era: float = None
     ip: float = None
+    # v2 on current ratings: the WAR the league's replacement takes off (his
+    # spot's price), so his WAR on StatsPlus's scale is his value plus this;
+    # None where the profile values him over StatsPlus's replacement
+    replacement: float = None
 
     def scored_player_fields(self) -> dict:
         return {name: getattr(self, name) for name in SCORED_PLAYER_FIELDS}

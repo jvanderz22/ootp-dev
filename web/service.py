@@ -50,7 +50,7 @@ _FLOAT_FIELDS = (
     "model_score", "position_player_score", "fielding_score_component",
     "batting_score_component", "pitcher_score", "starter_component",
     "reliever_component", "running_score_component", "raw_overall_score",
-    "pre_demand_score", "wrc_plus", "era", "sp_era", "rp_era", "ip",
+    "pre_demand_score", "wrc_plus", "era", "sp_era", "rp_era", "ip", "replacement",
 )
 
 
@@ -269,10 +269,16 @@ _WAR_PARTS = {
 
 def _war_fields(payload) -> dict:
     """A v2 row's value and its parts in WAR (all None for legacy, whose
-    points aren't WAR). `war` is before the demand step: the model's value."""
+    points aren't WAR), before the demand step. On current ratings the model
+    ranks on `surplus_war`, his WAR above the league's own replacement; `war`
+    adds that replacement back, his WAR on StatsPlus's scale (ranking/value.py).
+    Elsewhere they're the same and `surplus_war` is None."""
     if payload["pre_demand_score"] is None:
-        return {"war": None, **dict.fromkeys(_WAR_PARTS)}
-    out = {"war": round((payload["pre_demand_score"] - _REPLACEMENT_POINTS) / _POINTS_PER_WAR, 2)}
+        return {"war": None, "surplus_war": None, **dict.fromkeys(_WAR_PARTS)}
+    value = (payload["pre_demand_score"] - _REPLACEMENT_POINTS) / _POINTS_PER_WAR
+    replacement = payload.get("replacement")
+    out = {"war": round(value + (replacement or 0.0), 2),
+           "surplus_war": None if replacement is None else round(value, 2)}
     for field, points in _WAR_PARTS.items():
         value = payload[points]
         out[field] = None if value is None else round(value / _POINTS_PER_WAR, 2)

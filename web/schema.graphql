@@ -83,8 +83,10 @@ type RankedPlayer {
   era: Float
   "v2 engine only: where he's valued - his best position, or SP / RP"
   role: String
-  "v2 engine only: his value in WAR before the demand step"
+  "v2 engine only: his WAR before the demand step, on StatsPlus's scale"
   war: Float
+  "v2 engine on current ratings only: his WAR above the league's own replacement for his spot - what the ranking is on (war minus the spot's price)"
+  surplusWar: Float
   "v2 engine only, a hitter's parts of it: batting (with the playing-time credit), fielding (with position and utility), baserunning"
   battingWar: Float
   fieldingWar: Float

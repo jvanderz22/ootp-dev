@@ -340,8 +340,13 @@ export interface ValueGroup {
 export interface ValueBuild {
   /** everything before the demand step, by stage in pipeline order */
   groups: ValueGroup[];
-  /** his value: the sum of those groups */
+  /** his WAR: the sum of those groups */
   war: number;
+  /** current ratings: the league's replacement for his spot, taken off his
+   *  WAR below the total, and what's left - his surplus WAR, the rank's
+   *  value (null where the ranking has no league replacement) */
+  replacement: ValueStep[];
+  surplus: number | null;
   /** the demand step's lines (draft classes) */
   demand: ValueStep[];
   /** the score after demand, in WAR and in points */
@@ -414,16 +419,26 @@ export function valueBuild(b: ScoreBreakdown | null): ValueBuild | null {
   if (!b?.ledger?.length) return null;
   const isBaseline = (l: LedgerLine) =>
     l.stage === 'model' && l.side == null && l.label === 'replacement level';
+  const isReplacement = (l: LedgerLine) => l.stage === 'model' && l.label === 'league replacement';
   const counted = b.ledger.filter((l) => l.counted && !isBaseline(l));
+  // his WAR first, then the league's replacement below its total, then demand
+  const ordered = [
+    ...counted.filter((l) => l.stage !== 'demand' && !isReplacement(l)),
+    ...counted.filter(isReplacement),
+    ...counted.filter((l) => l.stage === 'demand'),
+  ];
   const groups: ValueGroup[] = [];
   const demand: ValueStep[] = [];
+  const replacement: ValueStep[] = [];
   let hidden = 0;
   let war = 0;
   let finalWar = 0;
-  for (const { line, step } of waterfall(counted)) {
+  for (const { line, step } of waterfall(ordered)) {
     finalWar += step.war;
-    if (line.stage !== 'demand') war += step.war;
-    if (!shown(line)) {
+    if (line.stage !== 'demand' && !isReplacement(line)) war += step.war;
+    if (isReplacement(line)) {
+      replacement.push(step);
+    } else if (!shown(line)) {
       hidden++;
     } else if (line.stage === 'demand') {
       demand.push(step);
@@ -450,6 +465,8 @@ export function valueBuild(b: ScoreBreakdown | null): ValueBuild | null {
   return {
     groups,
     war,
+    replacement,
+    surplus: replacement.length ? war + replacement.reduce((sum, s) => sum + s.war, 0) : null,
     demand,
     finalWar,
     score: REPLACEMENT_POINTS + finalWar * POINTS_PER_WAR,

@@ -148,6 +148,9 @@ export interface RankedPlayer {
    *  judged on it */
   role: string | null;
   war: number | null;
+  /** v2 on current ratings: WAR above the league's own replacement for his
+   *  spot, what the rank is on (war minus the spot's price); null elsewhere */
+  surplusWar: number | null;
   battingWar: number | null;
   fieldingWar: number | null;
   runningWar: number | null;

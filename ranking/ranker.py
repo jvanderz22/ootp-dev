@@ -14,6 +14,7 @@ from ranking.stages.demand import Demand
 from ranking.stages.legacy import LegacyModel, LegacyModifiers, TwoWay
 from ranking.stages.talent import Talent
 from ranking.stages.value import Value
+from ranking import value
 from ranking.value import DISPLAY_OFFSET
 from ranking.state import PlayerState
 from rankers.base_ranker import DEFAULT_BATCH_SIZE
@@ -37,6 +38,13 @@ def v2_pipeline(profile, league=None):
 
 
 PIPELINES = {"v2": v2_pipeline, "legacy": legacy_pipeline}
+
+
+def _league_replacement(ledger):
+    """The WAR his counted "league replacement" lines take off, or None
+    without one (ranking/value.py)."""
+    lines = [line for line in ledger.lines if line.label == "league replacement" and ledger.counted(line)]
+    return round(-sum(line.delta for line in lines) / value.DISPLAY_SCALE, 3) if lines else None
 
 
 class Ranker:
@@ -119,6 +127,7 @@ class Ranker:
             sp_era=None if state.sp_era is None else round(state.sp_era, 2),
             rp_era=None if state.rp_era is None else round(state.rp_era, 2),
             ip=None if state.innings is None else round(state.innings),
+            replacement=_league_replacement(state.ledger),
         )
 
     def _finish(self, results) -> list:

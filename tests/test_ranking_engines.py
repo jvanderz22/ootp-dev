@@ -43,7 +43,7 @@ def test_migration_3_keeps_existing_runs_as_legacy(data_dir):
     conn.commit()
     conn.close()
 
-    assert db.query_one("PRAGMA user_version")[0] == len(db._MIGRATIONS) == 6
+    assert db.query_one("PRAGMA user_version")[0] == len(db._MIGRATIONS) == 7
     info = results_store.run_info("class", "c", "draft_class", "legacy")
     assert info["source_version"] == 3 and info["manifest"] is None
     assert results_store.run_info("class", "c", "draft_class", "v2") is None
