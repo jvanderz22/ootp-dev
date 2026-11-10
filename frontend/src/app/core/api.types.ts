@@ -153,6 +153,11 @@ export interface RankedPlayer {
   runningWar: number | null;
   starterWar: number | null;
   relieverWar: number | null;
+  /** v2 pitchers: ERA as a starter (null when he can't start) and a reliever */
+  spEra: number | null;
+  rpEra: number | null;
+  /** v2 pitchers: innings in the role he's valued in */
+  ip: number | null;
   /** the Compare view only (null otherwise): overall score and rank under
    *  each engine — ranks are each engine's model order; the units differ
    *  (legacy points vs v2's 50 + 10 × WAR), so the score diff is rough */
@@ -248,6 +253,14 @@ export interface ScoreBreakdown {
   role: string | null;
   /** v2 pitchers: WAR as a starter (SP) and a reliever (RP) */
   roleWar: NamedValue[];
+  /** v2 pitchers: ERA as a starter (SP, when he can start) and a reliever (RP) */
+  roleEra: NamedValue[];
+  /** v2: the judged side against each hand (vs LHP / RHP, or vs LHB / RHB in his role) */
+  splits: NamedValue[];
+  /** 'wRC+' or 'ERA': what `splits` are in */
+  splitStat: string | null;
+  /** the hitter splits are the expected ones for his batting hand */
+  splitsExpected: boolean;
   batting: {
     battingModel: number | null;
     runningModel: number | null;

@@ -20,7 +20,11 @@ The value of a position is its runs plus its adjustment. The adjustments come
 from where OOTP's managers play regulars, pulled lightly toward StatsPlus's
 (decided 2026-11-09): StatsPlus's put SS only 2 runs above 2B, so a true SS
 came out worth more at 2B. The best position is the most valuable one, so the
-same adjustments pick a player's position and value him there.
+same adjustments pick a player's position and value him there. The corners
+are one skill apart from the arm (2026-11-09): LF and RF share their Range and
+Error shapes, and RF's adjustment sits a little above LF's (a ball that gets
+by in RF puts runners on third), so an outfielder with an arm is worth more in
+RF than LF.
 
 Utility (decided 2026-11-09) is roster flexibility, not runs: WAR for other
 positions a player can cover - one in the middle infield (SS over 2B), one in
@@ -73,7 +77,9 @@ JUDGED = {
         "of_error": [-1.5, -1.0, -0.5] + [0.0] * 10,
     },
     "LF": {"of_arm": _edges(0.25)},
-    "RF": {"of_arm": _edges(1.5)},
+    # RF's Arm costs from below 55 (2026-11-09): with RF a little more valuable
+    # than LF, a 45 arm always plays LF and a 50 mostly does
+    "RF": {"of_arm": _edges(1.5, low=55)},
 }
 # utility: WAR for each other position he covers - clears its floors and
 # fields it no worse than COVER_RUNS against its average

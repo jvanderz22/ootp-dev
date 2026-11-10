@@ -99,6 +99,25 @@ def test_an_arm_counts_most_in_right_and_least_in_left(model):
     assert gain["RF"] > gain["CF"] > gain["LF"] > 0
 
 
+def test_a_corner_outfielder_with_an_arm_is_worth_more_in_rf(model):
+    # 2026-11-09: one corner skill apart from the arm, and RF a little more
+    # valuable (a ball that gets by puts runners on third)
+    from ranking.fitting.fielding_talent import RF_OVER_LF
+
+    for rating in ("of_range", "of_error"):
+        gap = np.asarray(model.tables["RF"][rating]) - np.asarray(model.tables["LF"][rating])
+        assert np.ptp(gap) <= 0.02   # the tables are stored to 0.01
+    assert model.position_adjustment["RF"] >= model.position_adjustment["LF"] + RF_OVER_LF - 1e-9
+
+    def corner(arm):
+        _, best, _ = model.best(_ratings(of_range=65, of_arm=arm, of_error=55, if_range=30, if_arm=30,
+                                         if_error=30, turn_dp=30, c_arm=20, c_blocking=20, c_framing=20))
+        return best[0]
+    # a 45 or 50 arm plays LF (your call, 2026-11-09)
+    assert corner(40) == corner(45) == corner(50) == "LF"
+    assert corner(55) == corner(65) == corner(75) == "RF"
+
+
 def test_utility_is_flexibility_not_runs():
     war, credited = utility({"SS", "3B", "CF", "LF"}, "2B")
     assert credited == ["SS", "3B", "CF"]

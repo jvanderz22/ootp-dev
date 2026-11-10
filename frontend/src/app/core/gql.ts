@@ -44,6 +44,9 @@ const PLAYER_FIELDS = gql`
     runningWar
     starterWar
     relieverWar
+    spEra
+    rpEra
+    ip
     legacyScore
     legacyRank
     v2Score
@@ -514,6 +517,16 @@ export const PLAYER_BREAKDOWN = gql`
         name
         value
       }
+      roleEra {
+        name
+        value
+      }
+      splits {
+        name
+        value
+      }
+      splitStat
+      splitsExpected
       ledger {
         stage
         label

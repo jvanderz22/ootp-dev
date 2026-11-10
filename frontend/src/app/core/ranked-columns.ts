@@ -764,10 +764,43 @@ const V2_MODELED_COLUMNS: ColumnDef[] = [
   ...DRAFT_COLUMNS,
 ];
 
+/** A pitcher's ERA in one role, and his innings in the role he's valued in
+ *  (the Pitching view). */
+const roleEraCol = (field: 'spEra' | 'rpEra', header: string, title: string): ColumnDef => ({
+  field,
+  header,
+  title,
+  numeric: true,
+  descFirst: false,
+  group: 'Model',
+  value: model(field),
+  fmt: fmtNum2,
+});
+const V2_PITCHING_MODEL: ColumnDef[] = [
+  roleEraCol('spEra', 'SP ERA', 'Modeled ERA as a starter (blank when he can’t start)'),
+  roleEraCol('rpEra', 'RP ERA', 'Modeled ERA as a reliever'),
+  {
+    field: 'ip',
+    header: 'IP',
+    title: 'Innings in the role he’s valued in: a starter’s by stamina and efficiency, or the reliever workload',
+    numeric: true,
+    descFirst: true,
+    group: 'Model',
+    value: model('ip'),
+    fmt: fmtInt,
+  },
+];
+
 const V2_VIEW_COLUMNS: Record<ClassView, ColumnDef[]> = {
   modeled: [...V2_LEAD, ...V2_MODELED_COLUMNS],
   batting: [...V2_LEAD.filter((c) => c.field !== 'type'), WAR_COLUMN, field_('wrcPlus'), ...BATTING_COLUMNS],
-  pitching: [...V2_LEAD.filter((c) => c.field !== 'type'), WAR_COLUMN, field_('era'), ...PITCHING_COLUMNS],
+  pitching: [
+    ...V2_LEAD.filter((c) => c.field !== 'type'),
+    WAR_COLUMN,
+    field_('era'),
+    ...V2_PITCHING_MODEL,
+    ...PITCHING_COLUMNS,
+  ],
   compare: VIEW_COLUMNS.compare,
 };
 

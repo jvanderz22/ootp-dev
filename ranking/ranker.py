@@ -114,6 +114,9 @@ class Ranker:
             wrc_plus=None if state.wrc_plus is None else round(state.wrc_plus),
             era=None if state.era is None else round(state.era, 2),
             role=state.ledger.role,
+            sp_era=None if state.sp_era is None else round(state.sp_era, 2),
+            rp_era=None if state.rp_era is None else round(state.rp_era, 2),
+            ip=None if state.innings is None else round(state.innings),
         )
 
     def _finish(self, results) -> list:

@@ -114,9 +114,12 @@ class Value(BatchStage):
         ledger = state.ledger
         # batting over replacement: the allowance (a full-time regular's
         # credit, the same for every hitter) rides on the batting line
+        if sides:
+            # by side (the card's splits row): his splits, or the expected ones for his hand
+            for s, w in sides.items():
+                write_runtime_component(state.player.id, f"batting.value.wrc_{s.lower()}", w)
+            write_runtime_component(state.player.id, "batting.value.splits_expected", not batting.platoon)
         how = [f"{batting_runs:+.1f} runs vs avg",
-               f"vL {sides['vL']:.0f} / vR {sides['vR']:.0f}" if sides else None,
-               "his splits" if batting and batting.platoon else None,
                "BABIP from Contact" if batting and batting.babip_implied else None]
         ledger.add(MODEL, "batting", SCALE * (parts["batting"] + parts["allowance"]), BATTING,
                    f"{wrc:.0f} wRC+", " · ".join(h for h in how if h))
@@ -197,8 +200,6 @@ class Value(BatchStage):
         if fitted is None:
             return self._unrated(state, side, PITCHING, ("starter", "reliever"), "pitching")
         sp_era, rp_era, rp_index, sp_index = fitted.sp_era, fitted.rp_era, fitted.rp_index, fitted.sp_index
-        stuff = {"sp": f"Stuff {fitted.sp_stuff:.0f} as SP", "rp": f"Stuff {fitted.rp_stuff:.0f} as RP"}
-        splits = " · his splits" if fitted.platoon else ""
         split = {"sp": fitted.sp_split, "rp": fitted.rp_split}
         estimated = fitted.split_estimated
         stamina, pitches = self.ratings.stamina(player), self.ratings.pitch_count(player)
@@ -228,7 +229,7 @@ class Value(BatchStage):
         if starting and sp_war >= rp_war:
             side.role, state.era = "SP", era["sp"]
             ledger.add(MODEL, "pitching", SCALE * sp_normal["runs"], PITCHING,
-                       f"{era['sp']:.2f} ERA", stuff["sp"] + splits)
+                       f"{era['sp']:.2f} ERA", self._pitching_detail(player, fitted, "sp"))
             if tilt["sp"] > 0:
                 gap = (era["sp matched"] - era["sp"]) / tilt["sp"]
                 ledger.add(MODEL, "matchups", SCALE * (starting["runs"] - sp_normal["runs"]), PITCHING,
@@ -240,7 +241,7 @@ class Value(BatchStage):
             side.role, state.era = "RP", era["rp"]
             leverage = float(self.model.leverage(rp_index))
             ledger.add(MODEL, "pitching", SCALE * normal["runs"], PITCHING,
-                       f"{era['rp']:.2f} ERA", stuff["rp"] + splits)
+                       f"{era['rp']:.2f} ERA", self._pitching_detail(player, fitted, "rp"))
             ledger.add(MODEL, "leverage", SCALE * normal["leverage"], PITCHING, f"LI {leverage:.2f}")
             if tilt["rp"] > 0:
                 gap = (era["rp"] - era["rp matched"]) / tilt["rp"]
@@ -251,11 +252,30 @@ class Value(BatchStage):
             war = rp_war
         write_runtime_component(player.id, "pitching.value.starter_war", sp_war if starting else 0.0)
         write_runtime_component(player.id, "pitching.value.reliever_war", rp_war)
+        # each role's ERA, and the valued role's against each batting hand (the card)
+        state.sp_era, state.rp_era = (era["sp"] if starting else None), era["rp"]
+        state.innings = innings if side.role == "SP" else self.model.workloads["reliever_ip"]
+        if starting:
+            write_runtime_component(player.id, "pitching.value.starter_era", era["sp"])
+        write_runtime_component(player.id, "pitching.value.reliever_era", era["rp"])
+        if fitted.side_era:
+            role = side.role.lower()
+            for s, e in fitted.side_era[role].items():
+                write_runtime_component(player.id, f"pitching.value.era_{s.lower()}", float(cal("era", e, role)))
         control = self.ratings.control(player)
         floor = value.control_floor(control)
         floors = [("Control floor", floor, f"Control {control}")] if floor < 1 else []
         self._modifiers(state, side, PITCHING, war)
         return self._modified(state, side, war, PITCHING, self._development(state, war), floors)
+
+    @staticmethod
+    def _pitching_detail(player, fitted, role) -> str:
+        """His Stuff when he's valued in a role he isn't listed in (the role
+        shift moved it); None otherwise."""
+        listed = "sp" if player.position == "SP" else "rp"
+        if role == listed:
+            return None
+        return f"Stuff {fitted.sp_stuff if role == 'sp' else fitted.rp_stuff:.0f} as {role.upper()}"
 
     # -- both ------------------------------------------------------------------
 

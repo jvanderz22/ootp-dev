@@ -45,12 +45,12 @@ _BATTING_SIDE = (
     "position_player_score", "batting_score_component",
     "fielding_score_component", "running_score_component",
 )
-_PITCHING_SIDE = ("pitcher_score", "starter_component", "reliever_component")
+_PITCHING_SIDE = ("pitcher_score", "starter_component", "reliever_component", "sp_era", "rp_era", "ip")
 _FLOAT_FIELDS = (
     "model_score", "position_player_score", "fielding_score_component",
     "batting_score_component", "pitcher_score", "starter_component",
     "reliever_component", "running_score_component", "raw_overall_score",
-    "pre_demand_score", "wrc_plus", "era",
+    "pre_demand_score", "wrc_plus", "era", "sp_era", "rp_era", "ip",
 )
 
 
@@ -1224,6 +1224,7 @@ def player_breakdown(source: dict, player_id):
     player_type, breakdown, ledger = found
     info = results_store.run_info(scope, scope_id, method, engine) or {}
     roles = ((breakdown.get("pitching") or {}).get("value") or {})
+    side = (ledger or {}).get("side")
     return {
         **_breakdown_payload(player_type, breakdown),
         "engine": engine,
@@ -1232,7 +1233,24 @@ def player_breakdown(source: dict, player_id):
         "role": (ledger or {}).get("role"),
         "role_war": [{"name": n, "value": roles[k]} for n, k in (("SP", "starter_war"), ("RP", "reliever_war"))
                      if roles.get(k) is not None],
+        "role_era": [{"name": n, "value": roles[k]} for n, k in (("SP", "starter_era"), ("RP", "reliever_era"))
+                     if roles.get(k) is not None],
+        **_splits_payload(breakdown, side),
     }
+
+
+def _splits_payload(breakdown, side) -> dict:
+    """v2: the side he's judged on, against each hand - a hitter's wRC+ vs
+    LHP / RHP (his splits, or the expected ones for his hand), a pitcher's ERA
+    vs LHB / RHB in the role he's valued in (his splits only)."""
+    v = ((breakdown.get(side) or {}).get("value") or {}) if side else {}
+    if side == "batting" and v.get("wrc_vl") is not None:
+        return {"splits": [{"name": "vs LHP", "value": v["wrc_vl"]}, {"name": "vs RHP", "value": v["wrc_vr"]}],
+                "split_stat": "wRC+", "splits_expected": bool(v.get("splits_expected"))}
+    if side == "pitching" and v.get("era_vl") is not None:
+        return {"splits": [{"name": "vs LHB", "value": v["era_vl"]}, {"name": "vs RHB", "value": v["era_vr"]}],
+                "split_stat": "ERA", "splits_expected": False}
+    return {"splits": [], "split_stat": None, "splits_expected": False}
 
 
 def _ledger_payload(ledger) -> list:

@@ -43,7 +43,7 @@ def test_migration_3_keeps_existing_runs_as_legacy(data_dir):
     conn.commit()
     conn.close()
 
-    assert db.query_one("PRAGMA user_version")[0] == len(db._MIGRATIONS) == 5
+    assert db.query_one("PRAGMA user_version")[0] == len(db._MIGRATIONS) == 6
     info = results_store.run_info("class", "c", "draft_class", "legacy")
     assert info["source_version"] == 3 and info["manifest"] is None
     assert results_store.run_info("class", "c", "draft_class", "v2") is None
@@ -133,7 +133,8 @@ _ROWS = f"""{{ rankedPlayers(name: "{CLASS}", pageSize: 5)
 
 _BREAKDOWN = """query($source: RankingSourceInput!, $id: ID!) {
   playerBreakdown(source: $source, playerId: $id) {
-    engine unit role roleWar { name value } ledger { stage label delta side counted stat note } } }"""
+    engine unit role roleWar { name value } roleEra { name value } splits { name value } splitStat splitsExpected
+    ledger { stage label delta side counted stat note } } }"""
 
 
 def test_the_header_picks_the_engine(client):
@@ -161,10 +162,25 @@ def test_breakdown_carries_the_ledger(client):
     assert any(line["stat"] for line in b["ledger"] if line["stage"] == "model")
     if b["roleWar"]:
         assert {r["name"] for r in b["roleWar"]} == {"SP", "RP"}
+        assert "RP" in {r["name"] for r in b["roleEra"]}
     # the source can name the engine itself, over the header
     b = _gql(client, _BREAKDOWN, source={**source, "engine": "legacy"}, id=top["id"])["playerBreakdown"]
     assert b["engine"] == "legacy" and b["ledger"] == [] and b["unit"] is None
-    assert b["role"] is None and b["roleWar"] == []
+    assert b["role"] is None and b["roleWar"] == [] and b["splits"] == []
+
+
+def test_breakdown_carries_the_judged_sides_splits(client):
+    # a draft class has no split ratings: a hitter shows the splits expected
+    # for his batting hand, a pitcher none
+    source = {"className": CLASS}
+    for row in _gql(client, _ROWS)["rankedPlayers"]["rows"]:
+        b = _gql(client, _BREAKDOWN, source=source, id=row["id"])["playerBreakdown"]
+        side = next(line["side"] for line in b["ledger"] if line["counted"] and line["side"])
+        if side == "pitching":
+            assert b["splits"] == [] and b["roleEra"]
+        elif b["splits"]:
+            assert [s["name"] for s in b["splits"]] == ["vs LHP", "vs RHP"]
+            assert b["splitStat"] == "wRC+" and b["splitsExpected"]
 
 
 _SIDES = f"""{{ rankedPlayers(name: "{CLASS}", allRows: true)

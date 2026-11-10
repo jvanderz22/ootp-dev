@@ -9,7 +9,8 @@ step 2):
   fielder, as a sum of one table per rating: monotone and piecewise-linear
   (knots at 40 / 50 / 60 / 70), fit on MLB and AAA lines (a level term keeps
   them on MLB's scale) - zone runs plus framing for every position, and double
-  plays (DP_RUNS each) for 2B and SS on Turn DP. Each takes the strongest
+  plays (DP_RUNS each) for 2B and SS on Turn DP; LF and RF share their Range
+  and Error shapes, fit on both corners' lines (SHARED). Each takes the strongest
   smoothing within 2% of the best out-of-fold error (folds grouped by player);
   the double plays keep the data's drop at 40-45 instead. Outside the 5-95%
   range of MLB regulars a table continues at its average slope inside it.
@@ -21,7 +22,7 @@ step 2):
   are worth the most at SS; and centred so the regulars' average matches
   StatsPlus's. StatsPlus's (from its WAR: an allowance per PA at each position
   against the average of all nine, DH included) put SS only 2 runs above 2B,
-  so a true SS came out worth more at 2B.
+  so a true SS came out worth more at 2B. RF is then kept RF_OVER_LF above LF.
 """
 import argparse
 import gzip
@@ -68,6 +69,13 @@ READS = {
     "RF": ("of_range", "of_arm", "of_error"),
 }
 DP_POSITIONS = ("2B", "SS")
+# the corners are one skill (your call, 2026-11-09): LF and RF share their
+# Range and Error shapes, fit on both positions' lines (RF's own went flat
+# from Range 60 to 65), so Arm and the adjustment are what tell them apart
+SHARED = {"LF": ("LF", "RF"), "RF": ("LF", "RF")}
+# RF is worth a little more than LF whatever the arm (your call, 2026-11-09):
+# a ball that gets by in RF puts runners on third
+RF_OVER_LF = 1.5
 USAGE_INNINGS = 400
 USAGE_YEARS = 2
 # how hard the usage fit is pulled toward StatsPlus's adjustments (your call,
@@ -164,8 +172,9 @@ def position_tables(rows) -> tuple:
     against its average fielder, as zone rating measures them."""
     out, report = {}, {}
     for pos, reads in READS.items():
+        pooled = rows[rows.position.isin(SHARED.get(pos, (pos,)))].reset_index(drop=True)
+        tables, lam, rmse = seed(pooled, pooled.per_season.to_numpy(float), reads, MIN_MAIN_LAMBDA)
         d = rows[rows.position == pos].reset_index(drop=True)
-        tables, lam, rmse = seed(d, d.per_season.to_numpy(float), reads, MIN_MAIN_LAMBDA)
         if pos in DP_POSITIONS:
             coef = fit_tables(d, d.dp_runs.to_numpy(float), ("turn_dp",), DP_LAMBDA)
             dp = basis(STEPS) @ coef[2:]
@@ -277,6 +286,7 @@ def main(argv=None):
     artifact["position_adjustment"] = adjustment
     # a first baseman is no worse than a DH, who fields nowhere
     artifact["position_adjustment"]["1B"] = max(adjustment["1B"], war_adjustment[DH])
+    artifact["position_adjustment"]["RF"] = max(adjustment["RF"], round(adjustment["LF"] + RF_OVER_LF, 2))
 
     adj = {**artifact["position_adjustment"], DH: war_adjustment[DH]}
     order = [(a, b, adj[a] > adj[b]) for a, b in POSITION_ORDER]

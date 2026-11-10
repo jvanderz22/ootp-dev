@@ -92,6 +92,11 @@ type RankedPlayer {
   "v2 engine only, a pitcher's WAR as a starter and as a reliever (the better one counts)"
   starterWar: Float
   relieverWar: Float
+  "v2 engine only, a pitcher's ERA as a starter (null when he can't start) and as a reliever"
+  spEra: Float
+  rpEra: Float
+  "v2 engine only, a pitcher's innings in the role he's valued in: a starter's by stamina and efficiency, or the reliever workload"
+  ip: Float
   """
   The Compare view (only when the query passes `compare: true`): his overall
   score and rank under each engine - ranks are each engine's model order, and
@@ -238,6 +243,14 @@ type ScoreBreakdown {
   role: String
   "v2 pitchers: his WAR as a starter (SP) and as a reliever (RP); the better one counts"
   roleWar: [NamedValue!]!
+  "v2 pitchers: his ERA as a starter (SP, when he can start) and as a reliever (RP)"
+  roleEra: [NamedValue!]!
+  "v2: the side he's judged on against each hand (vs LHP / RHP wRC+, or vs LHB / RHB ERA in his role); empty without them"
+  splits: [NamedValue!]!
+  "wRC+ or ERA: what `splits` are in"
+  splitStat: String
+  "the hitter splits are the expected ones for his batting hand, not his own"
+  splitsExpected: Boolean!
   batting: BattingBreakdown
   pitching: PitchingBreakdown
   rankAdjust: RankAdjustBreakdown

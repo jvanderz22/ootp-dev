@@ -72,8 +72,12 @@ def test_a_class_without_hra_is_scored_on_movement():
 def test_v2_scores_pitchers_with_the_talent_layer():
     for r in get_ranker("draft_class").rank([GamePlayer(dict(row)) for row in _class_rows()], batch_size=45):
         lines = [line for line in r.ledger.lines if line.side == "pitching"]
-        assert any(line.label == "pitching" and line.stat.endswith(" ERA") and line.note.startswith("Stuff ")
-                   for line in lines), lines
+        (talent,) = [line for line in lines if line.label == "pitching"]
+        assert talent.stat.endswith(" ERA")
+        # his Stuff is shown only when he's valued in a role he isn't listed in
+        relieving = any(line.label == "leverage" for line in lines)
+        moved = relieving == (r.position == "SP")
+        assert ("Stuff " in (talent.note or "")) == moved, (r.position, talent)
         assert not any(line.label in ("SP model", "RP model") for line in lines)
         assert r.ledger.total() == pytest.approx(r.overall_score, abs=1e-9)
 

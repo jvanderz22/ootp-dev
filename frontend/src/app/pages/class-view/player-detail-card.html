@@ -304,6 +304,18 @@
       <span class="muted vb-unit">WAR over replacement</span>
     </div>
     @if (build(); as vb) {
+      @if (breakdown()?.splits?.length) {
+        @let b = breakdown()!;
+        <div class="vb-splits" [title]="b.splitsExpected ? 'Expected for his batting hand' : ''">
+          @for (s of b.splits; track s.name) {
+            <span
+              >{{ s.name }}
+              <b>{{ b.splitStat === 'ERA' ? (s.value | number: '1.2-2') : (s.value | number: '1.0-0') }}</b></span
+            >
+          }
+          <span class="muted">{{ b.splitStat }}{{ b.splitsExpected ? ' · expected for his hand' : '' }}</span>
+        </div>
+      }
       <div class="vb">
         @for (g of vb.groups; track g.stage) {
           <div class="vb-stage">{{ g.title }}</div>
@@ -323,15 +335,19 @@
             <span>Ranked on</span><b>{{ vb.finalWar | number: '1.2-2' }} WAR</b>
           </div>
         }
-        <div class="vb-foot muted">
-          Score {{ vb.score | number: '1.2-2' }} = 50 + 10 × WAR
-          @if (p.preDemandRank && vb.demand.length) {
-            · #{{ p.preDemandRank }} before demand
-          }
-          @if (vb.hidden) {
-            · {{ vb.hidden }} modifier{{ vb.hidden === 1 ? '' : 's' }} at x1.00 hidden
-          }
-        </div>
+        @if ((p.preDemandRank && vb.demand.length) || vb.hidden) {
+          <div class="vb-foot muted">
+            @if (p.preDemandRank && vb.demand.length) {
+              #{{ p.preDemandRank }} before demand
+            }
+            @if (p.preDemandRank && vb.demand.length && vb.hidden) {
+              ·
+            }
+            @if (vb.hidden) {
+              {{ vb.hidden }} modifier{{ vb.hidden === 1 ? '' : 's' }} at x1.00 hidden
+            }
+          </div>
+        }
         @if (vb.other; as o) {
           <p-panel [toggleable]="true" [collapsed]="true" styleClass="vb-other">
             <ng-template #header>

@@ -49,6 +49,9 @@ _RESULT_KEYS = {
     "wrc_plus": "wrc_plus",
     "era": "era",
     "role": "role",
+    "sp_era": "sp_era",
+    "rp_era": "rp_era",
+    "ip": "ip",
 }
 
 # ledger deltas are stored to this many places - plenty for a waterfall, and
@@ -107,6 +110,9 @@ def result_from_scored(s) -> dict:
         "wrc_plus": getattr(s, "wrc_plus", None),
         "era": getattr(s, "era", None),
         "role": getattr(s, "role", None),
+        "sp_era": getattr(s, "sp_era", None),
+        "rp_era": getattr(s, "rp_era", None),
+        "ip": getattr(s, "ip", None),
     }
 
 

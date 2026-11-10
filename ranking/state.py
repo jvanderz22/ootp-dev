@@ -33,6 +33,11 @@ class PlayerState:
     # pitching side is judged in (None where a legacy model scored the side)
     wrc_plus: float = None
     era: float = None
+    # v2 pitching: his ERA as a starter (None when he can't start) and as a
+    # reliever, and the innings of the role he's valued in
+    sp_era: float = None
+    rp_era: float = None
+    innings: float = None
     # the fitted talent layers' outputs by side ("batting", "fielding",
     # "running", "pitching"; None where a legacy model scored it)
     fitted: dict = None

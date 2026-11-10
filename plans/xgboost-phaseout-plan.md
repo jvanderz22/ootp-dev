@@ -329,6 +329,29 @@ legacy's bonus on the live board: 0.07 WAR on average across the top 400
 hitters, 0.19 at the 90th percentile, 0.36 at most. It credits each other
 position a player can cover, most for SS and CF.
 
+**The corners (your call, 2026-11-09, after step 3):** no outfielder's best
+position came out RF on his arm. RF's fitted Range table was flat from 60 to
+65, so a 65-Range corner bat started 2 runs better in LF. And RF's arm and
+adjustment (0.6 above LF) only made up 1.25 runs at Arm 65. MLB managers do
+put arms in RF: 42–47% of corner regulars at Arm 45–60 play RF, 59% at 65
+and 65% at 70+. You added that RF is a little more valuable whatever the
+arm, since a ball that gets by in RF puts runners on third. So:
+- **One corner skill.** LF and RF share their Range and Error shapes, fit on
+  both corners' lines (`SHARED`), so only Arm and the adjustment tell them
+  apart.
+- **RF is kept 1.5 runs above LF** (`RF_OVER_LF`). That puts it at −2.1,
+  against LF's −3.6.
+- **RF's Arm costs from below 55** (`_edges(1.5, low=55)`; it was 45), so 45
+  and 50 arms play LF (your call) and 55 and up play RF.
+- **The value line refit** at 0.56 + 0.81 × (runs + adjustment).
+- **What moved:**
+  - Corner bats with arms gain about 0.2 WAR: Thatcher #5 → #4, Iwasaki
+    #33 → #26, Blanton #35 → #29. So do Range 60–65 CFs with arms, now
+    valued in RF (Kral, Smith, Thacker).
+  - Other hitters gain 0.01–0.04 WAR in the top 100 from the refit line.
+  - Avelar and Spinner stay #1 and #2, and hitters in the current top 100 go
+    from 57 to 58.
+
 ### 3. A native model stage (no points) ✅ (2026-11-09)
 
 - Replace `LegacyModel` and the points bridges with a v2 talent → value path.

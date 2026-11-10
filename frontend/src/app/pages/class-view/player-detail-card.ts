@@ -171,8 +171,14 @@ export class PlayerDetailCardComponent {
       : p.type === 'Pitcher';
     const role = b?.role ?? p.role ?? (pitching ? p.position : (p.bestPosition ?? p.position));
     const alt = b?.roleWar.find((r) => r.name !== role && r.value != null);
+    const altEra = alt && b?.roleEra.find((r) => r.name === alt.name)?.value;
     const roleNote = pitching
-      ? [ledgerStat(b, 'innings'), alt ? `${alt.name} ${alt.value!.toFixed(2)} WAR` : null]
+      ? [
+          ledgerStat(b, 'innings'),
+          alt
+            ? `${alt.name} ${altEra != null ? `${altEra.toFixed(2)} ERA, ` : ''}${alt.value!.toFixed(2)} WAR`
+            : null,
+        ]
       : [ledgerStat(b, 'utility')];
     const talentNote = b?.ledger.find(
       (l) => l.counted && l.label === (pitching ? 'pitching' : 'batting'),

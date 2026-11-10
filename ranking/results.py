@@ -21,6 +21,10 @@ class RankedResult(ScoredPlayer):
     wrc_plus: float = None
     era: float = None
     role: str = None
+    # v2 pitching: ERA as a starter / reliever, and the innings of his role
+    sp_era: float = None
+    rp_era: float = None
+    ip: float = None
 
     def scored_player_fields(self) -> dict:
         return {name: getattr(self, name) for name in SCORED_PLAYER_FIELDS}

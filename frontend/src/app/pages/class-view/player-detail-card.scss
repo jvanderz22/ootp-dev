@@ -420,6 +420,21 @@
 }
 .vb-total b { font-variant-numeric: tabular-nums; }
 .vb-foot { font-size: 11px; margin-top: 2px; }
+.vb-splits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: baseline;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.vb-splits b {
+  margin-left: 3px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.vb-splits .muted { font-size: 11px; }
 .vb-loading { font-size: 12px; }
 .vb-other-head { font-size: 12px; font-weight: 500; }
 .vb-other-head b { margin-left: 6px; font-variant-numeric: tabular-nums; }
