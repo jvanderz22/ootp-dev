@@ -16,7 +16,7 @@ def _player(we="N", intelligence="N", prone="Normal"):
 
 def _product(player, war):
     out = 1.0
-    for _, factor in development.factors(player, war):
+    for _, factor, _ in development.factors(player, war):
         out *= factor
     return out
 

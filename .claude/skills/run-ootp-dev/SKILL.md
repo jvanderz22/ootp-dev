@@ -1,6 +1,6 @@
 ---
 name: run-ootp-dev
-description: Run, start, drive or screenshot the OOTP draft web app (uvicorn web.app:app + the Angular SPA) against a scratch DATA_DIR; smoke-test the v2/legacy engine toggle, the Pre-dem columns and the player card's score ledger in headless Chrome; query the GraphQL API with curl.
+description: Run, start, drive or screenshot the OOTP draft web app (uvicorn web.app:app + the Angular SPA) against a scratch DATA_DIR; smoke-test the v2/legacy engine toggle, the Pre-dem columns and the player card's v2 verdict band and value build in headless Chrome; query the GraphQL API with curl.
 ---
 
 # Run the OOTP draft web app
@@ -66,7 +66,7 @@ activate/bin/python -m pytest -q
 - **The SPA always shows its login form until sessionStorage holds `ootp-draft-auth`,** even when `APP_PASSWORD` is empty and the server accepts anything. `drive.mjs` seeds a dummy Basic token with `addInitScript`.
 - **The engine comes from the `X-Ranking-Engine` header** (or `?engine=` on downloads), not from a GraphQL argument. An unknown value silently falls back to v2. Switching engines in the UI reloads the page, so wait for navigation.
 - **POST to `/graphql/` with the trailing slash.** `/graphql` answers 307.
-- **The legacy card fills in after the breakdown query,** so the driver waits about 1.5 s before checking there's no ledger.
+- **The legacy card fills in after the breakdown query,** so the driver waits about 1.5 s before checking there's no value build.
 - **`seed.py` has to set `DATA_DIR` before importing `db`.** Run it from the repo root, so it can import `tests.e2e_fixtures`.
 - **`fly_data/` is a local copy of production data and is gitignored.** On a clean checkout, use the synthetic class.
 - **Background `&` jobs can't be stopped with `kill %1`** in the agent shell. Kill by port.

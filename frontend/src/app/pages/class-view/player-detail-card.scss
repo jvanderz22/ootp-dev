@@ -3,9 +3,12 @@
 .detail-card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   padding: 4px 2px 8px;
   font-size: 13px;
+  /* the card lays out by its own width: an expanded table row on desktop, the
+     full-screen panel on phones */
+  container: card / inline-size;
 }
 
 .detail-head {
@@ -41,25 +44,73 @@
   font-size: 12px;
 }
 
-/* In-game rating groups fill the left; the model column pins to the right. */
-.detail-sections {
+/* v2's verdict band: value, the talent behind it, where, and the game's read */
+.verdict {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-elev);
+}
+.vt {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px 24px;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: 8px 14px 9px;
+}
+.vt + .vt { border-left: 1px solid var(--border); }
+.vt-head {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+.vt-num { display: flex; align-items: baseline; gap: 5px; }
+.vt-num b {
+  font-size: 22px;
+  line-height: 1.15;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.vt-num i { font-style: normal; font-size: 12px; font-weight: 600; color: var(--text-dim); }
+.vt-sep { margin: 0 3px; font-weight: 400; color: var(--text-dim); }
+.vt small { font-size: 11px; line-height: 1.3; color: var(--text-dim); overflow-wrap: anywhere; }
+/* the first tile is the answer: give it the accent */
+.vt:first-child .vt-num b { color: var(--accent); }
+
+/* ratings (the evidence) on the left; the value build (the why) on the right */
+.detail-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 430px);
+  gap: 16px 32px;
   align-items: start;
 }
-.ingame-grid {
-  flex: 1 1 460px;
+.ratings {
   min-width: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px 24px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 18px 24px;
   align-items: start;
 }
-.model-col {
-  flex: 1 1 240px;
+.value-col {
   min-width: 0;
-  max-width: 340px;
+  padding-left: 24px;
+  border-left: 1px solid var(--border);
+}
+
+@container card (max-width: 820px) {
+  .detail-body { grid-template-columns: minmax(0, 1fr); }
+  /* verdict -> why -> evidence: the value build comes before the ratings */
+  .value-col { order: -1; padding-left: 0; border-left: none; }
+}
+@container card (max-width: 520px) {
+  .verdict { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vt:nth-child(3) { border-left: none; }
+  .vt:nth-child(n + 3) { border-top: 1px solid var(--border); }
+  .vt { padding: 8px 12px; }
+  .ratings { grid-template-columns: minmax(0, 1fr); }
 }
 
 .detail-section {
@@ -79,6 +130,17 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.stat-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.stat-list .stat b { text-align: right; }
+.sub-head {
+  margin: 6px 0 0;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--text-dim);
 }
 
@@ -121,13 +183,7 @@
 .rating i { color: var(--text-dim); font-style: normal; font-variant-numeric: tabular-nums; }
 .rating-head { color: var(--text-dim); }
 .rating-head b, .rating-head i, .rating-head .col-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
-/* the ratings in one column so cur / pot line up, the side stats beside them */
-.rating-cols {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 2px 16px;
-  align-items: start;
-}
+/* the ratings in one column so cur / pot line up */
 .rating-grid.single { grid-template-columns: 1fr; }
 .rating-grid.single > .rating:not(.lr):not(.one) { grid-template-columns: 1fr repeat(2, 2.25rem); }
 .rating-grid.single > .rating > i, .rating-grid.single > .rating > b { text-align: right; }
@@ -240,57 +296,90 @@
   font: inherit;
 }
 
-/* v2 score ledger: each counted line as a bar from the running total before
-   it to the one after (a waterfall), grouped by pipeline stage */
-.ledger {
-  margin-top: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.ledger h5 {
-  margin: 0 0 2px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-dim);
-}
-.ledger h5 .muted { font-weight: 400; margin-left: 4px; }
-.ledger-stage {
-  margin-top: 4px;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-dim);
-}
-.ledger-row {
+/* fielding: IF / OF share Range / Arm / Error (+ Turn DP), the catcher his own;
+   his position's group in full strength, the others dimmed */
+.field-matrix {
   display: grid;
-  grid-template-columns: minmax(0, 9rem) minmax(40px, 1fr) auto;
-  align-items: center;
-  gap: 8px;
+  grid-template-columns: minmax(4.5rem, 1fr) repeat(4, minmax(2.2rem, 2.8rem));
+  gap: 3px 6px;
+  align-items: baseline;
   font-size: 12px;
 }
-.lg-label { color: var(--text-dim); overflow-wrap: anywhere; }
-.ledger-row b { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
-.lg-bar {
-  position: relative;
-  height: 8px;
-  background: var(--bg-elev-2);
-  border-radius: 2px;
+.fm-head {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-dim);
+  text-align: right;
+  white-space: nowrap;
+  padding-top: 4px;
 }
-.lg-bar i {
+.fm-group { color: var(--text-dim); border-bottom: 1px dotted var(--border); padding-bottom: 2px; }
+.fm-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  font-weight: 500;
+  border-bottom: 1px dotted var(--border);
+  padding-bottom: 2px;
+}
+.fm-group.primary { color: var(--text); font-weight: 600; }
+.fm-cell.primary { color: var(--text); font-weight: 700; }
+
+/* v2 value build: each line's name and what it read, a waterfall bar from the
+   running total before it to the one after, and the WAR it adds */
+.vb-unit { font-size: 11px; }
+.vb { display: flex; flex-direction: column; gap: 3px; margin-top: 2px; }
+.vb-stage {
+  margin-top: 8px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+.vb-stage:first-child { margin-top: 0; }
+.vb-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px 3.4rem;
+  gap: 10px;
+  align-items: center;
+  padding: 2px 0;
+  font-size: 12px;
+}
+.vb-text { display: flex; flex-direction: column; min-width: 0; }
+.vb-line { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+.vb-label { color: var(--text-dim); }
+.vb-stat { font-weight: 600; font-variant-numeric: tabular-nums; }
+.vb-note { font-size: 11px; line-height: 1.3; color: var(--text-dim); opacity: 0.85; overflow-wrap: anywhere; }
+.vb-bar {
+  position: relative;
+  height: 6px;
+  background: var(--bg-elev-2);
+  border-radius: 3px;
+}
+.vb-bar i {
   position: absolute;
   top: 0;
   bottom: 0;
-  min-width: 1px;
-  border-radius: 2px;
+  min-width: 2px;
+  border-radius: 3px;
   background: var(--ok);
 }
-.lg-bar i.neg { background: var(--danger); }
-.ledger-row.total {
-  margin-top: 2px;
+.vb-bar i.neg { background: var(--danger); }
+.vb-war { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vb-war.neg { color: var(--danger); }
+.vb-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-top: 5px;
   border-top: 1px solid var(--border);
-  padding-top: 2px;
+  font-weight: 700;
+  font-size: 13px;
 }
-.ledger-row.total .lg-label, .ledger-row.total b { color: var(--text); font-weight: 600; }
-.ledger-row.total .lg-bar { background: none; }
-.lg-note { font-size: 11px; }
+.vb-total b { font-variant-numeric: tabular-nums; }
+.vb-foot { font-size: 11px; margin-top: 2px; }
+.vb-loading { font-size: 12px; }
+.vb-other-head { font-size: 12px; font-weight: 500; }
+.vb-other-head b { margin-left: 6px; font-variant-numeric: tabular-nums; }
+.vb-other-head .muted { margin-left: 6px; font-weight: 400; font-size: 11px; }

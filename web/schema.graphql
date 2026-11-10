@@ -183,11 +183,16 @@ isn't judged on.
 """
 type LedgerLine {
   stage: String!
+  "a short name: batting, fielding, pitching, a modifier's class name..."
   label: String!
   delta: Float!
   "batting | pitching, or null for a line that applies to the whole player"
   side: String
   counted: Boolean!
+  "the headline of what the line read, e.g. 105 wRC+ or x1.04"
+  stat: String
+  "the context behind it, e.g. vL 92 / vR 112, +3.5 runs"
+  note: String
 }
 
 """
@@ -201,6 +206,10 @@ type ScoreBreakdown {
   unit: String
   "the score step by step (v2 only; empty for legacy)"
   ledger: [LedgerLine!]!
+  "v2: where he's valued on the side he's judged on - his best position, or SP / RP"
+  role: String
+  "v2 pitchers: his WAR as a starter (SP) and as a reliever (RP); the better one counts"
+  roleWar: [NamedValue!]!
   batting: BattingBreakdown
   pitching: PitchingBreakdown
   rankAdjust: RankAdjustBreakdown

@@ -16,6 +16,8 @@ class SideState:
     # batting: batting / fielding / running; pitching: starter / reliever
     components: dict = field(default_factory=dict)
     best_position: str = None
+    # where the side is valued: his best position, or SP / RP
+    role: str = None
     # the profile's modifiers as (name, factor), for the value layer to replay
     modifiers: list = field(default_factory=list)
 

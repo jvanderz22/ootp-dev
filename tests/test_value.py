@@ -8,6 +8,7 @@ from models.game_players import GamePlayer
 from models.player_type import HITTER, PITCHER, TWO_WAY, classify
 from ranking import get_ranker, value
 from ranking.ledger import Ledger
+from ranking.state import PlayerState
 from ranking.stages.demand import Demand
 from ranking.stages.value import Value
 from tests.test_league_snapshot import make_snapshot_csvs
@@ -60,8 +61,7 @@ def test_modifiers_only_scale_war_above_replacement():
 
 
 def test_two_way_adds_a_share_of_the_other_side_above_replacement():
-    state = type("S", (), {})()
-    state.ledger = Ledger()
+    state = PlayerState(player=None)
     Value._combine(state, 4.0, 3.0)
     assert state.value == pytest.approx(value.points(4.0 + value.TWO_WAY_SHARE * 3.0))
     state.ledger = Ledger()
@@ -137,6 +137,6 @@ def test_a_wild_pitcher_keeps_none_of_his_value_above_replacement():
     wild = _split_pitcher("Right", {"stuff_ovr": 70, "movement_ovr": 60, "control_ovr": 25,
                                     "hr_allowed_ovr": 60, "pbabip_ovr": 55})
     (r,) = get_ranker("overall").rank([wild])
-    (line,) = [l for l in r.ledger.lines if l.label.startswith("Control floor")]
-    assert line.side == "pitching" and "x0.00" in line.label
+    (line,) = [l for l in r.ledger.lines if l.label == "Control floor"]
+    assert line.side == "pitching" and line.stat == "x0.00"
     assert r.pitcher_score <= 0

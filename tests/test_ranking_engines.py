@@ -133,7 +133,7 @@ _ROWS = f"""{{ rankedPlayers(name: "{CLASS}", pageSize: 5)
 
 _BREAKDOWN = """query($source: RankingSourceInput!, $id: ID!) {
   playerBreakdown(source: $source, playerId: $id) {
-    engine unit ledger { stage label delta side counted } } }"""
+    engine unit role roleWar { name value } ledger { stage label delta side counted stat note } } }"""
 
 
 def test_the_header_picks_the_engine(client):
@@ -156,9 +156,15 @@ def test_breakdown_carries_the_ledger(client):
     counted = [line["delta"] for line in b["ledger"] if line["counted"]]
     assert sum(counted) == pytest.approx(top["modelScore"], abs=0.01)
     assert {line["stage"] for line in b["ledger"]} >= {"model", "modifiers", "demand"}
+    # each line carries what it read apart from its name, and the role he's valued in
+    assert b["role"]
+    assert any(line["stat"] for line in b["ledger"] if line["stage"] == "model")
+    if b["roleWar"]:
+        assert {r["name"] for r in b["roleWar"]} == {"SP", "RP"}
     # the source can name the engine itself, over the header
     b = _gql(client, _BREAKDOWN, source={**source, "engine": "legacy"}, id=top["id"])["playerBreakdown"]
     assert b["engine"] == "legacy" and b["ledger"] == [] and b["unit"] is None
+    assert b["role"] is None and b["roleWar"] == []
 
 
 def test_download_takes_the_engine_as_a_query_param(client):

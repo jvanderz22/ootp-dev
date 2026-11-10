@@ -323,33 +323,52 @@ export function otherComponents(b: ScoreBreakdown | null): [string, unknown][] {
   return rows.filter(([, v]) => v != null);
 }
 
-/** One counted ledger line placed on the waterfall: its bar runs from the
- *  running total before it to the one after, as a % of the widest total. */
-export interface LedgerStep {
+// v2's ledger is in display points, 50 + 10 x WAR: the card reads it in WAR,
+// with the 50 of replacement level as the baseline rather than a line.
+const REPLACEMENT_POINTS = 50;
+const POINTS_PER_WAR = 10;
+
+export function pointsToWar(points: number): number {
+  return (points - REPLACEMENT_POINTS) / POINTS_PER_WAR;
+}
+
+/** One ledger line in WAR, placed on the waterfall: its bar runs from the
+ *  running total before it to the one after, as a % of the range the totals
+ *  span (zero included). */
+export interface ValueStep {
   label: string;
-  delta: number;
+  stat: string | null;
+  note: string | null;
+  war: number;
   left: number;
   width: number;
 }
 
-export interface LedgerStage {
+export interface ValueGroup {
   stage: string;
   title: string;
-  steps: LedgerStep[];
+  steps: ValueStep[];
 }
 
-export interface LedgerWaterfall {
-  stages: LedgerStage[];
-  total: number;
-  /** lines that move the score by less than this aren't drawn */
+export interface ValueBuild {
+  /** everything before the demand step, by stage in pipeline order */
+  groups: ValueGroup[];
+  /** his value: the sum of those groups */
+  war: number;
+  /** the demand step's lines (draft classes) */
+  demand: ValueStep[];
+  /** the score after demand, in WAR and in points */
+  finalWar: number;
+  score: number;
+  /** lines with no effect (modifiers at x1.00) aren't drawn */
   hidden: number;
-  /** the side the player isn't judged on — listed, not counted */
-  other: { label: string; delta: number }[];
+  /** the side he isn't judged on - listed, not counted */
+  other: { title: string; war: number; steps: ValueStep[] } | null;
 }
 
-const LEDGER_STAGE_TITLES: Record<string, string> = {
-  model: 'Model',
-  modifiers: 'Modifiers',
+const VALUE_STAGE_TITLES: Record<string, string> = {
+  model: 'Talent & role',
+  modifiers: 'Adjustments',
   development: 'Development',
   'two-way': 'Two-way',
   demand: 'Demand',
@@ -357,46 +376,134 @@ const LEDGER_STAGE_TITLES: Record<string, string> = {
 const LEDGER_MIN_DELTA = 0.005;
 
 function ledgerLabel(line: LedgerLine): string {
-  return line.stage === 'modifiers' || line.stage === 'demand'
-    ? prettyModifier(line.label)
-    : line.label;
+  const label =
+    line.stage === 'modifiers' || line.stage === 'demand' ? prettyModifier(line.label) : line.label;
+  return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-/** The v2 ledger as a waterfall, grouped by stage in pipeline order. Null when
- *  there's no ledger (the legacy engine). */
-export function ledgerWaterfall(b: ScoreBreakdown | null): LedgerWaterfall | null {
-  if (!b?.ledger?.length) return null;
-  const counted = b.ledger.filter((l) => l.counted);
+/** A line that moves nothing is still shown when it's a talent read (the
+ *  platoon's "no starts"); a modifier at x1.00 isn't. */
+function shown(line: LedgerLine): boolean {
+  return Math.abs(line.delta) >= LEDGER_MIN_DELTA || (line.stage === 'model' && !!line.stat);
+}
+
+/** "+0.31" / "−0.06" / "0.00": signed, with a true minus, none once it rounds to zero. */
+export function signedWar(war: number): string {
+  const text = Math.abs(war).toFixed(2);
+  if (Number(text) === 0) return text;
+  return (war > 0 ? '+' : '−') + text;
+}
+
+/** Place `lines` as a waterfall from zero WAR. */
+function waterfall(lines: LedgerLine[]): { line: LedgerLine; step: ValueStep }[] {
   let running = 0;
-  let peak = 0;
-  const placed = counted.map((line) => {
+  let lo = 0;
+  let hi = 0;
+  const spans = lines.map((line) => {
     const start = running;
-    running += line.delta;
-    peak = Math.max(peak, start, running);
+    running += line.delta / POINTS_PER_WAR;
+    lo = Math.min(lo, running);
+    hi = Math.max(hi, running);
     return { line, start, end: running };
   });
-  const scale = peak || 1;
-  const stages: LedgerStage[] = [];
-  let hidden = 0;
-  for (const { line, start, end } of placed) {
-    if (Math.abs(line.delta) < LEDGER_MIN_DELTA) {
-      hidden++;
-      continue;
-    }
-    let stage = stages[stages.length - 1];
-    if (stage?.stage !== line.stage) {
-      stage = { stage: line.stage, title: LEDGER_STAGE_TITLES[line.stage] ?? line.stage, steps: [] };
-      stages.push(stage);
-    }
-    stage.steps.push({
+  const range = hi - lo || 1;
+  return spans.map(({ line, start, end }) => ({
+    line,
+    step: {
       label: ledgerLabel(line),
-      delta: line.delta,
-      left: (Math.min(start, end) / scale) * 100,
-      width: (Math.abs(line.delta) / scale) * 100,
-    });
+      stat: line.stat,
+      note: line.note,
+      war: end - start,
+      left: ((Math.min(start, end) - lo) / range) * 100,
+      width: (Math.abs(end - start) / range) * 100,
+    },
+  }));
+}
+
+/** v2's ledger as the card's value build: in WAR, grouped by stage, demand
+ *  apart. Null when there's no ledger (the legacy engine). */
+export function valueBuild(b: ScoreBreakdown | null): ValueBuild | null {
+  if (!b?.ledger?.length) return null;
+  const isBaseline = (l: LedgerLine) =>
+    l.stage === 'model' && l.side == null && l.label === 'replacement level';
+  const counted = b.ledger.filter((l) => l.counted && !isBaseline(l));
+  const groups: ValueGroup[] = [];
+  const demand: ValueStep[] = [];
+  let hidden = 0;
+  let war = 0;
+  let finalWar = 0;
+  for (const { line, step } of waterfall(counted)) {
+    finalWar += step.war;
+    if (line.stage !== 'demand') war += step.war;
+    if (!shown(line)) {
+      hidden++;
+    } else if (line.stage === 'demand') {
+      demand.push(step);
+    } else {
+      let group = groups[groups.length - 1];
+      if (group?.stage !== line.stage) {
+        group = { stage: line.stage, title: VALUE_STAGE_TITLES[line.stage] ?? line.stage, steps: [] };
+        groups.push(group);
+      }
+      group.steps.push(step);
+    }
   }
-  const other = b.ledger
-    .filter((l) => !l.counted && Math.abs(l.delta) >= LEDGER_MIN_DELTA)
-    .map((l) => ({ label: ledgerLabel(l), delta: l.delta }));
-  return { stages, total: running, hidden, other };
+  const rest = b.ledger.filter((l) => !l.counted);
+  const other = rest.length
+    ? {
+        title: rest[0].side === 'pitching' ? 'As a pitcher' : 'As a hitter',
+        war: rest.reduce((sum, l) => sum + l.delta, 0) / POINTS_PER_WAR,
+        steps: waterfall(rest)
+          .filter(({ line }) => shown(line))
+          .map(({ step }) => step),
+      }
+    : null;
+  return {
+    groups,
+    war,
+    demand,
+    finalWar,
+    score: REPLACEMENT_POINTS + finalWar * POINTS_PER_WAR,
+    hidden,
+    other,
+  };
+}
+
+/** The headline stat of the counted ledger line named `label`, if any. */
+export function ledgerStat(b: ScoreBreakdown | null, label: string): string | null {
+  return b?.ledger.find((l) => l.counted && l.label === label)?.stat ?? null;
+}
+
+// ---------------------------------------------------------- fielding matrix
+// The ten fielding ratings as three groups: infield and outfield share
+// Range / Arm / Error (+ Turn DP), catcher has its own. The group his
+// position plays from is the one his value reads, so the card marks it.
+
+export interface FieldingGroup {
+  key: 'IF' | 'OF' | 'C';
+  label: string;
+  cells: (number | null)[];
+  primary: boolean;
+}
+
+const FIELD_GROUP_OF: Record<string, 'IF' | 'OF' | 'C'> = {
+  '1B': 'IF', '2B': 'IF', '3B': 'IF', SS: 'IF', LF: 'OF', CF: 'OF', RF: 'OF', C: 'C',
+};
+
+export const FIELDING_HEADS = {
+  field: ['Range', 'Arm', 'Error', 'DP'],
+  catcher: ['Frame', 'Block', 'Arm'],
+};
+
+export function fieldingMatrix(p: RankedPlayer, position: string | null): FieldingGroup[] {
+  const f = p.ratings?.fielding;
+  if (!f) return [];
+  const main = position ? FIELD_GROUP_OF[position] : undefined;
+  const v = (k: string) => (f[k] ? (f[k] as number) : null);
+  const groups: FieldingGroup[] = [
+    { key: 'IF', label: 'Infield', cells: [v('ifRange'), v('ifArm'), v('ifError'), v('turnDp')], primary: main === 'IF' },
+    { key: 'OF', label: 'Outfield', cells: [v('ofRange'), v('ofArm'), v('ofError'), null], primary: main === 'OF' },
+    { key: 'C', label: 'Catcher', cells: [v('cFraming'), v('cBlocking'), v('cArm')], primary: main === 'C' },
+  ];
+  return groups.filter((g) => g.cells.some((c) => c != null));
 }

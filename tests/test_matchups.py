@@ -55,8 +55,8 @@ def test_arm_slots_read_from_either_export():
 def test_a_big_split_helps_a_reliever_and_costs_a_starter():
     ranked = {r.position: r for r in get_ranker("overall").rank([_pitcher("RP", stamina=20), _pitcher("SP", pid=990002)])}
     (rp_line,), (sp_line,) = _matchups(ranked["RP"]), _matchups(ranked["SP"])
-    assert rp_line.label.startswith("RP matchups") and rp_line.delta > 0
-    assert sp_line.label.startswith("SP matchups") and sp_line.delta < 0
+    assert ranked["RP"].ledger.role == "RP" and "strong side" in rp_line.stat and rp_line.delta > 0
+    assert ranked["SP"].ledger.role == "SP" and "weak side" in sp_line.stat and sp_line.delta < 0
     for r in ranked.values():
         counted = sum(line.delta for line in r.ledger.lines if r.ledger.counted(line) and line.stage != "demand")
         assert counted == pytest.approx(r.pre_demand_score, abs=0.05)
@@ -67,7 +67,7 @@ def test_a_big_split_moves_a_back_end_starter_to_the_bullpen(monkeypatch):
 
     def role():
         (r,) = get_ranker("overall").rank([_pitcher("SP", back_end, stamina=35)])
-        return next(line.label[:2] for line in r.ledger.lines if line.label.startswith(("SP talent", "RP talent")))
+        return r.ledger.role
 
     assert role() == "RP"
     monkeypatch.setattr(value, "MATCHUP_TILT", 0.0)

@@ -45,15 +45,20 @@ def weight(war) -> float:
     return float(1 - (1 - TAPERED_WEIGHT) * np.clip(ramp, 0.0, 1.0))
 
 
+def _note(base, w) -> str:
+    """The ledger note for a factor of `base` at weight `w`."""
+    return f"x{base:g}" + (f" at {w:.0%} weight" if w < 1 else "")
+
+
 def switch_hitter(war) -> tuple:
-    """(ledger label, factor) for a switch-hitting prospect's batting side."""
+    """(ledger label, factor, note) for a switch-hitting prospect's batting side."""
     w = weight(war)
-    return f"switch hitter (x{SWITCH_HITTER:g}" + (f" at {w:.0%} weight)" if w < 1 else ")"), SWITCH_HITTER ** w
+    return "switch hitter", SWITCH_HITTER ** w, _note(SWITCH_HITTER, w)
 
 
 def factors(player, war) -> list:
-    """[(ledger label, factor)] for `player`'s side worth `war`; only the
-    factors that move him."""
+    """[(ledger label, factor, note)] for `player`'s side worth `war`; only
+    the factors that move him."""
     w = weight(war)
     out = []
     for label, (attr, table) in FACTORS.items():
@@ -61,6 +66,5 @@ def factors(player, war) -> list:
         base = table.get(value)
         if base is None:
             continue
-        shown = f"{label} {value} (x{base:g}" + (f" at {w:.0%} weight)" if w < 1 else ")")
-        out.append((shown, base ** w))
+        out.append((f"{label} {value}", base ** w, _note(base, w)))
     return out

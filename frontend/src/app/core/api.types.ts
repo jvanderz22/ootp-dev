@@ -183,6 +183,10 @@ export interface LedgerLine {
   /** batting | pitching, or null for a whole-player line */
   side: string | null;
   counted: boolean;
+  /** the headline of what the line read ("105 wRC+", "x1.04") */
+  stat: string | null;
+  /** the context behind it ("vL 92 / vR 112, +3.5 runs") */
+  note: string | null;
 }
 
 /** A named model value — modifier names vary by ranking method. */
@@ -219,6 +223,10 @@ export interface ScoreBreakdown {
   unit: string | null;
   /** the score step by step — v2 only, empty for legacy */
   ledger: LedgerLine[];
+  /** v2: where he's valued — his best position, or SP / RP */
+  role: string | null;
+  /** v2 pitchers: WAR as a starter (SP) and a reliever (RP) */
+  roleWar: NamedValue[];
   batting: {
     battingModel: number | null;
     runningModel: number | null;

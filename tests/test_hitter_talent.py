@@ -75,11 +75,10 @@ def test_v2_scores_hitters_with_the_talent_layer(method, snapshot_rows, model):
         labels = [line.label for line in r.ledger.lines]
         if view.hitting(players[r.id]):
             assert "batting model x0.73" not in labels
-            assert any(label.startswith("batting talent (") for label in labels)
+            assert "batting" in labels
             changed += r.batting_score_component != base.batting_score_component
         # fielding and baserunning are fitted too (tests/test_fielding_talent.py)
-        assert any(label.startswith("fielding (") for label in labels)
-        assert any(label.startswith("baserunning (") for label in labels)
+        assert "fielding" in labels and "baserunning" in labels
         assert r.ledger.total() == pytest.approx(r.overall_score, abs=1e-9)
     assert changed
 

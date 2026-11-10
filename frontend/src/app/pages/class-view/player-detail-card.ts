@@ -16,10 +16,11 @@ import { TradeListStore } from '../../core/trade-list-store';
 import {
   battingComponents,
   battingSkillRows,
-  fieldingRows,
+  FIELDING_HEADS,
+  fieldingMatrix,
   gradeTone,
   hasModifiers,
-  ledgerWaterfall,
+  ledgerStat,
   makeupRows,
   modifierGroup,
   otherComponents,
@@ -27,14 +28,20 @@ import {
   pitchingComponents,
   pitchingMiscRows,
   pitchingSkillRows,
+  pointsToWar,
   showBatting,
   showPitching,
+  signedWar,
   speedRows,
   splitRows,
   typeSeverity,
+  valueBuild,
 } from '../../core/player-stats';
 
-/** The expanded-row content: grouped, type-gated scouting + model breakdown. */
+/** The expanded-row content (and, on phones, the full-screen panel's). Under
+ *  v2 it reads top-down as verdict -> why -> evidence: a band with his value
+ *  and the talent behind it, the value build (the ledger, in WAR), then the
+ *  ratings. Legacy keeps its model-score column. */
 @Component({
   selector: 'app-player-detail-card',
   imports: [DecimalPipe, NgTemplateOutlet, FormsModule, TagModule, PanelModule],
@@ -147,8 +154,47 @@ export class PlayerDetailCardComponent {
 
   protected readonly rankMax = computed(() => this.totalRanked() || null);
 
-  /** The v2 score ledger as a waterfall (null under the legacy engine). */
-  protected readonly ledger = computed(() => ledgerWaterfall(this.breakdown()));
+  /** The v2 ledger as the value build (null under legacy, or while loading). */
+  protected readonly build = computed(() => valueBuild(this.breakdown()));
+
+  protected readonly isV2 = computed(() => this.player().source.engine === 'v2');
+
+  /** The v2 verdict band. It reads the table row, so it's there before the
+   *  breakdown lands; the breakdown then adds the role he's valued in and
+   *  what it reads. His WAR is before demand (the model's value); the score
+   *  under it is what he's ranked on. */
+  protected readonly verdict = computed(() => {
+    const p = this.player();
+    const b = this.breakdown();
+    const pitching = b?.ledger.length
+      ? b.ledger.some((l) => l.counted && l.side === 'pitching')
+      : p.type === 'Pitcher';
+    const value = p.preDemandScore ?? p.modelScore;
+    const role = b?.role ?? (pitching ? p.position : (p.bestPosition ?? p.position));
+    const alt = b?.roleWar.find((r) => r.name !== role && r.value != null);
+    const roleNote = pitching
+      ? [ledgerStat(b, 'innings'), alt ? `${alt.name} ${alt.value!.toFixed(2)} WAR` : null]
+      : [ledgerStat(b, 'utility') ?? ledgerStat(b, 'playing time')];
+    const talentNote = b?.ledger.find(
+      (l) => l.counted && l.label === (pitching ? 'pitching' : 'batting'),
+    )?.note;
+    return {
+      war: value == null ? null : pointsToWar(value),
+      talentNote: talentNote ?? null,
+      score: p.modelScore,
+      talent: pitching
+        ? { value: p.era == null ? null : p.era.toFixed(2), label: 'ERA' }
+        : { value: p.wrcPlus == null ? null : p.wrcPlus.toFixed(0), label: 'wRC+' },
+      role,
+      roleNote: roleNote.filter(Boolean).join(' · '),
+    };
+  });
+
+  /** Fielding as an IF / OF / C matrix, his position's group marked. */
+  protected readonly fielding = computed(() =>
+    fieldingMatrix(this.player(), this.verdict().role ?? null),
+  );
+  protected readonly fieldingHeads = FIELDING_HEADS;
 
   /** "Org · Team · Level" for live-league rows; empty in the draft-class view. */
   protected readonly orgLine = computed(() => {
@@ -177,6 +223,7 @@ export class PlayerDetailCardComponent {
     this.editing.set(false);
   }
 
+  protected readonly signedWar = signedWar;
   protected readonly showBatting = showBatting;
   protected readonly showPitching = showPitching;
   protected readonly typeSeverity = typeSeverity;
@@ -190,7 +237,6 @@ export class PlayerDetailCardComponent {
   protected readonly makeupRows = makeupRows;
   protected readonly battingSkillRows = battingSkillRows;
   protected readonly speedRows = speedRows;
-  protected readonly fieldingRows = fieldingRows;
   protected readonly pitchingSkillRows = pitchingSkillRows;
   protected readonly pitchingMiscRows = pitchingMiscRows;
   protected readonly pitchArsenal = pitchArsenal;

@@ -60,12 +60,21 @@ def _engine(engine):
 
 
 def ledger_json(ledger) -> dict:
-    """A `ranking.ledger.Ledger` as stored: the side it's judged on and its
-    lines as [stage, label, delta, side]."""
+    """A `ranking.ledger.Ledger` as stored: the side it's judged on, the role
+    he's valued in there, and its lines as [stage, label, delta, side, stat,
+    note] (the last two only when the line has them)."""
     return {
         "side": ledger.side,
-        "lines": [[l.stage, l.label, round(l.delta, _LEDGER_PLACES), l.side] for l in ledger.lines],
+        "role": ledger.role,
+        "lines": [_ledger_line(l) for l in ledger.lines],
     }
+
+
+def _ledger_line(line) -> list:
+    out = [line.stage, line.label, round(line.delta, _LEDGER_PLACES), line.side]
+    if line.stat or line.note:
+        out += [line.stat, line.note]
+    return out
 
 
 def result_from_scored(s) -> dict:

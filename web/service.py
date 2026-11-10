@@ -1184,11 +1184,15 @@ def player_breakdown(source: dict, player_id):
         return None
     player_type, breakdown, ledger = found
     info = results_store.run_info(scope, scope_id, method, engine) or {}
+    roles = ((breakdown.get("pitching") or {}).get("value") or {})
     return {
         **_breakdown_payload(player_type, breakdown),
         "engine": engine,
         "unit": (info.get("manifest") or {}).get("unit"),
         "ledger": _ledger_payload(ledger),
+        "role": (ledger or {}).get("role"),
+        "role_war": [{"name": n, "value": roles[k]} for n, k in (("SP", "starter_war"), ("RP", "reliever_war"))
+                     if roles.get(k) is not None],
     }
 
 
@@ -1198,11 +1202,12 @@ def _ledger_payload(ledger) -> list:
     if not ledger:
         return []
     side = ledger.get("side")
-    return [
-        {"stage": stage, "label": label, "delta": delta, "side": line_side,
-         "counted": line_side is None or line_side == side}
-        for stage, label, delta, line_side in ledger.get("lines") or []
-    ]
+    out = []
+    for stage, label, delta, line_side, *detail in ledger.get("lines") or []:
+        stat, note = detail or (None, None)
+        out.append({"stage": stage, "label": label, "delta": delta, "side": line_side,
+                    "counted": line_side is None or line_side == side, "stat": stat, "note": note})
+    return out
 
 
 # --------------------------------------------------------- custom trade lists

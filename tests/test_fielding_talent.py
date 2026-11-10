@@ -140,6 +140,5 @@ def test_v2_ledger_shows_fielding_and_baserunning():
     rows = join_rows(*make_snapshot_csvs())
     for r in get_ranker("overall").rank([GamePlayer(dict(x)) for x in rows], batch_size=500):
         labels = [line.label for line in r.ledger.lines if line.side == "batting"]
-        assert any(label.startswith("fielding (") for label in labels)
-        assert any(label.startswith("baserunning (") for label in labels)
+        assert "fielding" in labels and "baserunning" in labels
         assert r.ledger.total() == pytest.approx(r.overall_score, abs=1e-9)

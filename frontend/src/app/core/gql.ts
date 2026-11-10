@@ -502,12 +502,19 @@ export const PLAYER_BREAKDOWN = gql`
       playerType
       engine
       unit
+      role
+      roleWar {
+        name
+        value
+      }
       ledger {
         stage
         label
         delta
         side
         counted
+        stat
+        note
       }
       batting {
         battingModel

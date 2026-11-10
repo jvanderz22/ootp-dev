@@ -1,6 +1,6 @@
 // Drive the running web app in headless Chrome: open a draft class, check the
 // engine toggle and the Pre-dem columns, open the top player's card and read
-// its score ledger, then switch to legacy and check the ledger is gone.
+// v2 verdict band and value build, then switch to legacy and check they're gone.
 //
 //   node .claude/skills/run-ootp-dev/drive.mjs CLASS OUT_DIR [BASE_URL]
 //
@@ -33,7 +33,7 @@ await page.addInitScript(() => sessionStorage.setItem('ootp-draft-auth', 'Basic 
 const firstRow = () => page.locator('tr.body-row').first();
 const openTopCard = async () => {
   await firstRow().click();
-  await page.waitForSelector('.model-col', { timeout: 15000 });
+  await page.waitForSelector('.value-col', { timeout: 15000 });
 };
 
 try {
@@ -48,12 +48,13 @@ try {
   check(headers.some((h) => h.includes('Pre-dem')), 'Pre-dem columns shown');
 
   await openTopCard();
-  await page.waitForSelector('.ledger', { timeout: 15000 });
-  await page.locator('.model-col').screenshot({ path: `${out}/2-card-v2.png` });
-  const rows = await page.locator('.ledger-row').count();
-  const total = await page.locator('.ledger-row.total b').innerText();
-  console.log(`ledger: ${rows} rows, total ${total}`);
-  check(rows > 2, 'card shows the score ledger');
+  await page.waitForSelector('.vb', { timeout: 15000 });
+  await page.locator('.detail-card').first().screenshot({ path: `${out}/2-card-v2.png` });
+  const rows = await page.locator('.vb-row').count();
+  const total = await page.locator('.vb-total b').first().innerText();
+  console.log(`value build: ${rows} rows, value ${total}`);
+  check(rows > 2, 'card shows the value build');
+  check((await page.locator('.verdict .vt').count()) === 4, 'card shows the verdict band');
 
   // --- legacy: the toggle reloads the page
   await Promise.all([page.waitForNavigation(), page.click('.engine-toggle button:has-text("legacy")')]);
@@ -62,8 +63,9 @@ try {
   await page.screenshot({ path: `${out}/3-table-legacy.png` });
   await openTopCard();
   await page.waitForTimeout(1500); // the breakdown query lands after the card opens
-  await page.locator('.model-col').screenshot({ path: `${out}/4-card-legacy.png` });
-  check((await page.locator('.ledger').count()) === 0, 'legacy card has no ledger');
+  await page.locator('.detail-card').first().screenshot({ path: `${out}/4-card-legacy.png` });
+  check((await page.locator('.vb').count()) === 0, 'legacy card has no value build');
+  check((await page.locator('.verdict').count()) === 0, 'legacy card has no verdict band');
 } catch (e) {
   failures.push(String(e));
   console.log('FAIL', e.message);

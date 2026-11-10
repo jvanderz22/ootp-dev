@@ -71,9 +71,10 @@ def test_a_class_without_hra_is_scored_on_movement():
 
 def test_v2_scores_pitchers_with_the_talent_layer():
     for r in get_ranker("draft_class").rank([GamePlayer(dict(row)) for row in _class_rows()], batch_size=45):
-        labels = [line.label for line in r.ledger.lines if line.side == "pitching"]
-        assert any("talent (Stuff" in label and "ERA)" in label for label in labels), labels
-        assert not any(label in ("SP model", "RP model") for label in labels)
+        lines = [line for line in r.ledger.lines if line.side == "pitching"]
+        assert any(line.label == "pitching" and line.stat.endswith(" ERA") and line.note.startswith("Stuff ")
+                   for line in lines), lines
+        assert not any(line.label in ("SP model", "RP model") for line in lines)
         assert r.ledger.total() == pytest.approx(r.overall_score, abs=1e-9)
 
 
@@ -84,7 +85,7 @@ def test_a_pitcher_without_ratings_is_valued_at_replacement():
     labels = [line.label for line in r.ledger.lines if line.side == "pitching"]
     # no legacy scorer behind it: the side says why it's worth replacement
     assert any("no pitching ratings" in label for label in labels), labels
-    assert not any(" talent (" in label for label in labels)
+    assert "pitching" not in labels
     assert r.ledger.total() == pytest.approx(r.overall_score, abs=1e-9)
 
 

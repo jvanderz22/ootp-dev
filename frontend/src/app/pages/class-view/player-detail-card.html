@@ -75,17 +75,56 @@
     </div>
   }
 
-  <div class="detail-sections">
-    <div class="ingame-grid">
+  @if (isV2()) {
+    @let v = verdict();
+    <!-- v2's verdict: what he's worth, the talent behind it, where, and the game's own read -->
+    <div class="verdict">
+      <div class="vt">
+        <span class="vt-head">Value</span>
+        <span class="vt-num"
+          ><b>{{ v.war == null ? '—' : (v.war | number: '1.2-2') }}</b><i>WAR</i></span
+        >
+        <small>score {{ v.score | number: '1.2-2' }}</small>
+      </div>
+      <div class="vt">
+        <span class="vt-head">{{ v.talent.label === 'ERA' ? 'Pitching' : 'Batting' }}</span>
+        <span class="vt-num"
+          ><b>{{ v.talent.value ?? '—' }}</b><i>{{ v.talent.label }}</i></span
+        >
+        @if (v.talentNote) {
+          <small>{{ v.talentNote }}</small>
+        }
+      </div>
+      <div class="vt">
+        <span class="vt-head">Valued at</span>
+        <span class="vt-num"><b>{{ v.role ?? '—' }}</b></span>
+        @if (v.roleNote) {
+          <small>{{ v.roleNote }}</small>
+        }
+      </div>
+      <div class="vt">
+        <span class="vt-head">In-game</span>
+        <span class="vt-num"
+          ><b>{{ p.inGameOverall ?? '—' }}<span class="vt-sep">/</span>{{ p.inGamePotential ?? '—' }}</b></span
+        >
+        <small>OVR / POT</small>
+      </div>
+    </div>
+  }
+
+  <div class="detail-body">
+    <div class="ratings">
       <section class="detail-section">
-        <h4>Overview</h4>
-        <div class="stat-grid">
-          <div class="stat">
-            <span>OVR</span><b>{{ p.inGameOverall ?? '—' }}</b>
-          </div>
-          <div class="stat">
-            <span>POT</span><b>{{ p.inGamePotential ?? '—' }}</b>
-          </div>
+        <h4>{{ isV2() ? 'Makeup' : 'Overview' }}</h4>
+        <div class="stat-list">
+          @if (!isV2()) {
+            <div class="stat">
+              <span>OVR</span><b>{{ p.inGameOverall ?? '—' }}</b>
+            </div>
+            <div class="stat">
+              <span>POT</span><b>{{ p.inGamePotential ?? '—' }}</b>
+            </div>
+          }
           @for (m of makeupRows(p); track m[0]) {
             <div class="stat">
               <span>{{ m[0] }}</span
@@ -101,43 +140,57 @@
             <h4>Batting</h4>
             <ng-container *ngTemplateOutlet="splitToggle" />
           </div>
-          <div class="rating-cols">
-            <div class="rating-grid single">
-              <ng-container *ngTemplateOutlet="ratingHead" />
-              @if (splitMode()) {
-                <ng-container *ngTemplateOutlet="splitGrid; context: { $implicit: 'batting' }" />
-              } @else {
-                @for (r of battingSkillRows(p); track r.label) {
-                  <div class="rating" [class.part]="r.part">
-                    <span>{{ r.label }}</span>
-                    <i>{{ r.current ?? '—' }}</i>
-                    <b>{{ r.potential ?? '—' }}</b>
-                  </div>
-                }
-              }
-            </div>
-            <div class="rating-grid single">
-              <div class="rating rating-head one"><span class="col-label">Running</span></div>
-              @for (s of speedRows(p); track s[0]) {
-                <div class="rating one">
-                  <span>{{ s[0] }}</span>
-                  <b>{{ s[1] ?? '—' }}</b>
+          <div class="rating-grid single">
+            <ng-container *ngTemplateOutlet="ratingHead" />
+            @if (splitMode()) {
+              <ng-container *ngTemplateOutlet="splitGrid; context: { $implicit: 'batting' }" />
+            } @else {
+              @for (r of battingSkillRows(p); track r.label) {
+                <div class="rating" [class.part]="r.part">
+                  <span>{{ r.label }}</span>
+                  <i>{{ r.current ?? '—' }}</i>
+                  <b>{{ r.potential ?? '—' }}</b>
                 </div>
               }
-            </div>
+            }
+          </div>
+          <h5 class="sub-head">Running</h5>
+          <div class="stat-list">
+            @for (s of speedRows(p); track s[0]) {
+              <div class="stat">
+                <span>{{ s[0] }}</span>
+                <b>{{ s[1] ?? '—' }}</b>
+              </div>
+            }
           </div>
         </section>
       }
 
-      @if (showBatting(p.type) && fieldingRows(p).length) {
+      @if (showBatting(p.type) && fielding().length) {
         <section class="detail-section">
           <h4>Fielding</h4>
-          <div class="stat-grid tight">
-            @for (fr of fieldingRows(p); track fr[0]) {
-              <div class="stat">
-                <span>{{ fr[0] }}</span
-                ><b>{{ fr[1] }}</b>
-              </div>
+          <div class="field-matrix">
+            @for (g of fielding(); track g.key) {
+              @if (g.key !== 'C' && $first) {
+                <span></span>
+                @for (h of fieldingHeads.field; track h) {
+                  <span class="fm-head">{{ h }}</span>
+                }
+              }
+              @if (g.key === 'C') {
+                <span></span>
+                @for (h of fieldingHeads.catcher; track h) {
+                  <span class="fm-head">{{ h }}</span>
+                }
+                <span></span>
+              }
+              <span class="fm-group" [class.primary]="g.primary">{{ g.label }}</span>
+              @for (c of g.cells; track $index) {
+                <b class="fm-cell" [class.primary]="g.primary">{{ c ?? '' }}</b>
+              }
+              @if (g.cells.length < 4) {
+                <span></span>
+              }
             }
           </div>
         </section>
@@ -149,43 +202,41 @@
             <h4>Pitching</h4>
             <ng-container *ngTemplateOutlet="splitToggle" />
           </div>
-          <div class="rating-cols">
-            <div class="rating-grid single">
-              <ng-container *ngTemplateOutlet="ratingHead" />
-              @if (splitMode()) {
-                <ng-container *ngTemplateOutlet="splitGrid; context: { $implicit: 'pitching' }" />
-              } @else {
-                @for (r of pitchingSkillRows(p); track r.label) {
-                  <div class="rating" [class.part]="r.part">
-                    <span>{{ r.label }}</span>
-                    <i>{{ r.current ?? '—' }}</i>
-                    <b>{{ r.potential ?? '—' }}</b>
-                  </div>
-                }
+          <div class="rating-grid single">
+            <ng-container *ngTemplateOutlet="ratingHead" />
+            @if (splitMode()) {
+              <ng-container *ngTemplateOutlet="splitGrid; context: { $implicit: 'pitching' }" />
+            } @else {
+              @for (r of pitchingSkillRows(p); track r.label) {
+                <div class="rating" [class.part]="r.part">
+                  <span>{{ r.label }}</span>
+                  <i>{{ r.current ?? '—' }}</i>
+                  <b>{{ r.potential ?? '—' }}</b>
+                </div>
               }
-            </div>
-            @if (pitchingMiscRows(p).length) {
-              <div class="rating-grid single">
-                <div class="rating rating-head one"><span class="col-label">Profile</span></div>
-                @for (m of pitchingMiscRows(p); track m[0]) {
-                  <div class="rating one">
-                    <span>{{ m[0] }}</span>
-                    <b>{{ m[1] }}</b>
-                  </div>
-                }
-              </div>
             }
           </div>
+          @if (pitchingMiscRows(p).length) {
+            <h5 class="sub-head">Profile</h5>
+            <div class="stat-list">
+              @for (m of pitchingMiscRows(p); track m[0]) {
+                <div class="stat">
+                  <span>{{ m[0] }}</span>
+                  <b>{{ m[1] }}</b>
+                </div>
+              }
+            </div>
+          }
         </section>
       }
 
       @if (showPitching(p.type) && pitchArsenal(p).length) {
         <section class="detail-section">
           <h4>Arsenal</h4>
-          <div class="rating-grid">
-            <div class="rating rating-head arsenal"><span>Pitch</span><i>cur</i><b>pot</b></div>
+          <div class="rating-grid single">
+            <div class="rating rating-head"><span></span><i>cur</i><b>pot</b></div>
             @for (pi of pitchArsenal(p); track pi.name) {
-              <div class="rating arsenal">
+              <div class="rating">
                 <span>{{ pi.name }}</span>
                 <i>{{ pi.current ?? '—' }}</i>
                 <b>{{ pi.potential ?? '—' }}</b>
@@ -196,166 +247,16 @@
       }
     </div>
 
-    <section class="detail-section model-col">
-      <h4>Model</h4>
-      <div class="stat-grid">
-        <div class="stat">
-          <span>Overall</span><b>{{ p.modelScore | number: '1.2-2' }}</b>
-        </div>
-        <div class="stat">
-          <span>Raw overall</span><b>{{ p.rawOverallScore | number: '1.2-2' }}</b>
-        </div>
-        @if (p.source.className && p.preDemandScore != null) {
-          <div class="stat" title="The model's score and rank before the demand step">
-            <span>Pre-demand</span
-            ><b>{{ p.preDemandScore | number: '1.2-2' }} · #{{ p.preDemandRank }}</b>
-          </div>
-        }
-        <div class="stat">
-          <span>Batter score</span><b>{{ p.positionPlayerScore | number: '1.2-2' }}</b>
-        </div>
-        <div class="stat">
-          <span>Pitcher score</span><b>{{ p.pitcherScore | number: '1.2-2' }}</b>
-        </div>
-        @if (showBatting(p.type)) {
-          <div class="stat">
-            <span>Batting model</span><b>{{ p.battingScoreComponent | number: '1.2-2' }}</b>
-          </div>
-          <div class="stat">
-            <span>Fielding model</span><b>{{ p.fieldingScoreComponent | number: '1.2-2' }}</b>
-          </div>
-          <div class="stat">
-            <span>Running model</span><b>{{ p.runningScoreComponent | number: '1.2-2' }}</b>
-          </div>
-        }
-        @if (showPitching(p.type)) {
-          <div class="stat">
-            <span>SP model</span><b>{{ p.starterComponent | number: '1.2-2' }}</b>
-          </div>
-          <div class="stat">
-            <span>RP model</span><b>{{ p.relieverComponent | number: '1.2-2' }}</b>
-          </div>
-        }
-      </div>
-
-      @if (showBatting(p.type) && battingComponents(breakdown(), p.bestPosition).length) {
-        <div class="stat-grid tight subtle">
-          @for (e of battingComponents(breakdown(), p.bestPosition); track e[0]) {
-            <div class="stat">
-              <span>{{ e[0] }}</span
-              ><b>{{ e[1] | number: '1.2-2' }}</b>
-            </div>
-          }
-        </div>
-      }
-
-      @if (showPitching(p.type) && pitchingComponents(breakdown()).length) {
-        <div class="stat-grid tight subtle">
-          @for (e of pitchingComponents(breakdown()); track e[0]) {
-            <div class="stat">
-              <span>{{ e[0] }}</span
-              ><b>{{ e[1] | number: '1.2-2' }}</b>
-            </div>
-          }
-        </div>
-      }
-
-      @if (hasModifiers(breakdown())) {
-        <div class="modifier-summary">
-          @if (showBatting(p.type) && modifierGroup(breakdown(), 'pos'); as g) {
-            @if (g.total != null) {
-              <div class="mod total">
-                <span>Position modifiers ×</span><b>{{ g.total | number: '1.2-2' }}</b>
-              </div>
-            }
-          }
-          @if (showPitching(p.type) && modifierGroup(breakdown(), 'pitcher'); as g) {
-            @if (g.total != null) {
-              <div class="mod total">
-                <span>Pitcher modifiers ×</span><b>{{ g.total | number: '1.2-2' }}</b>
-              </div>
-            }
-          }
-        </div>
-
-        <p-panel header="Modifier breakdown" [toggleable]="true" [collapsed]="true">
-          @if (showBatting(p.type) && modifierGroup(breakdown(), 'pos'); as g) {
-            <div class="modifier-group">
-              <h5>Position modifiers</h5>
-              @for (m of g.rows; track m.label) {
-                <div class="mod">
-                  <span>{{ m.label }}</span
-                  ><b>{{ m.value | number: '1.2-2' }}</b>
-                </div>
-              }
-              @if (g.total != null) {
-                <div class="mod total">
-                  <span>Total</span><b>{{ g.total | number: '1.2-2' }}</b>
-                </div>
-              }
-            </div>
-          }
-          @if (showPitching(p.type) && modifierGroup(breakdown(), 'pitcher'); as g) {
-            <div class="modifier-group">
-              <h5>Pitcher modifiers</h5>
-              @for (m of g.rows; track m.label) {
-                <div class="mod">
-                  <span>{{ m.label }}</span
-                  ><b>{{ m.value | number: '1.2-2' }}</b>
-                </div>
-              }
-              @if (g.total != null) {
-                <div class="mod total">
-                  <span>Total</span><b>{{ g.total | number: '1.2-2' }}</b>
-                </div>
-              }
-            </div>
-          }
-        </p-panel>
-      }
-
-      @if (ledger(); as lw) {
-        <div class="ledger">
-          <h5>
-            Score ledger
-            <span class="muted">{{ breakdown()?.engine }} · {{ breakdown()?.unit }}</span>
-          </h5>
-          @for (st of lw.stages; track st.stage) {
-            <div class="ledger-stage">{{ st.title }}</div>
-            @for (s of st.steps; track $index) {
-              <div class="ledger-row">
-                <span class="lg-label">{{ s.label }}</span>
-                <span class="lg-bar"
-                  ><i [class.neg]="s.delta < 0" [style.left.%]="s.left" [style.width.%]="s.width"></i
-                ></span>
-                <b>{{ s.delta > 0 ? '+' : '' }}{{ s.delta | number: '1.2-2' }}</b>
-              </div>
-            }
-          }
-          <div class="ledger-row total">
-            <span class="lg-label">Score</span>
-            <span class="lg-bar"></span>
-            <b>{{ lw.total | number: '1.2-2' }}</b>
-          </div>
-          @if (lw.hidden) {
-            <div class="muted lg-note">{{ lw.hidden }} line(s) with no effect not shown</div>
-          }
-          @if (lw.other.length) {
-            <p-panel header="Other side (not counted)" [toggleable]="true" [collapsed]="true">
-              @for (o of lw.other; track $index) {
-                <div class="mod">
-                  <span>{{ o.label }}</span
-                  ><b>{{ o.delta > 0 ? '+' : '' }}{{ o.delta | number: '1.2-2' }}</b>
-                </div>
-              }
-            </p-panel>
-          }
-        </div>
+    <section class="detail-section value-col">
+      @if (isV2()) {
+        <ng-container *ngTemplateOutlet="valueBuildTpl" />
+      } @else {
+        <ng-container *ngTemplateOutlet="legacyModel" />
       }
     </section>
   </div>
 
-  @if (otherComponents(breakdown()).length) {
+  @if (!isV2() && otherComponents(breakdown()).length) {
     <p-panel header="Diagnostics" [toggleable]="true" [collapsed]="true">
       <div class="stat-grid tight subtle">
         @for (e of otherComponents(breakdown()); track e[0]) {
@@ -367,6 +268,197 @@
       </div>
     </p-panel>
   }
+
+  <!-- v2: the ledger in WAR - each line's name and what it read, its bar from
+       the running total before it to the one after, and what it adds -->
+  <ng-template #valueBuildTpl>
+    <div class="section-head">
+      <h4>Value build</h4>
+      <span class="muted vb-unit">WAR over replacement</span>
+    </div>
+    @if (build(); as vb) {
+      <div class="vb">
+        @for (g of vb.groups; track g.stage) {
+          <div class="vb-stage">{{ g.title }}</div>
+          @for (s of g.steps; track $index) {
+            <ng-container *ngTemplateOutlet="vbRow; context: { $implicit: s }" />
+          }
+        }
+        <div class="vb-total">
+          <span>Value</span><b>{{ vb.war | number: '1.2-2' }} WAR</b>
+        </div>
+        @if (vb.demand.length) {
+          <div class="vb-stage">Demand</div>
+          @for (s of vb.demand; track $index) {
+            <ng-container *ngTemplateOutlet="vbRow; context: { $implicit: s }" />
+          }
+          <div class="vb-total">
+            <span>Ranked on</span><b>{{ vb.finalWar | number: '1.2-2' }} WAR</b>
+          </div>
+        }
+        <div class="vb-foot muted">
+          Score {{ vb.score | number: '1.2-2' }} = 50 + 10 × WAR
+          @if (p.preDemandRank && vb.demand.length) {
+            · #{{ p.preDemandRank }} before demand
+          }
+          @if (vb.hidden) {
+            · {{ vb.hidden }} modifier{{ vb.hidden === 1 ? '' : 's' }} at x1.00 hidden
+          }
+        </div>
+        @if (vb.other; as o) {
+          <p-panel [toggleable]="true" [collapsed]="true" styleClass="vb-other">
+            <ng-template #header>
+              <span class="vb-other-head"
+                >{{ o.title }} <b>{{ o.war | number: '1.2-2' }} WAR</b>
+                <span class="muted">not counted</span></span
+              >
+            </ng-template>
+            <div class="vb">
+              @for (s of o.steps; track $index) {
+                <ng-container *ngTemplateOutlet="vbRow; context: { $implicit: s }" />
+              }
+            </div>
+          </p-panel>
+        }
+      </div>
+    } @else if (breakdown() === null) {
+      <span class="muted vb-loading">Loading…</span>
+    }
+  </ng-template>
+
+  <ng-template #vbRow let-s>
+    <div class="vb-row">
+      <div class="vb-text">
+        <span class="vb-line"
+          ><span class="vb-label">{{ s.label }}</span>
+          @if (s.stat) {
+            <span class="vb-stat">{{ s.stat }}</span>
+          }</span
+        >
+        @if (s.note) {
+          <span class="vb-note">{{ s.note }}</span>
+        }
+      </div>
+      <span class="vb-bar"
+        ><i [class.neg]="s.war <= -0.005" [style.left.%]="s.left" [style.width.%]="s.width"></i
+      ></span>
+      <b class="vb-war" [class.neg]="s.war <= -0.005">{{ signedWar(s.war) }}</b>
+    </div>
+  </ng-template>
+
+  <!-- legacy: the model's scores and its modifiers -->
+  <ng-template #legacyModel>
+    <h4>Model</h4>
+    <div class="stat-grid">
+      <div class="stat">
+        <span>Overall</span><b>{{ p.modelScore | number: '1.2-2' }}</b>
+      </div>
+      <div class="stat">
+        <span>Raw overall</span><b>{{ p.rawOverallScore | number: '1.2-2' }}</b>
+      </div>
+      <div class="stat">
+        <span>Batter score</span><b>{{ p.positionPlayerScore | number: '1.2-2' }}</b>
+      </div>
+      <div class="stat">
+        <span>Pitcher score</span><b>{{ p.pitcherScore | number: '1.2-2' }}</b>
+      </div>
+      @if (showBatting(p.type)) {
+        <div class="stat">
+          <span>Batting model</span><b>{{ p.battingScoreComponent | number: '1.2-2' }}</b>
+        </div>
+        <div class="stat">
+          <span>Fielding model</span><b>{{ p.fieldingScoreComponent | number: '1.2-2' }}</b>
+        </div>
+        <div class="stat">
+          <span>Running model</span><b>{{ p.runningScoreComponent | number: '1.2-2' }}</b>
+        </div>
+      }
+      @if (showPitching(p.type)) {
+        <div class="stat">
+          <span>SP model</span><b>{{ p.starterComponent | number: '1.2-2' }}</b>
+        </div>
+        <div class="stat">
+          <span>RP model</span><b>{{ p.relieverComponent | number: '1.2-2' }}</b>
+        </div>
+      }
+    </div>
+
+    @if (showBatting(p.type) && battingComponents(breakdown(), p.bestPosition).length) {
+      <div class="stat-grid tight subtle">
+        @for (e of battingComponents(breakdown(), p.bestPosition); track e[0]) {
+          <div class="stat">
+            <span>{{ e[0] }}</span
+            ><b>{{ e[1] | number: '1.2-2' }}</b>
+          </div>
+        }
+      </div>
+    }
+
+    @if (showPitching(p.type) && pitchingComponents(breakdown()).length) {
+      <div class="stat-grid tight subtle">
+        @for (e of pitchingComponents(breakdown()); track e[0]) {
+          <div class="stat">
+            <span>{{ e[0] }}</span
+            ><b>{{ e[1] | number: '1.2-2' }}</b>
+          </div>
+        }
+      </div>
+    }
+
+    @if (hasModifiers(breakdown())) {
+      <div class="modifier-summary">
+        @if (showBatting(p.type) && modifierGroup(breakdown(), 'pos'); as g) {
+          @if (g.total != null) {
+            <div class="mod total">
+              <span>Position modifiers ×</span><b>{{ g.total | number: '1.2-2' }}</b>
+            </div>
+          }
+        }
+        @if (showPitching(p.type) && modifierGroup(breakdown(), 'pitcher'); as g) {
+          @if (g.total != null) {
+            <div class="mod total">
+              <span>Pitcher modifiers ×</span><b>{{ g.total | number: '1.2-2' }}</b>
+            </div>
+          }
+        }
+      </div>
+
+      <p-panel header="Modifier breakdown" [toggleable]="true" [collapsed]="true">
+        @if (showBatting(p.type) && modifierGroup(breakdown(), 'pos'); as g) {
+          <div class="modifier-group">
+            <h5>Position modifiers</h5>
+            @for (m of g.rows; track m.label) {
+              <div class="mod">
+                <span>{{ m.label }}</span
+                ><b>{{ m.value | number: '1.2-2' }}</b>
+              </div>
+            }
+            @if (g.total != null) {
+              <div class="mod total">
+                <span>Total</span><b>{{ g.total | number: '1.2-2' }}</b>
+              </div>
+            }
+          </div>
+        }
+        @if (showPitching(p.type) && modifierGroup(breakdown(), 'pitcher'); as g) {
+          <div class="modifier-group">
+            <h5>Pitcher modifiers</h5>
+            @for (m of g.rows; track m.label) {
+              <div class="mod">
+                <span>{{ m.label }}</span
+                ><b>{{ m.value | number: '1.2-2' }}</b>
+              </div>
+            }
+            @if (g.total != null) {
+              <div class="mod total">
+                <span>Total</span><b>{{ g.total | number: '1.2-2' }}</b>
+              </div>
+            }
+          </div>
+        }
+      </p-panel>
+    }
+  </ng-template>
 
   <!-- live league only: flips the batting / pitching grids between cur/pot and vs L / vs R -->
   <ng-template #splitToggle>

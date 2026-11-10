@@ -695,10 +695,10 @@ def _ranks(ranked, label, pid):
 
 
 def _lines(ledger):
-    """{(stage, label, side): (delta, counted)} in ledger order."""
+    """{(stage, text, side): (delta, counted)} in ledger order."""
     out = {}
     for line in ledger.lines:
-        key = (line.stage, line.label, line.side)
+        key = (line.stage, line.text, line.side)
         delta, counted = out.get(key, (0.0, ledger.counted(line)))
         out[key] = (delta + line.delta, counted)
     return out
