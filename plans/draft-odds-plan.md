@@ -436,6 +436,57 @@ not in `ranking/artifacts/`).*
    Steps 5–7 answer the growth half of it. They stay as judgment either
    way, and the result could argue for a bigger upside than they give
    today.
+
+   *Done 2026-11-10 (prototype in a scratchpad; it goes into the script
+   with B7, which refits it).* Held out one class at a time, classes
+   2033–37, about 2,200 draftees:
+   - **The shape:** P(A > 0) by logistic regression, and A given A > 0 as a
+     gamma, spread by side. A lognormal was tried and dropped. Hitters'
+     log spread is 1.9, which inflates its mean about 5× and needs pitchers
+     ×1.83 to balance.
+   - **The mean stays Poisson.** The hurdle's own E[v] ties it (rho 0.412
+     against 0.407, top 25 1.50 against 1.54, top 100 1.08 against 1.09).
+     By this plan's rule, Poisson keeps the mean and the hurdle supplies
+     the shape: the positive part's mean is the Poisson mean / P(A > 0).
+   - **P10–P90 is the wrong check.** P10 is 0 for nearly everyone, since
+     most draftees bust more than 10% of the time, so "the likely range"
+     always starts at 0. What can be checked is P90: 12% land above it
+     (target 10%).
+   - **The tail is thin where it matters.** At 4+ WAR of ceiling, 34%
+     became regulars against 21–23% predicted; at 0.5–1.5, 8–13% against
+     5%. A spread that varies with the ceiling didn't help: it got tighter
+     at high ceilings. This is the upside the growth outcome (5–7) is for.
+   - **Ranking rules (open question 1):** neither the surplus over the
+     league's price nor γ = 1.5 ranks better than E[v]. The surplus is far
+     worse (top 25 1.05 against 1.50) and puts 72% pitchers in the top 25.
+     E[v] stays.
+   - **"A regular"** on the full-time scale: hitter 1.71 and SP 1.98 (the
+     league's prices); RP 0.19, the median team's 8th-best MLB reliever on
+     the full-time scale. The bullpen prices are on the slot-leverage scale,
+     so they can't be used. P(regular) is calibrated except at the top
+     decile (0.34 predicted against 0.41 observed).
+   - **Stuff and velocity, the mean held fixed** (the model without those
+     two modifiers), pitchers:
+
+     | | n | E[v] pred | A observed | regular, pred / obs |
+     |---|---|---|---|---|
+     | velo 96+ | 272 | 0.58 | **0.68** | 0.13 / **0.17** |
+     | velo 93–95 | 610 | 0.52 | 0.50 | 0.10 / 0.11 |
+     | velo ≤92 | 335 | 0.39 | **0.46** | 0.06 / **0.10** |
+     | Stuff P 55+ | 279 | 0.70 | 0.71 | 0.19 / 0.21 |
+     | Stuff P 45–50 | 770 | 0.45 | 0.48 | 0.07 / 0.10 |
+     | Stuff P ≤40 | 168 | 0.36 | **0.46** | 0.06 / 0.07 |
+
+     - **96+ velocity supports your argument, modestly:** about 17% more
+       realized than the model expects, and more regulars. The chance he
+       sticks is as predicted (0.45 against 0.44): velocity buys upside, not
+       survival.
+     - **High Stuff adds nothing past the model.**
+     - **The low end beats the model too,** and that's where the modifiers
+       cut (about ×0.88). It's likely low ceilings growing; B6 separates it.
+       It bears on open question 4.
+     - The fit classes are old exports, so this is current velocity, not
+       potential.
 5. **The ceiling panel.** One row per draftee per later look: the draft
    classes joined by ID to the prospect exports (2038–42, the own-scout
    files, not `-osa`) and the snapshot. Each look is scored with the
@@ -449,6 +500,62 @@ not in `ranking/artifacts/`).*
    Set the "outgrows" margin here (for example +1 WAR past the draft-day
    ceiling, and at least a regular's price), and look at who sits just
    either side of it before fixing it.
+
+   *Built 2026-11-10 (scratchpad scripts; they go into the repo with B6).*
+   The panel covers 8,771 draftees from classes 2033–41 (a re-entered
+   draftee keeps his last class), and 32,375 looks: draft day, the
+   2038–42 prospect exports and the snapshot. Every look is scored with
+   `CEILING`. "A regular" uses the B4 thresholds (hitter 1.71, SP 1.98, RP
+   0.19).
+   - **Low ceilings do grow, more often in WAR than in POT.** Of the 4,467
+     draftees in classes 2033–39 whose draft-day ceiling was below a
+     regular's price, **7.5%** are regulars by the snapshot (3–11% by
+     class). On POT the figure was 2.5%, but POT 55+ is a higher bar. Of
+     those at or above a regular's price on draft day, 65% fell 1+ WAR or
+     left, and 39% are still regulars.
+   - **What drives it, in WAR,** with the draft-day ceiling held fixed:
+     teens ×2.15 (1.80–2.69), pitchers ×1.38 (1.12–1.68), **adaptability**
+     H ×1.41 (1.04–1.73) and L ×0.81 (0.59–0.97).
+   - **Work ethic and intelligence show nothing:** WE H ×1.00 (0.78–1.31),
+     INT H ×1.19 (0.84–1.66). That's against the POT look and your read.
+     WE does move the mean, through outcome A, but not the chance a low
+     ceiling grows into a regular.
+   - **Velocity: a little; Stuff: nothing,** for pitchers in classes
+     2033–39:
+     - per mph ×1.01 (0.95–1.07); by band, ≤92 6.7%, 93–95 10.2%, 96+
+       10.4%
+     - only the 2039 class has potential velocity: ×1.10 per mph
+       (0.96–1.38), 25 regulars
+     - potential Stuff per 10 ×0.96 (0.79–1.17)
+   - **Your examples:**
+     - **Linger** (2037, 21): ceiling 1.44 → 3.21 WAR. He outgrew it.
+     - **Lujan** (2034, 18): 1.14 → 3.09. He outgrew it.
+     - **O'Neal** (2035, 18): 2.85 → 2.89, with a dip to 1.97 in between.
+       His POT rose 40 → 60 and his Stuff P 45 → 75, but the WAR model
+       already valued his 96 mph at 18 on draft day. His POT moved; his
+       WAR ceiling didn't.
+   - **Candidate margins** (classes 2033–39, still in the league, a regular
+     by the snapshot):
+
+     | past the draft-day ceiling | draftees | share | low ceilings |
+     |---|---|---|---|
+     | +0.5 WAR | 503 | 7.5% | 286 |
+     | +1.0 WAR | 344 | 5.1% | 218 |
+     | +1.5 WAR | 225 | 3.3% | 166 |
+     | +2.0 WAR | 158 | 2.3% | 119 |
+
+     Either side of +1.0 the WAR change and the POT change don't line up
+     cleanly:
+     - **Just under (+0.6):** mostly 18-year-old hitters whose POT didn't
+       move (Johnny Krinke 45 → 45, Raul Galvan 45 → 45). Ramon Munoz, a
+       real grower (POT 35 → 60), also sits there at +0.64.
+     - **Just over (+1.3):** clear growers (Chris Haga 45 → 60, J.J. Lennan
+       60 → 70, Hugo Gomez 55 → 65), but also flat ones (Dave Carter
+       45 → 45).
+
+     *Recommend +1.0 WAR and a regular:* it keeps most of the clear growth
+     and drops most of the drift. +1.5 is cleaner, but there are a third
+     fewer cases to fit on.
 6. **Fit the growth odds.** A logistic fit of outgrowing on draft-day
    inputs:
    - potential WAR (lower ceilings have more room)
