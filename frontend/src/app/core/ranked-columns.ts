@@ -5,6 +5,7 @@
  * camelCase, a dotted rating path like `batting.power`, or `pitch.<Name>`).
  */
 import { ClassView, RankedPlayerRow } from './api.types';
+import { RankingEngine } from './engine';
 import { gradeTone } from './player-stats';
 
 /** Pitchers first, then scorekeeping order for position players. */
@@ -37,6 +38,7 @@ export type ColGroup =
   | 'Draft'
   | 'In-Game'
   | 'Model'
+  | 'WAR'
   | 'Batting'
   | 'Running'
   | 'Infield'
@@ -700,6 +702,80 @@ export const VIEW_COLUMNS: Record<ClassView, ColumnDef[]> = {
   compare: [...COMPARE_LEAD, ...COMPARE_COLUMNS],
 };
 
+// ------------------------------------------------------------- v2 columns
+// v2 values every player in WAR, so its views read in WAR: his value before
+// demand, where he's valued, the talent line behind it, and its parts. Each
+// side's columns are blank for players not judged on that side.
+
+const warCol = (
+  field: keyof RankedPlayerRow,
+  header: string,
+  title: string,
+  group: ColGroup = 'WAR',
+): ColumnDef => ({
+  field,
+  header,
+  title,
+  numeric: true,
+  descFirst: true,
+  group,
+  value: model(field),
+  fmt: fmtNum2,
+});
+
+const WAR_COLUMN = warCol('war', 'WAR', 'v2 value in WAR over replacement, before the demand step', 'Model');
+
+const ROLE_COLUMN: ColumnDef = {
+  field: 'role',
+  header: 'Role',
+  title: 'Where v2 values him: his best position, or SP / RP',
+  numeric: false,
+  descFirst: false,
+  group: 'Model',
+  value: model('role'),
+  fmt: fmtText,
+};
+
+const field_ = (f: string) => MODELED_COLUMNS.find((c) => c.field === f)!;
+
+/** The score the rank is on, after demand (50 + 10 x WAR); draft classes only,
+ *  where demand can move it off his WAR. */
+const V2_SCORE_COLUMN: ColumnDef = {
+  ...LEADING_COLUMNS.find((c) => c.field === 'modelScore')!,
+  header: 'Score',
+  title: 'Score the rank is on: after the demand step, 50 + 10 × WAR',
+};
+
+const V2_LEAD = LEADING_COLUMNS.filter((c) => c.field !== 'modelScore');
+
+const V2_MODELED_COLUMNS: ColumnDef[] = [
+  WAR_COLUMN,
+  V2_SCORE_COLUMN,
+  field_('preDemandRank'),
+  ROLE_COLUMN,
+  field_('wrcPlus'),
+  field_('era'),
+  warCol('battingWar', 'Bat', 'Batting WAR, with the playing-time credit over replacement'),
+  warCol('fieldingWar', 'Fld', 'Fielding WAR at his position, with its adjustment and utility'),
+  warCol('runningWar', 'Run', 'Baserunning WAR'),
+  warCol('starterWar', 'SP', 'WAR as a starter'),
+  warCol('relieverWar', 'RP', 'WAR as a reliever (the better of SP / RP counts)'),
+  DEMAND_COLUMN,
+  ...DRAFT_COLUMNS,
+];
+
+const V2_VIEW_COLUMNS: Record<ClassView, ColumnDef[]> = {
+  modeled: [...V2_LEAD, ...V2_MODELED_COLUMNS],
+  batting: [...V2_LEAD.filter((c) => c.field !== 'type'), WAR_COLUMN, field_('wrcPlus'), ...BATTING_COLUMNS],
+  pitching: [...V2_LEAD.filter((c) => c.field !== 'type'), WAR_COLUMN, field_('era'), ...PITCHING_COLUMNS],
+  compare: VIEW_COLUMNS.compare,
+};
+
+const COLUMNS_BY_ENGINE: Record<RankingEngine, Record<ClassView, ColumnDef[]>> = {
+  v2: V2_VIEW_COLUMNS,
+  legacy: VIEW_COLUMNS,
+};
+
 /** Columns with no meaning for a live-league snapshot: the drafted/demand
  *  columns (pre-demand included) and the draft-class player-type tag. */
 const DROPPED_IN_LEAGUE = new Set([
@@ -711,16 +787,32 @@ const DROPPED_IN_LEAGUE = new Set([
   'preDemandRank',
 ]);
 
-/** Columns for a view in a given context. `'league'` drops the demand / drafted
- *  columns and the player-type tag, and inserts Org / Level right after Pos. */
-export function viewColumns(view: ClassView, context: 'class' | 'league' = 'class'): ColumnDef[] {
-  const base = VIEW_COLUMNS[view];
+/** Columns for a view in a given context and engine. `'league'` drops the
+ *  demand / drafted columns and the player-type tag, and inserts Org / Level
+ *  right after Pos; under v2 it drops the score too (no demand step, so it's
+ *  just his WAR in points). */
+export function viewColumns(
+  view: ClassView,
+  context: 'class' | 'league' = 'class',
+  engine: RankingEngine = 'v2',
+): ColumnDef[] {
+  const base = COLUMNS_BY_ENGINE[engine][view];
   if (context !== 'league') return base;
+  const dropped = engine === 'v2' && view !== 'compare' ? new Set([...DROPPED_IN_LEAGUE, 'modelScore']) : DROPPED_IN_LEAGUE;
   // Drop the drafted/demand columns and the Type tag; Pos stays sticky right
   // after Name, with Org (3-letter code) and Level slotted in just after it.
-  const trimmed = base.filter((c) => !DROPPED_IN_LEAGUE.has(c.field));
+  const trimmed = base.filter((c) => !dropped.has(c.field));
   const at = trimmed.findIndex((c) => c.field === 'position') + 1;
   return [...trimmed.slice(0, at), ...LEAGUE_IDENTITY_COLUMNS, ...trimmed.slice(at)];
+}
+
+/** Phones: the view's model columns right after the pinned Pos, so a player's
+ *  value is on screen without scrolling sideways. */
+export function modelFirst(cols: ColumnDef[]): ColumnDef[] {
+  const rest = cols.filter((c) => c.group !== 'Model');
+  const at = rest.findIndex((c) => c.sticky === 'pos') + 1;
+  if (!at) return cols;
+  return [...rest.slice(0, at), ...cols.filter((c) => c.group === 'Model'), ...rest.slice(at)];
 }
 
 export const DEFAULT_SORT: Record<ClassView, { field: string; order: 1 | -1 }> = {
@@ -757,13 +849,13 @@ export interface FilterableField {
   graded: boolean;
 }
 
-/** Every column across all three views that supports a numeric >/< bound —
- *  numeric ratings/scores plus the graded-text and demand columns — deduped by
- *  field so one master list backs the filter dropdown regardless of the view. */
-export const FILTERABLE_FIELDS: FilterableField[] = (() => {
+/** Every column across the views that supports a numeric >/< bound — numeric
+ *  ratings/scores plus the graded-text and demand columns — deduped by field so
+ *  one list backs the filter dropdown regardless of the view. */
+function filterableIn(views: Record<ClassView, ColumnDef[]>): FilterableField[] {
   const seen = new Set<string>();
   const out: FilterableField[] = [];
-  for (const cols of Object.values(VIEW_COLUMNS)) {
+  for (const cols of Object.values(views)) {
     for (const c of cols) {
       const graded = GRADED_TEXT_FIELDS.has(c.field);
       const usable = (c.numeric || graded || c.field === 'demandKey') && c.field !== 'rank';
@@ -774,7 +866,20 @@ export const FILTERABLE_FIELDS: FilterableField[] = (() => {
     }
   }
   return out;
-})();
+}
+
+/** What the filter picker offers: the engine's own columns. */
+export const FILTER_PICKER_FIELDS: Record<RankingEngine, FilterableField[]> = {
+  v2: filterableIn(V2_VIEW_COLUMNS),
+  legacy: filterableIn(VIEW_COLUMNS),
+};
+
+/** Every filterable field under either engine - for reading a filter back
+ *  (from the URL, or a column header) whichever engine wrote it. */
+export const FILTERABLE_FIELDS: FilterableField[] = [
+  ...FILTER_PICKER_FIELDS.v2,
+  ...FILTER_PICKER_FIELDS.legacy.filter((f) => !FILTER_PICKER_FIELDS.v2.some((v) => v.field === f.field)),
+];
 
 /** Contiguous group runs across a column list, for the first header row. */
 export function groupSpans(cols: ColumnDef[]): { label: ColGroup; span: number }[] {

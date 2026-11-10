@@ -199,6 +199,7 @@ CREATE TABLE run_results (
   ledger TEXT,
   wrc_plus,
   era,
+  role TEXT,
   PRIMARY KEY (scope, scope_id, method, engine, player_id),
   FOREIGN KEY (scope, scope_id, method, engine)
     REFERENCES model_runs (scope, scope_id, method, engine) ON DELETE CASCADE
@@ -274,8 +275,16 @@ def _migration_4(conn):
             conn.execute(f"ALTER TABLE run_results ADD COLUMN {column}")
 
 
+def _migration_5(conn):
+    # v2's role: where he's valued (best position, or SP / RP); legacy rows
+    # leave it NULL. A database created since has it already.
+    have = {r[1] for r in conn.execute("PRAGMA table_info(run_results)")}
+    if "role" not in have:
+        conn.execute("ALTER TABLE run_results ADD COLUMN role TEXT")
+
+
 # index i holds the step that takes the schema from version i to i + 1
-_MIGRATIONS = [_migration_1, _migration_2, _migration_3, _migration_4]
+_MIGRATIONS = [_migration_1, _migration_2, _migration_3, _migration_4, _migration_5]
 
 _conns: "dict[tuple, sqlite3.Connection]" = {}
 _conns_lock = threading.Lock()

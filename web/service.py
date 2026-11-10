@@ -41,6 +41,11 @@ from web.settings import cookie_header
 
 _pipeline_lock = asyncio.Lock()
 
+_BATTING_SIDE = (
+    "position_player_score", "batting_score_component",
+    "fielding_score_component", "running_score_component",
+)
+_PITCHING_SIDE = ("pitcher_score", "starter_component", "reliever_component")
 _FLOAT_FIELDS = (
     "model_score", "position_player_score", "fielding_score_component",
     "batting_score_component", "pitcher_score", "starter_component",
@@ -237,12 +242,41 @@ def _player_payload(rank, row, drafted_info, game_player=None, source=None):
     payload["type"] = row.get("player_type") or classify(
         payload["position_player_score"], payload["pitcher_score"]
     )
+    # only the side(s) his type is judged on: a hitter's pitching score (and
+    # a pitcher's batting one) is the model valuing a role he'll never play
     if payload["type"] == "Pitcher":
-        payload["best_position"] = None
-        payload["wrc_plus"] = None
+        for field in ("best_position", "wrc_plus", *_BATTING_SIDE):
+            payload[field] = None
     if payload["type"] == "Hitter":
-        payload["era"] = None
+        for field in ("era", *_PITCHING_SIDE):
+            payload[field] = None
+    payload["role"] = row.get("role") or None
+    payload.update(_war_fields(payload))
     return payload
+
+
+# v2 scores are display points, 50 + 10 x WAR (ranking/value.py)
+_REPLACEMENT_POINTS, _POINTS_PER_WAR = 50.0, 10.0
+# WAR field -> the points it's read from (null on the side he isn't judged on)
+_WAR_PARTS = {
+    "batting_war": "batting_score_component",
+    "fielding_war": "fielding_score_component",
+    "running_war": "running_score_component",
+    "starter_war": "starter_component",
+    "reliever_war": "reliever_component",
+}
+
+
+def _war_fields(payload) -> dict:
+    """A v2 row's value and its parts in WAR (all None for legacy, whose
+    points aren't WAR). `war` is before the demand step: the model's value."""
+    if payload["pre_demand_score"] is None:
+        return {"war": None, **dict.fromkeys(_WAR_PARTS)}
+    out = {"war": round((payload["pre_demand_score"] - _REPLACEMENT_POINTS) / _POINTS_PER_WAR, 2)}
+    for field, points in _WAR_PARTS.items():
+        value = payload[points]
+        out[field] = None if value is None else round(value / _POINTS_PER_WAR, 2)
+    return out
 
 
 _CAMEL_RE = re.compile(r"(?<!^)(?=[A-Z])")
@@ -1103,6 +1137,11 @@ def _breakdown_payload(player_type: str, b: dict) -> dict:
             "position_model": model.get("overall"),
             "best_position_score": model.get("best_position_score"),
             "utility_bonus": model.get("utility_bonus"),
+            "positions": [
+                {"position": pos, "runs": v.get("runs"), "value": v.get("value"),
+                 "floor": v.get("floor"), "covers": bool(v.get("covers"))}
+                for pos, v in (bat.get("positions") or {}).items()
+            ],
             "modifiers": {"modifiers": _named(bat.get("modifiers")), "total": bat.get("modifier_total")},
         }
     pitching = None

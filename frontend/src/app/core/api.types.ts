@@ -143,6 +143,16 @@ export interface RankedPlayer {
   /** v2 engine only: the fitted model's wRC+ (hitters) and ERA (pitchers) */
   wrcPlus: number | null;
   era: number | null;
+  /** v2 engine only: where he's valued (best position, or SP / RP), his value
+   *  in WAR before demand, and its parts - each side's null where he isn't
+   *  judged on it */
+  role: string | null;
+  war: number | null;
+  battingWar: number | null;
+  fieldingWar: number | null;
+  runningWar: number | null;
+  starterWar: number | null;
+  relieverWar: number | null;
   /** the Compare view only (null otherwise): overall score and rank under
    *  each engine — ranks are each engine's model order; the units differ
    *  (legacy points vs v2's 50 + 10 × WAR), so the score diff is rough */
@@ -187,6 +197,17 @@ export interface LedgerLine {
   stat: string | null;
   /** the context behind it ("vL 92 / vR 112, +3.5 runs") */
   note: string | null;
+}
+
+/** v2: a hitter's fielding at one position, as the value stage reads it -
+ *  runs there, the value with its adjustment, and the floor factor (0-1)
+ *  where one of its floors cuts in. */
+export interface PositionFielding {
+  position: string;
+  runs: number | null;
+  value: number | null;
+  floor: number | null;
+  covers: boolean;
 }
 
 /** A named model value — modifier names vary by ranking method. */
@@ -234,6 +255,8 @@ export interface ScoreBreakdown {
     bestPositionScore: number | null;
     utilityBonus: number | null;
     modifiers: ModifierBreakdown;
+    /** v2: his fielding at every position */
+    positions: PositionFielding[];
   } | null;
   pitching: {
     starter: PitchingRoleBreakdown;

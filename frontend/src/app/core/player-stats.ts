@@ -5,6 +5,7 @@
  */
 import {
   LedgerLine,
+  PositionFielding,
   PlayerSplits,
   PlayerType,
   RankedPlayer,
@@ -328,10 +329,6 @@ export function otherComponents(b: ScoreBreakdown | null): [string, unknown][] {
 const REPLACEMENT_POINTS = 50;
 const POINTS_PER_WAR = 10;
 
-export function pointsToWar(points: number): number {
-  return (points - REPLACEMENT_POINTS) / POINTS_PER_WAR;
-}
-
 /** One ledger line in WAR, placed on the waterfall: its bar runs from the
  *  running total before it to the one after, as a % of the range the totals
  *  span (zero included). */
@@ -362,7 +359,8 @@ export interface ValueBuild {
   score: number;
   /** lines with no effect (modifiers at x1.00) aren't drawn */
   hidden: number;
-  /** the side he isn't judged on - listed, not counted */
+  /** the side he isn't judged on - listed, not counted - when he'd be worth
+   *  something there (a two-way candidate); null at or below replacement */
   other: { title: string; war: number; steps: ValueStep[] } | null;
 }
 
@@ -449,10 +447,11 @@ export function valueBuild(b: ScoreBreakdown | null): ValueBuild | null {
     }
   }
   const rest = b.ledger.filter((l) => !l.counted);
-  const other = rest.length
+  const otherWar = rest.reduce((sum, l) => sum + l.delta, 0) / POINTS_PER_WAR;
+  const other = otherWar > 0
     ? {
         title: rest[0].side === 'pitching' ? 'As a pitcher' : 'As a hitter',
-        war: rest.reduce((sum, l) => sum + l.delta, 0) / POINTS_PER_WAR,
+        war: otherWar,
         steps: waterfall(rest)
           .filter(({ line }) => shown(line))
           .map(({ step }) => step),
@@ -494,6 +493,15 @@ export const FIELDING_HEADS = {
   field: ['Range', 'Arm', 'Error', 'DP'],
   catcher: ['Frame', 'Block', 'Arm'],
 };
+
+/** v2's fielding at every position, best value first, so the card shows
+ *  why his position won: runs there against its average fielder, and the
+ *  value once the position's adjustment is in. */
+export function positionFielding(b: ScoreBreakdown | null): PositionFielding[] {
+  return [...(b?.batting?.positions ?? [])]
+    .filter((p) => p.value != null)
+    .sort((x, y) => (y.value ?? 0) - (x.value ?? 0));
+}
 
 export function fieldingMatrix(p: RankedPlayer, position: string | null): FieldingGroup[] {
   const f = p.ratings?.fielding;

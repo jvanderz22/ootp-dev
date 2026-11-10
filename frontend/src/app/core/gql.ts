@@ -37,6 +37,13 @@ const PLAYER_FIELDS = gql`
     preDemandRank
     wrcPlus
     era
+    role
+    war
+    battingWar
+    fieldingWar
+    runningWar
+    starterWar
+    relieverWar
     legacyScore
     legacyRank
     v2Score
@@ -522,6 +529,13 @@ export const PLAYER_BREAKDOWN = gql`
         positionModel
         bestPositionScore
         utilityBonus
+        positions {
+          position
+          runs
+          value
+          floor
+          covers
+        }
         modifiers {
           modifiers {
             name

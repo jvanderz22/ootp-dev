@@ -236,6 +236,9 @@ class FittedFielding(NamedTuple):
     runs: float             # fielding runs per season at the best position
     utility_war: float = 0.0    # roster flexibility (fielding_talent.utility)
     covers: tuple = ()          # the other positions credited for it
+    # {position: (runs there after its floors, floor factor)}: the card's
+    # position table, so you can see why the best one won
+    positions: dict = None
 
 
 class FieldingTalent:
@@ -256,10 +259,14 @@ class FieldingTalent:
         ratings = {r: np.asarray(v, float) for r, v in self.ratings.fielding(players).items()}
         _, best, runs = self.model.best(ratings)
         covers = self.model.covers(ratings)
+        by_position = self.model.runs(ratings)
+        floors = {pos: fielding_talent.floor_factor(pos, ratings) for pos in fielding_talent.POSITIONS}
         out = []
         for j, player in enumerate(players):
             war, credited = fielding_talent.utility({p for p, c in covers.items() if c[j]}, best[j])
-            out.append(FittedFielding(best[j], float(runs[j]), war, tuple(credited)))
+            positions = {pos: (float(by_position[pos][j]), float(floors[pos][j]))
+                         for pos in fielding_talent.POSITIONS}
+            out.append(FittedFielding(best[j], float(runs[j]), war, tuple(credited), positions))
             write_runtime_component(player.id, "batting.talent.fielding_runs", float(runs[j]))
         return out
 

@@ -112,33 +112,34 @@ class Value(BatchStage):
         parts = {**self.model.hitting(batting_runs, fielding, running), "utility": reads["utility"]}
         platoon = self._platoon(sides, batting and batting.bats, parts, pa)
         ledger = state.ledger
-        how = [f"vL {sides['vL']:.0f} / vR {sides['vR']:.0f}" if sides else None,
-               f"{batting_runs:+.1f} runs",
-               "on his splits" if batting and batting.platoon else None,
+        # batting over replacement: the allowance (a full-time regular's
+        # credit, the same for every hitter) rides on the batting line
+        how = [f"{batting_runs:+.1f} runs vs avg",
+               f"vL {sides['vL']:.0f} / vR {sides['vR']:.0f}" if sides else None,
+               "his splits" if batting and batting.platoon else None,
                "BABIP from Contact" if batting and batting.babip_implied else None]
-        ledger.add(MODEL, "batting", SCALE * parts["batting"], BATTING,
-                   f"{wrc:.0f} wRC+", ", ".join(h for h in how if h))
+        ledger.add(MODEL, "batting", SCALE * (parts["batting"] + parts["allowance"]), BATTING,
+                   f"{wrc:.0f} wRC+", " · ".join(h for h in how if h))
         ledger.add(MODEL, "fielding", SCALE * parts["fielding"], BATTING,
-                   f"{position} {runs:+.0f} runs", f"{fielding:+.0f} with the {position} adjustment")
+                   f"{position} {runs:+.0f} runs", f"{fielding:+.0f} with position")
         if field.covers:
             ledger.add(MODEL, "utility", SCALE * parts["utility"], BATTING, f"covers {', '.join(field.covers)}")
         ledger.add(MODEL, "baserunning", SCALE * parts["running"], BATTING, f"{running:+.1f} runs")
-        ledger.add(MODEL, "playing time", SCALE * parts["allowance"], BATTING,
-                   f"{pa:.0f} PA", "a full-time regular's credit over replacement")
         if platoon and not any(platoon[1].values()):
             # below replacement on both sides: no starts to credit, so he's
             # valued at his full-time WAR, which keeps the bottom ordered
-            ledger.add(MODEL, "platoon", 0.0, BATTING, "no starts", "below replacement on both sides")
+            ledger.add(MODEL, "platoon", 0.0, BATTING, "no starts", "below replacement both sides")
         elif platoon:
             war_lost, starts = platoon
             ledger.add(MODEL, "platoon", SCALE * war_lost, BATTING,
-                       f"{starts['vR']:.0%} vs RHP, {starts['vL']:.0%} vs LHP", "his share of starts")
+                       f"{starts['vR']:.0%} vs RHP · {starts['vL']:.0%} vs LHP", "share of starts")
             parts["platoon"] = war_lost
         side.components = {
             "batting": SCALE * (parts["batting"] + parts["allowance"] + parts.get("platoon", 0.0)),
             "fielding": SCALE * (parts["fielding"] + parts["utility"]),
             "running": SCALE * parts["running"],
         }
+        self._positions(state.player, field)
         side.best_position = side.role = field.best_position
         state.wrc_plus = wrc
         war = sum(parts.values())
@@ -147,6 +148,22 @@ class Value(BatchStage):
             developing.append(development.switch_hitter(war))
         self._modifiers(state, side, BATTING, war)
         return self._modified(state, side, war, BATTING, developing)
+
+    def _positions(self, player, field):
+        """Record his fielding at every position for the card, calibrated the
+        way his best one is valued: runs there, the value with its adjustment
+        (the ledger's "with position"), the floor factor where a floor bites,
+        and whether utility credits it."""
+        adjustment = self.fielding_model.position_adjustment
+        for pos, (raw, floor) in (field.positions or {}).items():
+            runs = float(self.model.fielding_runs(raw, pos))
+            path = f"batting.positions.{pos}"
+            write_runtime_component(player.id, f"{path}.runs", runs)
+            write_runtime_component(player.id, f"{path}.value", self.model.fielding_value(runs, adjustment[pos]))
+            if floor < 1:
+                write_runtime_component(player.id, f"{path}.floor", floor)
+            if pos in field.covers:
+                write_runtime_component(player.id, f"{path}.covers", 1.0)
 
     def _platoon(self, sides, bats, parts, pa):
         """(WAR the platoon takes off, {side: share of starts}) for a hitter
@@ -181,7 +198,7 @@ class Value(BatchStage):
             return self._unrated(state, side, PITCHING, ("starter", "reliever"), "pitching")
         sp_era, rp_era, rp_index, sp_index = fitted.sp_era, fitted.rp_era, fitted.rp_index, fitted.sp_index
         stuff = {"sp": f"Stuff {fitted.sp_stuff:.0f} as SP", "rp": f"Stuff {fitted.rp_stuff:.0f} as RP"}
-        splits = ", on his splits" if fitted.platoon else ""
+        splits = " · his splits" if fitted.platoon else ""
         split = {"sp": fitted.sp_split, "rp": fitted.rp_split}
         estimated = fitted.split_estimated
         stamina, pitches = self.ratings.stamina(player), self.ratings.pitch_count(player)
@@ -203,7 +220,7 @@ class Value(BatchStage):
         sp_normal = self.model.starting(era["sp"], innings) if innings else None
         normal = self.model.relieving(era["rp"], rp_index)
         relieving = self.model.relieving(era["rp matched"], rp_matched)
-        how = "estimated from slot and pitches" if estimated else "on his splits"
+        how = " · estimated" if estimated else ""
         sp_war = sum(starting.values()) if starting else None
         rp_war = sum(relieving.values())
         side.components = {"starter": SCALE * sp_war if starting else 0.0, "reliever": SCALE * rp_war}
@@ -215,7 +232,7 @@ class Value(BatchStage):
             if tilt["sp"] > 0:
                 gap = (era["sp matched"] - era["sp"]) / tilt["sp"]
                 ledger.add(MODEL, "matchups", SCALE * (starting["runs"] - sp_normal["runs"]), PITCHING,
-                           f"+{tilt['sp']:.0%} on his weak side", f"{gap:.2f} ERA split, {how}")
+                           f"+{tilt['sp']:.0%} weak side", f"{gap:.2f} ERA split{how}")
             ledger.add(MODEL, "innings", SCALE * starting["innings"], PITCHING,
                        f"{innings:.0f} IP", f"stamina {stamina}")
             war = sp_war
@@ -228,9 +245,9 @@ class Value(BatchStage):
             if tilt["rp"] > 0:
                 gap = (era["rp"] - era["rp matched"]) / tilt["rp"]
                 ledger.add(MODEL, "matchups", SCALE * (rp_war - normal["runs"] - normal["leverage"] - normal["innings"]),
-                           PITCHING, f"+{tilt['rp']:.0%} on his strong side", f"{gap:.2f} ERA split, {how}")
+                           PITCHING, f"+{tilt['rp']:.0%} strong side", f"{gap:.2f} ERA split{how}")
             ledger.add(MODEL, "innings", SCALE * relieving["innings"], PITCHING,
-                       f"{self.model.workloads['reliever_ip']:.0f} IP", "a reliever's workload")
+                       f"{self.model.workloads['reliever_ip']:.0f} IP", "relief workload")
             war = rp_war
         write_runtime_component(player.id, "pitching.value.starter_war", sp_war if starting else 0.0)
         write_runtime_component(player.id, "pitching.value.reliever_war", rp_war)
@@ -245,7 +262,7 @@ class Value(BatchStage):
     @staticmethod
     def _unrated(state, side, side_name, components, what) -> float:
         """A side no fitted model can read: valued at replacement."""
-        state.ledger.add(MODEL, f"no {what} ratings", 0.0, side_name, note="none the model can read: valued at replacement")
+        state.ledger.add(MODEL, f"no {what} ratings", 0.0, side_name, note="valued at replacement")
         side.components = dict.fromkeys(components, 0.0)
         side.score = 0.0
         write_runtime_component(state.player.id, f"{side_name}.value.war", 0.0)

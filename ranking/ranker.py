@@ -113,6 +113,7 @@ class Ranker:
             ledger=state.ledger,
             wrc_plus=None if state.wrc_plus is None else round(state.wrc_plus),
             era=None if state.era is None else round(state.era, 2),
+            role=state.ledger.role,
         )
 
     def _finish(self, results) -> list:

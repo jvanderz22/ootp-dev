@@ -15,7 +15,8 @@ import { PopoverModule } from 'primeng/popover';
 import { DrawerModule } from 'primeng/drawer';
 
 import { NumericFilter } from '../../core/api.types';
-import { FILTERABLE_FIELDS, FilterableField } from '../../core/ranked-columns';
+import { EngineService } from '../../core/engine';
+import { FILTERABLE_FIELDS, FILTER_PICKER_FIELDS, FilterableField } from '../../core/ranked-columns';
 import { Viewport } from '../../core/viewport';
 import { HandednessFilterComponent } from './handedness-filter';
 import { TeamFilterComponent } from './team-filter';
@@ -314,9 +315,12 @@ export class NumericFiltersComponent {
   /** Phones: the panel's bottom sheet is open. */
   protected readonly sheetOpen = signal(false);
 
+  private readonly engine = inject(EngineService).engine;
+
+  /** The picker offers the engine's own columns (v2's in WAR, legacy's in points). */
   protected readonly groups = computed(() => {
     const m = new Map<string, { field: string; name: string }[]>();
-    for (const f of FILTERABLE_FIELDS) {
+    for (const f of FILTER_PICKER_FIELDS[this.engine()]) {
       const name = f.label.split(' · ').slice(1).join(' · ') || f.label;
       const bucket = m.get(f.group) ?? m.set(f.group, []).get(f.group)!;
       bucket.push({ field: f.field, name });

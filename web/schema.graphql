@@ -81,6 +81,17 @@ type RankedPlayer {
   "v2 engine only: the fitted talent model's wRC+ (hitters) and ERA (pitchers, in the role they're judged in), on the ranking's ratings - potential for prospects and draft classes"
   wrcPlus: Float
   era: Float
+  "v2 engine only: where he's valued - his best position, or SP / RP"
+  role: String
+  "v2 engine only: his value in WAR before the demand step"
+  war: Float
+  "v2 engine only, a hitter's parts of it: batting (with the playing-time credit), fielding (with position and utility), baserunning"
+  battingWar: Float
+  fieldingWar: Float
+  runningWar: Float
+  "v2 engine only, a pitcher's WAR as a starter and as a reliever (the better one counts)"
+  starterWar: Float
+  relieverWar: Float
   """
   The Compare view (only when the query passes `compare: true`): his overall
   score and rank under each engine - ranks are each engine's model order, and
@@ -148,6 +159,23 @@ type BattingBreakdown {
   bestPositionScore: Float
   utilityBonus: Float
   modifiers: ModifierBreakdown!
+  "v2: his fielding at every position, valued the way his best one is"
+  positions: [PositionFielding!]!
+}
+
+"""
+v2: a hitter's fielding at one position, calibrated as the value stage reads
+it: runs against the average fielder there, and the value with the position's
+adjustment (what picks his best position). The floor factor (0-1) is present
+where one of the position's rating floors cuts it.
+"""
+type PositionFielding {
+  position: String!
+  runs: Float
+  value: Float
+  floor: Float
+  "whether utility credits him for covering it"
+  covers: Boolean!
 }
 
 "One pitching role's model score and the multipliers applied to it."

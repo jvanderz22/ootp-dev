@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { DecimalPipe, NgTemplateOutlet, PercentPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TagModule } from 'primeng/tag';
 import { PanelModule } from 'primeng/panel';
@@ -28,7 +28,7 @@ import {
   pitchingComponents,
   pitchingMiscRows,
   pitchingSkillRows,
-  pointsToWar,
+  positionFielding,
   showBatting,
   showPitching,
   signedWar,
@@ -44,7 +44,7 @@ import {
  *  ratings. Legacy keeps its model-score column. */
 @Component({
   selector: 'app-player-detail-card',
-  imports: [DecimalPipe, NgTemplateOutlet, FormsModule, TagModule, PanelModule],
+  imports: [DecimalPipe, PercentPipe, NgTemplateOutlet, FormsModule, TagModule, PanelModule],
   templateUrl: './player-detail-card.html',
   styleUrl: './player-detail-card.scss',
 })
@@ -169,17 +169,16 @@ export class PlayerDetailCardComponent {
     const pitching = b?.ledger.length
       ? b.ledger.some((l) => l.counted && l.side === 'pitching')
       : p.type === 'Pitcher';
-    const value = p.preDemandScore ?? p.modelScore;
-    const role = b?.role ?? (pitching ? p.position : (p.bestPosition ?? p.position));
+    const role = b?.role ?? p.role ?? (pitching ? p.position : (p.bestPosition ?? p.position));
     const alt = b?.roleWar.find((r) => r.name !== role && r.value != null);
     const roleNote = pitching
       ? [ledgerStat(b, 'innings'), alt ? `${alt.name} ${alt.value!.toFixed(2)} WAR` : null]
-      : [ledgerStat(b, 'utility') ?? ledgerStat(b, 'playing time')];
+      : [ledgerStat(b, 'utility')];
     const talentNote = b?.ledger.find(
       (l) => l.counted && l.label === (pitching ? 'pitching' : 'batting'),
     )?.note;
     return {
-      war: value == null ? null : pointsToWar(value),
+      war: p.war,
       talentNote: talentNote ?? null,
       score: p.modelScore,
       talent: pitching
@@ -195,6 +194,9 @@ export class PlayerDetailCardComponent {
     fieldingMatrix(this.player(), this.verdict().role ?? null),
   );
   protected readonly fieldingHeads = FIELDING_HEADS;
+
+  /** v2: his fielding at every position, best first. */
+  protected readonly positions = computed(() => positionFielding(this.breakdown()));
 
   /** "Org · Team · Level" for live-league rows; empty in the draft-class view. */
   protected readonly orgLine = computed(() => {
@@ -224,6 +226,13 @@ export class PlayerDetailCardComponent {
   }
 
   protected readonly signedWar = signedWar;
+
+  /** "+5" / "−4" / "0": whole runs, signed with a true minus. */
+  protected signedRuns(v: number | null): string {
+    if (v == null) return '—';
+    const r = Math.round(v);
+    return r > 0 ? `+${r}` : r < 0 ? `−${-r}` : '0';
+  }
   protected readonly showBatting = showBatting;
   protected readonly showPitching = showPitching;
   protected readonly typeSeverity = typeSeverity;

@@ -43,7 +43,7 @@ def test_migration_3_keeps_existing_runs_as_legacy(data_dir):
     conn.commit()
     conn.close()
 
-    assert db.query_one("PRAGMA user_version")[0] == len(db._MIGRATIONS) == 4
+    assert db.query_one("PRAGMA user_version")[0] == len(db._MIGRATIONS) == 5
     info = results_store.run_info("class", "c", "draft_class", "legacy")
     assert info["source_version"] == 3 and info["manifest"] is None
     assert results_store.run_info("class", "c", "draft_class", "v2") is None
@@ -165,6 +165,37 @@ def test_breakdown_carries_the_ledger(client):
     b = _gql(client, _BREAKDOWN, source={**source, "engine": "legacy"}, id=top["id"])["playerBreakdown"]
     assert b["engine"] == "legacy" and b["ledger"] == [] and b["unit"] is None
     assert b["role"] is None and b["roleWar"] == []
+
+
+_SIDES = f"""{{ rankedPlayers(name: "{CLASS}", allRows: true)
+  {{ rows {{ type role preDemandScore positionPlayerScore battingScoreComponent fieldingScoreComponent
+    runningScoreComponent pitcherScore starterComponent relieverComponent
+    war battingWar fieldingWar runningWar starterWar relieverWar }} }} }}"""
+_BATTING_SIDE = ("positionPlayerScore", "battingScoreComponent", "fieldingScoreComponent",
+                 "runningScoreComponent", "battingWar", "fieldingWar", "runningWar")
+_PITCHING_SIDE = ("pitcherScore", "starterComponent", "relieverComponent", "starterWar", "relieverWar")
+
+
+@pytest.mark.parametrize("engine", ranking_engine.ENGINES)
+def test_rows_carry_only_the_side_their_type_is_judged_on(client, engine):
+    rows = _gql(client, _SIDES, engine=engine)["rankedPlayers"]["rows"]
+    assert {r["type"] for r in rows} >= {"Hitter", "Pitcher"}
+    for r in rows:
+        if r["type"] == "Hitter":
+            assert all(r[f] is None for f in _PITCHING_SIDE), r
+        if r["type"] == "Pitcher":
+            assert all(r[f] is None for f in _BATTING_SIDE), r
+        if engine == "legacy":
+            assert r["war"] is None and r["role"] is None
+            continue
+        # v2: his value in WAR before demand, its parts, and where he's valued
+        assert r["war"] == pytest.approx((r["preDemandScore"] - 50) / 10, abs=0.01)
+        if r["type"] == "Hitter":
+            assert r["battingWar"] == pytest.approx(r["battingScoreComponent"] / 10, abs=0.01)
+            assert r["role"] not in ("SP", "RP")
+        if r["type"] == "Pitcher":
+            assert r["role"] in ("SP", "RP")
+            assert r["starterWar"] == pytest.approx(r["starterComponent"] / 10, abs=0.01)
 
 
 def test_download_takes_the_engine_as_a_query_param(client):

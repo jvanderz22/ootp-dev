@@ -12,7 +12,7 @@ code and artifacts scoring now (`ranking.manifest.model_version`).
 Each result row carries the scores plus the player's score breakdown, already
 pruned to the side(s) his Hitter / Pitcher / Two-way type is judged on. A v2
 row also has the score and rank before the demand step, the ledger, and the
-modeled wRC+ / ERA.
+modeled wRC+ / ERA and the role he's valued in.
 """
 import json
 from datetime import datetime, timezone
@@ -48,6 +48,7 @@ _RESULT_KEYS = {
     "pre_demand_rank": "pre_demand_rank",
     "wrc_plus": "wrc_plus",
     "era": "era",
+    "role": "role",
 }
 
 # ledger deltas are stored to this many places - plenty for a waterfall, and
@@ -105,6 +106,7 @@ def result_from_scored(s) -> dict:
         "ledger": ledger_json(s.ledger) if getattr(s, "ledger", None) is not None else None,
         "wrc_plus": getattr(s, "wrc_plus", None),
         "era": getattr(s, "era", None),
+        "role": getattr(s, "role", None),
     }
 
 

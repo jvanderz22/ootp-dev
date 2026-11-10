@@ -82,32 +82,33 @@
       <div class="vt">
         <span class="vt-head">Value</span>
         <span class="vt-num"
-          ><b>{{ v.war == null ? '—' : (v.war | number: '1.2-2') }}</b><i>WAR</i></span
+          ><b>{{ v.war == null ? '—' : (v.war | number: '1.2-2') }}</b><i>WAR</i>
+          <small>score {{ v.score | number: '1.2-2' }}</small></span
         >
-        <small>score {{ v.score | number: '1.2-2' }}</small>
       </div>
       <div class="vt">
         <span class="vt-head">{{ v.talent.label === 'ERA' ? 'Pitching' : 'Batting' }}</span>
         <span class="vt-num"
-          ><b>{{ v.talent.value ?? '—' }}</b><i>{{ v.talent.label }}</i></span
+          ><b>{{ v.talent.value ?? '—' }}</b><i>{{ v.talent.label }}</i>
+          @if (v.talentNote) {
+            <small [title]="v.talentNote">{{ v.talentNote }}</small>
+          }</span
         >
-        @if (v.talentNote) {
-          <small>{{ v.talentNote }}</small>
-        }
       </div>
       <div class="vt">
         <span class="vt-head">Valued at</span>
-        <span class="vt-num"><b>{{ v.role ?? '—' }}</b></span>
-        @if (v.roleNote) {
-          <small>{{ v.roleNote }}</small>
-        }
+        <span class="vt-num"
+          ><b>{{ v.role ?? '—' }}</b>
+          @if (v.roleNote) {
+            <small [title]="v.roleNote">{{ v.roleNote }}</small>
+          }</span
+        >
       </div>
       <div class="vt">
-        <span class="vt-head">In-game</span>
+        <span class="vt-head">In-game OVR / POT</span>
         <span class="vt-num"
           ><b>{{ p.inGameOverall ?? '—' }}<span class="vt-sep">/</span>{{ p.inGamePotential ?? '—' }}</b></span
         >
-        <small>OVR / POT</small>
       </div>
     </div>
   }
@@ -193,6 +194,32 @@
               }
             }
           </div>
+          @if (positions().length) {
+            <!-- v2: what each position is worth to him; the adjustment is
+                 what turns runs there into value, and picks his position -->
+            <div class="pos-table">
+              <span class="pt-head">By position</span>
+              <span class="pt-head num">Runs</span>
+              <span class="pt-head num" title="With the position's adjustment">Value</span>
+              @for (f of positions(); track f.position) {
+                <span class="pt-pos" [class.pick]="f.position === verdict().role">
+                  <b>{{ f.position }}</b>
+                  @if (f.position === verdict().role) {
+                    <i class="pt-tag pick">valued</i>
+                  } @else if (f.covers) {
+                    <i class="pt-tag">covers</i>
+                  }
+                  @if (f.floor != null) {
+                    <i class="pt-tag floor" [title]="'A rating floor keeps ' + (f.floor | percent) + ' of his value there'">{{
+                      f.floor === 0 ? 'below floor' : 'floor ×' + (f.floor | number: '1.2-2')
+                    }}</i>
+                  }
+                </span>
+                <span class="num" [class.pick]="f.position === verdict().role">{{ signedRuns(f.runs) }}</span>
+                <span class="num" [class.pick]="f.position === verdict().role">{{ signedRuns(f.value) }}</span>
+              }
+            </div>
+          }
         </section>
       }
 

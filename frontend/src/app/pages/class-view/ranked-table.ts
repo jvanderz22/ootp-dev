@@ -27,11 +27,13 @@ import {
 } from '../../core/api.types';
 import { TradeListStore } from '../../core/trade-list-store';
 import { Viewport } from '../../core/viewport';
+import { EngineService } from '../../core/engine';
 import {
   ColumnDef,
   DEFAULT_SORT,
   FIELDING_POSITIONS,
   FILTERABLE_FIELDS,
+  modelFirst,
   VIEW_OPTIONS,
   groupSpans,
   viewColumns,
@@ -201,9 +203,12 @@ export class RankedTableComponent {
     () => (this.positionSel().length ? 1 : 0) + (this.hideDrafted() ? 1 : 0),
   );
 
-  protected readonly columns = computed<ColumnDef[]>(() =>
-    viewColumns(this.view(), this.context()),
-  );
+  private readonly engine = inject(EngineService).engine;
+
+  protected readonly columns = computed<ColumnDef[]>(() => {
+    const cols = viewColumns(this.view(), this.context(), this.engine());
+    return this.isNarrow() ? modelFirst(cols) : cols;
+  });
   protected readonly headerGroups = computed(() => groupSpans(this.columns()));
 
   /** The leading compare / star cell. Phones compare from the player panel, so
