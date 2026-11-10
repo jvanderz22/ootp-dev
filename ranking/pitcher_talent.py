@@ -44,7 +44,6 @@ from pathlib import Path
 
 import numpy as np
 
-from ranking import bridge
 from ranking.hitter_talent import ARTIFACTS_DIR, HIGH, LOW, outcomes, runs_per_pa
 
 ARTIFACT = "pitcher_talent_v1"
@@ -103,9 +102,6 @@ class PitcherTalent:
         self.platoon_mix = artifact.get("platoon_mix")
         # {"features", "intercept", "coef", ...}: the split predictor
         self.split_fit = artifact.get("split_gap")
-        # runs allowed index -> legacy SP / RP points (ranking/bridge.py);
-        # absent while fitting
-        self.bridges = artifact.get("points_bridges")
 
     @classmethod
     def from_file(cls, path) -> "PitcherTalent":
@@ -174,9 +170,6 @@ class PitcherTalent:
 
     def era_of(self, events: dict):
         return era_from(events, self.weights, self.era_scale)
-
-    def points(self, runs_index, role: str):
-        return bridge.points(runs_index, self.bridges[role])
 
 
 def era_from(events: dict, weights: dict, scale: float):

@@ -11,8 +11,6 @@ parameters each, and the opportunity-driven attempt counts only set one
 multiplier.
 """
 import argparse
-import csv
-import gzip
 import json
 import sys
 from datetime import datetime, timezone
@@ -23,7 +21,6 @@ from scipy.stats import spearmanr
 from sklearn.model_selection import GroupKFold
 
 from context import default_base_dir
-from ranking import bridge
 from ranking.fitting.components import PARAMS, Additive, Rate
 from ranking.fitting.datasets import read_fielders, running_rows, season_snapshots
 from ranking.fitting.hitter_talent import data_hash
@@ -79,47 +76,27 @@ def aggressive_multiplier(stats_dir, snapshots, league_attempts) -> float:
     return float(top.attempts.sum() / top.expected.sum())
 
 
-def legacy_scores(players) -> dict:
-    from attribute_models.running_attribute_model import RunningAttributeModel
-
-    return dict(zip((int(p.id) for p in players), RunningAttributeModel().predict_many(players)))
-
-
-def _players(path, ids=None):
-    from models.game_players import GamePlayer
-
-    opener = gzip.open if str(path).endswith(".gz") else open
-    with opener(path, "rt", newline="") as f:
-        rows = [r for r in csv.DictReader(f) if r["POS"] not in ("SP", "RP", "CL")]
-    wanted = None if ids is None else {str(i) for i in ids}
-    return [GamePlayer(r) for r in rows if wanted is None or r["ID"] in wanted]
-
-
 def model_from(tables, base) -> RunningTalent:
     attempts = np.minimum(np.asarray(tables["league_attempts"]) * base["aggressive_multiplier"], 1.0)
     return RunningTalent({**base, **tables, "steal_attempts": np.round(attempts, 5).tolist()})
 
 
-def report(rows, base, snapshots) -> dict:
+def report(rows, base) -> dict:
     """Cross-validated, inside each level: the spearman of predicted with actual
-    baserunning runs per PA, next to the legacy running model's. The actual
-    runs reflect each manager's sends, so this measures the talent half."""
+    baserunning runs per PA. The actual runs reflect each manager's sends, so
+    this measures the talent half."""
     oof = np.zeros(len(rows))
     for train, test in GroupKFold(FOLDS).split(rows, groups=rows.player_id):
         model = model_from(fit_tables(rows.iloc[train]), base)
         r = rows.iloc[test]
         oof[test] = model.runs({k: r[k].to_numpy() for k in ("speed", "steal", "running_ability")})
-    legacy = {}
-    for path in snapshots.values():
-        legacy.update(legacy_scores(_players(path, rows.player_id.unique())))
-    rows = rows.assign(predicted=oof, actual=rows.baserunning / rows.pa, legacy=rows.player_id.map(legacy))
+    rows = rows.assign(predicted=oof, actual=rows.baserunning / rows.pa)
     out = {}
     for level, group in rows[rows.pa >= REPORT_MIN_PA].groupby("level_id"):
         if len(group) >= 30:
             out[int(level)] = {
                 "rows": len(group),
                 "fitted": round(float(spearmanr(group.predicted, group.actual).correlation), 3),
-                "legacy": round(float(spearmanr(group.legacy, group.actual).correlation), 3),
             }
     return out
 
@@ -150,10 +127,10 @@ def main(argv=None):
     }
     print(f"{len(rows)} rows; aggressive teams send good base stealers {base['aggressive_multiplier']}x"
           f" the league rate; {base['times_on_first']} times on first per {SEASON_PA} PA")
-    cv = report(rows, base, snapshots)
-    print("\ncross-validated spearman with baserunning runs per PA (200+ PA):\n  level  rows  fitted  legacy")
+    cv = report(rows, base)
+    print("\ncross-validated spearman with baserunning runs per PA (200+ PA):\n  level  rows  fitted")
     for level, r in cv.items():
-        print(f"  {level:>5} {r['rows']:>5}   {r['fitted']:.3f}   {r['legacy']:.3f}")
+        print(f"  {level:>5} {r['rows']:>5}   {r['fitted']:.3f}")
 
     model = model_from(tables, base)
 
@@ -170,13 +147,6 @@ def main(argv=None):
     print("  steal success by Stealing:", {v: round(success[v - 20], 2) for v in (30, 40, 50, 60, 70, 80)})
 
     artifact = {**base, **tables, "steal_attempts": model.steal_attempts}
-    players = _players(snapshots[max(snapshots)])
-    ratings = {k: np.array([getattr(p, k) for p in players]) for k in ("speed", "steal", "running_ability")}
-    legacy = list(legacy_scores(players).values())
-    artifact["points_bridge"] = {
-        "method": f"percentiles of {len(players)} snapshot hitters",
-        **bridge.fit(model.runs(ratings), legacy),
-    }
     artifact["meta"] = {
         "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "league": args.league,

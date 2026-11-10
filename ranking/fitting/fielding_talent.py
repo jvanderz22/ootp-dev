@@ -2,7 +2,7 @@
 
     python -m ranking.fitting.fielding_talent --data-dir fly_data
 
-Three parts (decided 2026-11-09; the research is in plans/xgboost-phaseout-plan.md,
+Two parts (decided 2026-11-09; the research is in plans/xgboost-phaseout-plan.md,
 step 2):
 
 - **The tables.** For each position, runs per season against its average
@@ -22,8 +22,6 @@ step 2):
   StatsPlus's. StatsPlus's (from its WAR: an allowance per PA at each position
   against the average of all nine, DH included) put SS only 2 runs above 2B,
   so a true SS came out worth more at 2B.
-- **The points bridge** from best-position value to legacy's best-position
-  grid score, for the legacy scoring shell v2 still runs inside.
 """
 import argparse
 import gzip
@@ -38,9 +36,8 @@ from scipy.optimize import lsq_linear, minimize
 from sklearn.model_selection import GroupKFold
 
 from context import default_base_dir
-from ranking import bridge
 from ranking.fielding_talent import (
-    ARTIFACT, JUDGED, POSITIONS, SEASON_INNINGS, STEPS, FieldingTalent, floor_factor, grid_scores, ratings_of,
+    ARTIFACT, JUDGED, POSITIONS, SEASON_INNINGS, STEPS, FieldingTalent, floor_factor, ratings_of,
 )
 from ranking.fitting.datasets import MIN_AGE, _join, _seasons, read_fielders, season_snapshots
 from ranking.fitting.hitter_talent import data_hash
@@ -242,16 +239,6 @@ def statsplus_adjustments(stats_dir, years) -> tuple:
     return {n: round(float((a - mean) / war["per_defense_run"]), 2) for n, a in allowance.items()}, war["per_defense_run"]
 
 
-def points_bridge(model: FieldingTalent, snapshot_path) -> dict:
-    """Best-position value -> legacy best-position fielding points (before the
-    utility bonus), matched by percentile over every hitter in the snapshot."""
-    players = _players(snapshot_path)
-    value, _, _ = model.best(ratings_of(players))
-    grids = grid_scores(players)
-    legacy = np.column_stack([grids[pos] for pos in POSITIONS]).max(axis=1)
-    return {"method": f"percentiles of {len(players)} snapshot hitters", **bridge.fit(value, legacy)}
-
-
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--league", default="yfmlb")
@@ -290,8 +277,6 @@ def main(argv=None):
     artifact["position_adjustment"] = adjustment
     # a first baseman is no worse than a DH, who fields nowhere
     artifact["position_adjustment"]["1B"] = max(adjustment["1B"], war_adjustment[DH])
-    model = FieldingTalent(artifact)
-    artifact["points_bridge"] = points_bridge(model, snapshot)
 
     adj = {**artifact["position_adjustment"], DH: war_adjustment[DH]}
     order = [(a, b, adj[a] > adj[b]) for a, b in POSITION_ORDER]

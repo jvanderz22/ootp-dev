@@ -32,8 +32,6 @@ from pathlib import Path
 
 import numpy as np
 
-from ranking import bridge
-
 ARTIFACTS_DIR = Path(__file__).resolve().parent / "artifacts"
 ARTIFACT = "hitter_talent_v1"
 
@@ -77,9 +75,6 @@ class HitterTalent:
         self.platoon_mix = artifact.get("platoon_mix")
         # {hand: {rating: {"weight": on vL, "gap": [vL - vR at 50, per point]}}}
         self.expected = artifact.get("expected_splits")
-        # wRC+ -> the legacy batting model's points (ranking/bridge.py); absent
-        # while fitting
-        self.bridge = artifact.get("points_bridge")
 
     @classmethod
     def from_file(cls, path) -> "HitterTalent":
@@ -130,9 +125,6 @@ class HitterTalent:
 
     def wrc_of(self, events: dict):
         return 100 * runs_per_pa(events, self.weights) / self.mlb_runs_per_pa
-
-    def points(self, wrc_plus):
-        return bridge.points(wrc_plus, self.bridge)
 
 
 @lru_cache(maxsize=None)

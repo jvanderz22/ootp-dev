@@ -16,13 +16,10 @@ line in the combined rating's level.
 
 The report: cross-validated (folds grouped by player, so a player's seasons
 stay together), the spearman of predicted runs per PA with the actual line
-inside each level, next to the legacy batting model's on the same rows; then
-the rules suite and the hypotheses. A new artifact replaces the committed one
+inside each level; then the rules suite and the hypotheses. A new artifact replaces the committed one
 only if both hold up and eval_rankings.py agrees.
 """
 import argparse
-import csv
-import gzip
 import hashlib
 import json
 import sys
@@ -35,10 +32,9 @@ from scipy.stats import spearmanr
 from sklearn.model_selection import GroupKFold
 
 from context import default_base_dir
-from ranking import bridge
 from ranking.fitting import rules
 from ranking.fitting.components import PARAMS, Rate
-from ranking.fitting.datasets import hitter_rows, read_hitters, season_snapshots
+from ranking.fitting.datasets import hitter_rows, season_snapshots
 from ranking.fitting.stats import (
     LEVEL_MLB, batting_pa_by_side, fit_linear_weights, load_batting, mlb_runs_per_pa, runs,
 )
@@ -65,15 +61,6 @@ def fit_tables(rows) -> dict:
     }
 
 
-def points_bridge(model: HitterTalent, snapshot_path) -> dict:
-    """wRC+ -> legacy batting points, matched by percentile over every hitter in
-    the snapshot (see ranking/bridge.py)."""
-    hitters = read_hitters(snapshot_path)
-    wrc = model.wrc_plus({r: hitters[r].to_numpy() for r in RATINGS})
-    legacy = list(legacy_scores(snapshot_path, hitters.player_id).values())
-    return {"method": f"percentiles of {len(hitters)} snapshot hitters", **bridge.fit(wrc, legacy)}
-
-
 def triple_share(bat) -> float:
     mlb = bat[bat.level_id == LEVEL_MLB]
     return float(mlb.triple.sum() / (mlb.double.sum() + mlb.triple.sum()))
@@ -85,30 +72,13 @@ def predict_rows(model: HitterTalent, rows) -> np.ndarray:
     return runs_per_pa(events, model.weights)
 
 
-def legacy_scores(snapshot_path, player_ids) -> dict:
-    """The legacy batting model's current-ratings score per player."""
-    from attribute_models.batting_attribute_model import BattingAttributeModel
-    from models.game_players import GamePlayer
-
-    wanted = {str(i) for i in player_ids}
-    opener = gzip.open if str(snapshot_path).endswith(".gz") else open
-    with opener(snapshot_path, "rt", newline="") as f:
-        players = [GamePlayer(r) for r in csv.DictReader(f) if r["ID"] in wanted]
-    scores = BattingAttributeModel("overall").predict_many(players)
-    return {int(p.id): s for p, s in zip(players, scores)}
-
-
-def report(rows, artifact_base, snapshots) -> dict:
-    """Cross-validated fitted vs legacy, inside each level."""
+def report(rows, artifact_base) -> dict:
+    """Cross-validated, inside each level."""
     oof = np.zeros(len(rows))
     for train, test in GroupKFold(FOLDS).split(rows, groups=rows.player_id):
         model = HitterTalent({**artifact_base, "tables": fit_tables(rows.iloc[train])})
         oof[test] = predict_rows(model, rows.iloc[test])
     rows = rows.assign(predicted=oof, actual=runs(rows, artifact_base["linear_weights"]) / rows.pa)
-    legacy = {}
-    for season, path in snapshots.items():
-        legacy.update(legacy_scores(path, rows.player_id[rows.season == season].unique()))
-    rows = rows.assign(legacy=rows.player_id.map(legacy))
     out = {}
     for level, group in rows[rows.pa >= REPORT_MIN_PA].groupby("level_id"):
         if len(group) < 30:
@@ -116,7 +86,6 @@ def report(rows, artifact_base, snapshots) -> dict:
         out[int(level)] = {
             "rows": len(group),
             "fitted": round(float(spearmanr(group.predicted, group.actual).correlation), 3),
-            "legacy": round(float(spearmanr(group.legacy, group.actual).correlation), 3),
         }
     return out
 
@@ -219,14 +188,13 @@ def main(argv=None):
           f"snapshots {sorted(snapshots)}; linear weights from {stat_years[0]}-{stat_years[-1]}")
     print("linear weights:", artifact_base["linear_weights"])
 
-    cv = report(rows, artifact_base, snapshots)
+    cv = report(rows, artifact_base)
     print(f"\ncross-validated spearman with runs per PA, rows with {REPORT_MIN_PA}+ PA:")
-    print("  level   rows  fitted  legacy")
+    print("  level   rows  fitted")
     for level, r in cv.items():
-        print(f"  {level:>5} {r['rows']:>6}  {r['fitted']:.3f}   {r['legacy']:.3f}")
+        print(f"  {level:>5} {r['rows']:>6}  {r['fitted']:.3f}")
 
     artifact = {**artifact_base, "tables": fit_tables(rows)}
-    artifact["points_bridge"] = points_bridge(HitterTalent(artifact), snapshots[latest])
     model = HitterTalent(artifact)
 
     def wrc(**ratings):

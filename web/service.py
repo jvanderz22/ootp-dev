@@ -1037,7 +1037,7 @@ def league_org_rankings(league_id: str) -> list:
     allowed = _allowed_org_ids(lg, ctx)
     if allowed is not None:
         rows = [r for r in rows if str(r.get("org_id") or "") in allowed]
-    return org_rankings.summarize_orgs(rows)
+    return org_rankings.summarize_orgs(rows, engine=ranking_engine.current())
 
 
 def list_league_game_leagues(league_id: str) -> list:

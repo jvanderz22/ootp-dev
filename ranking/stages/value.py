@@ -1,10 +1,13 @@
-"""The value stage (phase 5b): each side's talent -> WAR at a full-time role
-(ranking/value.py), the profile's modifiers, and the two sides combined.
+"""The value stage (phase 5b): each side's talent (ranking/stages/talent.py) ->
+WAR at a full-time role (ranking/value.py), the profile's modifiers, and the
+two sides combined. The ledger is in display points, 50 + 10 x WAR, and its
+counted lines sum to the value.
 
-It runs after LegacyModel and LegacyModifiers, which still compute what the
-legacy modifiers need (their factors are weighted by the legacy score), and
-replaces their points with WAR: the ledger is rewritten in display points,
-50 + 10 x WAR, and its counted lines sum to the value.
+The profile's modifiers are the legacy ones, minus those v2 replaces (the
+platoons replace the batter handedness modifier, and the development factors
+the makeup and injury modifiers wherever potential ratings are read). The two
+that weight themselves by the side's score read its WAR before them
+(ranking/modifiers.py).
 
 A hitter is platooned the way you use your roster (2026-11-08): against each
 pitcher hand he starts in proportion to his WAR rate on that side next to an
@@ -27,6 +30,8 @@ import numpy as np
 
 from ranking import development, fielding_talent, hitter_talent, pitcher_talent, value
 from ranking.ledger import BATTING, DEVELOPMENT, MODEL, MODIFIERS, PITCHING, TWO_WAY, Ledger
+from ranking.modifiers import in_war
+from ranking.profiles import modifier_name
 from ranking.ratings import RatingsView
 from ranking.stages.base import BatchStage
 from scoring.runtime_components import write_runtime_component
@@ -47,6 +52,11 @@ class Value(BatchStage):
         self.fielding_model = fielding_talent.load()
         self.pitching_model = pitcher_talent.load()
         self.develops = profile.ratings == "potential"
+        drop = {*value.PLATOON_REPLACES, *(development.REPLACES if self.develops else ())}
+        self.modifiers = {
+            side: [in_war(m, side) for m in profile.shared_modifiers + own if modifier_name(m) not in drop]
+            for side, own in ((BATTING, profile.batting_modifiers), (PITCHING, profile.pitching_modifiers))
+        }
 
     @property
     def artifacts(self) -> dict:
@@ -132,6 +142,7 @@ class Value(BatchStage):
         developing = self._development(state, war)
         if self.develops and batting and batting.bats == "S":
             developing.append(development.switch_hitter(war))
+        self._modifiers(state, side, BATTING, war)
         return self._modified(state, side, war, BATTING, developing)
 
     def _platoon(self, sides, bats, parts, pa):
@@ -220,6 +231,7 @@ class Value(BatchStage):
         control = self.ratings.control(player)
         floor = value.control_floor(control)
         floors = [(f"Control floor (Control {control}, x{floor:.2f})", floor)] if floor < 1 else []
+        self._modifiers(state, side, PITCHING, war)
         return self._modified(state, side, war, PITCHING, self._development(state, war), floors)
 
     # -- both ------------------------------------------------------------------
@@ -232,6 +244,18 @@ class Value(BatchStage):
         side.score = 0.0
         write_runtime_component(state.player.id, f"{side_name}.value.war", 0.0)
         return 0.0
+
+    def _modifiers(self, state, side, side_name, war):
+        """The profile's modifiers for the side, fed its WAR before them, into
+        `side.modifiers` as (name, factor); recorded for the card."""
+        player, product = state.player, 1.0
+        for modifier in self.modifiers[side_name]:
+            factor = modifier.calculate_player_modifier(player, war)
+            name = modifier_name(modifier)
+            write_runtime_component(player.id, f"{side_name}.modifiers.{name}", factor)
+            side.modifiers.append((name, factor))
+            product *= factor
+        write_runtime_component(player.id, f"{side_name}.modifier_total", product)
 
     def _development(self, state, war) -> list:
         return development.factors(state.player, war) if self.develops else []

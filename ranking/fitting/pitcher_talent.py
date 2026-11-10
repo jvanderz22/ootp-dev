@@ -43,9 +43,8 @@ average.
 
 The report: cross-validated (folds grouped by player), the spearman of the
 predicted runs allowed with the actual line inside each level and role - both
-runs from the line's own events, and runs actually charged - next to the
-legacy score for that role on the same rows; then the rules suite and the
-hypotheses.
+runs from the line's own events, and runs actually charged; then the rules
+suite and the hypotheses.
 """
 import argparse
 import csv
@@ -62,7 +61,6 @@ from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import GroupKFold, KFold, cross_val_predict
 
 from context import default_base_dir
-from ranking import bridge
 from ranking.fitting.components import PARAMS, Rate
 from ranking.fitting import ootp_export, rules
 from ranking.fitting.datasets import (
@@ -233,53 +231,6 @@ def _players(snapshot_path, player_ids):
         return [GamePlayer(r) for r in csv.DictReader(f) if r["ID"] in wanted]
 
 
-def legacy_scores(players) -> dict:
-    """The legacy current-ratings (starter, reliever) scores per player."""
-    from scoring.pitcher_scorer import PitcherScorer
-    from scoring.runtime_components import runtime_components_scope
-
-    with runtime_components_scope():
-        scores = PitcherScorer("overall").score_many(players)
-    return {int(p.id): (s[1], s[2]) for p, s in zip(players, scores)}
-
-
-def points_bridges(model: PitcherTalent, snapshot_path) -> dict:
-    """Runs allowed index -> legacy points, per role, matched by percentile over
-    every pitcher in the snapshot (see ranking/bridge.py). The legacy side is
-    the role score with the role factor the v2 stage multiplies back in taken
-    out, so v2's role scores are spread as legacy's are."""
-    from ranking.stages.talent import rp_role_factor, sp_role_factor
-    from scoring.pitcher_scorer import RP_OVERALL_MODIFIER
-
-    pitchers = read_pitchers(snapshot_path)
-    players = {int(p.id): p for p in _players(snapshot_path, pitchers.player_id)}
-    legacy = legacy_scores(list(players.values()))
-    ratings = {r: pitchers[r].to_numpy() for r in COMPONENTS.values()}
-    top = pitchers[[f"p{i + 1}" for i in range(SHIFT_PITCHES)]].to_numpy()
-    stuff = model.role_stuff(pitchers.stuff, top, pitchers.listed_sp, "overall")
-    out = {}
-    for role in ROLES:
-        index = model.runs_index({**ratings, "stuff": stuff[role]}, role)
-        talent, target = [], []
-        for pid, value in zip(pitchers.player_id, index):
-            p = players[pid]
-            pitches = len(p.get_ovr_pitches())
-            if role == "sp":
-                factor = sp_role_factor(p.stamina, pitches)
-                score = legacy[pid][0]
-            else:
-                factor = rp_role_factor(p.stamina, pitches) * RP_OVERALL_MODIFIER
-                score = legacy[pid][1]
-            if factor > 0:
-                talent.append(value)
-                target.append(score / factor)
-        out[role] = {
-            "method": f"percentiles of {len(talent)} snapshot pitchers",
-            **bridge.fit(talent, target, higher_is_better=False),
-        }
-    return out
-
-
 SPLIT_ALPHAS = np.logspace(-2, 4, 25)
 
 
@@ -316,19 +267,13 @@ def split_gap(model: PitcherTalent, snapshot_path) -> dict:
     }
 
 
-def report(rows, artifact_base, snapshots) -> dict:
-    """Cross-validated fitted vs legacy, inside each level and role."""
+def report(rows, artifact_base) -> dict:
+    """Cross-validated, inside each level and role."""
     oof = np.zeros(len(rows))
     for train, test in GroupKFold(FOLDS).split(rows, groups=rows.player_id):
         model = PitcherTalent({**artifact_base, **fit_tables(rows.iloc[train])})
         oof[test] = predict_rows(model, rows.iloc[test])
-    legacy = {}
-    for season, path in snapshots.items():
-        legacy.update(legacy_scores(_players(path, rows.player_id[rows.season == season].unique())))
-    role_score = [legacy[p][0] if sp else legacy[p][1] for p, sp in zip(rows.player_id, rows.sp)]
-    rows = rows.assign(
-        predicted=oof, line=line_runs(rows, artifact_base), charged=rows.r / rows.bf, legacy=role_score,
-    )
+    rows = rows.assign(predicted=oof, line=line_runs(rows, artifact_base), charged=rows.r / rows.bf)
     out = {}
     for (level, sp), group in rows[rows.bf >= REPORT_MIN_BF].groupby(["level_id", "sp"]):
         if len(group) < 40:
@@ -341,7 +286,6 @@ def report(rows, artifact_base, snapshots) -> dict:
         out[f"{int(level)} {'SP' if sp else 'RP'}"] = {
             "rows": len(group),
             "fitted": [rho(-group.predicted, "line"), rho(-group.predicted, "charged")],
-            "legacy": [rho(group.legacy, "line"), rho(group.legacy, "charged")],
         }
     return out
 
@@ -397,16 +341,14 @@ def main(argv=None):
     }
     print(f"{len(rows)} rows from seasons {sorted(rows.year.unique())}; snapshots {sorted(snapshots)}")
 
-    cv = report(rows, artifact_base, snapshots)
+    cv = report(rows, artifact_base)
     print(f"\ncross-validated spearman with runs allowed per BF (from the line's events | charged),"
           f" rows with {REPORT_MIN_BF}+ BF:")
-    print("  level role  rows   fitted         legacy")
+    print("  level role  rows   fitted")
     for key, r in cv.items():
-        print(f"  {key:>10} {r['rows']:>5}   {r['fitted'][0]:.3f} | {r['fitted'][1]:.3f}"
-              f"  {r['legacy'][0]:.3f} | {r['legacy'][1]:.3f}")
+        print(f"  {key:>10} {r['rows']:>5}   {r['fitted'][0]:.3f} | {r['fitted'][1]:.3f}")
 
     artifact = {**artifact_base, **fit_tables(rows)}
-    artifact["points_bridges"] = points_bridges(PitcherTalent(artifact), snapshots[latest])
     artifact["split_gap"] = split_gap(PitcherTalent(artifact), snapshots[latest])
     split = artifact["split_gap"]
     print(f"\nsplit predictor ({split['pitchers']} pitchers with splits): cross-validated R2 {split['cv_r2']},"

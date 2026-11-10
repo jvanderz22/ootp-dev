@@ -140,7 +140,7 @@ def leverage_map(p, snapshot_path) -> dict:
     snap = pd.read_csv(snapshot_path, low_memory=False, usecols=["ID", "POS", "Lev"]).rename(columns={"ID": "player_id"})
     pen = snap[(snap.Lev == "MLB") & snap.POS.isin(["RP", "CL"])].player_id
     with runtime_components_scope():
-        scored = PitcherTalent(SimpleNamespace(ratings="overall", rp_multiplier=1.0)).score(_players(snapshot_path, pen))
+        scored = PitcherTalent(SimpleNamespace(ratings="overall")).score(_players(snapshot_path, pen))
     index = np.array([f.rp_index for f in scored if f is not None])
     # the best reliever (lowest index) is the top percentile
     talent = np.quantile(index, 1 - LEVERAGE_KNOTS)
@@ -161,14 +161,12 @@ def _reads(model, snapshot_path, player_ids) -> dict:
     """{player_id: (hitter reads, pitcher reads)} as the current-ratings
     value stage reads them, before calibration."""
     from ranking.profiles import CURRENT
-    from ranking.stages.legacy import LegacyModel
-    from ranking.stages.talent import FieldingTalent, HitterTalent, RunningTalent
+    from ranking.stages.talent import Talent
     from ranking.stages.value import Value
     from ranking.state import PlayerState
 
     players = _players(snapshot_path, player_ids)
-    stage = LegacyModel(CURRENT, batting=HitterTalent(CURRENT), fielding=FieldingTalent(CURRENT),
-                        running=RunningTalent(CURRENT), pitching=PitcherTalent(CURRENT))
+    stage = Talent(CURRENT)
     value_stage = Value(CURRENT, model=model)
     with runtime_components_scope():
         states = [PlayerState(p) for p in players]

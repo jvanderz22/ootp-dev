@@ -1,6 +1,6 @@
 """Unit coverage for web/org_rankings.py - the per-org rollup shared by the
 System Rankings page and print_org_summaries.py."""
-from web.org_rankings import ORG_POINTS_MODEL, summarize_orgs
+from web.org_rankings import ORG_POINTS_MODEL, ORG_WAR_MODEL, org_points, summarize_orgs
 
 
 def _row(org_id, org, rank, model_score, **extra):
@@ -22,6 +22,24 @@ def test_curve_breakpoints_are_frozen():
     assert ORG_POINTS_MODEL.vals == [
         0, 0, 2.2, 6, 9, 11, 14, 19, 32, 45, 61, 81, 92, 100
     ]
+
+
+def test_v2_reads_the_same_curve_in_war():
+    # converted once from points by percentile on the live league (2026-11-09)
+    assert ORG_WAR_MODEL.ranks == [0, 3.9, 4.3, 4.6, 4.9, 5.1, 5.3, 5.6, 6.0, 6.4, 7.1, 8.1, 8.8, 9.6]
+    assert ORG_WAR_MODEL.vals == ORG_POINTS_MODEL.vals
+    # a v2 score is 50 + 10 x WAR
+    assert org_points(89.0, "v2") == 0 and org_points(146.0, "v2") == 100
+    assert 0 < org_points(95.0, "v2") < org_points(100.0, "v2")
+    assert org_points(75.0) == ORG_POINTS_MODEL.rank(75.0)
+
+
+def test_summarize_orgs_reads_v2_scores_in_war():
+    rows = [_row("A", "Sea Dogs", 1, 120.0), _row("B", "Rainiers", 2, 100.0), _row("B", "Rainiers", 3, 98.0)]
+    out = summarize_orgs(rows, engine="v2")
+    assert [o["org_id"] for o in out] == ["A", "B"]
+    assert out[0]["org_score"] == ORG_WAR_MODEL.rank(7.0)
+    assert out[1]["org_score"] == ORG_WAR_MODEL.rank(5.0) + ORG_WAR_MODEL.rank(4.8)
 
 
 def test_cli_shares_the_same_curve():

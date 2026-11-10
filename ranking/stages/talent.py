@@ -1,12 +1,11 @@
-"""The fitted talent layer (phases 3, 4 and 5a). `LegacyModel` asks it for each
-batch's batting, fielding, baserunning and pitching scores: it scores every
-player whose base ratings are there, and the legacy models score the rest (old
-class formats without BABIP).
+"""The fitted talent layer (phases 3, 4 and 5a): batting, fielding, baserunning
+and pitching read off the ratings by the fitted models, one batched call per
+model (`Talent`). A player a model can't read (no batting ratings, a pitcher
+without Stuff or Control) gets None there, and the value stage values that
+side at replacement.
 
-Until the value layer turns everything into WAR, fitted talent is put on the
-legacy models' 0-100 scales through the artifacts' points bridges, so the
-fielding and running components, the modifiers and the two-way rule still see
-the scale they were tuned for.
+Since 2026-11-09 (plans/xgboost-phaseout-plan.md, step 3) nothing here goes
+through legacy points: the value stage turns these reads into WAR directly.
 """
 from typing import NamedTuple
 
@@ -14,15 +13,12 @@ import numpy as np
 
 from models.game_players import SPLIT_SIDES
 from ranking import fielding_talent, hitter_talent, pitcher_talent, running_talent
-from ranking import value as value_model
 from ranking.ratings import RatingsView
-from scoring.pitcher_scorer import rp_stamina_modifier_map, sp_stamina_modifier_map
+from ranking.stages.base import BatchStage
 from scoring.runtime_components import write_runtime_component
 
 
 class FittedBatting(NamedTuple):
-    points: float
-    label: str
     wrc_plus: float
     platoon: bool = False   # scored on his vL / vR splits
     bats: str = None        # "R" / "L" / "S"; None when not exported
@@ -54,13 +50,11 @@ class HitterTalent:
         bats = [self.ratings.bats(p) for p in hitters]
         real, side_wrc = self._sides(hitters, bats, ratings, events)
         wrc_plus = self.model.wrc_of(events)
-        points = self.model.points(wrc_plus)
-        for j, ((i, _), wrc, pts) in enumerate(zip(rated, wrc_plus, points)):
+        for j, ((i, _), wrc) in enumerate(zip(rated, wrc_plus)):
             write_runtime_component(players[i].id, "batting.talent.wrc_plus", float(wrc))
             vl, vr = (None if np.isnan(w[j]) else float(w[j]) for w in (side_wrc["vL"], side_wrc["vR"]))
             implied = getattr(players[i], self.ratings.attrs["babip"]) is None
-            out[i] = FittedBatting(float(pts), f"batting talent ({wrc:.0f} wRC+)", float(wrc), bool(real[j]),
-                                   bats[j], vl, vr, implied)
+            out[i] = FittedBatting(float(wrc), bool(real[j]), bats[j], vl, vr, implied)
         return out
 
     def _sides(self, hitters, bats, ratings, events):
@@ -101,35 +95,7 @@ class HitterTalent:
         return real, side_wrc
 
 
-# Role viability - can he hold a starter's workload, does he have the pitches to
-# turn a lineup over - is playing time, which the value layer (phase 5) will
-# model. Until then it keeps the legacy values: stamina, and the pitch-count
-# part of the legacy pitch-mix maps (the grades are Stuff, already in talent).
-SP_ROLE_FLOOR = 0.45
-
-
-def _grade(table, value):
-    return table[min(max(int(round(value / 5)) * 5, 20), 80)]
-
-
-def sp_role_factor(stamina, pitches) -> float:
-    if pitches < 1:
-        return 0.0
-    count = (0.8 if pitches <= 2 else 1) * (0.35 if pitches < 3 else 1) * (0.92 if pitches < 4 else 1)
-    return max(SP_ROLE_FLOOR, _grade(sp_stamina_modifier_map, stamina) * count)
-
-
-def rp_role_factor(stamina, pitches) -> float:
-    if pitches < 1:
-        return 0.0
-    return _grade(rp_stamina_modifier_map, stamina) * (0.8 if pitches < 2 else 1)
-
-
 class FittedPitching(NamedTuple):
-    starter: float
-    reliever: float
-    starter_talent: float
-    reliever_talent: float
     sp_index: float
     rp_index: float
     sp_era: float
@@ -157,7 +123,6 @@ class PitcherTalent:
 
     def __init__(self, profile, model=None):
         self.ratings = RatingsView(profile.ratings)
-        self.rp_multiplier = profile.rp_multiplier
         self.model = model or pitcher_talent.load()
 
     @property
@@ -191,16 +156,9 @@ class PitcherTalent:
         platoon = self._platoon(players, group, top, listed_sp, events, split, side_era)
         index = {role: self.model.index_of(events[role]) for role in pitcher_talent.ROLES}
         era = {role: self.model.era_of(events[role]) for role in pitcher_talent.ROLES}
-        talent = {role: self.model.points(index[role], role) for role in pitcher_talent.ROLES}
         for j, (i, _) in enumerate(group):
             player = players[i]
-            pitches, stamina = self.ratings.pitch_count(player), self.ratings.stamina(player)
-            sp, rp = float(talent["sp"][j]), float(talent["rp"][j])
             out[i] = FittedPitching(
-                starter=sp * sp_role_factor(stamina, pitches),
-                reliever=rp * rp_role_factor(stamina, pitches) * self.rp_multiplier,
-                starter_talent=sp,
-                reliever_talent=rp,
                 sp_index=float(index["sp"][j]),
                 rp_index=float(index["rp"][j]),
                 sp_era=float(era["sp"][j]),
@@ -274,11 +232,8 @@ class PitcherTalent:
 
 
 class FittedFielding(NamedTuple):
-    points: float           # best position, on legacy's best-position scale
-    utility: float          # utility_war on legacy's points scale, for its shell
     best_position: str
     runs: float             # fielding runs per season at the best position
-    value: float            # those plus the position's adjustment
     utility_war: float = 0.0    # roster flexibility (fielding_talent.utility)
     covers: tuple = ()          # the other positions credited for it
 
@@ -299,24 +254,17 @@ class FieldingTalent:
         if not players:
             return []
         ratings = {r: np.asarray(v, float) for r, v in self.ratings.fielding(players).items()}
-        value, best, runs = self.model.best(ratings)
+        _, best, runs = self.model.best(ratings)
         covers = self.model.covers(ratings)
-        points = self.model.points(value)
-        # the legacy shell's utility points: the flexibility WAR as defense runs
-        per_run = value_model.load().hitter["per_defense_run"]
         out = []
         for j, player in enumerate(players):
             war, credited = fielding_talent.utility({p for p, c in covers.items() if c[j]}, best[j])
-            shell = float(self.model.points(value[j] + war / per_run) - points[j])
-            out.append(FittedFielding(
-                float(points[j]), shell, best[j], float(runs[j]), float(value[j]), war, tuple(credited),
-            ))
+            out.append(FittedFielding(best[j], float(runs[j]), war, tuple(credited)))
             write_runtime_component(player.id, "batting.talent.fielding_runs", float(runs[j]))
         return out
 
 
 class FittedRunning(NamedTuple):
-    points: float
     runs: float             # baserunning runs per 600 PA
 
 
@@ -335,7 +283,32 @@ class RunningTalent:
         if not players:
             return []
         runs = self.model.runs(self.ratings.running(players))
-        points = self.model.points(runs)
         for player, r in zip(players, runs):
             write_runtime_component(player.id, "batting.talent.baserunning_runs", float(r))
-        return [FittedRunning(float(p), float(r)) for p, r in zip(points, runs)]
+        return [FittedRunning(float(r)) for r in runs]
+
+
+class Talent(BatchStage):
+    """Every fitted talent model, one batched call each: `state.fitted` by
+    side ("batting", "fielding", "running", "pitching"), None where a model
+    can't read the player."""
+
+    name = "talent"
+
+    def __init__(self, profile):
+        self.models = {
+            "batting": HitterTalent(profile),
+            "fielding": FieldingTalent(profile),
+            "running": RunningTalent(profile),
+            "pitching": PitcherTalent(profile),
+        }
+
+    @property
+    def artifacts(self) -> dict:
+        return {m.name: m.artifact for m in self.models.values()}
+
+    def run(self, states, profile):
+        players = [s.player for s in states]
+        scored = {side: model.score(players) for side, model in self.models.items()}
+        for j, state in enumerate(states):
+            state.fitted = {side: fits[j] for side, fits in scored.items()}

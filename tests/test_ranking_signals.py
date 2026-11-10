@@ -31,6 +31,13 @@ def test_draft_reads_are_attributed_to_their_readers():
     assert "pitcher scorer (role adjustments)" not in inv.reads
 
 
+def test_v2_reads_nothing_through_the_legacy_scorers():
+    legacy = {"batting model", "running model", "pitching models", "batting scorer",
+              "pitcher scorer (role adjustments)"}
+    for method in PROFILES:
+        assert not legacy & set(inventory(get_ranker(method), _players()).reads), method
+
+
 def test_flags_composites_and_repeat_reads_by_side():
     inv = inventory(get_ranker("draft_class"), _players())
     batting, pitching = inv.flags("batting"), inv.flags("pitching")

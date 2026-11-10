@@ -46,12 +46,6 @@ def test_a_higher_rating_never_lowers_wrc_plus(model, rating):
     assert np.all(np.diff(values) >= 0)
 
 
-def test_points_are_monotone_and_floored(model):
-    wrc = np.linspace(-50, 300, 200)
-    points = model.points(wrc)
-    assert np.all(np.diff(points) >= 0) and points.min() == 0
-
-
 def test_ratings_view_reads_the_profiles_side(snapshot_rows):
     player = next(GamePlayer(dict(r)) for r in snapshot_rows if r.get("BABIP"))
     current, potential = RatingsView("overall").hitting(player), RatingsView("potential").hitting(player)

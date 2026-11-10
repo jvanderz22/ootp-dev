@@ -329,7 +329,7 @@ legacy's bonus on the live board: 0.07 WAR on average across the top 400
 hitters, 0.19 at the 90th percentile, 0.36 at most. It credits each other
 position a player can cover, most for SS and CF.
 
-### 3. A native model stage (no points)
+### 3. A native model stage (no points) ✅ (2026-11-09)
 
 - Replace `LegacyModel` and the points bridges with a v2 talent → value path.
 - Convert the two score-weighted modifiers' thresholds to WAR.
@@ -339,6 +339,61 @@ position a player can cover, most for SS and CF.
 - Re-express the org rankings curve in WAR (its existing TODO) here.
 - **Gate:** v2's boards match the last commit within rounding, except where a
   converted threshold moves someone, and you see those first.
+
+#### What changed (2026-11-09)
+
+- **v2's pipeline is `Talent` → `Value` → demand.** `Talent`
+  (`ranking/stages/talent.py`) runs the four fitted models. `Value` turns
+  them into WAR, runs the profile's modifiers, and combines the sides.
+  `LegacyModel` and `LegacyModifiers` are back to legacy only, and
+  `ranking/bridge.py` is gone. So are the points bridges in the four
+  artifacts (nothing else in them changed), the pitcher role factors and v2's
+  use of `rp_multiplier`. The value fit reproduces `value_v1` exactly through
+  the new stage.
+- **The fits no longer score legacy.** The bridges and the legacy column in
+  the cross-validated reports are gone, so the hitter, pitcher and running fits
+  no longer load the grids. The artifacts' `meta` keeps the old legacy numbers
+  until the next refit.
+- **The two score-weighted modifiers read WAR** (`ranking/modifiers.py`).
+  Each threshold is the WAR v2's side had at that many legacy points: an
+  isotonic fit over the live league's potential board and three draft
+  classes (2041, 2042, wbf 2121). Those numbers are frozen. Per side,
+  because legacy points meant different WAR. Rounded:
+
+  | Legacy points | Hitter WAR | Pitcher WAR |
+  |---|---|---|
+  | AgeModifier 35 / 55 / 100 / 130 | 0.7 / 3.9 / 10.3 / 14.8 | 2.1 / 3.7 / 6.7 / 8.7 |
+  | Leadership H: 25 / 32 / 40 / 45 | −0.1 / 0.3 / 1.6 / 2.4 | 1.6 / 2.0 / 2.4 / 2.9 |
+  | Leadership L: 30 / 38 | 0.2 / 1.2 | 1.9 / 2.4 |
+  | Bad traits: 10 / 35 / 50 / 75 / 100 | −2.5 / 0.7 / 3.1 / 6.6 / 10.3 | 0.5 / 2.1 / 3.3 / 5.0 / 6.7 |
+
+  No hitter reaches 100 points, so his top two continue along the slope of
+  his range.
+- **The org rankings curve, in WAR for v2** (`ORG_WAR_MODEL`, legacy keeps
+  its own). Each breakpoint is the potential WAR at the same percentile of
+  the live league's v2 board as its points were on legacy's:
+  58 → +3.9 … 120 → +9.6, with the same weights. Under v2 the points curve
+  had credited 4,680 players (everyone above +0.8 WAR); the WAR curve
+  credits 509, against legacy's 502. The order of systems against legacy's
+  went from Spearman 0.73 to 0.94. The rest is the engines disagreeing on
+  players.
+
+**Who moved** (pre-demand, against the last commit):
+- **The current board** doesn't move: no score-weighted modifiers.
+- **The live potential board:** mean change 0.001 WAR, at most 0.09.
+- **The draft classes:** mean 0.003–0.01 WAR, at most 0.31. Two causes,
+  nearly all pitchers:
+  - **Age bonus:** good SP prospects lose about 0.02 of it (Dusty Hall
+    1.09 → 1.07). At the same WAR, a starter had fewer legacy points than a
+    reliever (legacy paid innings less), so starters got more age weight.
+    One threshold per side now treats them the same. That's a few places
+    each, e.g. 2041's Dusty Hall #42 → #50.
+  - **Leadership near its thresholds:** its weight falls from 0.8 to 0.1
+    between 32 and 40 points, so a small difference in where a player sits
+    flips it:
+    - Corey Horton (2042, high leadership) 1.14 → 1.02, #129 → #163;
+    - Sarsa-dengal Kayode (2042, low leadership) 0.87 → 1.00, #163 → #135;
+    - Abdul-azim Bin Zahid (wbf 2121) 1.05 → 1.19, #98 → #81.
 
 ### 4. The cutover (phase 8): deferred
 

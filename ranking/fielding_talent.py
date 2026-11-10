@@ -32,7 +32,6 @@ from pathlib import Path
 
 import numpy as np
 
-from ranking import bridge
 from ranking.hitter_talent import ARTIFACTS_DIR
 
 ARTIFACT = "fielding_talent_v2"
@@ -107,8 +106,6 @@ class FieldingTalent:
                 self.tables[pos].setdefault(rating, np.asarray(t, float))
         self.position_adjustment = artifact["position_adjustment"]
         self.dh_adjustment = artifact["dh_adjustment"]
-        # best-position value -> legacy fielding points; absent while fitting
-        self.bridge = artifact.get("points_bridge")
 
     @classmethod
     def from_file(cls, path) -> "FieldingTalent":
@@ -147,9 +144,6 @@ class FieldingTalent:
         runs = self.unfloored(ratings)
         return {pos: (floor_factor(pos, ratings) >= 1) & (runs[pos] >= COVER_RUNS) for pos in POSITIONS}
 
-    def points(self, value):
-        return bridge.points(value, self.bridge)
-
 
 def utility(covers: set, best: str) -> tuple:
     """(WAR, the positions credited) for a player whose best position is
@@ -172,15 +166,6 @@ def utility(covers: set, best: str) -> tuple:
 @lru_cache(maxsize=None)
 def load(name: str = ARTIFACT) -> FieldingTalent:
     return FieldingTalent.from_file(ARTIFACTS_DIR / f"{name}.json")
-
-
-def grid_scores(players) -> dict:
-    """{position: your legacy grid's score for each player}: only for fitting
-    the points bridge to legacy's scale."""
-    from scoring.model_cache import get_position_player_scorer
-
-    models = get_position_player_scorer("overall").fielding_models_map
-    return {pos: np.asarray(models[pos].predict_many(players)) for pos in POSITIONS}
 
 
 def ratings_of(players) -> dict:

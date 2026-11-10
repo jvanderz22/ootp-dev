@@ -6,7 +6,7 @@ import pytest
 from league_snapshot import join_rows
 from models.game_players import GamePlayer
 from models.player_type import HITTER, PITCHER, TWO_WAY, classify
-from ranking import bridge, get_ranker, hitter_talent, value
+from ranking import get_ranker, value
 from ranking.ledger import Ledger
 from ranking.stages.demand import Demand
 from ranking.stages.value import Value
@@ -82,12 +82,6 @@ def test_players_below_replacement_on_both_sides_go_by_position():
     assert classify(-5, -20, "SS") == HITTER and classify(-20, -5, "SS") == HITTER
     assert classify(-5, -20, "RP") == PITCHER
     assert classify(30, 20, "SS") == TWO_WAY and classify(30, 10, "SP") == HITTER
-
-
-def test_points_read_back_through_a_bridge():
-    b = hitter_talent.load().bridge
-    wrc = np.array([80.0, 100.0, 130.0])
-    assert np.allclose(bridge.talent(bridge.points(wrc, b), b), wrc, atol=0.5)
 
 
 def test_a_marginal_other_side_earns_no_two_way_credit():

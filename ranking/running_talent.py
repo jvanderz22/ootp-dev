@@ -16,7 +16,6 @@ from pathlib import Path
 
 import numpy as np
 
-from ranking import bridge
 from ranking.hitter_talent import ARTIFACTS_DIR, HIGH, LOW
 
 ARTIFACT = "running_talent_v1"
@@ -35,8 +34,6 @@ class RunningTalent:
         self.steal_success = artifact["steal_success"]
         self.steal_attempts = artifact["steal_attempts"]
         self.times_on_first = artifact["times_on_first"]
-        # baserunning runs -> legacy running points; absent while fitting
-        self.bridge = artifact.get("points_bridge")
 
     @classmethod
     def from_file(cls, path) -> "RunningTalent":
@@ -54,9 +51,6 @@ class RunningTalent:
 
     def runs(self, ratings: dict):
         return self.extra_base_runs(ratings) + self.steal_runs(ratings)
-
-    def points(self, runs):
-        return bridge.points(runs, self.bridge)
 
 
 @lru_cache(maxsize=None)

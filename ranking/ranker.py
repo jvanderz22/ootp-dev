@@ -8,14 +8,13 @@ is in, the pool stages (demand) run on the pre-demand order.
 import gc
 
 from models.player_type import classify, prune_breakdown
-from ranking import development
 from ranking.manifest import build_manifest
 from ranking.results import RankedResult
 from ranking.stages.demand import Demand
 from ranking.stages.legacy import LegacyModel, LegacyModifiers, TwoWay
-from ranking.stages.talent import FieldingTalent, HitterTalent, PitcherTalent, RunningTalent
+from ranking.stages.talent import Talent
 from ranking.stages.value import Value
-from ranking.value import DISPLAY_OFFSET, PLATOON_REPLACES
+from ranking.value import DISPLAY_OFFSET
 from ranking.state import PlayerState
 from rankers.base_ranker import DEFAULT_BATCH_SIZE
 from scoring.runtime_components import runtime_components_scope
@@ -30,21 +29,11 @@ def legacy_pipeline(profile):
     return [LegacyModel(profile), LegacyModifiers(), TwoWay()], [Demand()]
 
 
-# Engine v2's pipeline. Each later layer swaps out a legacy stage here, while
-# `legacy` keeps reproducing the legacy rankers (with a ledger) for comparison.
+# Engine v2's pipeline: the fitted talent models, then WAR (with the modifiers
+# and the two sides combined), then demand. `legacy` keeps reproducing the
+# legacy rankers (with a ledger) for comparison.
 def v2_pipeline(profile):
-    model = LegacyModel(
-        profile,
-        batting=HitterTalent(profile),
-        fielding=FieldingTalent(profile),
-        running=RunningTalent(profile),
-        pitching=PitcherTalent(profile),
-    )
-    # the value layer's platoons replace the batter handedness modifier, and
-    # the development layer the legacy makeup / injury modifiers wherever
-    # potential ratings are read
-    drop = (*PLATOON_REPLACES, *(development.REPLACES if profile.ratings == "potential" else ()))
-    return [model, LegacyModifiers(drop), Value(profile)], [Demand(offset=DISPLAY_OFFSET)]
+    return [Talent(profile), Value(profile)], [Demand(offset=DISPLAY_OFFSET)]
 
 
 PIPELINES = {"v2": v2_pipeline, "legacy": legacy_pipeline}

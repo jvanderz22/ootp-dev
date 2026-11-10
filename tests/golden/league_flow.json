@@ -106,7 +106,7 @@
   {
    "orgId": "52",
    "orgName": "Pittsburgh Pirates",
-   "orgScore": 593.1958333333333,
+   "orgScore": 119.42511904761906,
    "prospectCount": 18,
    "top10": 4,
    "top100": 18,
@@ -117,14 +117,14 @@
     {
      "id": "1037",
      "level": "AAA",
-     "modelScore": 122.01,
+     "modelScore": 121.99,
      "name": "Reese Calder",
      "rank": 2
     },
     {
      "id": "1034",
      "level": "MLB",
-     "modelScore": 115.16,
+     "modelScore": 115.17,
      "name": "Oakley Quimby",
      "rank": 3
     },
@@ -145,21 +145,21 @@
     {
      "id": "1051",
      "level": "R",
-     "modelScore": 89.53,
+     "modelScore": 89.37,
      "name": "Logan Oakes",
      "rank": 12
     },
     {
      "id": "1044",
      "level": "AA",
-     "modelScore": 84.42,
+     "modelScore": 84.51,
      "name": "Emery Stanton",
      "rank": 16
     },
     {
      "id": "1035",
      "level": "AAA",
-     "modelScore": 83.12,
+     "modelScore": 83.1,
      "name": "Parker Oakes",
      "rank": 18
     },
@@ -173,7 +173,7 @@
     {
      "id": "1049",
      "level": "A",
-     "modelScore": 75.52,
+     "modelScore": 75.53,
      "name": "Jordan Merritt",
      "rank": 26
     },
@@ -194,14 +194,14 @@
     {
      "id": "1038",
      "level": "AAA",
-     "modelScore": 70.87,
+     "modelScore": 70.88,
      "name": "Sawyer Lowell",
      "rank": 31
     },
     {
      "id": "1043",
      "level": "AA",
-     "modelScore": 64.71,
+     "modelScore": 64.75,
      "name": "Dakota Oakes",
      "rank": 41
     },
@@ -222,7 +222,7 @@
     {
      "id": "1045",
      "level": "A",
-     "modelScore": 57.24,
+     "modelScore": 57.25,
      "name": "Finley Pembroke",
      "rank": 52
     },
@@ -245,7 +245,7 @@
   {
    "orgId": "46",
    "orgName": "Milwaukee Brewers",
-   "orgScore": 386.4853333333333,
+   "orgScore": 78.30499999999999,
    "prospectCount": 18,
    "top10": 2,
    "top100": 18,
@@ -277,7 +277,7 @@
     {
      "id": "1009",
      "level": "AAA",
-     "modelScore": 80.28,
+     "modelScore": 80.31,
      "name": "Jordan Hollis",
      "rank": 20
     },
@@ -291,7 +291,7 @@
     {
      "id": "1012",
      "level": "AAA",
-     "modelScore": 78.41,
+     "modelScore": 78.42,
      "name": "Morgan Ingram",
      "rank": 23
     },
@@ -312,14 +312,14 @@
     {
      "id": "1025",
      "level": "R",
-     "modelScore": 66.36,
+     "modelScore": 66.37,
      "name": "Finley Thorne",
      "rank": 38
     },
     {
      "id": "1022",
      "level": "A",
-     "modelScore": 65.48,
+     "modelScore": 65.47,
      "name": "Casey Norcross",
      "rank": 39
     },
@@ -340,7 +340,7 @@
     {
      "id": "1008",
      "level": "MLB",
-     "modelScore": 58.91,
+     "modelScore": 58.92,
      "name": "Indy Calder",
      "rank": 48
     },
@@ -384,7 +384,7 @@
   {
    "orgId": "60",
    "orgName": "Austin Armadillos",
-   "orgScore": 345.63750000000005,
+   "orgScore": 13.669000000000002,
    "prospectCount": 18,
    "top10": 2,
    "top100": 18,
@@ -395,7 +395,7 @@
     {
      "id": "1068",
      "level": "AA",
-     "modelScore": 100.72,
+     "modelScore": 100.71,
      "name": "Indy Pembroke",
      "rank": 5
     },
@@ -409,14 +409,14 @@
     {
      "id": "1077",
      "level": "R",
-     "modelScore": 90.67,
+     "modelScore": 90.66,
      "name": "Reese Jessop",
      "rank": 11
     },
     {
      "id": "1076",
      "level": "INT",
-     "modelScore": 87.91,
+     "modelScore": 87.92,
      "name": "Quinn Kettering",
      "rank": 14
     },
@@ -430,7 +430,7 @@
     {
      "id": "1061",
      "level": "AAA",
-     "modelScore": 74.01,
+     "modelScore": 73.95,
      "name": "Blake Calder",
      "rank": 29
     },
@@ -444,7 +444,7 @@
     {
      "id": "1074",
      "level": "A",
-     "modelScore": 69.11,
+     "modelScore": 69.12,
      "name": "Oakley Calder",
      "rank": 35
     },
@@ -472,7 +472,7 @@
     {
      "id": "1060",
      "level": "MLB",
-     "modelScore": 56.75,
+     "modelScore": 56.76,
      "name": "Avery Calder",
      "rank": 53
     },
@@ -1845,12 +1845,12 @@
   "rows": [
    {
     "id": "1035",
-    "modelScore": 83.12,
+    "modelScore": 83.1,
     "rank": 18
    },
    {
     "id": "1068",
-    "modelScore": 100.72,
+    "modelScore": 100.71,
     "rank": 5
    },
    {
@@ -1860,7 +1860,7 @@
    },
    {
     "id": "1097",
-    "modelScore": 87.69,
+    "modelScore": 87.57,
     "rank": 15
    },
    {
@@ -1870,7 +1870,7 @@
    },
    {
     "id": "1034",
-    "modelScore": 115.16,
+    "modelScore": 115.17,
     "rank": 3
    },
    {
@@ -1885,7 +1885,7 @@
    },
    {
     "id": "1008",
-    "modelScore": 58.91,
+    "modelScore": 58.92,
     "rank": 48
    },
    {
@@ -1895,7 +1895,7 @@
    },
    {
     "id": "1098",
-    "modelScore": 67.79,
+    "modelScore": 67.62,
     "rank": 37
    },
    {
@@ -1905,27 +1905,27 @@
    },
    {
     "id": "1051",
-    "modelScore": 89.53,
+    "modelScore": 89.37,
     "rank": 12
    },
    {
     "id": "1043",
-    "modelScore": 64.71,
+    "modelScore": 64.75,
     "rank": 41
    },
    {
     "id": "1091",
-    "modelScore": 83.75,
+    "modelScore": 83.68,
     "rank": 17
    },
    {
     "id": "1049",
-    "modelScore": 75.52,
+    "modelScore": 75.53,
     "rank": 26
    },
    {
     "id": "1101",
-    "modelScore": 70.66,
+    "modelScore": 70.6,
     "rank": 32
    },
    {
@@ -1935,7 +1935,7 @@
    },
    {
     "id": "1060",
-    "modelScore": 56.75,
+    "modelScore": 56.76,
     "rank": 53
    },
    {
@@ -1945,12 +1945,12 @@
    },
    {
     "id": "1096",
-    "modelScore": 69.98,
+    "modelScore": 69.92,
     "rank": 33
    },
    {
     "id": "1022",
-    "modelScore": 65.48,
+    "modelScore": 65.47,
     "rank": 39
    },
    {
@@ -1970,12 +1970,12 @@
    },
    {
     "id": "1012",
-    "modelScore": 78.41,
+    "modelScore": 78.42,
     "rank": 23
    },
    {
     "id": "1061",
-    "modelScore": 74.01,
+    "modelScore": 73.95,
     "rank": 29
    },
    {
@@ -1985,7 +1985,7 @@
    },
    {
     "id": "1045",
-    "modelScore": 57.24,
+    "modelScore": 57.25,
     "rank": 52
    },
    {
@@ -2015,7 +2015,7 @@
    },
    {
     "id": "1037",
-    "modelScore": 122.01,
+    "modelScore": 121.99,
     "rank": 2
    },
    {
@@ -2030,12 +2030,12 @@
    },
    {
     "id": "1077",
-    "modelScore": 90.67,
+    "modelScore": 90.66,
     "rank": 11
    },
    {
     "id": "1044",
-    "modelScore": 84.42,
+    "modelScore": 84.51,
     "rank": 16
    },
    {
@@ -2065,17 +2065,17 @@
    },
    {
     "id": "1074",
-    "modelScore": 69.11,
+    "modelScore": 69.12,
     "rank": 35
    },
    {
     "id": "1025",
-    "modelScore": 66.36,
+    "modelScore": 66.37,
     "rank": 38
    },
    {
     "id": "1093",
-    "modelScore": 65.06,
+    "modelScore": 65.05,
     "rank": 40
    },
    {
@@ -2095,7 +2095,7 @@
    },
    {
     "id": "1100",
-    "modelScore": 57.51,
+    "modelScore": 57.52,
     "rank": 51
    },
    {
@@ -2120,7 +2120,7 @@
    },
    {
     "id": "1103",
-    "modelScore": 94.24,
+    "modelScore": 94.29,
     "rank": 8
    },
    {
@@ -2130,12 +2130,12 @@
    },
    {
     "id": "1076",
-    "modelScore": 87.91,
+    "modelScore": 87.92,
     "rank": 14
    },
    {
     "id": "1009",
-    "modelScore": 80.28,
+    "modelScore": 80.31,
     "rank": 20
    },
    {
@@ -2145,7 +2145,7 @@
    },
    {
     "id": "1038",
-    "modelScore": 70.87,
+    "modelScore": 70.88,
     "rank": 31
    },
    {
@@ -12915,12 +12915,12 @@
     "inGameOverall": 30,
     "inGamePotential": 65,
     "level": "AAA",
-    "modelScore": 122.01,
+    "modelScore": 121.99,
     "name": "Reese Calder",
     "org": "Pittsburgh Pirates",
     "pitcherScore": -25.88,
     "position": "C",
-    "positionPlayerScore": 72.01,
+    "positionPlayerScore": 71.99,
     "rank": 2,
     "ratings": {
      "batHand": "Switch",
@@ -12977,7 +12977,7 @@
      "throwHand": "Right",
      "workEthic": "L"
     },
-    "rawOverallScore": 122.01358804990777,
+    "rawOverallScore": 121.98607050916985,
     "relieverComponent": -19.99,
     "rule5Eligible": true,
     "runningScoreComponent": -1.4,
@@ -13005,10 +13005,10 @@
     "inGameOverall": 35,
     "inGamePotential": 40,
     "level": "MLB",
-    "modelScore": 115.16,
+    "modelScore": 115.17,
     "name": "Oakley Quimby",
     "org": "Pittsburgh Pirates",
-    "pitcherScore": 65.16,
+    "pitcherScore": 65.17,
     "position": "SP",
     "positionPlayerScore": -40.52,
     "rank": 3,
@@ -13088,7 +13088,7 @@
      "throwHand": "Left",
      "workEthic": "N"
     },
-    "rawOverallScore": 115.16309233509617,
+    "rawOverallScore": 115.17174893889604,
     "relieverComponent": 38.91,
     "rule5Eligible": false,
     "runningScoreComponent": -1.06,
@@ -13178,7 +13178,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 101.99029691517856,
+    "rawOverallScore": 101.99267456262297,
     "relieverComponent": -23.77,
     "rule5Eligible": true,
     "runningScoreComponent": -4.18,
@@ -13206,10 +13206,10 @@
     "inGameOverall": 40,
     "inGamePotential": 60,
     "level": "AA",
-    "modelScore": 100.72,
+    "modelScore": 100.71,
     "name": "Indy Pembroke",
     "org": "Austin Armadillos",
-    "pitcherScore": 50.72,
+    "pitcherScore": 50.71,
     "position": "SP",
     "positionPlayerScore": -35.1,
     "rank": 5,
@@ -13289,7 +13289,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 100.7162555282038,
+    "rawOverallScore": 100.70697069957811,
     "relieverComponent": 38.08,
     "rule5Eligible": true,
     "runningScoreComponent": -1.71,
@@ -13379,7 +13379,7 @@
      "throwHand": "Left",
      "workEthic": "N"
     },
-    "rawOverallScore": 95.95726542266442,
+    "rawOverallScore": 95.9566424175211,
     "relieverComponent": -27.99,
     "rule5Eligible": false,
     "runningScoreComponent": -3.31,
@@ -13497,12 +13497,12 @@
     "inGameOverall": 50,
     "inGamePotential": 60,
     "level": "R",
-    "modelScore": 94.24,
+    "modelScore": 94.29,
     "name": "Dakota Fenwick",
     "org": "Boise Bison",
     "pitcherScore": -22.7,
     "position": "CF",
-    "positionPlayerScore": 44.24,
+    "positionPlayerScore": 44.29,
     "rank": 8,
     "ratings": {
      "batHand": "Right",
@@ -13559,7 +13559,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 94.24441045094149,
+    "rawOverallScore": 94.28731623936983,
     "relieverComponent": -22.7,
     "rule5Eligible": false,
     "runningScoreComponent": -3.16,
@@ -13649,7 +13649,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 93.33384488014447,
+    "rawOverallScore": 93.32716390634234,
     "relieverComponent": -24.6,
     "rule5Eligible": false,
     "runningScoreComponent": -0.09,
@@ -13767,12 +13767,12 @@
     "inGameOverall": 60,
     "inGamePotential": 50,
     "level": "R",
-    "modelScore": 90.67,
+    "modelScore": 90.66,
     "name": "Reese Jessop",
     "org": "Austin Armadillos",
     "pitcherScore": -20.66,
     "position": "RF",
-    "positionPlayerScore": 40.67,
+    "positionPlayerScore": 40.66,
     "rank": 11,
     "ratings": {
      "batHand": "Left",
@@ -13829,7 +13829,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 90.66809106851844,
+    "rawOverallScore": 90.6594795403403,
     "relieverComponent": -20.66,
     "rule5Eligible": false,
     "runningScoreComponent": -3.59,
@@ -13857,10 +13857,10 @@
     "inGameOverall": 45,
     "inGamePotential": 60,
     "level": "R",
-    "modelScore": 89.53,
+    "modelScore": 89.37,
     "name": "Logan Oakes",
     "org": "Pittsburgh Pirates",
-    "pitcherScore": 39.53,
+    "pitcherScore": 39.37,
     "position": "SP",
     "positionPlayerScore": -37.79,
     "rank": 12,
@@ -13935,7 +13935,7 @@
      "throwHand": "Left",
      "workEthic": "N"
     },
-    "rawOverallScore": 89.53480565439861,
+    "rawOverallScore": 89.37211194903975,
     "relieverComponent": 30.72,
     "rule5Eligible": false,
     "runningScoreComponent": -2.85,
@@ -14064,12 +14064,12 @@
     "inGameOverall": 55,
     "inGamePotential": 70,
     "level": "INT",
-    "modelScore": 87.91,
+    "modelScore": 87.92,
     "name": "Quinn Kettering",
     "org": "Austin Armadillos",
     "pitcherScore": -31.72,
     "position": "LF",
-    "positionPlayerScore": 37.91,
+    "positionPlayerScore": 37.92,
     "rank": 14,
     "ratings": {
      "batHand": "Right",
@@ -14126,7 +14126,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 87.90956020006546,
+    "rawOverallScore": 87.91642462022664,
     "relieverComponent": -31.72,
     "rule5Eligible": false,
     "runningScoreComponent": -0.74,
@@ -14154,10 +14154,10 @@
     "inGameOverall": 50,
     "inGamePotential": 65,
     "level": "A",
-    "modelScore": 87.69,
+    "modelScore": 87.57,
     "name": "Reese Oakes",
     "org": "Boise Bison",
-    "pitcherScore": 37.69,
+    "pitcherScore": 37.57,
     "position": "SP",
     "positionPlayerScore": -45.7,
     "rank": 15,
@@ -14237,7 +14237,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 87.68611850775936,
+    "rawOverallScore": 87.57377844972655,
     "relieverComponent": 14.43,
     "rule5Eligible": true,
     "runningScoreComponent": -2.85,
@@ -14265,12 +14265,12 @@
     "inGameOverall": 45,
     "inGamePotential": 70,
     "level": "AA",
-    "modelScore": 84.42,
+    "modelScore": 84.51,
     "name": "Emery Stanton",
     "org": "Pittsburgh Pirates",
     "pitcherScore": -31.67,
     "position": "CF",
-    "positionPlayerScore": 34.42,
+    "positionPlayerScore": 34.51,
     "rank": 16,
     "ratings": {
      "batHand": "Switch",
@@ -14327,7 +14327,7 @@
      "throwHand": "Left",
      "workEthic": "N"
     },
-    "rawOverallScore": 84.41707665809142,
+    "rawOverallScore": 84.50862744922924,
     "relieverComponent": -23.75,
     "rule5Eligible": true,
     "runningScoreComponent": 0.12,
@@ -14355,10 +14355,10 @@
     "inGameOverall": 65,
     "inGamePotential": 45,
     "level": "AAA",
-    "modelScore": 83.75,
+    "modelScore": 83.68,
     "name": "Logan Thorne",
     "org": "Boise Bison",
-    "pitcherScore": 33.75,
+    "pitcherScore": 33.68,
     "position": "SP",
     "positionPlayerScore": -48.0,
     "rank": 17,
@@ -14438,7 +14438,7 @@
      "throwHand": "Right",
      "workEthic": "H"
     },
-    "rawOverallScore": 83.74900751450728,
+    "rawOverallScore": 83.67646164017962,
     "relieverComponent": 26.64,
     "rule5Eligible": false,
     "runningScoreComponent": -2.55,
@@ -14466,10 +14466,10 @@
     "inGameOverall": 55,
     "inGamePotential": 50,
     "level": "AAA",
-    "modelScore": 83.12,
+    "modelScore": 83.1,
     "name": "Parker Oakes",
     "org": "Pittsburgh Pirates",
-    "pitcherScore": 33.12,
+    "pitcherScore": 33.1,
     "position": "SP",
     "positionPlayerScore": -36.36,
     "rank": 18,
@@ -14544,7 +14544,7 @@
      "throwHand": "Right",
      "workEthic": "H"
     },
-    "rawOverallScore": 83.11582700321352,
+    "rawOverallScore": 83.09523472021942,
     "relieverComponent": 29.08,
     "rule5Eligible": false,
     "runningScoreComponent": -4.03,
@@ -14678,12 +14678,12 @@
     "inGameOverall": 30,
     "inGamePotential": 55,
     "level": "AAA",
-    "modelScore": 80.28,
+    "modelScore": 80.31,
     "name": "Jordan Hollis",
     "org": "Milwaukee Brewers",
     "pitcherScore": -23.89,
     "position": "2B",
-    "positionPlayerScore": 30.28,
+    "positionPlayerScore": 30.31,
     "rank": 20,
     "ratings": {
      "batHand": "Right",
@@ -14740,7 +14740,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 80.28303528481223,
+    "rawOverallScore": 80.31159752475887,
     "relieverComponent": -23.89,
     "rule5Eligible": false,
     "runningScoreComponent": -2.55,
@@ -14959,12 +14959,12 @@
     "inGameOverall": 60,
     "inGamePotential": 65,
     "level": "AAA",
-    "modelScore": 78.41,
+    "modelScore": 78.42,
     "name": "Morgan Ingram",
     "org": "Milwaukee Brewers",
     "pitcherScore": -18.61,
     "position": "1B",
-    "positionPlayerScore": 28.41,
+    "positionPlayerScore": 28.42,
     "rank": 23,
     "ratings": {
      "batHand": "Right",
@@ -15021,7 +15021,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 78.41008380456941,
+    "rawOverallScore": 78.41603310912458,
     "relieverComponent": -18.61,
     "rule5Eligible": false,
     "runningScoreComponent": -1.98,
@@ -15201,7 +15201,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 75.83661910179757,
+    "rawOverallScore": 75.83514723168271,
     "relieverComponent": -28.02,
     "rule5Eligible": false,
     "runningScoreComponent": -0.37,
@@ -15229,10 +15229,10 @@
     "inGameOverall": 35,
     "inGamePotential": 50,
     "level": "A",
-    "modelScore": 75.52,
+    "modelScore": 75.53,
     "name": "Jordan Merritt",
     "org": "Pittsburgh Pirates",
-    "pitcherScore": 25.52,
+    "pitcherScore": 25.53,
     "position": "SP",
     "positionPlayerScore": -58.52,
     "rank": 26,
@@ -15317,7 +15317,7 @@
      "throwHand": "Right",
      "workEthic": "H"
     },
-    "rawOverallScore": 75.52392125042167,
+    "rawOverallScore": 75.52991723090113,
     "relieverComponent": 19.13,
     "rule5Eligible": false,
     "runningScoreComponent": -1.98,
@@ -15525,12 +15525,12 @@
     "inGameOverall": 45,
     "inGamePotential": 45,
     "level": "AAA",
-    "modelScore": 74.01,
+    "modelScore": 73.95,
     "name": "Blake Calder",
     "org": "Austin Armadillos",
     "pitcherScore": -14.25,
     "position": "2B",
-    "positionPlayerScore": 24.01,
+    "positionPlayerScore": 23.95,
     "rank": 29,
     "ratings": {
      "batHand": "Left",
@@ -15587,7 +15587,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 74.0074198892802,
+    "rawOverallScore": 73.94659230728706,
     "relieverComponent": -14.25,
     "rule5Eligible": true,
     "runningScoreComponent": -2.26,
@@ -15705,12 +15705,12 @@
     "inGameOverall": 50,
     "inGamePotential": 55,
     "level": "AAA",
-    "modelScore": 70.87,
+    "modelScore": 70.88,
     "name": "Sawyer Lowell",
     "org": "Pittsburgh Pirates",
     "pitcherScore": -27.56,
     "position": "SS",
-    "positionPlayerScore": 20.87,
+    "positionPlayerScore": 20.88,
     "rank": 31,
     "ratings": {
      "batHand": "Right",
@@ -15767,7 +15767,7 @@
      "throwHand": "Left",
      "workEthic": "N"
     },
-    "rawOverallScore": 70.87132572250117,
+    "rawOverallScore": 70.8830476203657,
     "relieverComponent": -27.56,
     "rule5Eligible": true,
     "runningScoreComponent": -0.37,
@@ -15795,10 +15795,10 @@
     "inGameOverall": 50,
     "inGamePotential": 75,
     "level": "A",
-    "modelScore": 70.66,
+    "modelScore": 70.6,
     "name": "Blake Ellery",
     "org": "Boise Bison",
-    "pitcherScore": 20.66,
+    "pitcherScore": 20.6,
     "position": "SP",
     "positionPlayerScore": -46.14,
     "rank": 32,
@@ -15878,7 +15878,7 @@
      "throwHand": "Left",
      "workEthic": "N"
     },
-    "rawOverallScore": 70.65977538876538,
+    "rawOverallScore": 70.59510211285551,
     "relieverComponent": 5.83,
     "rule5Eligible": false,
     "runningScoreComponent": -3.31,
@@ -15906,10 +15906,10 @@
     "inGameOverall": 50,
     "inGamePotential": 70,
     "level": "AA",
-    "modelScore": 69.98,
+    "modelScore": 69.92,
     "name": "Quinn Radley",
     "org": "Boise Bison",
-    "pitcherScore": 19.98,
+    "pitcherScore": 19.92,
     "position": "RP",
     "positionPlayerScore": -42.35,
     "rank": 33,
@@ -15994,7 +15994,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 69.9768251635557,
+    "rawOverallScore": 69.92485379810437,
     "relieverComponent": 10.08,
     "rule5Eligible": true,
     "runningScoreComponent": -2.85,
@@ -16084,7 +16084,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 69.82076278633886,
+    "rawOverallScore": 69.81889220710654,
     "relieverComponent": -23.89,
     "rule5Eligible": true,
     "runningScoreComponent": -3.01,
@@ -16112,12 +16112,12 @@
     "inGameOverall": 55,
     "inGamePotential": 55,
     "level": "A",
-    "modelScore": 69.11,
+    "modelScore": 69.12,
     "name": "Oakley Calder",
     "org": "Austin Armadillos",
     "pitcherScore": -18.78,
     "position": "CF",
-    "positionPlayerScore": 19.11,
+    "positionPlayerScore": 19.12,
     "rank": 35,
     "ratings": {
      "batHand": "Right",
@@ -16174,7 +16174,7 @@
      "throwHand": "Right",
      "workEthic": "H"
     },
-    "rawOverallScore": 69.11319345591478,
+    "rawOverallScore": 69.11941058515839,
     "relieverComponent": -22.3,
     "rule5Eligible": false,
     "runningScoreComponent": -1.65,
@@ -16292,10 +16292,10 @@
     "inGameOverall": 50,
     "inGamePotential": 70,
     "level": "A",
-    "modelScore": 67.79,
+    "modelScore": 67.62,
     "name": "Sawyer Jessop",
     "org": "Boise Bison",
-    "pitcherScore": 17.79,
+    "pitcherScore": 17.62,
     "position": "SP",
     "positionPlayerScore": -60.12,
     "rank": 37,
@@ -16380,7 +16380,7 @@
      "throwHand": "Right",
      "workEthic": "L"
     },
-    "rawOverallScore": 67.79063972456544,
+    "rawOverallScore": 67.62354879354905,
     "relieverComponent": 7.1,
     "rule5Eligible": true,
     "runningScoreComponent": -1.98,
@@ -16408,12 +16408,12 @@
     "inGameOverall": 40,
     "inGamePotential": 60,
     "level": "R",
-    "modelScore": 66.36,
+    "modelScore": 66.37,
     "name": "Finley Thorne",
     "org": "Milwaukee Brewers",
     "pitcherScore": -23.38,
     "position": "SS",
-    "positionPlayerScore": 16.36,
+    "positionPlayerScore": 16.37,
     "rank": 38,
     "ratings": {
      "batHand": "Right",
@@ -16470,7 +16470,7 @@
      "throwHand": "Left",
      "workEthic": "N"
     },
-    "rawOverallScore": 66.35789120374473,
+    "rawOverallScore": 66.36619890403212,
     "relieverComponent": -23.38,
     "rule5Eligible": false,
     "runningScoreComponent": -0.81,
@@ -16498,10 +16498,10 @@
     "inGameOverall": 40,
     "inGamePotential": 45,
     "level": "A",
-    "modelScore": 65.48,
+    "modelScore": 65.47,
     "name": "Casey Norcross",
     "org": "Milwaukee Brewers",
-    "pitcherScore": 15.48,
+    "pitcherScore": 15.47,
     "position": "SP",
     "positionPlayerScore": -46.15,
     "rank": 39,
@@ -16586,7 +16586,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 65.47535999949093,
+    "rawOverallScore": 65.4667355185014,
     "relieverComponent": 8.31,
     "rule5Eligible": false,
     "runningScoreComponent": -0.64,
@@ -16614,12 +16614,12 @@
     "inGameOverall": 65,
     "inGamePotential": 65,
     "level": "AA",
-    "modelScore": 65.06,
+    "modelScore": 65.05,
     "name": "Noel Calder",
     "org": "Boise Bison",
     "pitcherScore": -23.75,
     "position": "2B",
-    "positionPlayerScore": 15.06,
+    "positionPlayerScore": 15.05,
     "rank": 40,
     "ratings": {
      "batHand": "Switch",
@@ -16676,7 +16676,7 @@
      "throwHand": "Left",
      "workEthic": "N"
     },
-    "rawOverallScore": 65.05526771947171,
+    "rawOverallScore": 65.05283815657585,
     "relieverComponent": -23.75,
     "rule5Eligible": false,
     "runningScoreComponent": -2.85,
@@ -16704,10 +16704,10 @@
     "inGameOverall": 40,
     "inGamePotential": 70,
     "level": "AA",
-    "modelScore": 64.71,
+    "modelScore": 64.75,
     "name": "Dakota Oakes",
     "org": "Pittsburgh Pirates",
-    "pitcherScore": 14.71,
+    "pitcherScore": 14.75,
     "position": "RP",
     "positionPlayerScore": -49.89,
     "rank": 41,
@@ -16777,7 +16777,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 64.71460086979518,
+    "rawOverallScore": 64.74729949002463,
     "relieverComponent": 19.39,
     "rule5Eligible": false,
     "runningScoreComponent": -1.71,
@@ -17370,7 +17370,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 60.490520203844376,
+    "rawOverallScore": 60.48912784715995,
     "relieverComponent": -23.77,
     "rule5Eligible": false,
     "runningScoreComponent": -3.16,
@@ -17398,10 +17398,10 @@
     "inGameOverall": 50,
     "inGamePotential": 55,
     "level": "MLB",
-    "modelScore": 58.91,
+    "modelScore": 58.92,
     "name": "Indy Calder",
     "org": "Milwaukee Brewers",
-    "pitcherScore": 8.91,
+    "pitcherScore": 8.92,
     "position": "SP",
     "positionPlayerScore": -49.69,
     "rank": 48,
@@ -17471,7 +17471,7 @@
      "throwHand": "Left",
      "workEthic": "N"
     },
-    "rawOverallScore": 58.9103638959832,
+    "rawOverallScore": 58.92046174936211,
     "relieverComponent": 12.86,
     "rule5Eligible": false,
     "runningScoreComponent": -2.25,
@@ -17667,7 +17667,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 57.761976203331045,
+    "rawOverallScore": 57.760540487826844,
     "relieverComponent": -15.85,
     "rule5Eligible": true,
     "runningScoreComponent": -2.85,
@@ -17695,12 +17695,12 @@
     "inGameOverall": 35,
     "inGamePotential": 70,
     "level": "A",
-    "modelScore": 57.51,
+    "modelScore": 57.52,
     "name": "Avery Calder",
     "org": "Boise Bison",
     "pitcherScore": -19.99,
     "position": "RF",
-    "positionPlayerScore": 7.51,
+    "positionPlayerScore": 7.52,
     "rank": 51,
     "ratings": {
      "batHand": "Switch",
@@ -17757,7 +17757,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 57.50843964920993,
+    "rawOverallScore": 57.52064772821548,
     "relieverComponent": -19.99,
     "rule5Eligible": true,
     "runningScoreComponent": -4.46,
@@ -17785,12 +17785,12 @@
     "inGameOverall": 50,
     "inGamePotential": 75,
     "level": "A",
-    "modelScore": 57.24,
+    "modelScore": 57.25,
     "name": "Finley Pembroke",
     "org": "Pittsburgh Pirates",
     "pitcherScore": -18.3,
     "position": "3B",
-    "positionPlayerScore": 7.24,
+    "positionPlayerScore": 7.25,
     "rank": 52,
     "ratings": {
      "batHand": "Right",
@@ -17847,7 +17847,7 @@
      "throwHand": "Left",
      "workEthic": "N"
     },
-    "rawOverallScore": 57.24156990815461,
+    "rawOverallScore": 57.245917535708635,
     "relieverComponent": -18.3,
     "rule5Eligible": true,
     "runningScoreComponent": -1.83,
@@ -17875,10 +17875,10 @@
     "inGameOverall": 40,
     "inGamePotential": 75,
     "level": "MLB",
-    "modelScore": 56.75,
+    "modelScore": 56.76,
     "name": "Avery Calder",
     "org": "Austin Armadillos",
-    "pitcherScore": 6.75,
+    "pitcherScore": 6.76,
     "position": "SP",
     "positionPlayerScore": -39.71,
     "rank": 53,
@@ -17948,7 +17948,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 56.75143717373839,
+    "rawOverallScore": 56.75660707190264,
     "relieverComponent": 10.39,
     "rule5Eligible": false,
     "runningScoreComponent": -2.0,

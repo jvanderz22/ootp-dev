@@ -1,5 +1,5 @@
 """The fitted pitcher talent layer (phase 4): the model's tables, the Movement
-fallback, the role factors kept until the value layer, and v2's pitching side."""
+fallback, and v2's pitching side."""
 import csv
 import io
 
@@ -10,7 +10,6 @@ from league_snapshot import join_rows
 from models.game_players import GamePlayer
 from ranking import get_ranker, pitcher_talent
 from ranking.ratings import RatingsView
-from ranking.stages.talent import SP_ROLE_FLOOR, rp_role_factor, sp_role_factor
 from tests.e2e_fixtures import make_draft_class_csv
 from tests.test_league_snapshot import make_snapshot_csvs
 
@@ -54,14 +53,6 @@ def test_movement_stands_in_for_its_parts(model):
     # Movement isn't read when HRA / PBABIP are there; it is when they aren't
     assert model.runs_index(parts, "sp") == model.runs_index({**parts, "movement": 80}, "sp")
     assert model.runs_index(no_parts, "sp") > model.runs_index({**no_parts, "movement": 80}, "sp")
-
-
-def test_role_factors_keep_the_legacy_values():
-    assert sp_role_factor(55, 4) == 1.0
-    assert sp_role_factor(55, 2) == SP_ROLE_FLOOR  # 0.8 x 0.35 x 0.92, floored
-    assert sp_role_factor(30, 5) == pytest.approx(0.7)
-    assert sp_role_factor(55, 0) == rp_role_factor(55, 0) == 0.0
-    assert rp_role_factor(55, 1) == pytest.approx(1.01 * 0.8)
 
 
 def test_ratings_view_reads_the_profiles_side():
