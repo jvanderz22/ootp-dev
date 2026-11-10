@@ -93,9 +93,9 @@ class Value(BatchStage):
         price, full = self.replacement.prices[spot], spots.get("H", spots.get(spot))
         out = []
         if spot.startswith("H") and spot != "H":
-            out.append(("playing time", spots[spot] - full, f"{self.replacement.share(spot):.0%} of PA",
+            out.append(("playing time", spots[spot] - full, f"{self.replacement.share(spot):.0%} of a regular's PA",
                         value.Replacement.describe(spot)))
-        out.append(("league replacement", -price, f"{price:.2f} WAR", value.Replacement.describe(spot)))
+        out.append(("league replacement", -price, None, value.Replacement.describe(spot)))
         side.replacement = -sum(delta for _, delta, _, _ in out)
         return out
 
@@ -282,7 +282,7 @@ class Value(BatchStage):
             pen = self.replacement.best(spots)
             leverage, rp_tilt = self.replacement.leverage(pen), tilts[int(pen[2:]) - 1]
             normal = {**normal, "leverage": normal["runs"] * weight * (leverage - 1)}
-            rp_war, how = spots[pen], f"bullpen spot {pen[2:]}"
+            rp_war, how = spots[pen], value.Replacement.describe(pen)
             if starting:
                 spots["SP"] = sp_war
             spot = self.replacement.best(spots)

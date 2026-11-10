@@ -287,13 +287,15 @@ class Replacement:
 
     @staticmethod
     def describe(spot) -> str:
+        """The spot as the card names his role."""
         if spot == "H":
-            return f"an everyday bat, {LINEUP_FULL} a team"
+            return "an everyday regular"
         if spot == "SP":
-            return f"a starter, {ROTATION} a team"
+            return "a rotation starter"
         if spot.startswith("RP"):
-            return f"bullpen spot {spot[2:]} of {BULLPEN}"
-        return f"the {spot[1:]}th bat"
+            k = int(spot[2:])
+            return f"a {'high' if k <= 2 else 'mid' if k <= 4 else 'low'}-leverage reliever"
+        return "a platoon bat" if int(spot[1:]) <= LINEUP_FULL + 2 else "a bench bat"
 
 
 @lru_cache(maxsize=None)
