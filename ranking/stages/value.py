@@ -37,6 +37,19 @@ from ranking.stages.base import BatchStage
 from scoring.runtime_components import write_runtime_component
 
 SCALE = value.DISPLAY_SCALE
+# a matchups effect smaller than this (display points: 0.01 WAR) rides on the
+# pitching line instead of a line of its own
+MATCHUPS_SHOWN = 0.1
+
+
+def _hands(throws, split) -> tuple:
+    """(the batters he's weak against, the ones he's strong against) for a
+    pitcher throwing `throws` whose split is `split` (positive: better against
+    his own hand)."""
+    if throws not in ("L", "R"):
+        return "his weak side", "his strong side"
+    own, other = f"{throws}HB", f"{'R' if throws == 'L' else 'L'}HB"
+    return (other, own) if split >= 0 else (own, other)
 # the legacy modifiers that are personality, so also count below replacement
 # (the development factors replace PersonalityModifier wherever potential is read)
 BELOW_REPLACEMENT = ("PersonalityModifier", "DraftSecondaryPersonalityModifier")
@@ -221,32 +234,40 @@ class Value(BatchStage):
         sp_normal = self.model.starting(era["sp"], innings) if innings else None
         normal = self.model.relieving(era["rp"], rp_index)
         relieving = self.model.relieving(era["rp matched"], rp_matched)
-        how = " · estimated" if estimated else ""
+        how = " · split estimated from his hand, slot and pitches" if estimated else ""
         sp_war = sum(starting.values()) if starting else None
         rp_war = sum(relieving.values())
         side.components = {"starter": SCALE * sp_war if starting else 0.0, "reliever": SCALE * rp_war}
         ledger = state.ledger
         if starting and sp_war >= rp_war:
             side.role, state.era = "SP", era["sp"]
-            ledger.add(MODEL, "pitching", SCALE * sp_normal["runs"], PITCHING,
+            matchups = SCALE * (starting["runs"] - sp_normal["runs"])
+            shown = tilt["sp"] > 0 and abs(matchups) >= MATCHUPS_SHOWN
+            ledger.add(MODEL, "pitching", SCALE * sp_normal["runs"] + (0.0 if shown else matchups), PITCHING,
                        f"{era['sp']:.2f} ERA", self._pitching_detail(player, fitted, "sp"))
-            if tilt["sp"] > 0:
+            if shown:
                 gap = (era["sp matched"] - era["sp"]) / tilt["sp"]
-                ledger.add(MODEL, "matchups", SCALE * (starting["runs"] - sp_normal["runs"]), PITCHING,
-                           f"+{tilt['sp']:.0%} weak side", f"{gap:.2f} ERA split{how}")
+                weak, _ = _hands(self.ratings.throws(player), split["sp"])
+                ledger.add(MODEL, "matchups", matchups, PITCHING,
+                           self._side_eras(player, fitted, "sp", era["sp"], gap, split["sp"]),
+                           f"lineups stack {weak}: +{tilt['sp']:.0%} of his batters{how}")
             ledger.add(MODEL, "innings", SCALE * starting["innings"], PITCHING,
                        f"{innings:.0f} IP", f"stamina {stamina}")
             war = sp_war
         else:
             side.role, state.era = "RP", era["rp"]
             leverage = float(self.model.leverage(rp_index))
-            ledger.add(MODEL, "pitching", SCALE * normal["runs"], PITCHING,
+            matchups = SCALE * (rp_war - normal["runs"] - normal["leverage"] - normal["innings"])
+            shown = tilt["rp"] > 0 and abs(matchups) >= MATCHUPS_SHOWN
+            ledger.add(MODEL, "pitching", SCALE * normal["runs"] + (0.0 if shown else matchups), PITCHING,
                        f"{era['rp']:.2f} ERA", self._pitching_detail(player, fitted, "rp"))
             ledger.add(MODEL, "leverage", SCALE * normal["leverage"], PITCHING, f"LI {leverage:.2f}")
-            if tilt["rp"] > 0:
+            if shown:
                 gap = (era["rp"] - era["rp matched"]) / tilt["rp"]
-                ledger.add(MODEL, "matchups", SCALE * (rp_war - normal["runs"] - normal["leverage"] - normal["innings"]),
-                           PITCHING, f"+{tilt['rp']:.0%} strong side", f"{gap:.2f} ERA split{how}")
+                _, strong = _hands(self.ratings.throws(player), split["rp"])
+                ledger.add(MODEL, "matchups", matchups, PITCHING,
+                           self._side_eras(player, fitted, "rp", era["rp"], gap, split["rp"]),
+                           f"you use him against {strong}: +{tilt['rp']:.0%} of his batters{how}")
             ledger.add(MODEL, "innings", SCALE * relieving["innings"], PITCHING,
                        f"{self.model.workloads['reliever_ip']:.0f} IP", "relief workload")
             war = rp_war
@@ -267,6 +288,23 @@ class Value(BatchStage):
         floors = [("Control floor", floor, f"Control {control}")] if floor < 1 else []
         self._modifiers(state, side, PITCHING, war)
         return self._modified(state, side, war, PITCHING, self._development(state, war), floors)
+
+    def _side_eras(self, player, fitted, role, role_era, gap, split) -> str:
+        """His ERA in `role` against left- and right-handed batters: his
+        splits', or, from an estimated split, the two sides that blend to his
+        ERA at the share of lefties his hand faces and are `gap` apart."""
+        throws = self.ratings.throws(player)
+        if fitted.side_era:
+            eras = {f"{s[1]}HB": float(self.model.calibrated("era", e, role)) for s, e in fitted.side_era[role].items()}
+        elif throws:
+            weak, strong = _hands(throws, split)
+            lefties = float(self.pitching_model.lhb_share(role, [throws])[0])
+            weak_share = lefties if weak == "LHB" else 1 - lefties
+            eras = {strong: role_era - weak_share * gap}
+            eras[weak] = eras[strong] + gap
+        else:
+            return f"{gap:.2f} ERA worse against his weak side"
+        return f"{eras['LHB']:.2f} vs LHB · {eras['RHB']:.2f} vs RHB"
 
     @staticmethod
     def _pitching_detail(player, fitted, role) -> str:

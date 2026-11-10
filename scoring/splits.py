@@ -1,16 +1,16 @@
 """Platoon splits for the detail card: a live-league player's vs-L and vs-R
-ratings (see `GamePlayer.with_split`), and engine v2's read of each side next
-to his combined one - wRC+ for a hitter, ERA in his listed role for a pitcher,
-both calibrated as the value stage reads them (ranking/stages/value.py).
+ratings (see `GamePlayer.with_split`), and for a hitter engine v2's wRC+ on
+each side next to his combined one, calibrated as the value stage reads it
+(ranking/stages/value.py). A pitcher's ERA on each side is on the card's
+value build instead (the matchups line).
 
 The combined wRC+ is his two sides blended at his batting hand's mix, as the
-value stage blends them; the combined ERA is the talent stage's, which blends
-the sides at his role's mix of batters.
+value stage blends them.
 """
 from models.game_players import SPLIT_SIDES, GamePlayer
 from ranking import value
 from ranking.profiles import CURRENT
-from ranking.stages.talent import HitterTalent, PitcherTalent
+from ranking.stages.talent import HitterTalent
 from scoring.runtime_components import runtime_components_scope
 
 
@@ -42,20 +42,9 @@ def _wrc_plus(player: GamePlayer) -> dict:
     return {side: round(float(value.load().calibrated("wrc_plus", w))) for side, w in raw.items()}
 
 
-def _era(player: GamePlayer):
-    """(role, {"combined" | "vL" | "vR": ERA}) in his listed role, or
-    (None, {}) without a fit on his splits."""
-    (fit,) = PitcherTalent(CURRENT).score([player])
-    if fit is None or fit.side_era is None:
-        return None, {}
-    role = "sp" if player.position == "SP" else "rp"
-    raw = {**fit.side_era[role], "combined": fit.sp_era if role == "sp" else fit.rp_era}
-    return role, {side: round(float(value.load().calibrated("era", e, role)), 2) for side, e in raw.items()}
-
-
 def score_splits(player: GamePlayer):
     """`{"combined", "vL", "vR"}` -> the ratings on that side plus v2's wRC+
-    and ERA there, or None when the player's row carries no split ratings."""
+    there, or None when the player's row carries no split ratings."""
     variants = {side: player.with_split(side) for side in SPLIT_SIDES}
     if any(v is None for v in variants.values()):
         return None
@@ -64,9 +53,4 @@ def score_splits(player: GamePlayer):
     # concurrent ranking run's (or the shared fallback) store
     with runtime_components_scope():
         wrc = _wrc_plus(player)
-        role, era = _era(player)
-    return {
-        side: {**_ratings(p), "wrc_plus": wrc.get(side), "era": era.get(side),
-               "era_role": role and role.upper()}
-        for side, p in variants.items()
-    }
+    return {side: {**_ratings(p), "wrc_plus": wrc.get(side)} for side, p in variants.items()}

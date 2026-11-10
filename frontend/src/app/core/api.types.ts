@@ -290,9 +290,6 @@ export interface ScoreBreakdown {
 export interface SplitScores {
   /** engine v2's wRC+ on this side (null without a fit on his splits) */
   wrcPlus: number | null;
-  /** engine v2's ERA on this side, in his listed role (`eraRole`) */
-  era: number | null;
-  eraRole: string | null;
   contact: number | null;
   gap: number | null;
   power: number | null;

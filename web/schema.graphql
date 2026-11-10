@@ -266,10 +266,6 @@ ratings are the ones scored (the split's, or the combined current ratings).
 type SplitScores {
   "engine v2's wRC+ on this side (combined: both sides blended at his hand's mix); null without a fit on his splits"
   wrcPlus: Int
-  "engine v2's ERA on this side in his listed role (eraRole)"
-  era: Float
-  "SP or RP: the role `era` is in"
-  eraRole: String
   contact: Int
   gap: Int
   power: Int

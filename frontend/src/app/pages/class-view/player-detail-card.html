@@ -533,9 +533,9 @@
       @for (r of splitRows(splits(), side); track r.label) {
         <div class="rating lr" [class.part]="r.part" [class.model]="r.model">
           <span>{{ r.label }}</span>
-          <i>{{ splitValue(r.combined, r.decimals) }}</i>
-          <b [class]="splitTone(r.vsL, r.combined, r.lowerBetter)">{{ splitValue(r.vsL, r.decimals) }}</b>
-          <b [class]="splitTone(r.vsR, r.combined, r.lowerBetter)">{{ splitValue(r.vsR, r.decimals) }}</b>
+          <i>{{ splitValue(r.combined) }}</i>
+          <b [class]="splitTone(r.vsL, r.combined)">{{ splitValue(r.vsL) }}</b>
+          <b [class]="splitTone(r.vsR, r.combined)">{{ splitValue(r.vsR) }}</b>
         </div>
       }
     }

@@ -189,11 +189,8 @@ export interface SplitRow {
   vsL: number | null;
   vsR: number | null;
   part?: boolean;
-  /** engine v2's read of the side (wRC+ / ERA), not a rating */
+  /** engine v2's read of the side (wRC+), not a rating */
   model?: boolean;
-  /** ERA: a lower number is the better side */
-  lowerBetter?: boolean;
-  decimals?: number;
 }
 
 // Same order as battingSkillRows / pitchingSkillRows; `true` marks a part.
@@ -227,20 +224,13 @@ export function splitRows(s: PlayerSplits | null | undefined, side: 'batting' | 
       part,
     }))
     .filter((r) => !r.part || r.combined != null || r.vsL != null || r.vsR != null);
-  // v2's read of each side heads the grid when there is one
-  const model: SplitRow =
-    side === 'batting'
-      ? { label: 'wRC+', combined: s.combined.wrcPlus, vsL: s.vsL.wrcPlus, vsR: s.vsR.wrcPlus, model: true }
-      : {
-          label: `ERA as ${s.combined.eraRole ?? ''}`.trim(),
-          combined: s.combined.era,
-          vsL: s.vsL.era,
-          vsR: s.vsR.era,
-          model: true,
-          lowerBetter: true,
-          decimals: 2,
-        };
-  return model.combined == null ? ratings : [model, ...ratings];
+  // v2's wRC+ on each side heads the batting grid when there is one (a
+  // pitcher's ERA on each side is on the value build's matchups line)
+  if (side === 'pitching' || s.combined.wrcPlus == null) return ratings;
+  const model: SplitRow = {
+    label: 'wRC+', combined: s.combined.wrcPlus, vsL: s.vsL.wrcPlus, vsR: s.vsR.wrcPlus, model: true,
+  };
+  return [model, ...ratings];
 }
 
 // ------------------------------------------------------- score breakdown

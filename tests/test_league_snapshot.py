@@ -541,9 +541,9 @@ def test_player_splits_scores_each_side(data_dir):
     # v2's read of each side follows the ratings
     assert s["vs_l"]["wrc_plus"] > s["combined"]["wrc_plus"] > s["vs_r"]["wrc_plus"]
 
+    # a pitcher's ERA by side is on the value build, not here
     p = service.player_splits({"league_id": "yfmlb"}, "100")
-    assert p["combined"]["era_role"] in ("SP", "RP")
-    assert all(p[side]["era"] > 0 for side in ("combined", "vs_l", "vs_r"))
+    assert "era" not in p["combined"]
 
 
 def test_player_splits_unavailable(data_dir):

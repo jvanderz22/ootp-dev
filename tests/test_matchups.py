@@ -55,8 +55,8 @@ def test_arm_slots_read_from_either_export():
 def test_a_big_split_helps_a_reliever_and_costs_a_starter():
     ranked = {r.position: r for r in get_ranker("overall").rank([_pitcher("RP", stamina=20), _pitcher("SP", pid=990002)])}
     (rp_line,), (sp_line,) = _matchups(ranked["RP"]), _matchups(ranked["SP"])
-    assert ranked["RP"].ledger.role == "RP" and "strong side" in rp_line.stat and rp_line.delta > 0
-    assert ranked["SP"].ledger.role == "SP" and "weak side" in sp_line.stat and sp_line.delta < 0
+    assert ranked["RP"].ledger.role == "RP" and "vs LHB · " in rp_line.stat and rp_line.delta > 0
+    assert ranked["SP"].ledger.role == "SP" and "vs LHB · " in sp_line.stat and sp_line.delta < 0
     for r in ranked.values():
         counted = sum(line.delta for line in r.ledger.lines if r.ledger.counted(line) and line.stage != "demand")
         assert counted == pytest.approx(r.pre_demand_score, abs=0.05)
@@ -78,3 +78,13 @@ def test_an_even_split_gets_no_matchups():
     even = {"combined": _even(55), "vl": _even(55), "vr": _even(55)}
     (r,) = get_ranker("overall").rank([_pitcher("RP", even)])
     assert not _matchups(r)
+
+
+def test_the_matchups_line_names_the_batters():
+    from ranking.stages.value import _hands
+
+    # a normal split is weak against the other hand; a reverse one against his own
+    assert _hands("R", 5.0) == ("LHB", "RHB")
+    assert _hands("L", 5.0) == ("RHB", "LHB")
+    assert _hands("L", -3.0) == ("LHB", "RHB")
+    assert _hands(None, 5.0) == ("his weak side", "his strong side")
