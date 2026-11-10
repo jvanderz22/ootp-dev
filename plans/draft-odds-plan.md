@@ -556,6 +556,8 @@ not in `ranking/artifacts/`).*
      *Recommend +1.0 WAR and a regular:* it keeps most of the clear growth
      and drops most of the drift. +1.5 is cleaner, but there are a third
      fewer cases to fit on.
+     **Decided 2026-11-10: +1.0 WAR past the draft-day ceiling, and a
+     regular** (you: "the +1.0 case is legit").
 6. **Fit the growth odds.** A logistic fit of outgrowing on draft-day
    inputs:
    - potential WAR (lower ceilings have more room)
@@ -566,6 +568,52 @@ not in `ranking/artifacts/`).*
    Fit it on the panel (classes 2035–41, the export formats closest to
    potential velocity) and on outcome A (2033–37), bootstrapped, and
    compare the two.
+
+   *Done 2026-11-10.* The panel is `ranking/fitting/ceiling_panel.py`, and
+   the fit is in `draft_odds.py` (`growth_design`, `report_growth`; pass
+   `--panel` to cache the panel). The two sources measure different things:
+   - **Panel:** his *ceiling* outgrew draft day. Classes 2035–41: 348 of
+     6,797 (5.1%).
+   - **A:** his *value now* outgrew it. Classes 2033–37: 75 of 3,840 (2.0%).
+
+   Odds of outgrowing, with 90% ranges. The reference draftee is a hitter,
+   20–21, 3 WAR of ceiling, 7 years on:
+
+   | | panel | A |
+   |---|---|---|
+   | drafted 19 or younger | **×1.49** (1.18–1.85) | **×2.67** (1.67–4.35) |
+   | drafted 22+ | ×0.76 (0.54–1.00) | **×0.44** (0.21–0.77) |
+   | adaptability H | **×1.34** (1.06–1.65) | ×1.22 (0.76–1.99) |
+   | adaptability L | ×1.01 (0.75–1.28) | ×0.71 (0.37–1.12) |
+   | work ethic H | ×1.06 (0.86–1.32) | ×1.18 (0.81–1.74) |
+   | work ethic L | ×0.77 (0.54–1.06) | ×0.62 (0.33–1.03) |
+   | intelligence L | ×0.96 (0.67–1.25) | **×0.49** (0.26–0.82) |
+   | RP (draft day) | **×2.35** (1.71–3.28) | ×1.25 (0.67–2.17) |
+   | SP | ×0.82 (0.61–1.11) | ×0.62 (0.35–1.07) |
+   | velocity, per mph | ×1.02 (0.97–1.08) | ×1.03 (0.89–1.17) |
+   | potential Stuff, per 10 | ×0.97 (0.82–1.09) | ×0.72 (0.48–1.07) |
+   | pitch count, per pitch | ×1.01 (0.89–1.14) | ×0.81 (0.51–1.09) |
+   | log ceiling | ×1.17 (1.09–1.25) | ×0.98 (0.83–1.11) |
+   | readiness, per WAR | ×1.09 (0.94–1.28) | ×1.25 (0.91–1.65) |
+   | years on | ×1.19 (1.14–1.26) | ×0.86 (0.74–1.00) |
+
+   - **Both sources agree on age and makeup.** Youth and adaptability help;
+     low work ethic and low intelligence hurt. High work ethic barely
+     moves it.
+   - **Velocity and Stuff don't predict outgrowing in WAR,** in either
+     source. On POT (the 2026-11-10 first look) they did: ×1.11 per mph,
+     ×1.48 per 10 Stuff. A higher POT doesn't always mean more WAR (see
+     O'Neal). With B4, the evidence for open question 3 is: 96+ velocity
+     raises what he realizes a little (about +17%); neither raises the
+     chance he outgrows his ceiling.
+   - **Relievers' ceilings grow** (×2.35 on the panel). A reliever's
+     ceiling starts small, and the RP regular bar is low (0.19).
+   - **Years cut opposite ways.** The panel's ceilings keep growing with
+     time. A's oldest classes lose value to decline and to players
+     leaving.
+   - **Held out on the panel**, P(outgrows) is calibrated up to the 7th
+     decile and runs high at the top (0.13 predicted against 0.085
+     observed). Leaving out an end class makes "years on" extrapolate.
 7. **Fold growth into the distribution** as its third outcome (step 4's
    model refit with it). Rerun every check in "The distribution" and the
    step 2 ship checks. Then report:

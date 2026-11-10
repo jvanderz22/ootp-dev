@@ -49,10 +49,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
-from sklearn.linear_model import PoissonRegressor
+from sklearn.linear_model import LogisticRegression, PoissonRegressor
 
 from context import default_base_dir
 from ranking import development
+from ranking.fitting import ceiling_panel
 from ranking.hitter_talent import ARTIFACTS_DIR
 
 ARTIFACT = "draft_odds_v1"
@@ -78,6 +79,12 @@ MAKEUP = {
 KEPT = ("ScoutingAccuracyModifier", "DraftSecondaryPersonalityModifier", "DraftPitcherStuffModifier",
         "PitcherVelocityModifier", "BatterHitProfileModifier", "switch hitter")
 BUCKETS = [(1, 25), (26, 50), (51, 100), (101, 200), (201, 400)]
+# the growth odds (B6): outgrowing the ceiling (ranking/fitting/ceiling_panel.py)
+# fit on the panel's later classes, whose exports are closest to carrying
+# potential velocity, and checked on outcome A's
+GROWTH_PANEL_CLASSES = range(2035, 2042)
+GROWTH_C = 1.0                      # logistic regularisation: events are rare
+REFERENCE_YEARS = 7                 # years after the draft the odds are read at
 TOP_K = (25, 50, 100)
 
 
@@ -251,6 +258,75 @@ def side_balance(d: pd.DataFrame, pred: pd.Series) -> float:
     return float(np.sqrt(lo * hi))
 
 
+def growth_design(d: pd.DataFrame) -> pd.DataFrame:
+    """The growth odds' columns, on draft-day inputs; the reference draftee
+    is a hitter, 20-21 at the draft, REFERENCE_WAR at potential, 0 readiness,
+    normal makeup, REFERENCE_YEARS on. A pitcher's velocity (the top of his
+    range, from 93), potential Stuff (from 45) and pitch count (from 3) are 0
+    for hitters."""
+    pitcher = (d.group != "hitter").astype(float)
+    velo = pd.to_numeric(d.velo.astype(str).str.split("-").str[-1], errors="coerce").fillna(93)
+    cols = {
+        "log potential": np.log(d.war_pot.clip(lower=LOG_FLOOR) / REFERENCE_WAR),
+        "readiness": d.readiness.clip(*READINESS_CLIP),
+        "SP": (d.group == "SP").astype(float), "RP": (d.group == "RP").astype(float),
+        "age 19-": (d.age <= 19).astype(float), "age 22+": (d.age >= 22).astype(float),
+        "years": d.years - REFERENCE_YEARS,
+    }
+    for label, test in {**MAKEUP, "AD H": lambda d: d.ad == "H", "AD L": lambda d: d.ad == "L"}.items():
+        cols[label] = test(d).astype(float)
+    cols["velocity"] = pitcher * (velo - 93)
+    cols["Stuff P / 10"] = pitcher * (pd.to_numeric(d.stuff, errors="coerce").fillna(45) - 45) / 10
+    cols["pitches"] = pitcher * (pd.to_numeric(d.pitches, errors="coerce").fillna(3) - 3)
+    return pd.DataFrame(cols, index=d.index)
+
+
+def growth_table(d: pd.DataFrame, base: Path, league: str, cache: str = None) -> pd.DataFrame:
+    """The draftee table joined to the ceiling panel: per draftee (his last
+    class), `outgrows` on the panel (his latest ceiling) and `outgrows_a` on
+    outcome A (his value now, once settled), plus adaptability and years on."""
+    draftees, looks = ceiling_panel.load(base, league, cache)
+    regular = ceiling_panel.regular_thresholds(base, league)
+    o = ceiling_panel.outcomes(draftees, looks, regular, ceiling_panel._season(base, league))
+    o = o.assign(id=o.id.astype(int))[["id", "class", "ad", "years", "outgrows", "g_now"]]
+    g = d.merge(o, on=["id", "class"])
+    g["outgrows_a"] = g.a_settled & (g.a >= g.war_pot + ceiling_panel.MARGIN) & (g.a >= g.g_now.map(regular))
+    return g
+
+
+def fit_growth(g: pd.DataFrame, outcome: str) -> LogisticRegression:
+    return LogisticRegression(C=GROWTH_C, max_iter=5000).fit(growth_design(g).values, g[outcome].values)
+
+
+def report_growth(g: pd.DataFrame):
+    panel = g[g["class"].isin(GROWTH_PANEL_CLASSES)]
+    on_a = g[g["class"].isin(FIT_CLASSES) & g.a_settled]
+    names = list(growth_design(g.head(1)).columns)
+    fits = {}
+    for label, sub, outcome in (("panel", panel, "outgrows"), ("A", on_a, "outgrows_a")):
+        x, y = growth_design(sub).values, sub[outcome].values
+        rng = np.random.default_rng(0)
+        boots = [LogisticRegression(C=GROWTH_C, max_iter=5000).fit(x[i], y[i]).coef_[0]
+                 for i in (rng.integers(0, len(sub), len(sub)) for _ in range(BOOTSTRAPS))]
+        fits[label] = (fit_growth(sub, outcome), *np.percentile(boots, [5, 95], axis=0))
+        print(f"  {label}: classes {sub['class'].min()}-{sub['class'].max()}, n={len(sub)}, "
+              f"outgrew {y.mean():.1%} ({int(y.sum())})")
+    print(f"\n  {'odds of outgrowing':>18}  {'panel (90%)':>22}  {'A (90%)':>22}")
+    for i, name in enumerate(names):
+        cells = [f"x{np.exp(m.coef_[0][i]):.2f} ({np.exp(lo[i]):.2f}-{np.exp(hi[i]):.2f})" for m, lo, hi in fits.values()]
+        print(f"  {name:>18}  {cells[0]:>22}  {cells[1]:>22}")
+    print("\n  held out by class (panel), P(outgrows) by decile, predicted / observed:")
+    held = []
+    for year in sorted(panel["class"].unique()):
+        train, test = panel[panel["class"] != year], panel[panel["class"] == year]
+        held.append(pd.DataFrame({"p": fit_growth(train, "outgrows").predict_proba(growth_design(test).values)[:, 1],
+                                  "y": test.outgrows.values}))
+    h = pd.concat(held)
+    h["dec"] = pd.qcut(h.p.rank(method="first"), 10, labels=False)
+    print("   " + "  ".join(f"{a:.3f}/{b:.3f}" for a, b in h.groupby("dec").agg(a=("p", "mean"), b=("y", "mean")).values))
+    return fits
+
+
 def _shares_line(label, shares) -> str:
     cells = "  ".join(f"{lo}-{hi}: {s:4.0%}" for (lo, hi), s in zip(BUCKETS, shares))
     flag = "" if all(0.4 <= s <= 0.6 for s in shares) else "   <- outside 40-60%"
@@ -263,6 +339,7 @@ def main(argv=None):
     p.add_argument("--data-dir", help="a DATA_DIR copy, e.g. fly_data (default: the app's)")
     p.add_argument("--table", help="cache the draftee table here (a .pkl); read it when it exists")
     p.add_argument("--out", default=str(ARTIFACTS_DIR / f"{ARTIFACT}.json"))
+    p.add_argument("--panel", help="cache the ceiling panel here (a .pkl); read it when it exists")
     p.add_argument("--dry-run", action="store_true")
     args = p.parse_args(argv)
     base = Path(args.data_dir) if args.data_dir else default_base_dir()
@@ -302,6 +379,9 @@ def main(argv=None):
         table = held_out(mature, outcome, "a", balance)
         checks[outcome] = table.round(3).to_dict(orient="index")
         print(f"  judged on {label}, fit on A\n" + "\n".join("    " + line for line in table.round(3).to_string().splitlines()))
+
+    print(f"\ngrowth odds: outgrowing the ceiling (+{ceiling_panel.MARGIN:g} WAR past draft day, and a regular):")
+    report_growth(growth_table(d, base, args.league, args.panel))
 
     names = list(design(able.head(1)).columns)
     coef = dict(zip(names, model_a.coef_))
