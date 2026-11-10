@@ -692,7 +692,7 @@ def ranked_rows(
             # re-check: a concurrent caller may have scored it while we waited
             if not ranked_method_is_fresh(ctx, ranking_method):
                 version = snapshot_version(ctx)
-                ranker = ranking_engine.get_ranker(ranking_method)
+                ranker = ranking_engine.get_ranker(ranking_method, league=ctx.league_id)
                 results_store.save_run(
                     results_store.LEAGUE, ctx.league_id, ranking_method, version,
                     _score(ctx, ranker, ranking_method, progress),

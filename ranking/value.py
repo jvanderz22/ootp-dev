@@ -61,6 +61,30 @@ full TWO_WAY_SHARE from TWO_WAY_FULL WAR (about a league-average full-time
 starter), and a straight ramp between. A decent batter shouldn't outrank
 better batters for being a decent AAA pitcher.
 
+On current ratings (the profile's `league_replacement`), replacement is the
+league's own (decided 2026-11-10). StatsPlus's WAR sets replacement the MLB
+way, which this league's depth leaves far below what's freely available: it
+pays a starter ~0.12 WAR a nine innings just for pitching them, so a
+league-average starter is ~2 WAR, and dozens of them sit in free agency.
+Instead every team has the same spots - LINEUP_FULL everyday bats, then
+bats LINEUP_FULL+1 to LINEUP at the share of a season such bats get,
+ROTATION starters, and BULLPEN relievers at the leverage each bullpen spot
+pitches in (`Replacement`) - and each spot has a price: what the league's
+next-best player would add there, from assigning the league's players to
+its spots for the most WAR (ranking.fitting.replacement). A side is valued
+at the spot he's furthest above its price ("league replacement" in the
+ledger, after "playing time" for a part-time bat). Leverage belongs to the
+spot, not the pitcher: lose your closer and the setup man closes, so a
+closer only earns his edge over the next arm at closer leverage, credited at
+the share of leverage StatsPlus's WAR credits. His matchups are the spot's
+too: the late-inning spots pitch to whoever's due, so a reliever moves
+RELIEF_TILT of his batters to his strong side by his spot
+(`Replacement.tilts`), in place of MATCHUP_TILT. In 2042 the league's
+managers moved ~1% in spots 1-2, 5% in 3-4 and 6% in 5-8 at a full split
+(the fit's "bullpen_tilt"); you pick pockets better than the AI, so yours
+are higher. The modifiers and two-way ramp still read StatsPlus-scale WAR,
+as they were set on it; they scale what's above the league's price.
+
 On screen, `points` = 50 + 10 x WAR (50 = replacement).
 """
 import json
@@ -81,6 +105,17 @@ CONTROL_FLOOR, FLOOR_RAMP = 30, 5
 STARTER_MIN_STAMINA = 35   # borderline, at the bottom of the innings curve
 STARTER_MIN_PITCHES = 3
 DISPLAY_OFFSET, DISPLAY_SCALE = 50.0, 10.0
+REPLACEMENT_ARTIFACT = "replacement_v1"
+# judgment (2026-11-10): a team's spots - 7 everyday bats and 5 part-time
+# ones, 5 starters, 8 relievers
+LINEUP_FULL, LINEUP = 7, 12
+ROTATION, BULLPEN = 5, 8
+# judgment (2026-11-10): the share of a reliever's batters moved to his strong
+# side at FULL_TILT_SPLIT, by bullpen spot - about twice what the league's
+# managers got in the late innings, more where the matchups can be picked
+RELIEF_TILT = (0.024, 0.024, 0.08, 0.08, 0.14, 0.14, 0.14, 0.14)
+# the league the talent and value artifacts are fit on, for a class with none
+DEFAULT_LEAGUE = "yfmlb"
 # legacy modifiers the hitter platoons (ranking/stages/value.py) replace
 PLATOON_REPLACES = ("BatterHandednessModifier",)
 
@@ -200,3 +235,78 @@ class ValueModel:
 @lru_cache(maxsize=None)
 def load(name: str = ARTIFACT) -> ValueModel:
     return ValueModel.from_file(ARTIFACTS_DIR / f"{name}.json")
+
+
+def spot_slots(teams) -> dict:
+    """{spot: how many the league has}: "H" the everyday bats, "H8".."H12"
+    the part-time ones, "SP", and bullpen spots "RP1".."RP8" (most leverage
+    first)."""
+    return {"H": LINEUP_FULL * teams, **{f"H{k}": teams for k in range(LINEUP_FULL + 1, LINEUP + 1)},
+            "SP": ROTATION * teams, **{f"RP{k}": teams for k in range(1, BULLPEN + 1)}}
+
+
+class Replacement:
+    """A league's spots and their prices (WAR). `spots`: "lineup_shares", the
+    share of a full season bats LINEUP_FULL+1..LINEUP get, "bullpen_leverage",
+    and the leverage of bullpen spots 1..BULLPEN; `prices` {spot: WAR}, all 0
+    while they're being fit."""
+
+    def __init__(self, spots: dict, prices: dict = None):
+        self.shares = spots["lineup_shares"]
+        self.bullpen = spots["bullpen_leverage"]
+        self.prices = prices or dict.fromkeys(spot_slots(1), 0.0)
+
+    def hitter_spots(self, war) -> dict:
+        """{spot: his WAR there} for a hitter worth `war` full-time."""
+        part = {f"H{LINEUP_FULL + 1 + i}": share * war for i, share in enumerate(self.shares)}
+        return {"H": war, **part}
+
+    def tilts(self, split) -> list:
+        """The share of his batters a reliever with `split` (either direction)
+        moves to his strong side, by bullpen spot."""
+        ramp = float(np.clip(abs(split) / FULL_TILT_SPLIT, 0.0, 1.0))
+        return [t * ramp for t in RELIEF_TILT]
+
+    def relief_spots(self, runs, innings, weight) -> dict:
+        """{spot: his WAR there} for a reliever saving `runs` (one figure, or
+        one a spot) at average leverage over `innings` credit, leverage
+        credited at `weight`."""
+        runs = np.broadcast_to(np.asarray(runs, dtype=float), len(self.bullpen))
+        return {f"RP{k + 1}": float(r * (1 + weight * (li - 1)) + innings)
+                for k, (r, li) in enumerate(zip(runs, self.bullpen))}
+
+    def leverage(self, spot) -> float:
+        return self.bullpen[int(spot[2:]) - 1]
+
+    def share(self, spot) -> float:
+        return 1.0 if spot == "H" else self.shares[int(spot[1:]) - LINEUP_FULL - 1]
+
+    def best(self, spots) -> str:
+        """The spot he's furthest above its price."""
+        return max(spots, key=lambda s: spots[s] - self.prices[s])
+
+    @staticmethod
+    def describe(spot) -> str:
+        if spot == "H":
+            return f"an everyday bat, {LINEUP_FULL} a team"
+        if spot == "SP":
+            return f"a starter, {ROTATION} a team"
+        if spot.startswith("RP"):
+            return f"bullpen spot {spot[2:]} of {BULLPEN}"
+        return f"the {spot[1:]}th bat"
+
+
+@lru_cache(maxsize=None)
+def _replacement_artifact() -> dict:
+    path = ARTIFACTS_DIR / f"{REPLACEMENT_ARTIFACT}.json"
+    return json.loads(path.read_text()) if path.exists() else None
+
+
+def replacement(league=None):
+    """`league`'s Replacement (DEFAULT_LEAGUE's for a league it has none
+    for), or None before it's fit."""
+    artifact = _replacement_artifact()
+    if artifact is None:
+        return None
+    found = artifact["leagues"].get(league) or artifact["leagues"].get(DEFAULT_LEAGUE)
+    return Replacement(artifact["spots"], found["prices"]) if found else None

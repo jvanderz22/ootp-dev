@@ -58,9 +58,16 @@ BELOW_REPLACEMENT = ("PersonalityModifier", "DraftSecondaryPersonalityModifier")
 class Value(BatchStage):
     name = "value"
 
-    def __init__(self, profile, model=None):
+    def __init__(self, profile, model=None, league=None, replacement=None):
         self.ratings = RatingsView(profile.ratings)
         self.model = model or value.load()
+        # the league's spots and their prices (value.Replacement); None values
+        # him over StatsPlus's replacement, as the potential and draft boards do
+        self.league = league
+        self.league_replacement = profile.league_replacement
+        if replacement is None and profile.league_replacement:
+            replacement = value.replacement(league)
+        self.replacement = replacement if profile.league_replacement else None
         self.hitting_model = hitter_talent.load()
         self.fielding_model = fielding_talent.load()
         self.pitching_model = pitcher_talent.load()
@@ -73,7 +80,24 @@ class Value(BatchStage):
 
     @property
     def artifacts(self) -> dict:
-        return {self.name: self.model.version}
+        out = {self.name: self.model.version}
+        if self.league_replacement:
+            out["replacement"] = f"{value.REPLACEMENT_ARTIFACT}:{self.league or value.DEFAULT_LEAGUE}"
+        return out
+
+    def _spot(self, side, spots, spot) -> list:
+        """Value the side at `spot` of his `spots`: the ledger adjustments
+        (label, WAR, stat, note) from his full-time WAR down to that spot's
+        price, recorded on the side."""
+        side.spots = spots
+        price, full = self.replacement.prices[spot], spots.get("H", spots.get(spot))
+        out = []
+        if spot.startswith("H") and spot != "H":
+            out.append(("playing time", spots[spot] - full, f"{self.replacement.share(spot):.0%} of PA",
+                        value.Replacement.describe(spot)))
+        out.append(("league replacement", -price, f"{price:.2f} WAR", value.Replacement.describe(spot)))
+        side.replacement = -sum(delta for _, delta, _, _ in out)
+        return out
 
     def run(self, states, profile):
         for state in states:
@@ -163,7 +187,16 @@ class Value(BatchStage):
         if self.develops and batting and batting.bats == "S":
             developing.append(development.switch_hitter(war))
         self._modifiers(state, side, BATTING, war)
-        return self._modified(state, side, war, BATTING, developing)
+        adjustments = []
+        if self.replacement:
+            spots = self.replacement.hitter_spots(war)
+            spot = self.replacement.best(spots)
+            if spots[spot] < self.replacement.prices[spot]:
+                # below replacement at every spot: no part-time bat shrinks
+                # that, so he's valued full-time, which keeps the bottom ordered
+                spot = "H"
+            adjustments = self._spot(side, spots, spot)
+        return self._modified(state, side, war, BATTING, developing, adjustments=adjustments)
 
     def _positions(self, player, field):
         """Record his fielding at every position for the card, calibrated the
@@ -235,10 +268,33 @@ class Value(BatchStage):
         normal = self.model.relieving(era["rp"], rp_index)
         relieving = self.model.relieving(era["rp matched"], rp_matched)
         sp_war = sum(starting.values()) if starting else None
-        rp_war = sum(relieving.values())
+        adjustments = []
+        if self.replacement:
+            # leverage is the bullpen spot's, credited as StatsPlus's WAR credits it
+            # and so are his matchups: the spot's tilt to his strong side
+            weight = self.model.pitcher["rp"]["statsplus_leverage_weight"]
+            tilts = self.replacement.tilts(split["rp"])
+            runs = []
+            for t in tilts:
+                index = rp_index - t * abs(split["rp"])
+                runs.append(self.model.relieving(float(cal("era", rp_era * index / rp_index, "rp")), index)["runs"])
+            spots = self.replacement.relief_spots(runs, relieving["innings"], weight)
+            pen = self.replacement.best(spots)
+            leverage, rp_tilt = self.replacement.leverage(pen), tilts[int(pen[2:]) - 1]
+            normal = {**normal, "leverage": normal["runs"] * weight * (leverage - 1)}
+            rp_war, how = spots[pen], f"bullpen spot {pen[2:]}"
+            if starting:
+                spots["SP"] = sp_war
+            spot = self.replacement.best(spots)
+            starts = spot == "SP"
+            adjustments = self._spot(side, spots, spot)
+        else:
+            leverage, how, rp_tilt = float(self.model.leverage(rp_index)), None, tilt["rp"]
+            rp_war = sum(relieving.values())
+            starts = starting and sp_war >= rp_war
         side.components = {"starter": SCALE * sp_war if starting else 0.0, "reliever": SCALE * rp_war}
         ledger = state.ledger
-        if starting and sp_war >= rp_war:
+        if starts:
             side.role, state.era = "SP", era["sp"]
             matchups = SCALE * (starting["runs"] - sp_normal["runs"])
             shown = tilt["sp"] > 0 and abs(matchups) >= MATCHUPS_SHOWN
@@ -254,15 +310,14 @@ class Value(BatchStage):
             war = sp_war
         else:
             side.role, state.era = "RP", era["rp"]
-            leverage = float(self.model.leverage(rp_index))
             matchups = SCALE * (rp_war - normal["runs"] - normal["leverage"] - normal["innings"])
-            shown = tilt["rp"] > 0 and abs(matchups) >= MATCHUPS_SHOWN
+            shown = rp_tilt > 0 and abs(matchups) >= MATCHUPS_SHOWN
             ledger.add(MODEL, "pitching", SCALE * normal["runs"] + (0.0 if shown else matchups), PITCHING,
                        f"{era['rp']:.2f} ERA", self._pitching_detail(player, fitted, "rp"))
-            ledger.add(MODEL, "leverage", SCALE * normal["leverage"], PITCHING, f"LI {leverage:.2f}")
+            ledger.add(MODEL, "leverage", SCALE * normal["leverage"], PITCHING, f"LI {leverage:.2f}", how)
             if shown:
                 _, strong = _hands(self.ratings.throws(player), split["rp"])
-                ledger.add(MODEL, "matchups", matchups, PITCHING, f"+{tilt['rp']:.0%} vs {strong}",
+                ledger.add(MODEL, "matchups", matchups, PITCHING, f"+{rp_tilt:.0%} vs {strong}",
                            "how you'd use him")
             ledger.add(MODEL, "innings", SCALE * relieving["innings"], PITCHING,
                        f"{self.model.workloads['reliever_ip']:.0f} IP", "relief workload")
@@ -287,7 +342,7 @@ class Value(BatchStage):
         floor = value.control_floor(control)
         floors = [("Control floor", floor, f"Control {control}")] if floor < 1 else []
         self._modifiers(state, side, PITCHING, war)
-        return self._modified(state, side, war, PITCHING, self._development(state, war), floors)
+        return self._modified(state, side, war, PITCHING, self._development(state, war), floors, adjustments)
 
     def _side_eras(self, player, fitted, role, role_era, gap, split):
         """{"LHB" | "RHB": his ERA in `role` against them}: his splits', or,
@@ -342,13 +397,17 @@ class Value(BatchStage):
         return development.factors(state.player, war) if self.develops else []
 
     @staticmethod
-    def _modified(state, side, war, side_name, developing=(), floors=()) -> float:
-        """The side's WAR after its floors, its modifiers and then its
+    def _modified(state, side, war, side_name, developing=(), floors=(), adjustments=()) -> float:
+        """The side's WAR after its `adjustments` (label, WAR, stat, note: the
+        league's replacement), then its floors, its modifiers and then its
         development factors, which scale the part above replacement. Below
         replacement only his personality counts (decided 2026-11-08), in
         reverse: the development factors and BELOW_REPLACEMENT modifiers
         divide the deficit, so good makeup shrinks it. Recorded as ledger
         lines and the side's score."""
+        for label, delta, stat, note in adjustments:
+            state.ledger.add(MODEL, label, SCALE * delta, side_name, stat, note)
+            war += delta
         if war < 0:
             below = SCALE * war
             personality = [(MODIFIERS, n, f, None) for n, f in side.modifiers if n in BELOW_REPLACEMENT]
@@ -378,8 +437,10 @@ class Value(BatchStage):
         state.ledger.role = (state.batting if primary == BATTING else state.pitching).role
         war = max(hitting, pitching)
         other = min(hitting, pitching)
-        share = value.two_way_share(other)
-        if share > 0:
+        # the ramp is set in StatsPlus's WAR, so it reads the other side there;
+        # the share is of what's above replacement
+        share = value.two_way_share(other + (state.batting if secondary == BATTING else state.pitching).replacement)
+        if share > 0 and other > 0:
             bonus = share * other
             role = "pitcher" if secondary == PITCHING else "hitter"
             state.ledger.add(TWO_WAY, "two-way", SCALE * bonus, stat=f"{share:.0%} of {other:.1f} WAR", note=f"as a {role}")

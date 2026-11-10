@@ -24,7 +24,7 @@ ENGINE = "v2"
 UNIT = {"v2": "WAR points (50 + 10 x WAR)", "legacy": "points"}
 
 
-def legacy_pipeline(profile):
+def legacy_pipeline(profile, league=None):
     """Today's scoring as stages: (batch stages, pool stages)."""
     return [LegacyModel(profile), LegacyModifiers(), TwoWay()], [Demand()]
 
@@ -32,18 +32,20 @@ def legacy_pipeline(profile):
 # Engine v2's pipeline: the fitted talent models, then WAR (with the modifiers
 # and the two sides combined), then demand. `legacy` keeps reproducing the
 # legacy rankers (with a ledger) for comparison.
-def v2_pipeline(profile):
-    return [Talent(profile), Value(profile)], [Demand(offset=DISPLAY_OFFSET)]
+def v2_pipeline(profile, league=None):
+    return [Talent(profile), Value(profile, league=league)], [Demand(offset=DISPLAY_OFFSET)]
 
 
 PIPELINES = {"v2": v2_pipeline, "legacy": legacy_pipeline}
 
 
 class Ranker:
-    def __init__(self, profile, pipeline="v2"):
+    def __init__(self, profile, pipeline="v2", league=None):
         self.profile = profile
         self.pipeline = pipeline
-        self.batch_stages, self.pool_stages = PIPELINES[pipeline](profile)
+        # the league scored (its replacement levels, ranking/value.py)
+        self.league = league
+        self.batch_stages, self.pool_stages = PIPELINES[pipeline](profile, league)
 
     def manifest(self, source_version=None) -> dict:
         artifacts = {}

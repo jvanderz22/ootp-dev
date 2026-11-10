@@ -35,14 +35,14 @@ def using(engine: str):
         _current.reset(token)
 
 
-def get_ranker(method: str, engine: str = None):
-    """A ranker for `method` under `engine` (default: the current one). Both
-    kinds take `rank(players, batch_size=, progress=)` and return results
-    best-first."""
+def get_ranker(method: str, engine: str = None, league: str = None):
+    """A ranker for `method` under `engine` (default: the current one), for a
+    class or snapshot in `league` (v2 only). Both kinds take
+    `rank(players, batch_size=, progress=)` and return results best-first."""
     if validate(engine or current()) == "legacy":
         from rankers.get_ranker import get_ranker_for_method
 
         return get_ranker_for_method(method)
     from ranking import get_ranker as get_v2_ranker
 
-    return get_v2_ranker(method)
+    return get_v2_ranker(method, league=league)

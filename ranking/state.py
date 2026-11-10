@@ -20,6 +20,11 @@ class SideState:
     role: str = None
     # the profile's modifiers as (name, factor), for the value layer to replay
     modifiers: list = field(default_factory=list)
+    # v2 with the league's replacement (ranking/value.py): his WAR at each spot
+    # he can fill, and the WAR the league's replacement took (its price, and
+    # for a part-time bat his playing time)
+    spots: dict = None
+    replacement: float = 0.0
 
 
 @dataclass(slots=True)

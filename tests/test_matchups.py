@@ -52,7 +52,10 @@ def test_arm_slots_read_from_either_export():
         assert RatingsView.arm_slot(GamePlayer({**row, "Slot": exported})) == slot
 
 
-def test_a_big_split_helps_a_reliever_and_costs_a_starter():
+def test_a_big_split_helps_a_reliever_and_costs_a_starter(monkeypatch):
+    # roles over StatsPlus's replacement: these starters are back-end ones the
+    # league's own replacement prices into the bullpen
+    monkeypatch.setattr(value, "replacement", lambda league=None: None)
     ranked = {r.position: r for r in get_ranker("overall").rank([_pitcher("RP", stamina=20), _pitcher("SP", pid=990002)])}
     (rp_line,), (sp_line,) = _matchups(ranked["RP"]), _matchups(ranked["SP"])
     assert ranked["RP"].ledger.role == "RP" and "% vs " in rp_line.stat and rp_line.delta > 0
@@ -64,6 +67,7 @@ def test_a_big_split_helps_a_reliever_and_costs_a_starter():
 
 def test_a_big_split_moves_a_back_end_starter_to_the_bullpen(monkeypatch):
     back_end = {"combined": _even(45), "vl": _even(31), "vr": _even(52)}
+    monkeypatch.setattr(value, "replacement", lambda league=None: None)
 
     def role():
         (r,) = get_ranker("overall").rank([_pitcher("SP", back_end, stamina=35)])

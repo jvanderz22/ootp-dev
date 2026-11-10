@@ -95,6 +95,7 @@ def test_manifest_lists_the_artifact():
     assert get_ranker("overall").manifest()["artifact_versions"] == {
         "hitter-talent": hitter_talent.ARTIFACT, "pitcher-talent": pitcher_talent.ARTIFACT,
         "fielding-talent": "fielding_talent_v2", "running-talent": "running_talent_v1", "value": "value_v1",
+        "replacement": "replacement_v1:yfmlb",
     }
     assert get_ranker("overall", "legacy").manifest()["artifact_versions"] == {}
 

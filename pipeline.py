@@ -81,7 +81,7 @@ def write_player_scores(ctx, players, engine=None) -> None:
 
 def _write_player_scores(ctx, players, engine) -> None:
     print(f"Ranking using ranking method {ctx.ranking_method} ({engine})")
-    ranker = ranking_engine.get_ranker(ctx.ranking_method, engine)
+    ranker = ranking_engine.get_ranker(ctx.ranking_method, engine, league=ctx.config.get("league_id"))
     scored = ranker.rank(players)
     results_store.save_run(
         results_store.CLASS,

@@ -140,3 +140,90 @@ def test_a_wild_pitcher_keeps_none_of_his_value_above_replacement():
     (line,) = [l for l in r.ledger.lines if l.label == "Control floor"]
     assert line.side == "pitching" and line.stat == "x0.00"
     assert r.pitcher_score <= 0
+
+
+# -- the league's replacement (2026-11-10) ---------------------------------------
+
+SPOTS = {"lineup_shares": [0.67, 0.6, 0.5, 0.43, 0.37], "bullpen_leverage": [1.9, 1.5, 1.3, 1.15, 1.0, 0.9, 0.8, 0.7],
+         "bullpen_tilt": [0.0, 0.0, 0.05, 0.05, 0.06, 0.06, 0.06, 0.06]}
+
+
+def test_spots_taper_playing_time_and_leverage():
+    rep = value.Replacement(SPOTS)
+    bats = rep.hitter_spots(2.0)
+    assert bats["H"] == 2.0 and bats["H8"] == pytest.approx(1.34) and bats["H12"] == pytest.approx(0.74)
+    pen = rep.relief_spots(1.0, 0.3, 0.42)
+    assert pen["RP1"] > pen["RP4"] > pen["RP8"] and pen["RP5"] == pytest.approx(1.3)
+    assert set(value.spot_slots(30)) == {*bats, *pen, "SP"} and value.spot_slots(30)["H"] == 30 * value.LINEUP_FULL
+
+
+def test_a_player_is_valued_at_the_spot_hes_furthest_above_its_price():
+    prices = {**dict.fromkeys(value.spot_slots(1), 0.2), "H": 1.7, "H8": 1.0, "SP": 2.0}
+    rep = value.Replacement(SPOTS, {**prices, **dict.fromkeys(("H9", "H10", "H11", "H12"), 1.0)})
+    assert rep.best(rep.hitter_spots(4.0)) == "H"
+    assert rep.best(rep.hitter_spots(2.0)) == "H8"   # 2.0 - 1.7 < 1.34 - 1.0
+    assert rep.best({"SP": 2.1, **rep.relief_spots(1.0, 0.3, 0.42)}) == "RP1"
+
+
+def test_spot_prices_are_what_the_next_best_player_would_add():
+    from ranking.fitting.replacement import prices
+
+    players = [{"H": w, "H8": 0.5 * w} for w in (4.0, 3.5, 3.0, 2.0, 1.0)]
+    # one everyday spot and two half-time: 4 starts, 3.5 and 3 sit, 2 and 1 are out
+    got = prices(players, {"H": 1, "H8": 2})
+
+    def net(p):
+        return {s: p[s] - got[s] for s in p}
+
+    assert max(net(players[0]), key=net(players[0]).get) == "H"
+    assert all(max(net(p).values()) >= -1e-9 and max(net(p), key=net(p).get) == "H8" for p in players[1:3])
+    assert all(max(net(p).values()) <= 1e-9 for p in players[3:])
+
+
+def test_only_current_ratings_use_the_league_replacement(ranked):
+    def lines(r):
+        return [line for line in r.ledger.lines if line.label == "league replacement"]
+
+    if value.replacement() is None:
+        pytest.skip("no replacement artifact")
+    assert all(len(lines(r)) >= 1 for r in ranked)
+    potential = get_ranker("potential").rank([GamePlayer(dict(r)) for r in join_rows(*make_snapshot_csvs())])
+    assert not any(lines(r) for r in potential)
+
+
+def test_a_bat_below_replacement_everywhere_is_valued_full_time(ranked):
+    for r in ranked:
+        if r.ledger.side == "batting" and r.overall_score < value.DISPLAY_OFFSET:
+            assert not [line for line in r.ledger.lines if line.label == "playing time" and r.ledger.counted(line)]
+
+
+def test_two_way_never_takes_off_for_a_side_below_the_league_price():
+    state = PlayerState(player=None)
+    state.pitching.replacement = 2.0   # 1.8 WAR starting, 0.2 under the rotation's price
+    Value._combine(state, 3.0, -0.2)
+    assert state.value == pytest.approx(value.points(3.0))
+
+
+def test_current_ratings_without_the_league_replacement_are_statsplus_scale():
+    # the draft odds score outcome A and readiness this way (plans/draft-odds-plan.md)
+    from dataclasses import replace
+
+    from ranking.profiles import CURRENT
+    from ranking.ranker import Ranker
+
+    plain = Ranker(replace(CURRENT, league_replacement=False))
+    stage = next(s for s in plain.batch_stages if isinstance(s, Value))
+    assert stage.replacement is None
+    for r in plain.rank([GamePlayer(dict(r)) for r in join_rows(*make_snapshot_csvs())]):
+        assert not [line for line in r.ledger.lines if line.label in ("league replacement", "playing time")]
+        assert all(line.note is None for line in r.ledger.lines if line.label == "leverage")
+
+
+def test_a_reliever_picks_fewer_matchups_in_a_busier_spot():
+    rep = value.Replacement(SPOTS)
+    half, full = rep.tilts(value.FULL_TILT_SPLIT / 2), rep.tilts(-2 * value.FULL_TILT_SPLIT)
+    assert full == pytest.approx(list(value.RELIEF_TILT)) and full[0] < full[2] < full[4]
+    assert half[4] == pytest.approx(full[4] / 2) and max(full) < value.MATCHUP_TILT
+    # more runs saved a spot (his matchups) count at that spot's leverage
+    pen = rep.relief_spots([1.0] * 4 + [2.0] * 4, 0.3, 0.42)
+    assert pen["RP5"] == pytest.approx(2.0 * 1.0 + 0.3)

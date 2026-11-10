@@ -55,6 +55,9 @@ class ScoringProfile:
     # sides are within `high / two_way_threshold` of each other
     two_way_threshold: float = 1.8
     two_way_bonus: float = 0.15
+    # v2: value WAR above the league's own replacement by role
+    # (ranking/value.py), not StatsPlus's
+    league_replacement: bool = False
 
     def without(self, *modifiers) -> "ScoringProfile":
         """This profile minus `modifiers` (matched by name) on every side."""
@@ -83,6 +86,7 @@ class ScoringProfile:
             "demand_modifiers": [_describe_modifier(m) for m in self.demand_modifiers],
             "two_way_threshold": self.two_way_threshold,
             "two_way_bonus": self.two_way_bonus,
+            "league_replacement": self.league_replacement,
         }
 
     def config_hash(self) -> str:
@@ -95,6 +99,9 @@ CURRENT = ScoringProfile(
     ratings="overall",
     batting_modifiers=(BatterHandednessModifier, BatterHitProfileModifier(True)),
     two_way_threshold=2.5,
+    # next season's value on current ratings (2026-11-10); the potential and
+    # draft boards stay on StatsPlus's until the draft odds settle theirs
+    league_replacement=True,
 )
 
 # Potential ratings for the league's rookies (legacy OverallPotentialRanker).
