@@ -306,14 +306,15 @@
     @if (build(); as vb) {
       @if (breakdown()?.splits?.length) {
         @let b = breakdown()!;
-        <div class="vb-splits" [title]="b.splitsExpected ? 'Expected for his batting hand' : ''">
+        @let estimate = b.splitStat === 'ERA' ? 'estimated from his hand, slot and pitches' : 'expected for his hand';
+        <div class="vb-splits" [title]="b.splitsExpected ? estimate : ''">
           @for (s of b.splits; track s.name) {
             <span
               >{{ s.name }}
               <b>{{ b.splitStat === 'ERA' ? (s.value | number: '1.2-2') : (s.value | number: '1.0-0') }}</b></span
             >
           }
-          <span class="muted">{{ b.splitStat }}{{ b.splitsExpected ? ' · expected for his hand' : '' }}</span>
+          <span class="muted">{{ b.splitStat }}{{ b.splitsExpected ? ' · ' + estimate : '' }}</span>
         </div>
       }
       <div class="vb">

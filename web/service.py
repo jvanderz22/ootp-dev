@@ -1242,14 +1242,15 @@ def player_breakdown(source: dict, player_id):
 def _splits_payload(breakdown, side) -> dict:
     """v2: the side he's judged on, against each hand - a hitter's wRC+ vs
     LHP / RHP (his splits, or the expected ones for his hand), a pitcher's ERA
-    vs LHB / RHB in the role he's valued in (his splits only)."""
+    vs LHB / RHB in the role he's valued in (his splits, or estimated from his
+    hand, slot and pitches)."""
     v = ((breakdown.get(side) or {}).get("value") or {}) if side else {}
     if side == "batting" and v.get("wrc_vl") is not None:
         return {"splits": [{"name": "vs LHP", "value": v["wrc_vl"]}, {"name": "vs RHP", "value": v["wrc_vr"]}],
                 "split_stat": "wRC+", "splits_expected": bool(v.get("splits_expected"))}
     if side == "pitching" and v.get("era_vl") is not None:
         return {"splits": [{"name": "vs LHB", "value": v["era_vl"]}, {"name": "vs RHB", "value": v["era_vr"]}],
-                "split_stat": "ERA", "splits_expected": False}
+                "split_stat": "ERA", "splits_expected": bool(v.get("splits_expected"))}
     return {"splits": [], "split_stat": None, "splits_expected": False}
 
 

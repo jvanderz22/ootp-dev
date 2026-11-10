@@ -171,13 +171,17 @@ def test_breakdown_carries_the_ledger(client):
 
 def test_breakdown_carries_the_judged_sides_splits(client):
     # a draft class has no split ratings: a hitter shows the splits expected
-    # for his batting hand, a pitcher none
+    # for his batting hand, a pitcher the ones estimated from his hand, slot
+    # and pitches
     source = {"className": CLASS}
     for row in _gql(client, _ROWS)["rankedPlayers"]["rows"]:
         b = _gql(client, _BREAKDOWN, source=source, id=row["id"])["playerBreakdown"]
         side = next(line["side"] for line in b["ledger"] if line["counted"] and line["side"])
         if side == "pitching":
-            assert b["splits"] == [] and b["roleEra"]
+            assert b["roleEra"]
+            if b["splits"]:
+                assert [s["name"] for s in b["splits"]] == ["vs LHB", "vs RHB"]
+                assert b["splitStat"] == "ERA" and b["splitsExpected"]
         elif b["splits"]:
             assert [s["name"] for s in b["splits"]] == ["vs LHP", "vs RHP"]
             assert b["splitStat"] == "wRC+" and b["splitsExpected"]

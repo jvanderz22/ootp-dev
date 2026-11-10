@@ -259,7 +259,7 @@ export interface ScoreBreakdown {
   splits: NamedValue[];
   /** 'wRC+' or 'ERA': what `splits` are in */
   splitStat: string | null;
-  /** the hitter splits are the expected ones for his batting hand */
+  /** not his own: a hitter's expected for his hand, a pitcher's estimated from hand, slot and pitches */
   splitsExpected: boolean;
   batting: {
     battingModel: number | null;

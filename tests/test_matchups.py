@@ -55,8 +55,8 @@ def test_arm_slots_read_from_either_export():
 def test_a_big_split_helps_a_reliever_and_costs_a_starter():
     ranked = {r.position: r for r in get_ranker("overall").rank([_pitcher("RP", stamina=20), _pitcher("SP", pid=990002)])}
     (rp_line,), (sp_line,) = _matchups(ranked["RP"]), _matchups(ranked["SP"])
-    assert ranked["RP"].ledger.role == "RP" and "vs LHB · " in rp_line.stat and rp_line.delta > 0
-    assert ranked["SP"].ledger.role == "SP" and "vs LHB · " in sp_line.stat and sp_line.delta < 0
+    assert ranked["RP"].ledger.role == "RP" and "% vs " in rp_line.stat and rp_line.delta > 0
+    assert ranked["SP"].ledger.role == "SP" and "% vs " in sp_line.stat and sp_line.delta < 0
     for r in ranked.values():
         counted = sum(line.delta for line in r.ledger.lines if r.ledger.counted(line) and line.stage != "demand")
         assert counted == pytest.approx(r.pre_demand_score, abs=0.05)
