@@ -84,3 +84,11 @@ def test_pitchers_carry_the_balance_and_their_velocity(ranked):
     assert pitchers and all(any(l.label == "pitcher balance" for l in r.ledger.lines) for r in pitchers)
     hitters = [r for r in ranked if r.ledger.side == "batting"]
     assert not any(l.label == "pitcher balance" and r.ledger.counted(l) for r in hitters for l in r.ledger.lines)
+
+
+def test_a_reliever_realizes_less_of_his_ceiling_than_a_starter():
+    # the reliever factor is refit on the exports that rate draftee relievers
+    # like today's (2026-11-10): the fit's own classes overrated them ~3x
+    odds = draft_odds.load().a
+    assert odds["role"]["RP"] < odds["role"]["SP"] < 1
+    assert odds["check"]["reliever"]["fit"] > odds["role"]["RP"]

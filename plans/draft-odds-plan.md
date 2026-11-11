@@ -343,6 +343,32 @@ both (the ledger or the card), decided at build time.
   role").
 - **Chance he outgrows his ceiling: 7%.**
 
+### Relievers (2026-11-10, D)
+
+You: the board pushed relievers well above where the league drafts them;
+"if I followed this model as San Diego, I'd end up with nothing but
+relievers." On 2042: 9 relievers in the top 25, the best at 5th (Brad
+Nelson, a 2.8 ceiling, ahead of Mike Mooney's 7.2).
+
+- **Why:** the fit's classes (2033–37) rated almost no draftee reliever
+  above 2 WAR at potential: 12 of the 87 it saw. From the 2038 export on,
+  14–39 a class are. So the fit's RP ×1.13 was read off low ceilings.
+- **What they realized:** the relievers the fit ranked in its held-out top
+  200 realized 0.53 of the prediction. The settled 2038–41 relievers
+  realized 0.28, against hitters' 0.90 and starters' 0.57 (all short:
+  their careers are young).
+- **Decided:** refit only the reliever factor, on settled 2038–41
+  draftees, relative to hitters: ×1.13 → **×0.35**
+  (`reliever_factor`, `RELIEVER_CLASSES`). The rest of the fit stays on
+  2033–37. Pitcher balance ×0.87 → ×0.97. The distribution's spreads are
+  still read against the fit's own mean.
+- **After:** held out on 2033–37, top 25 / 50 / 100 is 1.55 / 1.35 / 1.09
+  (was 1.52 / 1.36 / 1.10). On 2042 the top 25 is 15 hitters and 10
+  starters, and the best reliever is 90th.
+- **Not done:** pricing relievers on the league's roster scale (the
+  Current board's bullpen taper: an elite closer about 3.9 → 2.0). Held
+  back as a second cut for the same problem.
+
 ### Order of work (2026-11-10)
 
 This replaces "Order of work" below. Nothing gets built until you say so.

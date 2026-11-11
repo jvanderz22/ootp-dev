@@ -34,6 +34,13 @@ tapers them (decided 2026-11-09), so a fitted factor is its full-weight value.
 Fit on draftees with MIN_POTENTIAL_WAR or more: below that the board barely
 ranks them and neither outcome has anything to say.
 
+The reliever factor alone is refit on RELIEVER_CLASSES (decided 2026-11-10):
+the fit's classes rated almost no draftee reliever above 2 WAR at potential,
+and the later exports rate dozens a class, so the fit's factor is read off
+low ceilings and doesn't carry. It's how much of what the fit predicts
+relievers realize there, against hitters in the same classes (whose careers
+are as short), times the fit's factor.
+
 Then, leaving one class out at a time, the fit's ranking against today's board
 (pre-demand) on both outcomes; and the pitcher share by rank bucket, with the
 one side-balance factor on pitchers that brings the buckets to 50/50 on
@@ -86,6 +93,9 @@ BUCKETS = [(1, 25), (26, 50), (51, 100), (101, 200), (201, 400)]
 # fit on the panel's later classes, whose exports are closest to carrying
 # potential velocity, and checked on outcome A's
 GROWTH_PANEL_CLASSES = range(2035, 2042)
+# the reliever factor's classes: the first exports that rate draftee relievers
+# like today's, judged on the draftees settled by now
+RELIEVER_CLASSES = range(2038, 2042)
 GROWTH_C = 1.0                      # logistic regularisation: events are rare
 REFERENCE_YEARS = 7                 # years after the draft the odds are read at
 # judgment (2026-11-10): the data's sample is small, and you'd keep a work
@@ -196,8 +206,27 @@ def design(d: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(cols, index=d.index)
 
 
-def fit(d: pd.DataFrame, outcome: str) -> PoissonRegressor:
-    return PoissonRegressor(alpha=ALPHA, max_iter=5000).fit(design(d).values, d[outcome].clip(lower=0).values)
+def fit(d: pd.DataFrame, outcome: str, reliever: float = None) -> PoissonRegressor:
+    """The Poisson fit, with the reliever factor set to `reliever` when given."""
+    model = PoissonRegressor(alpha=ALPHA, max_iter=5000).fit(design(d).values, d[outcome].clip(lower=0).values)
+    if reliever is not None:
+        model.coef_[_column("RP")] = np.log(reliever)
+    return model
+
+
+def _column(name) -> int:
+    return list(design(pd.DataFrame({"war_pot": [1.0], "readiness": [0.0], "group": ["hitter"], "age": [21],
+                                     "we": ["N"], "int": ["N"], "prone": ["Normal"]})).columns).index(name)
+
+
+def reliever_factor(d: pd.DataFrame, model: PoissonRegressor) -> tuple:
+    """(the factor, {group: realized / predicted}): on RELIEVER_CLASSES'
+    settled draftees, the fit's reliever factor x relievers' realized share
+    of their predicted A over hitters'."""
+    t = d[d["class"].isin(RELIEVER_CLASSES) & d.a_settled & (d.war_pot >= MIN_POTENTIAL_WAR)]
+    t = t.assign(pred=model.predict(design(t).values), y=t.a.clip(lower=0))
+    ratio = {g: float(x.y.sum() / x.pred.sum()) for g, x in t.groupby("group")}
+    return float(np.exp(model.coef_[_column("RP")]) * ratio["RP"] / ratio["hitter"]), ratio
 
 
 def bootstrap(d: pd.DataFrame, outcome: str, seed=0) -> np.ndarray:
@@ -236,7 +265,7 @@ def balanced(d: pd.DataFrame, pred, balance: float) -> np.ndarray:
     return np.where(d.group == "hitter", pred, pred * balance)
 
 
-def held_out(d: pd.DataFrame, outcome: str, fit_outcome: str, balance: float) -> pd.DataFrame:
+def held_out(d: pd.DataFrame, outcome: str, fit_outcome: str, balance: float, reliever: float) -> pd.DataFrame:
     """Mean per class, leaving each class out of a fit on `fit_outcome`
     (pitchers x `balance`): rho and the mean `outcome` of the top k, for the
     board and the fit."""
@@ -245,7 +274,7 @@ def held_out(d: pd.DataFrame, outcome: str, fit_outcome: str, balance: float) ->
         train, test = d[d["class"] != year], d[d["class"] == year].copy()
         train = train[train[f"{fit_outcome}_settled"]]
         test = test[test[f"{outcome}_settled"]]
-        test["fit"] = balanced(test, fit(train, fit_outcome).predict(design(test).values) * kept(test), balance)
+        test["fit"] = balanced(test, fit(train, fit_outcome, reliever).predict(design(test).values) * kept(test), balance)
         y = test[outcome].clip(lower=0)
         for key in ("board", "fit"):
             row = {"class": year, "key": key, "rho": spearmanr(test[key], y)[0]}
@@ -379,7 +408,7 @@ class Odds:
     Everything scales with `scale` (the kept lines, and the balance on
     pitchers), as the board scales his value."""
 
-    def fit(self, a: pd.DataFrame, a_all: pd.DataFrame, panel: pd.DataFrame):
+    def fit(self, a: pd.DataFrame, a_all: pd.DataFrame, panel: pd.DataFrame, reliever: float = None):
         self.growth = fit_growth(panel, "outgrows")
         y = a_all.outgrows_a.values.astype(float)
         offset = growth_logit(self.growth, a_all)
@@ -389,12 +418,14 @@ class Odds:
         self.excess = stats.gamma.fit(excess, floc=0)          # (shape, 0, scale)
         rest = a[~a.outgrows_a]
         x = design(rest).values
-        self.mean = PoissonRegressor(alpha=ALPHA, max_iter=5000).fit(x, rest.a.clip(lower=0).values)
         self.sticks = LogisticRegression(C=1e4, max_iter=5000).fit(x, rest.a.values > 0)
-        p, mu = self.sticks.predict_proba(x)[:, 1], self.mean.predict(x)
+        p, mu = self.sticks.predict_proba(x)[:, 1], fit(rest, "a").predict(x)
         pos = rest.a.values > 0
         resid = (rest.a.values[pos] - mu[pos] / p[pos]) / (mu[pos] / p[pos])
         self.shape = {g: 1 / np.mean(resid[rest.group.values[pos] == g] ** 2) for g in ("hitter", "SP", "RP")}
+        # the spread is read against the fit's own mean; the board's mean
+        # carries the refit reliever factor
+        self.mean = fit(rest, "a", reliever)
         return self
 
     def describe(self, growth_names, mean_names) -> dict:
@@ -450,7 +481,7 @@ class Odds:
         return np.where(self.cdf(d, np.zeros(len(d)), scale) >= q, 0.0, hi)
 
 
-def report_odds(g: pd.DataFrame, regular: dict):
+def report_odds(g: pd.DataFrame, regular: dict, reliever: float):
     """B7: the three outcomes, held out one class at a time, against the
     Poisson mean and the board."""
     able = g[g.war_pot >= MIN_POTENTIAL_WAR].assign(kept=lambda x: kept(x))
@@ -461,8 +492,8 @@ def report_odds(g: pd.DataFrame, regular: dict):
     def scale(d, k):
         return d.kept.values * np.where(d.group == "hitter", 1.0, k)
 
-    full = Odds().fit(a, a_all, panel)
-    poisson = fit(a, "a")
+    full = Odds().fit(a, a_all, panel, reliever)
+    poisson = fit(a, "a", reliever)
     k_odds = side_balance(able, pd.Series(full.expected(able, scale(able, 1.0)), index=able.index))
     k_pois = side_balance(able, pd.Series(poisson.predict(design(able).values) * able.kept.values, index=able.index))
     print(f"  realized share of grown ceilings: x{np.exp(full.shift):.2f} on the odds; "
@@ -474,11 +505,11 @@ def report_odds(g: pd.DataFrame, regular: dict):
     rows, pooled = [], []
     for year in sorted(a["class"].unique()):
         train, test = a[a["class"] != year], a[a["class"] == year]
-        m = Odds().fit(train, a_all[a_all["class"] != year], panel[panel["class"] != year])
+        m = Odds().fit(train, a_all[a_all["class"] != year], panel[panel["class"] != year], reliever)
         sc = scale(test, k_odds)
         ev = m.expected(test, sc)
         y = test.a.clip(lower=0).values
-        scores = {"board": test.board.values, "Poisson": fit(train, "a").predict(design(test).values) * scale(test, k_pois),
+        scores = {"board": test.board.values, "Poisson": fit(train, "a", reliever).predict(design(test).values) * scale(test, k_pois),
                   "the odds": ev}
         for key, s in scores.items():
             order = np.argsort(-s)
@@ -542,6 +573,12 @@ def main(argv=None):
     model_a, model_b = fit(a, "a"), fit(b, "b")
     report_fit("A: value now (the fit)", a, "a", model_a)
     report_fit(f"B: MLB WAR through {B_LAST_AGE} (the check)", b, "b", model_b)
+    fitted = float(np.exp(model_a.coef_[_column("RP")]))
+    reliever, ratios = reliever_factor(d, model_a)
+    print(f"\nreliever factor, refit on classes {RELIEVER_CLASSES.start}-{RELIEVER_CLASSES.stop - 1}: "
+          f"x{fitted:.2f} -> x{reliever:.2f} (realized / predicted: "
+          + ", ".join(f"{g} {r:.2f}" for g, r in ratios.items()) + ")")
+    model_a = fit(a, "a", reliever)
     print(f"\nreference: hitter, 21 at the draft, {REFERENCE_WAR:g} WAR at potential, 0 WAR readiness, "
           "normal makeup (full weight)")
 
@@ -558,7 +595,7 @@ def main(argv=None):
     print("\nheld out, one class at a time (mean per class), the fit with the judgment lines, balanced:")
     checks = {}
     for outcome, label in (("a", "A: value now"), ("b", f"B: MLB WAR to {B_LAST_AGE}")):
-        table = held_out(mature, outcome, "a", balance)
+        table = held_out(mature, outcome, "a", balance, reliever)
         checks[outcome] = table.round(3).to_dict(orient="index")
         print(f"  judged on {label}, fit on A\n" + "\n".join("    " + line for line in table.round(3).to_string().splitlines()))
 
@@ -567,7 +604,7 @@ def main(argv=None):
     growth_fits = report_growth(g)
     regular = ceiling_panel.regular_thresholds(base, args.league)
     print("\nthe three outcomes (outgrows / short / bust), held out:")
-    distribution, distribution_checks = report_odds(g, regular)
+    distribution, distribution_checks = report_odds(g, regular, reliever)
 
     names = list(design(able.head(1)).columns)
     coef = dict(zip(names, model_a.coef_))
@@ -599,6 +636,8 @@ def main(argv=None):
         "regular": regular,
         "distribution": distribution.describe(list(growth_design(g.head(1)).columns), names),
         "check": {"held_out": checks, "pitcher_share": {k: [round(x, 3) for x in v] for k, v in shares.items()},
+                  "reliever": {"fit": round(fitted, 4),
+                               "realized_over_predicted": {g: round(r, 3) for g, r in ratios.items()}},
                   "b_fit": {n: round(float(c), 4) for n, c in zip(names, model_b.coef_)},
                   "distribution": distribution_checks,
                   "growth_90": {label: {n: [round(float(np.exp(l)), 3), round(float(np.exp(h)), 3)]
