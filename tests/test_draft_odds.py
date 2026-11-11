@@ -113,3 +113,28 @@ def test_the_board_reads_on_a_fixed_1_to_100_scale(ranked):
     assert scores == sorted(scores, reverse=True)
     assert _draft_scores({"model_score": 60.0, "war": 1.0, "ceiling_war": 2.0, "war_low": None,
                           "war_high": None}) == dict.fromkeys(s)
+
+
+def test_a_college_draftee_near_mlb_ready_keeps_half_his_age_penalty(rows):
+    # judgment (2026-11-11): none of it eased at -1 WAR now, half from 0 up,
+    # 21 and older, a 21-year-old by the 22s' penalty at his ceiling; the
+    # Regular chance eases with it
+    odds = draft_odds.load()
+
+    def lines(age, readiness):
+        player = GamePlayer({**rows[0], "Age": str(age)})
+        growth = odds.growth_columns(player, 4.0, readiness, "hitter", 0)
+        return dict((label, value) for _, label, value, _, _ in odds.reaching(player, 4.0, readiness, "hitter", growth)[0])
+
+    full, part, none = lines(22, 0.5), lines(22, -0.5), lines(22, -1.5)
+    assert full["Age 22"] < 1
+    assert full["Polish"] == pytest.approx(full["Age 22"] ** -0.5)
+    assert part["Polish"] == pytest.approx(part["Age 22"] ** -0.25)
+    assert "Polish" not in none and "Polish" not in lines(20, 1.0)
+    assert lines(21, 0.5)["Polish"] == pytest.approx(full["Polish"])
+
+    def regular(age, readiness):
+        player = GamePlayer({**rows[0], "Age": str(age)})
+        cols, growth = odds.mean_columns(player, 4.0, readiness, "hitter"), odds.growth_columns(player, 4.0, readiness, "hitter", 0)
+        return odds.distribution(cols, growth, 4.0, "hitter", odds.expected(cols, age), 1.0, age)["regular"]
+    assert regular(22, 0.0) > regular(22, -1.0) and regular(21, 0.0) > regular(21, -1.0)

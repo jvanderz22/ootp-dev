@@ -133,7 +133,7 @@ class Value(BatchStage):
         if odds is None:
             return
         out = self.odds.distribution(odds["columns"], odds["growth"], odds["ceiling"], odds["group"],
-                                     odds["expected"], odds["scale"])
+                                     odds["expected"], odds["scale"], state.player.age)
         state.odds = {"ceiling": odds["ceiling"], **out}
 
     # -- hitters ---------------------------------------------------------------

@@ -7,7 +7,10 @@ profile's model lines). What he's expected to realize is a Poisson fit on the
 past classes' value now: the ceiling's base rate, then a factor each for how
 developed he already is (readiness: his current ratings' full-time WAR), his
 age, his role and his makeup (tapered by the ceiling, as ranking/development.py
-tapers it). Part of that expectation is the chance he outgrows his ceiling:
+tapers it). Readiness weighs by age, more from 21 on; and a draftee 21 or
+older near MLB-ready keeps only half the 22s' age penalty (the "polish"
+judgment, 2026-11-11: the value of a player close to the majors right after
+the draft). Part of that expectation is the chance he outgrows his ceiling:
 the growth odds (fit on the ceiling panel, with your work ethic and velocity
 judgment) and what outgrowing is worth. On the ledger the factors scale the
 rest, and the growth is its own line, so the lines sum to the expectation.
@@ -120,6 +123,8 @@ class DraftOdds:
             cols[f"age {label}"] = float(lo <= age <= hi)
         for label, (lo, hi, _) in self.a["age_by_potential"].items():
             cols[f"age {label} x potential"] = lp * (lo <= age <= hi)
+        for label, (lo, hi, _) in self.a["readiness"]["by_age"].items():
+            cols[f"readiness x age {label}"] = cols["readiness"] * (lo <= age <= hi)
         for label, (attr, values) in MAKEUP.items():
             cols[label] = float(getattr(player, attr) in values) * taper
         return cols
@@ -141,17 +146,39 @@ class DraftOdds:
 
     # -- what he's expected to realize -----------------------------------------
 
-    def expected(self, cols) -> float:
-        """The Poisson mean: base x (ceiling / reference) ^ exponent x the factors."""
-        return float(np.exp(self._mean_logit(cols)))
+    def expected(self, cols, age) -> float:
+        """The Poisson mean: base x (ceiling / reference) ^ exponent x the
+        factors, with the polish judgment for a draftee `age` years old."""
+        return float(np.exp(self._mean_logit(cols) + self.polish(cols, age, self._penalty(cols))))
+
+    def polish(self, cols, age, penalty) -> float:
+        """The logit the polish judgment (the artifact's) adds back: its share
+        of `penalty`, the 22s' age penalty at his ceiling - none at `from` WAR
+        now, `share` from `full` up, at its ages only."""
+        p = self.a["judgment"]["polish"]
+        lo, hi = p["ages"]
+        if not lo <= age <= hi:
+            return 0.0
+        ready = np.clip((cols["readiness"] - p["from"]) / (p["full"] - p["from"]), 0.0, 1.0)
+        return float(-p["share"] * ready * min(penalty, 0.0))
+
+    def _penalty(self, cols) -> float:
+        """The polish judgment's age group's factor at his ceiling, on the logit."""
+        label = self.a["judgment"]["polish"]["penalty"]
+        return float(np.log(self.a["age"][label][2]) + self.a["age_by_potential"][label][2] * cols["log potential"])
+
+    def _age_logit(self, cols) -> float:
+        a = self.a
+        z = sum(np.log(f) * cols[f"age {label}"] for label, (_, _, f) in a["age"].items())
+        return z + sum(e * cols[f"age {label} x potential"] for label, (_, _, e) in a["age_by_potential"].items())
 
     def _mean_logit(self, cols) -> float:
         a = self.a
         z = np.log(a["base"]) + a["potential_exponent"] * cols["log potential"]
         z += np.log(a["readiness"]["per_war"]) * cols["readiness"]
+        z += sum(np.log(f) * cols[f"readiness x age {label}"] for label, (_, _, f) in a["readiness"]["by_age"].items())
+        z += self._age_logit(cols)
         z += sum(np.log(a["role"][g]) * cols[g] for g in ("SP", "RP"))
-        z += sum(np.log(f) * cols[f"age {label}"] for label, (_, _, f) in a["age"].items())
-        z += sum(e * cols[f"age {label} x potential"] for label, (_, _, e) in a["age_by_potential"].items())
         z += sum(np.log(f) * cols[label] for label, f in a["makeup"].items())
         return z
 
@@ -172,7 +199,7 @@ class DraftOdds:
         from his ceiling to what he's expected to realize. `switch` is the
         switch hitter's (label, factor, note), applied with the factors."""
         a, cols = self.a, self.mean_columns(player, ceiling, readiness, group)
-        expected = self.expected(cols)
+        expected = self.expected(cols, player.age)
         q = self.outgrows(growth_cols)
         rest = max((expected - q * self.outgrown_worth(ceiling)) / (1 - q), REST_FLOOR * expected)
         growth = expected - rest
@@ -180,13 +207,15 @@ class DraftOdds:
         base = reference * (1 - growth / expected)
         share = f"{reference / ceiling:.0%}" if ceiling > a["log_floor"] else f"{reference:.2f} WAR"
         lines = [("add", "Base rate", base - ceiling, share, None)]
-        lines.append(("scale", "Readiness", a["readiness"]["per_war"] ** cols["readiness"], None,
+        by_age = np.prod([f ** cols[f"readiness x age {label}"] for label, (_, _, f) in a["readiness"]["by_age"].items()])
+        lines.append(("scale", "Readiness", a["readiness"]["per_war"] ** cols["readiness"] * by_age, None,
                       f"{readiness:+.1f} WAR now"))
-        age = player.age
-        for label, (lo, hi, f) in a["age"].items():
-            if lo <= age <= hi:
-                tilt = next((e for lab, (l2, h2, e) in a["age_by_potential"].items() if l2 <= age <= h2), 0.0)
-                lines.append(("scale", f"Age {age}", f * np.exp(tilt * cols["log potential"]), None, None))
+        age = self._age_logit(cols)
+        if age:
+            lines.append(("scale", f"Age {player.age}", float(np.exp(age)), None, None))
+        eased = self.polish(cols, player.age, self._penalty(cols))
+        if eased:
+            lines.append(("scale", "Polish", float(np.exp(eased)), None, "near MLB-ready"))
         if group == "SP":
             lines.append(("scale", "Starter", a["role"]["SP"], None, "most end up relieving"))
         elif group == "RP":
@@ -218,12 +247,14 @@ class DraftOdds:
 
     # -- the card's distribution -----------------------------------------------
 
-    def distribution(self, cols, growth_cols, ceiling, group, expected, scale) -> dict:
+    def distribution(self, cols, growth_cols, ceiling, group, expected, scale, age) -> dict:
         """The likely range (P10, P90), the chance he becomes a regular and the
         chance he outgrows his ceiling, for a side whose odds come to
         `expected` WAR and whose value is `scale` x that."""
         q = self.outgrows(growth_cols)
-        z = self.sticks["intercept"] + sum(c * cols[n] for n, c in self.sticks["coef"].items())
+        coef, label = self.sticks["coef"], self.a["judgment"]["polish"]["penalty"]
+        z = self.sticks["intercept"] + sum(c * cols[n] for n, c in coef.items())
+        z += self.polish(cols, age, coef[f"age {label}"] + coef[f"age {label} x potential"] * cols["log potential"])
         p = 1 / (1 + np.exp(-z))
         rest = max((expected - q * self.outgrown_worth(ceiling)) / (1 - q), REST_FLOOR * expected)
         k = self.shape[group]

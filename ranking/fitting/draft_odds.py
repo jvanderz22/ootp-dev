@@ -29,6 +29,12 @@ shrinks. Without that the fit drops 22-year-olds who went on to be stars and
 ranks the top 25 no better than the board (step 2, 2026-11-09); velocity,
 Stuff, pitch count, a potential curve per side and weighting the top didn't
 help.
+Readiness weighs by age (READINESS_BY_AGE, decided 2026-11-11): less for
+teens, who are all raw, and more from 21 on, as the pooled draftees and
+prospects show (plans/prospect-odds-plan.md, "On track"). On top of the fit,
+two judgments: the teens' readiness weight is held at the flat fit's
+(TEEN_READINESS), and a draftee 21 or older near MLB-ready keeps only half the
+22s' age penalty (POLISH). The checks judge the board with them on.
 The makeup columns are tapered by potential WAR as ranking/development.py
 tapers them (decided 2026-11-09), so a fitted factor is its full-weight value.
 Fit on draftees with MIN_POTENTIAL_WAR or more: below that the board barely
@@ -76,6 +82,20 @@ ALPHA = 1e-4
 BOOTSTRAPS = 200
 AGE_GROUPS = {"18": (0, 18), "19": (19, 19), "20": (20, 20), "22": (22, 99)}   # 21 is the reference
 AGE_BY_POTENTIAL = {"19": (0, 19), "22": (22, 99)}
+# readiness weighs differently by age (plans/prospect-odds-plan.md, "On
+# track", 2026-11-11): the data weighs it least for teens and 20-year-olds,
+# who are all raw, and most from 21 on
+READINESS_BY_AGE = {"20": (0, 20), "22": (22, 99)}   # 21 is the reference
+# judgment (2026-11-11, you): the teens' and 20-year-olds' weight a WAR, held
+# at the flat fit's x1.34 rather than the data's x1.21, so a raw teen doesn't
+# gain from it; the rest of the fit is fit around it
+TEEN_READINESS = 1.34
+# judgment (2026-11-11, you): a college draftee near MLB-ready keeps only half
+# his age penalty - none eased at FROM WAR now, half from FULL up - and a
+# 21-year-old gets the same credit, read off the 22s' penalty at his ceiling.
+# The data doesn't back it (draft-odds D, "Advanced college draftees"); it's
+# the value of a player close to the majors in the org right after the draft
+POLISH = {"share": 0.5, "from": -1.0, "full": 0.0, "ages": [21, 99], "penalty": "22"}
 MAKEUP = {
     "WE H": lambda d: d.we == "H", "WE L": lambda d: d.we == "L",
     "INT H": lambda d: d["int"] == "H", "INT L": lambda d: d["int"] == "L",
@@ -201,14 +221,25 @@ def design(d: pd.DataFrame) -> pd.DataFrame:
         cols[f"age {label}"] = d.age.between(lo, hi).astype(float)
     for label, (lo, hi) in AGE_BY_POTENTIAL.items():
         cols[f"age {label} x potential"] = potential * d.age.between(lo, hi)
+    for label, (lo, hi) in READINESS_BY_AGE.items():
+        cols[f"readiness x age {label}"] = cols["readiness"] * d.age.between(lo, hi)
     for label, test in MAKEUP.items():
         cols[label] = test(d).astype(float) * taper
     return pd.DataFrame(cols, index=d.index)
 
 
 def fit(d: pd.DataFrame, outcome: str, reliever: float = None) -> PoissonRegressor:
-    """The Poisson fit, with the reliever factor set to `reliever` when given."""
-    model = PoissonRegressor(alpha=ALPHA, max_iter=5000).fit(design(d).values, d[outcome].clip(lower=0).values)
+    """The Poisson fit, the teens' readiness weight held at TEEN_READINESS (an
+    offset, so the rest is fit around it) and the reliever factor set to
+    `reliever` when given."""
+    x, y = design(d), d[outcome].clip(lower=0).values
+    teen = x["readiness x age 20"].values
+    free = x.drop(columns="readiness x age 20").assign(readiness=x.readiness - teen)
+    offset = np.exp(np.log(TEEN_READINESS) * teen)
+    model = PoissonRegressor(alpha=ALPHA, max_iter=5000).fit(free.values, y / offset, sample_weight=offset)
+    coef = dict(zip(free.columns, model.coef_))
+    coef["readiness x age 20"] = np.log(TEEN_READINESS) - coef["readiness"]
+    model.coef_, model.n_features_in_ = np.array([coef[c] for c in x.columns]), x.shape[1]
     if reliever is not None:
         model.coef_[_column("RP")] = np.log(reliever)
     return model
@@ -265,6 +296,18 @@ def balanced(d: pd.DataFrame, pred, balance: float) -> np.ndarray:
     return np.where(d.group == "hitter", pred, pred * balance)
 
 
+def polish(d: pd.DataFrame, coef) -> np.ndarray:
+    """The POLISH factor on each draftee's prediction: the share of the 22s'
+    age penalty at his ceiling (`coef`'s, a fit's) that his readiness eases."""
+    x = design(d)
+    names, label = list(x.columns), POLISH["penalty"]
+    penalty = coef[names.index(f"age {label}")] + coef[names.index(f"age {label} x potential")] * x["log potential"].values
+    lo, hi = POLISH["ages"]
+    ready = np.clip((d.readiness.values - POLISH["from"]) / (POLISH["full"] - POLISH["from"]), 0, 1)
+    w = POLISH["share"] * ready * d.age.between(lo, hi).values
+    return np.exp(-w * np.minimum(penalty, 0))
+
+
 def held_out(d: pd.DataFrame, outcome: str, fit_outcome: str, balance: float, reliever: float) -> pd.DataFrame:
     """Mean per class, leaving each class out of a fit on `fit_outcome`
     (pitchers x `balance`): rho and the mean `outcome` of the top k, for the
@@ -274,7 +317,8 @@ def held_out(d: pd.DataFrame, outcome: str, fit_outcome: str, balance: float, re
         train, test = d[d["class"] != year], d[d["class"] == year].copy()
         train = train[train[f"{fit_outcome}_settled"]]
         test = test[test[f"{outcome}_settled"]]
-        test["fit"] = balanced(test, fit(train, fit_outcome, reliever).predict(design(test).values) * kept(test), balance)
+        model = fit(train, fit_outcome, reliever)
+        test["fit"] = balanced(test, model.predict(design(test).values) * kept(test) * polish(test, model.coef_), balance)
         y = test[outcome].clip(lower=0)
         for key in ("board", "fit"):
             row = {"class": year, "key": key, "rho": spearmanr(test[key], y)[0]}
@@ -489,11 +533,12 @@ def report_odds(g: pd.DataFrame, regular: dict, reliever: float):
     a_all = g[g["class"].isin(FIT_CLASSES) & g.a_settled]
     panel = g[g["class"].isin(GROWTH_PANEL_CLASSES)]
 
-    def scale(d, k):
-        return d.kept.values * np.where(d.group == "hitter", 1.0, k)
-
     full = Odds().fit(a, a_all, panel, reliever)
     poisson = fit(a, "a", reliever)
+
+    def scale(d, k):   # POLISH read on the full fit's age penalty
+        return d.kept.values * polish(d, poisson.coef_) * np.where(d.group == "hitter", 1.0, k)
+
     k_odds = side_balance(able, pd.Series(full.expected(able, scale(able, 1.0)), index=able.index))
     k_pois = side_balance(able, pd.Series(poisson.predict(design(able).values) * able.kept.values, index=able.index))
     print(f"  realized share of grown ceilings: x{np.exp(full.shift):.2f} on the odds; "
@@ -582,12 +627,12 @@ def main(argv=None):
     print(f"\nreference: hitter, 21 at the draft, {REFERENCE_WAR:g} WAR at potential, 0 WAR readiness, "
           "normal makeup (full weight)")
 
-    pred = model_a.predict(design(able).values) * kept(able)
+    pred = model_a.predict(design(able).values) * kept(able) * polish(able, model_a.coef_)
     balance = side_balance(able, pd.Series(pred, index=able.index))
     print(f"\npitcher share by rank within class, classes {able['class'].min()}-{able['class'].max()}:")
     shares = {"board": pitcher_shares(able, "board"),
               "fit": pitcher_shares(able.assign(x=pred), "x"),
-              "fit, no judgment lines": pitcher_shares(able.assign(x=pred / kept(able)), "x"),
+              "fit, no judgment lines": pitcher_shares(able.assign(x=pred / kept(able) / polish(able, model_a.coef_)), "x"),
               "fit, balanced": pitcher_shares(able.assign(x=balanced(able, pred, balance)), "x")}
     for label, s in shares.items():
         print(_shares_line(label if label != "fit, balanced" else f"fit, pitchers x{balance:.2f}", s))
@@ -617,7 +662,10 @@ def main(argv=None):
         # realized WAR = base x (potential WAR / reference) ^ exponent x the factors
         "base": round(float(np.exp(model_a.intercept_)), 5),
         "potential_exponent": round(float(coef["log potential"]), 4),
-        "readiness": {"per_war": round(float(np.exp(coef["readiness"])), 4), "clip": list(READINESS_CLIP)},
+        # per WAR at 21; the factor per WAR at another age is per_war x by_age's
+        "readiness": {"per_war": round(float(np.exp(coef["readiness"])), 4), "clip": list(READINESS_CLIP),
+                      "by_age": {label: [lo, hi, round(float(np.exp(coef[f"readiness x age {label}"])), 4)]
+                                 for label, (lo, hi) in READINESS_BY_AGE.items()}},
         "role": {g: round(float(np.exp(coef[g])), 4) for g in ("SP", "RP")},
         # [youngest, oldest, factor at the reference]
         "age": {label: [lo, hi, round(float(np.exp(coef[f"age {label}"])), 4)]
@@ -631,7 +679,8 @@ def main(argv=None):
         # the judgment on top of the odds (ranking/draft_odds.py): these
         # ledger lines kept, a pitcher's velocity upside, and what's replaced
         "judgment": {"kept": list(KEPT), "velocity_steps": [list(s) for s in board_odds.VELOCITY_STEPS],
-                     "replaces": list(board_odds.REPLACES)},
+                     "replaces": list(board_odds.REPLACES), "polish": POLISH,
+                     "teen_readiness": TEEN_READINESS},
         # a regular, on the full-time scale: the card's "chance he becomes a regular"
         "regular": regular,
         "distribution": distribution.describe(list(growth_design(g.head(1)).columns), names),

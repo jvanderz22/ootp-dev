@@ -369,6 +369,43 @@ Nelson, a 2.8 ceiling, ahead of Mike Mooney's 7.2).
   Current board's bullpen taper: an elite closer about 3.9 → 2.0). Held
   back as a second cut for the same problem.
 
+### Advanced college draftees (2026-11-11, D)
+
+You: Jordan Tapia (2042, RF, 22, OVR 40/80, 5.84 ceiling) is undervalued,
+and he has a better than 37% chance to be a regular.
+
+- **Why he's low:** not readiness. His +0.1 WAR now is 5th of 970, and the
+  median draftee's −2.2 gets ×0.5 from it. It's the age-22 line, ×0.63,
+  which doesn't care that he arrives advanced.
+- **The data doesn't back easing it, thinly:** settled 22+ draftees with a
+  3.5+ ceiling and OVR 35+ (10 of them) realized 0.36–0.73 against
+  0.90–1.59 predicted; 1 of the 4 hitters became a regular.
+- **Proposed first:** a judgment line letting readiness halve the 22+ age
+  penalty (none at −1 WAR now, half at 0+). Tapia ×0.63 → ×0.79, about
+  #6 → #4; Pat Calhoon (+1.6 now) would pass Jonathan Lee for #1.
+- **Decided instead (you):** one **on track** model for draftees and
+  prospects alike, weighing POT − CUR by age, fit pooled with judgment
+  calls rather than overfit on thin data. Designed in
+  `plans/prospect-odds-plan.md`, "On track". It replaces the draft fit's
+  Age and Readiness lines; the halving is the fallback if the pooled data
+  can't size it.
+- **Built (2026-11-11), after step 1** (`plans/prospect-odds-plan.md`,
+  "Step 1 findings"): pooled, a draftee at 22 reads as behind the pros his
+  age, so the draft board keeps its own fit, with three changes:
+  - **Readiness weighs by age** (fit): ×1.55 a WAR at 21, ×1.47 at 22+.
+  - **Teens and 20s held at ×1.34** (judgment, you: the data's ×1.21 let
+    raw teens gain, which you didn't want); the rest is fit around it.
+  - **Polish** (judgment, you): from 21 up, readiness eases half the 22s'
+    age penalty at his ceiling (none at −1 WAR now, half at 0+). A
+    21-year-old near MLB-ready gets the same credit as a 22. The Regular
+    chance eases with it.
+  - On 2042: Calhoon #1 (3.12, Regular 63%), Tapia #6 → #4 (2.12, Regular
+    46%), Maruri #9 → #5; teens within ±6%; 21s near MLB-ready +14–18%,
+    raw 21s −9 to −24% (Osorio #13 → #21). Held out, top 25 / 50 / 100
+    1.479 / 1.355 / 1.106 (was 1.553 / 1.347 / 1.094).
+  - Held back: a blended ×1.45 for 21s, to soften the raw 21s' drop. You
+    kept the data's weight.
+
 ### Order of work (2026-11-10)
 
 This replaces "Order of work" below. Nothing gets built until you say so.
