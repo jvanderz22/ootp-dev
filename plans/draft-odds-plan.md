@@ -803,6 +803,10 @@ the draft classes. For you to review:
 
 It ships on your call.
 
+*E now has its own plan, `plans/prospect-odds-plan.md` (2026-11-10): the
+remaining gap instead of the multiplier, age for level, and a judgment
+bridge for the unsettled teens.*
+
 **E. The potential profile.** B–D again on the 2038–41 prospect exports,
 with level as an input. The ceiling panel (B5) already covers these
 players' later looks, so their growth odds come from it directly. A
