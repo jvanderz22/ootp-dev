@@ -621,6 +621,59 @@ not in `ranking/artifacts/`).*
    - the growth fit's velocity and Stuff factors next to
      `DraftPitcherStuffModifier`'s and `PitcherVelocityModifier`'s
      tables, for open question 4
+
+   *Done 2026-11-10* (`Odds` and `report_odds` in `draft_odds.py`).
+   - **Borrowed growth** (you: borrow, but keep "the WE bump and probably
+     at least some of the velo bump"):
+     - **Who outgrows** comes from the panel's growth odds. `WE H` is held
+       near ×1.30 and velocity near ×1.06 per mph by a tight prior
+       (`GROWTH_JUDGMENT`); the rest is fit.
+     - **How often it's realized:** one shift fit on A. Odds ×0.24: about
+       a quarter of the ceilings that grow turn into value by 25+.
+     - **How far:** A past ceiling + 1 is a gamma with mean 0.65 WAR.
+     - **Everything else:** refit on the draftees who didn't outgrow.
+   - **Held out on A** (classes 2033–37; this population is joined to the
+     panel, so the board's numbers differ a little from B3's):
+
+     | | rho | top 25 | top 50 | top 100 |
+     |---|---|---|---|---|
+     | board | 0.375 | 1.57 | 1.32 | 1.12 |
+     | Poisson | **0.426** | **1.62** | **1.35** | 1.13 |
+     | three outcomes | **0.426** | 1.52 | 1.33 | **1.14** |
+     | three outcomes, no judgment | 0.426 | 1.52 | 1.33 | 1.14 |
+
+     The three outcomes tie Poisson overall and trail it at the top 25.
+     The judgment doesn't cause that: with or without it, the numbers match
+     to two decimals.
+   - **The judgment barely reaches E[v].** Realized outgrowing is about 2%
+     of draftees, so a 6%-per-mph change in its odds moves E[v] almost not
+     at all. If velocity is to move the board, the place is
+     `PitcherVelocityModifier`, not the growth odds.
+   - **The shape got better where B4 was short:**
+     - above P90: 13% overall (target 10%), 10% in the top 100, and 10% at
+       4+ WAR of ceiling (B4: 15%)
+     - P(regular) at 4+ WAR of ceiling: 0.28 predicted against 0.37
+       observed (B4: 0.21); at the top decile, 0.37 against 0.43
+     - still short at low ceilings (0.04 against 0.09)
+   - **P(outgrows) on A barely discriminates:** 1–4% predicted, 0–4%
+     observed, with the top decile high (0.04 against 0.02).
+   - **E[v] from outgrowing:** a median of 14% of his E[v], and 26% at P90.
+   - **Ship checks:**
+     - pitcher balance ×0.88; buckets 42 / 44 / 51 / 54 / 59%
+     - held-out top 50 1.33, against the board's 1.32
+     - both pass
+   - **Open question 4, the factors side by side:**
+     - **Velocity:**
+       - growth odds: ×1.06 per mph (judgment; ×1.02 as fit)
+       - `PitcherVelocityModifier` scales his whole value: from ×0.88 at
+         ≤87 to ×1.07 at 100+
+       - B4: the low end beats the model, and 96+ realizes about 17% more
+         than predicted
+     - **Stuff:**
+       - growth odds: ×0.95 per 10
+       - `DraftPitcherStuffModifier` only cuts: SP ≤40 ×0.93 up to 55
+         ×0.99; RP ≤45 ×0.93 up to 60 ×0.99
+       - B4: low Stuff beats the model, and high Stuff adds nothing
 8. **Write the artifact** `draft_odds_v1.json`: the mean, outcome and
    growth coefficients, the spreads, the margin, the balance factor, the
    bootstrap ranges and the held-out tables. The manifest hashes every artifact, so the file

@@ -48,6 +48,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy import optimize, stats
 from scipy.stats import spearmanr
 from sklearn.linear_model import LogisticRegression, PoissonRegressor
 
@@ -85,6 +86,12 @@ BUCKETS = [(1, 25), (26, 50), (51, 100), (101, 200), (201, 400)]
 GROWTH_PANEL_CLASSES = range(2035, 2042)
 GROWTH_C = 1.0                      # logistic regularisation: events are rare
 REFERENCE_YEARS = 7                 # years after the draft the odds are read at
+# judgment (2026-11-10): the data's sample is small, and you'd keep a work
+# ethic and a velocity bump on outgrowing even where it doesn't fully show
+# them (panel: WE H x1.06, x1.02 per mph; the POT look: x1.33, x1.11). Odds,
+# held near these by a tight prior; the other columns are fit.
+GROWTH_JUDGMENT = {"WE H": 1.30, "velocity": 1.06}
+JUDGMENT_SD = 0.05
 TOP_K = (25, 50, 100)
 
 
@@ -294,8 +301,40 @@ def growth_table(d: pd.DataFrame, base: Path, league: str, cache: str = None) ->
     return g
 
 
-def fit_growth(g: pd.DataFrame, outcome: str) -> LogisticRegression:
-    return LogisticRegression(C=GROWTH_C, max_iter=5000).fit(growth_design(g).values, g[outcome].values)
+def _growth_prior(names) -> tuple:
+    """(means, sds) of the growth coefficients' priors: the GROWTH_JUDGMENT
+    columns pinned near their odds, the rest shrunk to 0 as GROWTH_C sets."""
+    mean = np.array([np.log(GROWTH_JUDGMENT[n]) if n in GROWTH_JUDGMENT else 0.0 for n in names])
+    sd = np.array([JUDGMENT_SD if n in GROWTH_JUDGMENT else np.sqrt(GROWTH_C) for n in names])
+    return mean, sd
+
+
+def _map_logistic(x, y, mean, sd, offset=0.0) -> np.ndarray:
+    """[intercept, coefficients] of a logistic fit, each coefficient with a
+    normal prior (`mean`, `sd`); the intercept is free."""
+    def loss(w):
+        z = w[0] + x @ w[1:] + offset
+        p = 1 / (1 + np.exp(-z))
+        r = (w[1:] - mean) / sd
+        value = -np.sum(y * z - np.logaddexp(0, z)) + 0.5 * np.sum(r ** 2)
+        grad = np.concatenate([[np.sum(p - y)], x.T @ (p - y) + r / sd])
+        return value, grad
+    return optimize.minimize(loss, np.concatenate([[0.0], mean]), jac=True, method="L-BFGS-B").x
+
+
+def fit_growth(g: pd.DataFrame, outcome: str, judgment=True) -> np.ndarray:
+    """The growth odds: [intercept, coefficients] on `growth_design`."""
+    x = growth_design(g)
+    mean, sd = _growth_prior(x.columns)
+    if not judgment:
+        mean = np.zeros(len(mean))
+        sd = np.full(len(sd), np.sqrt(GROWTH_C))
+    return _map_logistic(x.values, g[outcome].values.astype(float), mean, sd)
+
+
+def growth_logit(w, d: pd.DataFrame) -> np.ndarray:
+    """The growth odds' log-odds for `d`, read REFERENCE_YEARS after the draft."""
+    return w[0] + growth_design(d.assign(years=REFERENCE_YEARS)).values @ w[1:]
 
 
 def report_growth(g: pd.DataFrame):
@@ -303,28 +342,143 @@ def report_growth(g: pd.DataFrame):
     on_a = g[g["class"].isin(FIT_CLASSES) & g.a_settled]
     names = list(growth_design(g.head(1)).columns)
     fits = {}
-    for label, sub, outcome in (("panel", panel, "outgrows"), ("A", on_a, "outgrows_a")):
-        x, y = growth_design(sub).values, sub[outcome].values
+    for label, sub, outcome, judgment in (("panel", panel, "outgrows", False), ("A", on_a, "outgrows_a", False),
+                                          ("panel + judgment", panel, "outgrows", True)):
         rng = np.random.default_rng(0)
-        boots = [LogisticRegression(C=GROWTH_C, max_iter=5000).fit(x[i], y[i]).coef_[0]
+        boots = [fit_growth(sub.iloc[i], outcome, judgment)[1:]
                  for i in (rng.integers(0, len(sub), len(sub)) for _ in range(BOOTSTRAPS))]
-        fits[label] = (fit_growth(sub, outcome), *np.percentile(boots, [5, 95], axis=0))
-        print(f"  {label}: classes {sub['class'].min()}-{sub['class'].max()}, n={len(sub)}, "
-              f"outgrew {y.mean():.1%} ({int(y.sum())})")
-    print(f"\n  {'odds of outgrowing':>18}  {'panel (90%)':>22}  {'A (90%)':>22}")
+        fits[label] = (fit_growth(sub, outcome, judgment)[1:], *np.percentile(boots, [5, 95], axis=0))
+        if not judgment:
+            print(f"  {label}: classes {sub['class'].min()}-{sub['class'].max()}, n={len(sub)}, "
+                  f"outgrew {sub[outcome].mean():.1%} ({int(sub[outcome].sum())})")
+    print(f"\n  {'odds of outgrowing':>18}" + "".join(f"  {label + ' (90%)':>24}" for label in fits))
     for i, name in enumerate(names):
-        cells = [f"x{np.exp(m.coef_[0][i]):.2f} ({np.exp(lo[i]):.2f}-{np.exp(hi[i]):.2f})" for m, lo, hi in fits.values()]
-        print(f"  {name:>18}  {cells[0]:>22}  {cells[1]:>22}")
-    print("\n  held out by class (panel), P(outgrows) by decile, predicted / observed:")
-    held = []
-    for year in sorted(panel["class"].unique()):
-        train, test = panel[panel["class"] != year], panel[panel["class"] == year]
-        held.append(pd.DataFrame({"p": fit_growth(train, "outgrows").predict_proba(growth_design(test).values)[:, 1],
-                                  "y": test.outgrows.values}))
-    h = pd.concat(held)
-    h["dec"] = pd.qcut(h.p.rank(method="first"), 10, labels=False)
-    print("   " + "  ".join(f"{a:.3f}/{b:.3f}" for a, b in h.groupby("dec").agg(a=("p", "mean"), b=("y", "mean")).values))
+        cells = [f"x{np.exp(w[i]):.2f} ({np.exp(lo[i]):.2f}-{np.exp(hi[i]):.2f})" for w, lo, hi in fits.values()]
+        print(f"  {name:>18}" + "".join(f"  {c:>24}" for c in cells))
+    print(f"  judgment: " + ", ".join(f"{n} x{v:.2f}" for n, v in GROWTH_JUDGMENT.items()))
     return fits
+
+
+class Odds:
+    """The three outcomes (B7): he outgrows his ceiling (the growth odds,
+    borrowed from the panel and brought to outcome A's rate), or he doesn't,
+    and then busts (A = 0) or lands short of it. Fit on outcome A's classes:
+
+    - P(outgrows): the panel's growth odds with GROWTH_JUDGMENT, plus one
+      shift fit on A - how often a ceiling that grows is realized
+    - outgrowing, how far: A past ceiling + MARGIN, a gamma
+    - otherwise: the Poisson mean of A, P(A > 0) by logistic regression, and
+      A given A > 0 a gamma of that mean, its spread by side
+
+    Everything scales with `scale` (the kept lines, and the balance on
+    pitchers), as the board scales his value."""
+
+    def fit(self, a: pd.DataFrame, a_all: pd.DataFrame, panel: pd.DataFrame):
+        self.growth = fit_growth(panel, "outgrows")
+        y = a_all.outgrows_a.values.astype(float)
+        offset = growth_logit(self.growth, a_all)
+        self.shift = float(_map_logistic(np.zeros((len(a_all), 0)), y, np.zeros(0), np.ones(0), offset)[0])
+        grown = a[a.outgrows_a]
+        excess = (grown.a - grown.war_pot - ceiling_panel.MARGIN).clip(lower=1e-3)
+        self.excess = stats.gamma.fit(excess, floc=0)          # (shape, 0, scale)
+        rest = a[~a.outgrows_a]
+        x = design(rest).values
+        self.mean = PoissonRegressor(alpha=ALPHA, max_iter=5000).fit(x, rest.a.clip(lower=0).values)
+        self.sticks = LogisticRegression(C=1e4, max_iter=5000).fit(x, rest.a.values > 0)
+        p, mu = self.sticks.predict_proba(x)[:, 1], self.mean.predict(x)
+        pos = rest.a.values > 0
+        resid = (rest.a.values[pos] - mu[pos] / p[pos]) / (mu[pos] / p[pos])
+        self.shape = {g: 1 / np.mean(resid[rest.group.values[pos] == g] ** 2) for g in ("hitter", "SP", "RP")}
+        return self
+
+    def outgrows(self, d) -> np.ndarray:
+        return 1 / (1 + np.exp(-(growth_logit(self.growth, d) + self.shift)))
+
+    def parts(self, d, scale=1.0) -> dict:
+        x = design(d).values
+        p = self.sticks.predict_proba(x)[:, 1]
+        mean = self.mean.predict(x)
+        return {"q": self.outgrows(d), "p": p, "mean": mean * scale, "k": d.group.map(self.shape).values,
+                "floor": (d.war_pot.values + ceiling_panel.MARGIN) * scale, "excess": self.excess[2] * scale}
+
+    def expected(self, d, scale=1.0) -> np.ndarray:
+        c = self.parts(d, scale)
+        grown = c["floor"] + self.excess[0] * c["excess"]
+        return (1 - c["q"]) * c["mean"] + c["q"] * grown
+
+    def from_growth(self, d, scale=1.0) -> np.ndarray:
+        """The part of E[v] the outgrowing outcome adds over the rest."""
+        c = self.parts(d, scale)
+        return c["q"] * (c["floor"] + self.excess[0] * c["excess"] - c["mean"])
+
+    def cdf(self, d, v, scale=1.0) -> np.ndarray:
+        c = self.parts(d, scale)
+        theta = c["mean"] / c["p"] / c["k"]
+        rest = (1 - c["p"]) + c["p"] * stats.gamma.cdf(v, c["k"], scale=theta)
+        grown = stats.gamma.cdf(v - c["floor"], self.excess[0], scale=c["excess"])
+        return np.where(v < 0, 0.0, (1 - c["q"]) * rest + c["q"] * grown)
+
+    def quantile(self, d, q, scale=1.0) -> np.ndarray:
+        lo, hi = np.zeros(len(d)), np.full(len(d), 40.0)
+        for _ in range(50):
+            mid = (lo + hi) / 2
+            below = self.cdf(d, mid, scale) < q
+            lo, hi = np.where(below, mid, lo), np.where(below, hi, mid)
+        return np.where(self.cdf(d, np.zeros(len(d)), scale) >= q, 0.0, hi)
+
+
+def report_odds(g: pd.DataFrame, regular: dict):
+    """B7: the three outcomes, held out one class at a time, against the
+    Poisson mean and the board."""
+    able = g[g.war_pot >= MIN_POTENTIAL_WAR].assign(kept=lambda x: kept(x))
+    a = able[able["class"].isin(FIT_CLASSES) & able.a_settled]
+    a_all = g[g["class"].isin(FIT_CLASSES) & g.a_settled]
+    panel = g[g["class"].isin(GROWTH_PANEL_CLASSES)]
+
+    def scale(d, k):
+        return d.kept.values * np.where(d.group == "hitter", 1.0, k)
+
+    full = Odds().fit(a, a_all, panel)
+    poisson = fit(a, "a")
+    k_odds = side_balance(able, pd.Series(full.expected(able, scale(able, 1.0)), index=able.index))
+    k_pois = side_balance(able, pd.Series(poisson.predict(design(able).values) * able.kept.values, index=able.index))
+    print(f"  realized share of grown ceilings: x{np.exp(full.shift):.2f} on the odds; "
+          f"how far past ceiling + {ceiling_panel.MARGIN:g}: mean {full.excess[0] * full.excess[2]:.2f} WAR")
+    print(f"  pitcher balance: odds x{k_odds:.2f}, Poisson x{k_pois:.2f}")
+    ev = full.expected(able, scale(able, k_odds))
+    print(_shares_line("the odds", pitcher_shares(able.assign(x=ev), "x")))
+
+    rows, pooled = [], []
+    for year in sorted(a["class"].unique()):
+        train, test = a[a["class"] != year], a[a["class"] == year]
+        m = Odds().fit(train, a_all[a_all["class"] != year], panel[panel["class"] != year])
+        sc = scale(test, k_odds)
+        ev = m.expected(test, sc)
+        y = test.a.clip(lower=0).values
+        scores = {"board": test.board.values, "Poisson": fit(train, "a").predict(design(test).values) * scale(test, k_pois),
+                  "the odds": ev}
+        for key, s in scores.items():
+            order = np.argsort(-s)
+            rows.append({"key": key, "rho": spearmanr(s, y)[0], **{f"top {k}": y[order[:k]].mean() for k in TOP_K}})
+        reg = test.group.map(regular).values
+        top = np.zeros(len(test), bool)
+        top[np.argsort(-ev)[:100]] = True
+        pooled.append(pd.DataFrame({"y": y, "p90": m.quantile(test, 0.9, sc), "q": m.outgrows(test),
+                                    "grew": test.outgrows_a.values, "p_reg": 1 - m.cdf(test, reg, sc), "reg": y >= reg,
+                                    "war_pot": test.war_pot.values, "top100": top}))
+    print("\n  held out, mean per class, judged on A:")
+    print("\n".join("    " + line for line in pd.DataFrame(rows).groupby("key").mean().round(3).to_string().splitlines()))
+    h = pd.concat(pooled)
+    print(f"\n  above P90 (target 10%): all {(h.y > h.p90).mean():.0%}, top 100 {(h.y > h.p90)[h.top100].mean():.0%}")
+    band = pd.cut(h.war_pot, [MIN_POTENTIAL_WAR, 1.5, 2.5, 4, 99])
+    by = h.groupby(band, observed=True).apply(lambda x: f"{(x.y > x.p90).mean():.0%} | {x.p_reg.mean():.2f}/{x.reg.mean():.2f}")
+    print("  by ceiling (above P90 | P(regular) pred/obs): " + "   ".join(f"{b}: {v}" for b, v in by.items()))
+    for label, pred, obs in (("P(regular)", "p_reg", "reg"), ("P(outgrows)", "q", "grew")):
+        dec = h.groupby(pd.qcut(h[pred].rank(method="first"), 10, labels=False)).agg(a=(pred, "mean"), b=(obs, "mean"))
+        print(f"  {label} by decile, pred/obs: " + " ".join(f"{x:.2f}/{z:.2f}" for x, z in dec.values))
+    share = full.from_growth(able, scale(able, k_odds)) / full.expected(able, scale(able, k_odds))
+    print(f"\n  share of E[v] from outgrowing: median {np.median(share):.0%}, P90 {np.percentile(share, 90):.0%}")
+    return full, able.assign(ev=full.expected(able, scale(able, k_odds)), growth=full.from_growth(able, scale(able, k_odds)))
 
 
 def _shares_line(label, shares) -> str:
@@ -381,7 +535,10 @@ def main(argv=None):
         print(f"  judged on {label}, fit on A\n" + "\n".join("    " + line for line in table.round(3).to_string().splitlines()))
 
     print(f"\ngrowth odds: outgrowing the ceiling (+{ceiling_panel.MARGIN:g} WAR past draft day, and a regular):")
-    report_growth(growth_table(d, base, args.league, args.panel))
+    g = growth_table(d, base, args.league, args.panel)
+    report_growth(g)
+    print("\nthe three outcomes (outgrows / short / bust), held out:")
+    report_odds(g, ceiling_panel.regular_thresholds(base, args.league))
 
     names = list(design(able.head(1)).columns)
     coef = dict(zip(names, model_a.coef_))
