@@ -53,6 +53,7 @@ _FLOAT_FIELDS = (
     "reliever_component", "running_score_component", "raw_overall_score",
     "pre_demand_score", "wrc_plus", "era", "sp_era", "rp_era", "ip", "replacement",
     "ceiling_war", "full_time_war", "war_low", "war_high", "p_regular", "p_outgrows",
+    "wrc_vl", "wrc_vr",
 )
 
 
@@ -246,9 +247,17 @@ def _player_payload(rank, row, drafted_info, game_player=None, source=None):
     )
     # only the side(s) his type is judged on: a hitter's pitching score (and
     # a pitcher's batting one) is the model valuing a role he'll never play
+    # v2 hitters: his fielding value at each position (runs, with the
+    # position's adjustment), as the card's position table shows it
+    payload["position_values"] = [
+        {"position": pos, "value": value}
+        for pos in results_store.FIELDING_POSITIONS
+        if (value := _to_number(row.get(f"position_value_{pos}"))) is not None
+    ]
     if payload["type"] == "Pitcher":
-        for field in ("best_position", "wrc_plus", *_BATTING_SIDE):
+        for field in ("best_position", "wrc_plus", "wrc_vl", "wrc_vr", *_BATTING_SIDE):
             payload[field] = None
+        payload["position_values"] = []
     if payload["type"] == "Hitter":
         for field in ("era", *_PITCHING_SIDE):
             payload[field] = None
@@ -352,7 +361,8 @@ def _grade_ordinal(value):
 def _sort_value(row, field):
     """Resolve a column's sort value: a flat payload key (camelCase from the
     client), a top-level `ratings` grade, a dotted rating path (`batting.power`,
-    `pitching.stuff`), or `pitch.<Name>` for an individual pitch potential."""
+    `pitching.stuff`), `pitch.<Name>` for an individual pitch potential, or
+    `pos.<POS>` for his fielding value at a position."""
     if field == "demandKey":
         return _demand_key(row.get("demand"))
     if field in _RATING_META_KEYS:
@@ -360,6 +370,8 @@ def _sort_value(row, field):
     if "." not in field:
         return row.get(_camel_to_snake(field))
     head, _, tail = field.partition(".")
+    if head == "pos":
+        return next((p["value"] for p in row.get("position_values") or [] if p["position"] == tail), None)
     ratings = row.get("ratings") or {}
     if head == "pitch":
         for p in (ratings.get("pitching") or {}).get("pitches") or []:

@@ -41,6 +41,7 @@ export type ColGroup =
   | 'WAR'
   | 'Batting'
   | 'Running'
+  | 'Positions'
   | 'Infield'
   | 'Outfield'
   | 'Catching'
@@ -806,15 +807,58 @@ const V2_PITCHING_MODEL: ColumnDef[] = [
   },
 ];
 
+/** A hitter's wRC+ against one pitcher hand (the Batting view). */
+const splitWrcCol = (field: 'wrcVl' | 'wrcVr', header: string, hand: string): ColumnDef => ({
+  field,
+  header,
+  title: `Modeled wRC+ vs ${hand} (his splits, or expected for his hand)`,
+  numeric: true,
+  descFirst: true,
+  group: 'Model',
+  value: model(field),
+  fmt: fmtInt,
+});
+
+/** His fielding value at each position, as the card's position table: runs
+ *  with the position's adjustment. Field `pos.<POS>` sorts and filters on it. */
+const fmtRuns = (v: unknown): string => {
+  if (isBlank(v)) return '—';
+  const r = Math.round(N(v));
+  return r > 0 ? `+${r}` : String(r);
+};
+const POSITION_VALUE_COLUMNS: ColumnDef[] = FIELDING_POSITIONS.map((pos) => ({
+  field: `pos.${pos}`,
+  header: pos,
+  title: `Fielding value at ${pos}: runs, with the position's adjustment`,
+  numeric: true,
+  descFirst: true,
+  group: 'Positions',
+  value: (p: RankedPlayerRow) => p.positionValues?.find((x) => x.position === pos)?.value ?? null,
+  fmt: fmtRuns,
+}));
+
+/** The Batting view under v2: the ratings with the model's reads beside
+ *  them - each position's value after Best Pos, baserunning WAR after the
+ *  running grades. */
+const V2_BATTING_COLUMNS: ColumnDef[] = BATTING_COLUMNS.flatMap((c) =>
+  c === BEST_POS_COLUMN
+    ? [c, ...POSITION_VALUE_COLUMNS]
+    : c.field === 'batting.steal'
+      ? [c, warCol('runningWar', 'WAR', 'Baserunning WAR', 'Running')]
+      : [c],
+);
+
 const V2_VIEW_COLUMNS: Record<ClassView, ColumnDef[]> = {
   modeled: [...V2_LEAD, ...V2_MODELED_COLUMNS],
   batting: [
     ...V2_LEAD.filter((c) => c.field !== 'type'),
     WAR_COLUMN,
     field_('wrcPlus'),
+    splitWrcCol('wrcVl', 'vL', 'LHP'),
+    splitWrcCol('wrcVr', 'vR', 'RHP'),
     surplusCol('Model'),
     ceilingCol('Model'),
-    ...BATTING_COLUMNS,
+    ...V2_BATTING_COLUMNS,
   ],
   pitching: [
     ...V2_LEAD.filter((c) => c.field !== 'type'),

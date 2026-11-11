@@ -37,6 +37,12 @@ const PLAYER_FIELDS = gql`
     preDemandRank
     wrcPlus
     era
+    wrcVl
+    wrcVr
+    positionValues {
+      position
+      value
+    }
     role
     war
     surplusWar

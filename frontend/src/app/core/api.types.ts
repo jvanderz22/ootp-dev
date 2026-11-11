@@ -143,6 +143,13 @@ export interface RankedPlayer {
   /** v2 engine only: the fitted model's wRC+ (hitters) and ERA (pitchers) */
   wrcPlus: number | null;
   era: number | null;
+  /** v2 hitters: wRC+ vs LHP / RHP (his splits, or the expected ones for
+   *  his batting hand) */
+  wrcVl: number | null;
+  wrcVr: number | null;
+  /** v2 hitters: fielding value at each position (runs, with the position's
+   *  adjustment); empty elsewhere */
+  positionValues: { position: string; value: number | null }[];
   /** v2 engine only: where he's valued (best position, or SP / RP), his value
    *  in WAR before demand, and its parts - each side's null where he isn't
    *  judged on it */

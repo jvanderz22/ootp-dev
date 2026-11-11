@@ -81,6 +81,11 @@ type RankedPlayer {
   "v2 engine only: the fitted talent model's wRC+ (hitters) and ERA (pitchers, in the role they're judged in), on the ranking's ratings - potential for prospects and draft classes"
   wrcPlus: Float
   era: Float
+  "v2 engine only, hitters: wRC+ vs LHP / RHP - his splits, or the expected ones for his batting hand"
+  wrcVl: Float
+  wrcVr: Float
+  "v2 engine only, hitters: his fielding value at each position he's scored at (runs, with the position's adjustment)"
+  positionValues: [PositionValue!]!
   "v2 engine only: where he's valued - his best position, or SP / RP"
   role: String
   "v2 engine only: his WAR before the demand step, on StatsPlus's scale"
@@ -182,6 +187,12 @@ type BattingBreakdown {
   modifiers: ModifierBreakdown!
   "v2: his fielding at every position, valued the way his best one is"
   positions: [PositionFielding!]!
+}
+
+"A table row's fielding value at one position (see PositionFielding)."
+type PositionValue {
+  position: String!
+  value: Float
 }
 
 """

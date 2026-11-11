@@ -64,6 +64,16 @@ _RESULT_KEYS = {
     "p_outgrows": "p_outgrows",
 }
 
+# v2 hitters' values the tables show that are only in the breakdown (the
+# value stage's card entries): key -> its path there. Absent (None) for
+# legacy runs and pitchers.
+FIELDING_POSITIONS = ("C", "1B", "2B", "3B", "SS", "LF", "CF", "RF")
+_BREAKDOWN_KEYS = {
+    "wrc_vl": "$.batting.value.wrc_vl",
+    "wrc_vr": "$.batting.value.wrc_vr",
+    **{f"position_value_{p}": f'$.batting.positions."{p}".value' for p in FIELDING_POSITIONS},
+}
+
 # ledger deltas are stored to this many places - plenty for a waterfall, and
 # a league's run stays small
 _LEDGER_PLACES = 4
@@ -205,10 +215,14 @@ def run_info(scope, scope_id, method, engine=None):
 
 
 def load_results(scope, scope_id, method, with_breakdown=False, engine=None) -> list:
-    """The run's result rows in model order. The breakdown and ledger are left
-    out unless asked for - only the detail view and the CLI's verbose mode use
-    them."""
-    select = ", ".join(f"{c} AS {k}" for c, k in _RESULT_KEYS.items())
+    """The run's result rows in model order, with the breakdown values the
+    tables show (`_BREAKDOWN_KEYS`). The breakdown and ledger themselves are
+    left out unless asked for - only the detail view and the CLI's verbose
+    mode use them."""
+    select = ", ".join(
+        [f"{c} AS {k}" for c, k in _RESULT_KEYS.items()]
+        + [f"json_extract(breakdown, '{path}') AS \"{k}\"" for k, path in _BREAKDOWN_KEYS.items()]
+    )
     if with_breakdown:
         select += ", breakdown, ledger"
     rows = db.query(
