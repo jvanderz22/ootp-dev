@@ -13,7 +13,9 @@ step 2):
   and Error shapes, fit on both corners' lines (SHARED). Each takes the strongest
   smoothing within 2% of the best out-of-fold error (folds grouped by player);
   the double plays keep the data's drop at 40-45 instead. Outside the 5-95%
-  range of MLB regulars a table continues at its average slope inside it.
+  range of MLB regulars a table continues at its average slope inside it -
+  except the easier positions' Range above it, which flattens where the data
+  does (PLATEAU).
   Your judged tables (fielding_talent.JUDGED) replace the fit where they exist.
 - **The position adjustments.** One per position, fit with a multinomial logit
   so the tables plus the adjustments reproduce where OOTP's managers play
@@ -53,6 +55,13 @@ LAMBDAS = (0.3, 1, 3, 10, 30, 100, 300)
 # the smoothing at least this strong for each position's main rating (2026-11-09:
 # LF and RF went flat from Range 60 to 70, which looked like noise)
 MIN_MAIN_LAMBDA = 30
+# the easier positions' Range past the top of MLB's regulars (your call,
+# 2026-11-10): it flattens where the data does instead of climbing at the
+# average slope - more range stops reaching more balls at 2B above 70, so an
+# elite-range SS came out worth more at 2B. The tail follows a lightly smoothed
+# fit (TAIL_LAMBDA), never steeper than the average slope at any step.
+PLATEAU = {"1B": "if_range", "2B": "if_range", "3B": "if_range", "LF": "of_range", "RF": "of_range"}
+TAIL_LAMBDA = 30
 # double plays keep the data's drop at 40-45 rather than smoothing it away
 DP_LAMBDA = 0.3
 # a double play instead of a force-out: run expectancy ~0.41 with no outs and
@@ -147,12 +156,15 @@ def out_of_fold(rows, y, reads, lam) -> float:
     return float(np.sqrt(err / total))
 
 
-def seed(rows, y, reads, min_lambda=0.0) -> tuple:
-    """(tables {rating: runs at STEPS, before centring}, lambda, out-of-fold RMSE)."""
+def seed(rows, y, reads, min_lambda=0.0, plateau=None) -> tuple:
+    """(tables {rating: runs at STEPS, before centring}, lambda, out-of-fold RMSE).
+    The `plateau` rating's tail above MLB's 95% flattens where a TAIL_LAMBDA
+    fit does."""
     errors = {lam: out_of_fold(rows, y, reads, lam) for lam in LAMBDAS if lam >= min_lambda}
     best = min(errors.values())
     lam = max(lam for lam, e in errors.items() if e <= 1.02 * best)
     coef = fit_tables(rows, y, reads, lam)
+    light = fit_tables(rows, y, reads, TAIL_LAMBDA) if plateau else None
     mlb = rows[rows.level_id == LEVEL_MLB]
     nseg = len(KNOTS) - 1
     tables = {}
@@ -161,7 +173,13 @@ def seed(rows, y, reads, min_lambda=0.0) -> tuple:
         f = lambda x: float((basis([x]) @ slopes)[0])
         lo, hi = int(mlb[r].quantile(0.05)), int(mlb[r].quantile(0.95))
         slope = (f(hi) - f(lo)) / max(hi - lo, 1)
-        tables[r] = np.array([f(lo) - slope * (lo - s) if s < lo else f(hi) + slope * (s - hi) if s > hi else f(s)
+        tail = lambda s: slope * (s - hi)
+        if r == plateau:
+            g = lambda x: float((basis([x]) @ light[2 + k * nseg: 2 + (k + 1) * nseg])[0])
+            edges = [hi] + [s for s in STEPS if s > hi]
+            rise = np.cumsum([min(slope * (b - a), g(b) - g(a)) for a, b in zip(edges, edges[1:])])
+            tail = dict(zip(edges[1:], rise)).get
+        tables[r] = np.array([f(lo) - slope * (lo - s) if s < lo else f(hi) + tail(s) if s > hi else f(s)
                               for s in STEPS])
     return tables, lam, errors[lam]
 
@@ -173,7 +191,7 @@ def position_tables(rows) -> tuple:
     out, report = {}, {}
     for pos, reads in READS.items():
         pooled = rows[rows.position.isin(SHARED.get(pos, (pos,)))].reset_index(drop=True)
-        tables, lam, rmse = seed(pooled, pooled.per_season.to_numpy(float), reads, MIN_MAIN_LAMBDA)
+        tables, lam, rmse = seed(pooled, pooled.per_season.to_numpy(float), reads, MIN_MAIN_LAMBDA, PLATEAU.get(pos))
         d = rows[rows.position == pos].reset_index(drop=True)
         if pos in DP_POSITIONS:
             coef = fit_tables(d, d.dp_runs.to_numpy(float), ("turn_dp",), DP_LAMBDA)
