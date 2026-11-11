@@ -292,15 +292,13 @@ def _war_fields(payload) -> dict:
 def _draft_scores(payload) -> dict:
     """A draft board's row on its 1-100 scale (ranking/value.py's
     `draft_score`): the score the rank is on (after demand), before demand,
-    his ceiling, and the likely range. All None off a draft board (no odds)."""
+    and his ceiling. All None off a draft board (no odds)."""
     if payload["war_low"] is None or payload["model_score"] is None:
-        return dict.fromkeys(("score", "value_score", "ceiling_score", "score_low", "score_high"))
+        return dict.fromkeys(("score", "value_score", "ceiling_score"))
     return {
         "score": draft_score((payload["model_score"] - _REPLACEMENT_POINTS) / _POINTS_PER_WAR),
         "value_score": draft_score(payload["war"]),
         "ceiling_score": draft_score(payload["ceiling_war"], "ceiling"),
-        "score_low": draft_score(payload["war_low"]),
-        "score_high": draft_score(payload["war_high"]),
     }
 
 

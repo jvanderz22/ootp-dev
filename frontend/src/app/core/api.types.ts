@@ -165,12 +165,10 @@ export interface RankedPlayer {
   pRegular: number | null;
   pOutgrows: number | null;
   /** v2 draft boards, the board's 1-100 scale: the score the rank is on
-   *  (after demand), before demand, his ceiling, and the likely range */
+   *  (after demand), before demand, and his ceiling */
   score: number | null;
   valueScore: number | null;
   ceilingScore: number | null;
-  scoreLow: number | null;
-  scoreHigh: number | null;
   battingWar: number | null;
   fieldingWar: number | null;
   runningWar: number | null;

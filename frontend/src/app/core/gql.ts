@@ -50,8 +50,6 @@ const PLAYER_FIELDS = gql`
     score
     valueScore
     ceilingScore
-    scoreLow
-    scoreHigh
     battingWar
     fieldingWar
     runningWar

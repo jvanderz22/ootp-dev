@@ -106,7 +106,7 @@ def test_the_board_reads_on_a_fixed_1_to_100_scale(ranked):
         payload = {"model_score": r.overall_score, "war": (r.pre_demand_score - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE,
                    "ceiling_war": r.ceiling_war, "war_low": r.war_low, "war_high": r.war_high}
         s = _draft_scores(payload)
-        assert 1 <= s["score_low"] <= s["value_score"] <= 100 and s["score_low"] <= s["score_high"]
+        assert 1 <= s["value_score"] <= 100
         assert 1 <= s["ceiling_score"] <= 100
     scores = [_draft_scores({"model_score": r.overall_score, "war": 0, "ceiling_war": 0, "war_low": 0,
                              "war_high": 0})["score"] for r in sorted(ranked, key=lambda r: -r.overall_score)]
