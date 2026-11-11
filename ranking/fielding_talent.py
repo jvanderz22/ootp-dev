@@ -14,7 +14,8 @@ Position floors (decided 2026-11-08, moved 2026-11-09; a catcher's Arm at 35,
 since Arm 40 cost good framers like Contreras most of their value): below a floor a player
 can't be trusted at the position. His value there falls toward a DH's over the
 last FLOOR_RAMP points above the floor: half at the floor itself, a DH's one
-step below it (ratings move in steps of 5).
+step below it (ratings move in steps of 5). A left-handed thrower is below
+the floor at C, 2B, 3B and SS (RIGHT_HANDED; decided 2026-11-10).
 
 The value of a position is its runs plus its adjustment. The adjustments come
 from where OOTP's managers play regulars, pulled lightly toward StatsPlus's
@@ -55,6 +56,9 @@ FLOORS = {
     "CF": {"of_range": 55},
     "C": {"c_arm": 35, "c_blocking": 45, "c_framing": 40},
 }
+# positions a left-handed thrower can't play: below the floor whatever his ratings
+RIGHT_HANDED = ("C", "2B", "3B", "SS")
+LEFTY = "throws_left"
 FLOOR_RAMP = 5
 # a step below the floor is where the factor reaches 0
 BELOW_FLOOR = 5
@@ -92,11 +96,13 @@ SS_COVERS_3B = 0.5
 
 def floor_factor(position, ratings: dict):
     """1 at FLOOR_RAMP points or more above every floor, half at the lowest
-    one, 0 below it."""
+    one, 0 below it - and 0 for a left-handed thrower at RIGHT_HANDED."""
     factor = np.ones(len(next(iter(ratings.values()))))
     for rating, floor in FLOORS.get(position, {}).items():
         ramp = (np.asarray(ratings[rating], float) - (floor - BELOW_FLOOR)) / (FLOOR_RAMP + BELOW_FLOOR)
         factor = np.minimum(factor, np.clip(ramp, 0, 1))
+    if position in RIGHT_HANDED and LEFTY in ratings:
+        factor = np.where(np.asarray(ratings[LEFTY], bool), 0.0, factor)
     return factor
 
 
@@ -174,5 +180,10 @@ def load(name: str = ARTIFACT) -> FieldingTalent:
     return FieldingTalent.from_file(ARTIFACTS_DIR / f"{name}.json")
 
 
+def lefty(players) -> np.ndarray:
+    """1 for a left-handed thrower, else 0 (right, switch or not exported)."""
+    return np.array([(p.throw_hand or "").strip()[:1].upper() == "L" for p in players], float)
+
+
 def ratings_of(players) -> dict:
-    return {r: np.array([getattr(p, r) or 0 for p in players], float) for r in RATINGS}
+    return {**{r: np.array([getattr(p, r) or 0 for p in players], float) for r in RATINGS}, LEFTY: lefty(players)}

@@ -424,18 +424,18 @@
   }
  },
  "position_adjustment": {
-  "C": 7.52,
-  "1B": -6.27,
-  "2B": 0.17,
-  "3B": 2.37,
-  "SS": 10.46,
+  "C": 7.51,
+  "1B": -6.3,
+  "2B": 0.18,
+  "3B": 2.43,
+  "SS": 10.47,
   "LF": -3.45,
-  "CF": 4.25,
+  "CF": 4.24,
   "RF": -1.95
  },
  "dh_adjustment": -12.33,
  "meta": {
-  "created_at": "2026-11-11T05:51:21+00:00",
+  "created_at": "2026-11-11T05:58:19+00:00",
   "league": "yfmlb",
   "snapshot_seasons": [
    2042
@@ -516,13 +516,13 @@
   },
   "usage": {
    "regular_seasons": 623,
-   "temperature": 3.65,
+   "temperature": 3.63,
    "pull": 0.1,
    "raised": {
     "SS": 1.83
    },
-   "picks_main_position": 0.632,
-   "picks_main_position_with_statsplus": 0.596
+   "picks_main_position": 0.629,
+   "picks_main_position_with_statsplus": 0.599
   },
   "dp_runs": 0.33,
   "war_per_fielding_run": 0.1087,

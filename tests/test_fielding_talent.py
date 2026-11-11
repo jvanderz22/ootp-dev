@@ -36,6 +36,17 @@ def test_floors_ramp_over_the_last_points_above_them():
     assert floor_factor("1B", _ratings(if_arm=20))[0] == 1
 
 
+def test_a_left_handed_thrower_is_below_the_floor_on_the_right_side(model):
+    lefty = _ratings(if_range=80, if_arm=80, if_error=80, turn_dp=80, c_arm=80, c_blocking=80, c_framing=80,
+                     throws_left=1)
+    righty = {**lefty, "throws_left": np.array([0.0])}
+    for pos in fielding_talent.RIGHT_HANDED:
+        assert floor_factor(pos, lefty)[0] == 0 and floor_factor(pos, righty)[0] == 1
+        assert model.value(lefty)[pos][0] == pytest.approx(model.dh_adjustment)
+        assert not model.covers(lefty)[pos][0]
+    assert floor_factor("1B", lefty)[0] == floor_factor("RF", lefty)[0] == 1
+
+
 def test_your_floors(model):
     # 2026-11-09: Turn DP 35 at 2B and 40 at SS; a catcher's Arm 35 and Blocking 45
     assert FLOORS["2B"]["turn_dp"] == 35 and FLOORS["SS"]["turn_dp"] == 40

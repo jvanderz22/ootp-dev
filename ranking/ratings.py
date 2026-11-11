@@ -7,6 +7,7 @@ stage can read the wrong side by accident.
 import numpy as np
 
 from models.game_players import SPLIT_SIDES
+from ranking.fielding_talent import LEFTY, lefty
 from ranking.fielding_talent import RATINGS as FIELDING
 from ranking.hitter_talent import HIGH, LOW
 from ranking.hitter_talent import RATINGS as HITTING
@@ -117,8 +118,9 @@ class RatingsView:
         return hand if hand in ("R", "L") else None
 
     def fielding(self, players) -> dict:
-        """{rating: array} of the fielding ratings (one value each: no potential side)."""
-        return {r: np.array([getattr(p, r) for p in players]) for r in FIELDING}
+        """{rating: array} of the fielding ratings (one value each: no potential
+        side), and whether each throws left."""
+        return {**{r: np.array([getattr(p, r) for p in players]) for r in FIELDING}, LEFTY: lefty(players)}
 
     def running(self, players) -> dict:
         return {r: np.array([getattr(p, r) for p in players]) for r in RUNNING}
