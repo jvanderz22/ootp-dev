@@ -54,10 +54,9 @@ MAKEUP = {
 GROWTH_ONLY = {"AD H": ("adaptibility", ("H",)), "AD L": ("adaptibility", ("L",))}
 # the card's labels for the makeup lines, by the rating's value
 MAKEUP_LABELS = {
-    "work_ethic": {"H": "High work ethic", "L": "Low work ethic"},
-    "intelligence": {"H": "High intelligence", "L": "Low intelligence"},
-    "injury_prone": {"Fragile": "Injury-prone", "Wrecked": "Very injury-prone",
-                     "Durable": "Durable", "Iron Man": "Very durable"},
+    "work_ethic": {"H": "Work ethic", "L": "Work ethic"},
+    "intelligence": {"H": "Intelligence", "L": "Intelligence"},
+    "injury_prone": {"Fragile": "Fragile", "Wrecked": "Wrecked", "Durable": "Durable", "Iron Man": "Iron Man"},
 }
 # the share of his E[v] the rest keeps at least, where outgrowing is worth
 # nearly all of it
@@ -179,56 +178,43 @@ class DraftOdds:
         growth = expected - rest
         reference = float(np.exp(np.log(a["base"]) + a["potential_exponent"] * cols["log potential"]))
         base = reference * (1 - growth / expected)
-        share = f"reach {reference / ceiling:.0%} of it" if ceiling > a["log_floor"] else f"{reference:.2f} WAR"
-        lines = [("add", "Draftees with his ceiling", base - ceiling, share, "at 21, with average makeup")]
-        r = cols["readiness"]
-        lines.append(("scale", "How developed he is", a["readiness"]["per_war"] ** r, None,
-                      f"{readiness:+.1f} WAR on today's ratings" + (": a long way to go" if readiness < -1 else "")))
+        share = f"{reference / ceiling:.0%}" if ceiling > a["log_floor"] else f"{reference:.2f} WAR"
+        lines = [("add", "Base rate", base - ceiling, share, None)]
+        lines.append(("scale", "Readiness", a["readiness"]["per_war"] ** cols["readiness"], None,
+                      f"{readiness:+.1f} WAR now"))
         age = player.age
         for label, (lo, hi, f) in a["age"].items():
             if lo <= age <= hi:
                 tilt = next((e for lab, (l2, h2, e) in a["age_by_potential"].items() if l2 <= age <= h2), 0.0)
-                young = age < 21
-                note = "More time to develop" if young else "Less time to develop"
-                if tilt and cols["log potential"] > 0:
-                    note += "; counts for less with a ceiling this high" if young else "; costs less with a ceiling this high"
-                lines.append(("scale", f"Drafted at {age}", f * np.exp(tilt * cols["log potential"]), None, note))
+                lines.append(("scale", f"Age {age}", f * np.exp(tilt * cols["log potential"]), None, None))
         if group == "SP":
-            lines.append(("scale", "Starters often end up relieving", a["role"]["SP"], None,
-                          "Most drafted starters don't stay in a rotation"))
+            lines.append(("scale", "Starter", a["role"]["SP"], None, "most end up relieving"))
         elif group == "RP":
-            lines.append(("scale", "Drafted as a reliever", a["role"]["RP"], None, "Relievers reach the majors more often"))
+            lines.append(("scale", "Reliever", a["role"]["RP"], None, None))
         taper = development.weight(ceiling)
         for label, (attr, values) in MAKEUP.items():
             value = getattr(player, attr)
             if value in values:
-                note = f"Counts for less with a ceiling this high ({taper:.0%})" if taper < 1 else None
-                lines.append(("scale", MAKEUP_LABELS[attr][value], a["makeup"][label] ** taper, None, note))
+                lines.append(("scale", MAKEUP_LABELS[attr][value], a["makeup"][label] ** taper, None, None))
         factor = 1.0
         if switch:
-            lines.append(("scale", "Switch hitter", switch[1], None, "Lets you set the lineup either way"))
+            lines.append(("scale", "Switch hitter", switch[1], None, None))
             factor = switch[1]
-        lines.append(("add", "Could outgrow his ceiling", growth * factor, f"{q:.0%} chance",
-                      self._growth_note(player, growth_cols)))
+        lines.append(("add", "Breakout", growth * factor, f"{q:.0%}", self._growth_note(player, growth_cols)))
         return lines, expected * factor
 
     def _growth_note(self, player, cols) -> str:
-        """What lifts his chance of outgrowing his ceiling, in words."""
-        coef, out = self.growth["coef"], []
+        """What lifts his chance of outgrowing his ceiling, in a few words."""
+        out = []
         if cols["age 19-"]:
-            out.append(f"drafted at {player.age}")
-        if cols["velocity"] >= 3 and coef["velocity"] > 0:
+            out.append(f"age {player.age}")
+        if cols["velocity"] >= 3 and self.growth["coef"]["velocity"] > 0:
             out.append(f"{_top_velocity(player.velocity):.0f} mph")
         if cols["WE H"]:
-            out.append("high work ethic")
+            out.append("work ethic")
         if cols["AD H"]:
-            out.append("adaptable")
-        if cols["RP"]:
-            out.append("relievers' ceilings grow most")
-        if not out:
-            return None
-        text = out[0] if len(out) == 1 else ", ".join(out[:-1]) + " and " + out[-1]
-        return text[0].upper() + text[1:]
+            out.append("adaptability")
+        return ", ".join(out) or None
 
     # -- the card's distribution -----------------------------------------------
 

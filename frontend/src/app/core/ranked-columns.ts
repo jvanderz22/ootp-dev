@@ -736,7 +736,7 @@ const surplusCol = (group: ColGroup) =>
   );
 
 /** His potential ratings' WAR in a full-time role (the league's boards). */
-export const CEILING_TITLE = 'His WAR as an everyday player if he reaches his potential ratings.';
+export const CEILING_TITLE = 'WAR at full potential';
 const ceilingCol = (group: ColGroup) => warCol('ceilingWar', 'Ceiling', CEILING_TITLE, group);
 
 const ROLE_COLUMN: ColumnDef = {

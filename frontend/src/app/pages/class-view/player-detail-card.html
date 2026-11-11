@@ -90,8 +90,7 @@
         <div class="vt" [title]="ceilingTitle">
           <span class="vt-head">Ceiling</span>
           <span class="vt-num"
-            ><b>{{ p.ceilingWar | number: '1.2-2' }}</b><i>WAR</i>
-            <small>at his potential</small></span
+            ><b>{{ p.ceilingWar | number: '1.2-2' }}</b><i>WAR</i></span
           >
         </div>
       }
@@ -122,13 +121,9 @@
     </div>
     @if (odds(); as o) {
       <div class="verdict-odds">
-        <span title="8 in 10 players like him end up in this range"
-          >Likely range <b>{{ o.low | number: '1.1-1' }}–{{ o.high | number: '1.1-1' }}</b> WAR</span
-        >
-        <span [title]="o.regularTitle">Chance he becomes a regular <b>{{ o.regular | percent: '1.0-0' }}</b></span>
-        <span title="His ratings grow past what's scouted as his ceiling today"
-          >Chance he outgrows his ceiling <b>{{ o.outgrows | percent: '1.0-0' }}</b></span
-        >
+        <span title="P10–P90">Range <b>{{ o.low | number: '1.1-1' }}–{{ o.high | number: '1.1-1' }}</b></span>
+        <span [title]="o.regularTitle">Regular <b>{{ o.regular | percent: '1.0-0' }}</b></span>
+        <span title="Outgrows his ceiling">Breakout <b>{{ o.outgrows | percent: '1.0-0' }}</b></span>
       </div>
     }
   }

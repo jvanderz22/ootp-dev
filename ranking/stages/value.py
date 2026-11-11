@@ -54,9 +54,9 @@ def _modifier_note(name, player) -> str:
     """The card's note for a judgment line the draft odds keep (only notes:
     the modifier reads the rating itself)."""
     if name == "ScoutingAccuracyModifier" and player.scouting_accuracy not in ("Very High", None):
-        return f"{player.scouting_accuracy}: the ratings may be off"
+        return player.scouting_accuracy
     if name == "DraftSecondaryPersonalityModifier":
-        return {"H": "High leadership", "L": "Low leadership"}.get(player.leadership)
+        return {"H": "leadership H", "L": "leadership L"}.get(player.leadership)
     return None
 
 
@@ -457,8 +457,7 @@ class Value(BatchStage):
             fast = draft_odds.velocity_factor(player.velocity, knuckleball)
             if fast != 1:
                 points = ledger.scale(MODIFIERS, "velocity", points, fast, side_name, f"{player.velocity} mph")
-            points = ledger.scale(MODIFIERS, "hitter–pitcher balance", points, self.odds.balance, side_name,
-                                  "Keeps the board about half hitters, half pitchers")
+            points = ledger.scale(MODIFIERS, "pitcher balance", points, self.odds.balance, side_name)
         modified = points / SCALE
         side.score = points
         side.odds = {"ceiling": ceiling, "group": group, "expected": expected / (switch[1] if switch else 1.0),

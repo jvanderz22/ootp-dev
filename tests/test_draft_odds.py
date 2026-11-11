@@ -62,7 +62,7 @@ def test_the_lines_take_his_ceiling_to_what_hes_expected_to_realize(ranked):
     for r in ranked:
         lines = [l for l in r.ledger.lines if r.ledger.counted(l)]
         labels = [l.label for l in lines if l.stage == DEVELOPMENT]
-        assert labels[0] == "Draftees with his ceiling" and labels[-1] == "Could outgrow his ceiling"
+        assert labels[0] == "Base rate" and labels[-1] == "Breakout"
         before_demand = sum(l.delta for l in lines if l.stage != DEMAND)
         assert before_demand == pytest.approx(r.pre_demand_score)
         # never below replacement: the odds order the bottom of the board
@@ -81,6 +81,6 @@ def test_the_card_gets_the_ceiling_the_range_and_the_chances(ranked):
 
 def test_pitchers_carry_the_balance_and_their_velocity(ranked):
     pitchers = [r for r in ranked if r.ledger.side == "pitching"]
-    assert pitchers and all(any(l.label == "hitter–pitcher balance" for l in r.ledger.lines) for r in pitchers)
+    assert pitchers and all(any(l.label == "pitcher balance" for l in r.ledger.lines) for r in pitchers)
     hitters = [r for r in ranked if r.ledger.side == "batting"]
-    assert not any(l.label == "hitter–pitcher balance" and r.ledger.counted(l) for r in hitters for l in r.ledger.lines)
+    assert not any(l.label == "pitcher balance" and r.ledger.counted(l) for r in hitters for l in r.ledger.lines)

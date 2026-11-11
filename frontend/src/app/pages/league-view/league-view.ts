@@ -30,12 +30,12 @@ const METHODS: { label: string; value: Method; title: string }[] = [
   {
     label: 'Current',
     value: 'overall',
-    title: 'Next season on his current ratings: WAR over what the league gives away free at his roster spot',
+    title: 'Current ratings, priced by roster spot',
   },
   {
     label: 'Prospects',
     value: 'potential',
-    title: 'Players with under a year of MLB service, on their potential ratings',
+    title: 'Under a year of MLB service, potential ratings',
   },
 ];
 

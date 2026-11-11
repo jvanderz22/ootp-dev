@@ -264,6 +264,17 @@ so makeup, velocity and Stuff aren't counted twice inside the model.
 
 ### Ledger wording (2026-11-10)
 
+*Revised 2026-11-10 after C (you: "you're always way too verbose in the
+UI"): the labels below were cut to a word or two, and most notes dropped.*
+- **Reaching his ceiling:** Base rate (44%), Readiness (+0.5 WAR now),
+  Age 19, Starter (most end up relieving), Reliever, Work ethic,
+  Intelligence, Fragile / Durable, Switch hitter, and Breakout (3%; "age 19,
+  work ethic").
+- **Adjustments:** Pitcher balance; the scouting and leadership notes are
+  just the grade.
+- **Under the band:** "Range 0.5–5.1 · Regular 54% · Breakout 3%".
+- **Current card:** the reference row reads "Full-time RF 2.08 WAR".
+
 Every line the draft card shows should read as plain English to someone
 who doesn't know the model. A card row has four parts: a label, a stat
 beside it, a note underneath, and the WAR it adds on the right.

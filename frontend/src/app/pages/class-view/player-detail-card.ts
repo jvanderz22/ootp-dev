@@ -168,12 +168,7 @@ export class PlayerDetailCardComponent {
     const p = this.player();
     if (p.pRegular == null || p.warLow == null || p.warHigh == null || p.pOutgrows == null) return null;
     const role = this.verdict().role;
-    const regular =
-      role === 'RP'
-        ? 'a regular bullpen role in this league'
-        : role === 'SP'
-          ? 'a rotation spot in this league'
-          : 'an everyday player in this league';
+    const regular = role === 'RP' ? 'A bullpen spot' : role === 'SP' ? 'A rotation spot' : 'An everyday job';
     return { low: p.warLow, high: p.warHigh, regular: p.pRegular, regularTitle: regular, outgrows: p.pOutgrows };
   });
 
@@ -188,19 +183,7 @@ export class PlayerDetailCardComponent {
     const partTime = b.ledger.some((l) => l.counted && l.label === 'playing time');
     const pen = p.role === 'RP' && Math.abs(p.fullTimeWar - war) >= 0.05;
     if (!partTime && !pen && p.fullTimeRole === p.role) return null;
-    const role = p.fullTimeRole;
-    const [label, note] =
-      role === 'SP'
-        ? ['As a rotation starter', 'a full turn every fifth day']
-        : role === 'RP'
-          ? ['As a reliever', 'at the leverage his stuff earns']
-          : ['As an everyday player', `a regular's PA at ${role ?? 'his position'}`];
-    return {
-      war: p.fullTimeWar,
-      label,
-      note,
-      title: 'His WAR if he had the job full-time, before the roster sets his role - for reference, not counted',
-    };
+    return { war: p.fullTimeWar, label: 'Full-time', note: p.fullTimeRole ?? '', title: 'Not counted' };
   });
 
   /** The v2 verdict band. It reads the table row, so it's there before the
