@@ -19,7 +19,8 @@ def test_draft_reads_are_attributed_to_their_readers():
     inv = inventory(get_ranker("draft_class"), _players())
     assert inv.players == 160
     assert inv.reads["DraftDemandModifier"] == {"DEM"}  # read off the result
-    assert inv.reads["AgeModifier"] == {"Age"}
+    # the draft odds read his age and makeup, and a pitcher's velocity and Stuff
+    assert {"Age", "WE", "INT", "Prone", "AD", "VT", "STU P"} == inv.reads["draft odds"]
     assert {"K P", "POW P"} <= inv.reads["batting talent"]
     # a class without BABIP is read through Contact, so the legacy batting grid never runs
     assert "batting model" not in inv.reads
@@ -45,12 +46,13 @@ def test_flags_composites_and_repeat_reads_by_side():
     assert any("K P" in note for note in batting["CON P"])
     assert batting["K P"]
     assert "4 readers" not in str(batting)  # no batting rating is read 4 times here
-    assert "3 readers" in pitching["STU P"] or "4 readers" in pitching["STU P"]
+    assert "2 readers" in pitching["STU P"]   # the pitching talent and the draft odds' growth
     # a batting-only modifier doesn't feed the pitching side
     assert inv.sides("BatterHitProfileModifier") == {"batting"}
     assert "BatterHitProfileModifier" not in str(inv.by_rating("pitching"))
-    # shared modifiers feed both
-    assert inv.sides("AgeModifier") == {"batting", "pitching"}
+    # shared modifiers feed both, and so do the odds
+    assert inv.sides("ScoutingAccuracyModifier") == {"batting", "pitching"}
+    assert inv.sides("draft odds") == {"batting", "pitching"}
 
 
 def test_flags_potential_reads_in_a_current_profile():

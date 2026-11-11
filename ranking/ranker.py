@@ -31,12 +31,13 @@ def legacy_pipeline(profile, league=None):
     return [LegacyModel(profile), LegacyModifiers(), TwoWay()], [Demand()]
 
 
-# Engine v2's pipeline: the fitted talent models, then WAR (with the modifiers
-# and the two sides combined), and any companion profiles; then demand.
-# `legacy` keeps reproducing the legacy rankers (with a ledger) for comparison.
+# Engine v2's pipeline: the fitted talent models, any companion profiles (the
+# value stage reads the draft's readiness), then WAR (with the modifiers and
+# the two sides combined); then demand. `legacy` keeps reproducing the legacy
+# rankers (with a ledger) for comparison.
 def v2_pipeline(profile, league=None):
     companions = [Companion(key, p, league) for key, p in profile.companions]
-    return [Talent(profile), Value(profile, league=league), *companions], [Demand(offset=DISPLAY_OFFSET)]
+    return [Talent(profile), *companions, Value(profile, league=league)], [Demand(offset=DISPLAY_OFFSET)]
 
 
 PIPELINES = {"v2": v2_pipeline, "legacy": legacy_pipeline}
@@ -51,6 +52,14 @@ def _league_replacement(ledger):
 
 def _war(companion):
     return None if companion is None else round(companion.war, 2)
+
+
+def _odds(odds) -> dict:
+    """The draft odds' fields of a result (None without them)."""
+    if odds is None:
+        return {}
+    return {"war_low": round(odds["p10"], 2), "war_high": round(odds["p90"], 2),
+            "p_regular": round(odds["regular"], 3), "p_outgrows": round(odds["outgrows"], 3)}
 
 
 class Ranker:
@@ -134,7 +143,8 @@ class Ranker:
             rp_era=None if state.rp_era is None else round(state.rp_era, 2),
             ip=None if state.innings is None else round(state.innings),
             replacement=_league_replacement(state.ledger),
-            ceiling_war=_war(state.companions.get("ceiling")),
+            ceiling_war=_war(state.companions.get("ceiling")) if state.odds is None else round(state.odds["ceiling"], 2),
+            **_odds(state.odds),
             full_time_war=_war(state.companions.get("full_time")),
             full_time_role=getattr(state.companions.get("full_time"), "role", None),
         )

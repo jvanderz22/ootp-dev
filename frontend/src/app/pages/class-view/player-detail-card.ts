@@ -161,6 +161,22 @@ export class PlayerDetailCardComponent {
 
   protected readonly ceilingTitle = CEILING_TITLE;
 
+  /** The draft odds under the verdict band: the likely range of what he
+   *  realizes, and the chances he becomes a regular and outgrows his
+   *  ceiling. Null off a draft board. */
+  protected readonly odds = computed(() => {
+    const p = this.player();
+    if (p.pRegular == null || p.warLow == null || p.warHigh == null || p.pOutgrows == null) return null;
+    const role = this.verdict().role;
+    const regular =
+      role === 'RP'
+        ? 'a regular bullpen role in this league'
+        : role === 'SP'
+          ? 'a rotation spot in this league'
+          : 'an everyday player in this league';
+    return { low: p.warLow, high: p.warHigh, regular: p.pRegular, regularTitle: regular, outgrows: p.pOutgrows };
+  });
+
   /** Current ratings: his WAR in a full-time role, beside his value - shown
    *  where the roster gives him a different job: a part-time bat, a bullpen
    *  slot's leverage, or the pen over the rotation (or back). */

@@ -237,9 +237,13 @@ def test_the_ceiling_is_his_potential_ratings_alone():
         for r in get_ranker(method).rank([GamePlayer(dict(r)) for r in rows]):
             war = (alone[r.id].pre_demand_score - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE
             assert r.ceiling_war == pytest.approx(war, abs=0.006), (method, r.name)
-    # the draft board's ceiling is its own model lines (the draft odds, step C)
+    # the draft board's ceiling is its own model lines, before the odds
+    from ranking.ledger import MODEL
+
     draft = csv.DictReader(io.StringIO(make_draft_class_csv(n=40, seed=7)))
-    assert all(r.ceiling_war is None for r in get_ranker("draft_class").rank([GamePlayer(r) for r in draft]))
+    for r in get_ranker("draft_class").rank([GamePlayer(r) for r in draft]):
+        model = sum(line.delta for line in r.ledger.lines if line.stage == MODEL and r.ledger.counted(line))
+        assert r.ceiling_war == pytest.approx((model - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE, abs=0.006)
 
 
 def test_current_ratings_carry_his_full_time_war(ranked):

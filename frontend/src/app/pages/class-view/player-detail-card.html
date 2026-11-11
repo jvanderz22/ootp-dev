@@ -120,6 +120,17 @@
         >
       </div>
     </div>
+    @if (odds(); as o) {
+      <div class="verdict-odds">
+        <span title="8 in 10 players like him end up in this range"
+          >Likely range <b>{{ o.low | number: '1.1-1' }}–{{ o.high | number: '1.1-1' }}</b> WAR</span
+        >
+        <span [title]="o.regularTitle">Chance he becomes a regular <b>{{ o.regular | percent: '1.0-0' }}</b></span>
+        <span title="His ratings grow past what's scouted as his ceiling today"
+          >Chance he outgrows his ceiling <b>{{ o.outgrows | percent: '1.0-0' }}</b></span
+        >
+      </div>
+    }
   }
 
   <div class="detail-body">
@@ -331,6 +342,11 @@
           <div class="vb-stage">{{ g.title }}</div>
           @for (s of g.steps; track $index) {
             <ng-container *ngTemplateOutlet="vbRow; context: { $implicit: s }" />
+          }
+          @if (g.stage === 'model' && vb.ceiling != null) {
+            <div class="vb-total" [title]="ceilingTitle">
+              <span>Ceiling</span><b>{{ vb.ceiling | number: '1.2-2' }} WAR</b>
+            </div>
           }
         }
         <div class="vb-total">

@@ -158,6 +158,12 @@ export interface RankedPlayer {
    *  sets his spot, and that role (a position, SP or RP); null elsewhere */
   fullTimeWar: number | null;
   fullTimeRole: string | null;
+  /** v2 draft boards, the draft odds: the likely range of what he realizes
+   *  (WAR), and the chances he becomes a regular and outgrows his ceiling */
+  warLow: number | null;
+  warHigh: number | null;
+  pRegular: number | null;
+  pOutgrows: number | null;
   battingWar: number | null;
   fieldingWar: number | null;
   runningWar: number | null;

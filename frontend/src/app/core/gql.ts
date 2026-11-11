@@ -43,6 +43,10 @@ const PLAYER_FIELDS = gql`
     ceilingWar
     fullTimeWar
     fullTimeRole
+    warLow
+    warHigh
+    pRegular
+    pOutgrows
     battingWar
     fieldingWar
     runningWar

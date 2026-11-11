@@ -238,7 +238,17 @@ export function splitRows(s: PlayerSplits | null | undefined, side: 'batting' | 
 // demand), already trimmed server-side to the side(s) the player is judged on.
 
 /** "DraftSecondaryPersonalityModifier" -> "Draft secondary personality" */
+/** The card's names for the judgment lines (modifiers) it shows by name. */
+const MODIFIER_LABELS: Record<string, string> = {
+  ScoutingAccuracyModifier: 'Scouting accuracy',
+  DraftSecondaryPersonalityModifier: 'Leadership and personality',
+  BatterHitProfileModifier: 'Batted-ball profile',
+  PitcherVelocityModifier: 'Velocity',
+  DraftPitcherStuffModifier: 'Stuff',
+};
+
 function prettyModifier(raw: string): string {
+  if (MODIFIER_LABELS[raw]) return MODIFIER_LABELS[raw];
   const s = raw
     .replace(/Modifier$/, '')
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
@@ -340,6 +350,9 @@ export interface ValueGroup {
 export interface ValueBuild {
   /** everything before the demand step, by stage in pipeline order */
   groups: ValueGroup[];
+  /** the talent lines' total - his ceiling - where the development or the
+   *  draft odds take it on from there (potential ratings); null otherwise */
+  ceiling: number | null;
   /** his WAR: the sum of those groups */
   war: number;
   /** current ratings: the league's replacement for his spot, taken off his
@@ -362,7 +375,7 @@ export interface ValueBuild {
 const VALUE_STAGE_TITLES: Record<string, string> = {
   model: 'Talent & role',
   modifiers: 'Adjustments',
-  development: 'Development',
+  development: 'Reaching his ceiling',
   'two-way': 'Two-way',
   demand: 'Demand',
 };
@@ -387,6 +400,15 @@ export function signedWar(war: number): string {
   return (war > 0 ? '+' : '−') + text;
 }
 
+/** A ledger stat as the card shows it: a multiplier ("x1.25") as the change
+ *  it makes ("+25%", "−38%"); anything else as it is. */
+function cardStat(stat: string | null | undefined): string | null {
+  const m = stat?.match(/^x(\d+(?:\.\d+)?)$/);
+  if (!m) return stat ?? null;
+  const pct = Math.round((Number(m[1]) - 1) * 100);
+  return pct === 0 ? '0%' : (pct > 0 ? '+' : '−') + Math.abs(pct) + '%';
+}
+
 /** Place `lines` as a waterfall from zero WAR. */
 function waterfall(lines: LedgerLine[]): { line: LedgerLine; step: ValueStep }[] {
   let running = 0;
@@ -404,7 +426,7 @@ function waterfall(lines: LedgerLine[]): { line: LedgerLine; step: ValueStep }[]
     line,
     step: {
       label: ledgerLabel(line),
-      stat: line.stat,
+      stat: cardStat(line.stat),
       note: line.note,
       war: end - start,
       left: ((Math.min(start, end) - lo) / range) * 100,
@@ -433,9 +455,11 @@ export function valueBuild(b: ScoreBreakdown | null): ValueBuild | null {
   let hidden = 0;
   let war = 0;
   let finalWar = 0;
+  let talent = 0;
   for (const { line, step } of waterfall(ordered)) {
     finalWar += step.war;
     if (line.stage !== 'demand' && !isReplacement(line)) war += step.war;
+    if (line.stage === 'model' && !isReplacement(line)) talent += step.war;
     if (isReplacement(line)) {
       replacement.push(step);
     } else if (!shown(line)) {
@@ -464,6 +488,7 @@ export function valueBuild(b: ScoreBreakdown | null): ValueBuild | null {
     : null;
   return {
     groups,
+    ceiling: counted.some((l) => l.stage === 'development') ? talent : null,
     war,
     replacement,
     surplus: replacement.length ? war + replacement.reduce((sum, s) => sum + s.war, 0) : null,

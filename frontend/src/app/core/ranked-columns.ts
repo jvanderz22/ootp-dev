@@ -847,15 +847,14 @@ const DROPPED_IN_LEAGUE = new Set([
 /** Columns for a view in a given context and engine. `'league'` drops the
  *  demand / drafted columns and the player-type tag, and inserts Org / Level
  *  right after Pos; under v2 it drops the score too (no demand step, so it's
- *  just his WAR in points). A class drops the Ceiling, which only the
- *  league's boards carry. */
+ *  just his WAR in points). */
 export function viewColumns(
   view: ClassView,
   context: 'class' | 'league' = 'class',
   engine: RankingEngine = 'v2',
 ): ColumnDef[] {
   const base = COLUMNS_BY_ENGINE[engine][view];
-  if (context !== 'league') return base.filter((c) => c.field !== 'ceilingWar');
+  if (context !== 'league') return base;
   const dropped = engine === 'v2' && view !== 'compare' ? new Set([...DROPPED_IN_LEAGUE, 'modelScore']) : DROPPED_IN_LEAGUE;
   // Drop the drafted/demand columns and the Type tag; Pos stays sticky right
   // after Name, with Org (3-letter code) and Level slotted in just after it.

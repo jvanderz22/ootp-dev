@@ -48,4 +48,4 @@ def test_a_threshold_in_war_weights_as_its_points_did():
 def test_v2_runs_the_talent_models_and_values_them_in_war(method):
     ranker = get_ranker(method)
     companions = ["companion"] * len(PROFILES[method].companions)
-    assert [s.name for s in ranker.batch_stages] == ["talent", "value", *companions]
+    assert [s.name for s in ranker.batch_stages] == ["talent", *companions, "value"]

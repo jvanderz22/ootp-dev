@@ -36,6 +36,12 @@ class RankedResult(ScoredPlayer):
     # sets his spot (ranking.profiles.FULL_TIME); None elsewhere
     full_time_war: float = None
     full_time_role: str = None
+    # the draft odds (ranking/draft_odds.py): the likely range (P10-P90, in
+    # WAR), and the chances he becomes a regular and outgrows his ceiling
+    war_low: float = None
+    war_high: float = None
+    p_regular: float = None
+    p_outgrows: float = None
 
     def scored_player_fields(self) -> dict:
         return {name: getattr(self, name) for name in SCORED_PLAYER_FIELDS}

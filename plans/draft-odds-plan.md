@@ -710,6 +710,43 @@ not in `ranking/artifacts/`).*
      partly in-sample for velocity.
 
 **C. The stage**
+
+*Built 2026-11-10, committed with `draft_odds_v1.json`, not deployed.*
+- **Readiness:** a companion, `("readiness", FULL_TIME)`, on the draft
+  profile. Companions now run before the value stage, and keep his
+  model-line WAR (`CompanionValue.model`), as the fit read readiness.
+- **The odds:** in `ranking/draft_odds.py` (`DraftOdds`), switched on by
+  the profile's `odds` flag. Its columns are held to the fit's `design` and
+  `growth_design` by a test, row for row.
+- **The ledger, in this order:**
+  - the talent lines (his ceiling)
+  - "Reaching his ceiling" (the `development` stage):
+    - a base line, "Draftees with his ceiling" ("reach 44% of it"), that
+      carries the reference draftee's rate
+    - one percentage line per factor
+    - "Could outgrow his ceiling" as an added line, with its chance and
+      what lifts it
+  - "Adjustments": the kept modifiers with notes, velocity (upside only)
+    and the hitter–pitcher balance
+- **Never below replacement.** The deficit branch doesn't apply on the
+  draft board.
+- **The card:**
+  - a "Ceiling" subtotal under the talent lines
+  - the section heading "Reaching his ceiling" (the potential board's
+    development factors get it too)
+  - every multiplier stat as a % change
+  - a label map for the kept modifiers
+  - under the verdict band, "Likely range 0.5–5.1 WAR · Chance he becomes
+    a regular 54% · Chance he outgrows his ceiling 3%"
+
+  These are stored as `war_low`, `war_high`, `p_regular` and `p_outgrows`
+  (migration 9). Draft rows also carry `ceiling_war`, so the Ceiling column
+  shows on class views too.
+- **The fit script's "board"** is now this board. Its factors are parsed
+  only from `x…` stats.
+- **The draft-class goldens** were regenerated. The league golden didn't
+  move.
+
 1. **Readiness** in the draft profile, from the companion stage: his
    current ratings' full-time WAR.
 2. **The odds** in `ranking/stages/value.py`. They replace `AgeModifier`,

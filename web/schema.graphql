@@ -92,6 +92,11 @@ type RankedPlayer {
   "v2 engine on current ratings only: his WAR in a full-time role (an everyday player, a rotation starter, or a reliever at the leverage his stuff earns), before the roster sets his spot; and that role"
   fullTimeWar: Float
   fullTimeRole: String
+  "v2 engine on draft boards only, the draft odds: the likely range of what he realizes (P10 and P90, WAR), and the chances he becomes a regular and outgrows his ceiling (0-1)"
+  warLow: Float
+  warHigh: Float
+  pRegular: Float
+  pOutgrows: Float
   "v2 engine only, a hitter's parts of it: batting (with the playing-time credit), fielding (with position and utility), baserunning"
   battingWar: Float
   fieldingWar: Float

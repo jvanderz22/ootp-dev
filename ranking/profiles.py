@@ -65,6 +65,10 @@ class ScoringProfile:
     # v2: (key, profile) pairs each player is also scored on, alongside this
     # profile (ranking/stages/companion.py) - e.g. his ceiling
     companions: tuple = ()
+    # v2: the draft odds (ranking/draft_odds.py) take his potential ratings'
+    # WAR to what he's expected to realize, in place of the development
+    # factors and the modifiers they replace; reads the "readiness" companion
+    odds: bool = False
 
     def without(self, *modifiers) -> "ScoringProfile":
         """This profile minus `modifiers` (matched by name) on every side."""
@@ -96,6 +100,7 @@ class ScoringProfile:
             "league_replacement": self.league_replacement,
             "development": self.development,
             "companions": {key: profile.describe() for key, profile in self.companions},
+            "odds": self.odds,
         }
 
     def config_hash(self) -> str:
@@ -162,6 +167,9 @@ DRAFT = ScoringProfile(
     pitching_modifiers=POTENTIAL.pitching_modifiers,
     demand_modifiers=(DraftDemandModifier,),
     two_way_threshold=2.2,
+    # how developed he already is: his current ratings' full-time WAR
+    companions=(("readiness", FULL_TIME),),
+    odds=True,
 )
 
 # keyed by ranking method, as `rankers.get_ranker.RANKERS` is (full_time has

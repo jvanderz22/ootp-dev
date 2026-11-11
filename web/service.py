@@ -51,7 +51,7 @@ _FLOAT_FIELDS = (
     "batting_score_component", "pitcher_score", "starter_component",
     "reliever_component", "running_score_component", "raw_overall_score",
     "pre_demand_score", "wrc_plus", "era", "sp_era", "rp_era", "ip", "replacement",
-    "ceiling_war", "full_time_war",
+    "ceiling_war", "full_time_war", "war_low", "war_high", "p_regular", "p_outgrows",
 )
 
 

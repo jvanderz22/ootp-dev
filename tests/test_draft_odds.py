@@ -1,0 +1,86 @@
+"""The draft odds on the draft board (ranking/draft_odds.py)."""
+import csv
+import io
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from models.game_players import GamePlayer
+from ranking import draft_odds, get_ranker, value
+from ranking.fitting import draft_odds as fit
+from ranking.ledger import DEMAND, DEVELOPMENT, MODIFIERS
+from ranking.ratings import RatingsView
+from tests.e2e_fixtures import make_draft_class_csv
+
+
+@pytest.fixture(scope="module")
+def rows():
+    return list(csv.DictReader(io.StringIO(make_draft_class_csv(n=120, seed=11))))
+
+
+@pytest.fixture(scope="module")
+def ranked(rows):
+    return get_ranker("draft_class").rank([GamePlayer(dict(r)) for r in rows], batch_size=50)
+
+
+@pytest.mark.parametrize("velocity, factor", [
+    ("93-95", 1.0), ("94-96", 1.05), ("96-98", 1.10), ("98-100", 1.12), ("101-103", 1.15), ("", 1.0), (None, 1.0),
+])
+def test_velocity_is_an_upside_never_a_penalty(velocity, factor):
+    assert draft_odds.velocity_factor(velocity) == factor
+    assert draft_odds.velocity_factor("99-101", knuckleball=True) == 1.0
+
+
+def test_the_board_reads_the_columns_the_fit_was_fit_on(rows):
+    # the runtime's columns are the fit's design matrices, row for row
+    odds, view = draft_odds.load(), RatingsView("potential")
+    rng = np.random.default_rng(0)
+    players = [GamePlayer(dict(r)) for r in rows]
+    frame = pd.DataFrame([{
+        "war_pot": float(rng.uniform(-0.5, 7)), "readiness": float(rng.uniform(-5, 4)),
+        "group": rng.choice(["hitter", "SP", "RP"]), "age": p.age, "we": p.work_ethic, "int": p.intelligence,
+        "prone": p.injury_prone, "ad": p.adaptibility, "velo": r.get("VT"), "stuff": r.get("STU P"),
+        "pitches": view.pitch_count(p), "years": fit.REFERENCE_YEARS,
+    } for p, r in zip(players, rows)])
+    mean, growth = fit.design(frame), fit.growth_design(frame)
+    for i, (player, row) in enumerate(zip(players, frame.itertuples())):
+        runtime = odds.mean_columns(player, row.war_pot, row.readiness, row.group)
+        assert runtime == pytest.approx(mean.iloc[i].to_dict()), player.name
+        runtime = odds.growth_columns(player, row.war_pot, row.readiness, row.group, row.pitches)
+        assert runtime == pytest.approx(growth.iloc[i].to_dict()), player.name
+
+
+def test_the_odds_replace_the_development_factors_and_their_modifiers(ranked):
+    replaced = {*draft_odds.REPLACES, "PersonalityModifier", "BatterInjuryModifier", "PitcherInjuryModifier"}
+    assert not [l for r in ranked for l in r.ledger.lines if l.stage == MODIFIERS and l.label in replaced]
+    assert not [l for r in ranked for l in r.ledger.lines if l.label.startswith(("work ethic", "durability"))]
+    assert get_ranker("draft_class").manifest()["artifact_versions"]["draft_odds"] == draft_odds.ARTIFACT
+
+
+def test_the_lines_take_his_ceiling_to_what_hes_expected_to_realize(ranked):
+    for r in ranked:
+        lines = [l for l in r.ledger.lines if r.ledger.counted(l)]
+        labels = [l.label for l in lines if l.stage == DEVELOPMENT]
+        assert labels[0] == "Draftees with his ceiling" and labels[-1] == "Could outgrow his ceiling"
+        before_demand = sum(l.delta for l in lines if l.stage != DEMAND)
+        assert before_demand == pytest.approx(r.pre_demand_score)
+        # never below replacement: the odds order the bottom of the board
+        assert r.pre_demand_score >= value.DISPLAY_OFFSET
+
+
+def test_the_card_gets_the_ceiling_the_range_and_the_chances(ranked):
+    for r in ranked:
+        assert r.ceiling_war is not None
+        assert 0 <= r.war_low <= r.war_high
+        assert 0 <= r.p_regular <= 1 and 0 < r.p_outgrows < 1
+    # a higher ceiling raises the chance he becomes a regular, on average
+    top = sorted(ranked, key=lambda r: -r.ceiling_war)
+    assert np.mean([r.p_regular for r in top[:20]]) > np.mean([r.p_regular for r in top[-20:]])
+
+
+def test_pitchers_carry_the_balance_and_their_velocity(ranked):
+    pitchers = [r for r in ranked if r.ledger.side == "pitching"]
+    assert pitchers and all(any(l.label == "hitter–pitcher balance" for l in r.ledger.lines) for r in pitchers)
+    hitters = [r for r in ranked if r.ledger.side == "batting"]
+    assert not any(l.label == "hitter–pitcher balance" and r.ledger.counted(l) for r in hitters for l in r.ledger.lines)

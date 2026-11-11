@@ -114,7 +114,8 @@ def _factors(result) -> dict:
     from ranking.ledger import DEVELOPMENT, MODIFIERS
 
     return {line.label: float(line.stat[1:]) for line in result.ledger.lines
-            if line.stage in (MODIFIERS, DEVELOPMENT) and result.ledger.counted(line) and line.stat}
+            if line.stage in (MODIFIERS, DEVELOPMENT) and result.ledger.counted(line)
+            and (line.stat or "").startswith("x")}
 
 
 def _rank(method, players):

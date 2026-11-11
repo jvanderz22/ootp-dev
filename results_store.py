@@ -13,7 +13,8 @@ Each result row carries the scores plus the player's score breakdown, already
 pruned to the side(s) his Hitter / Pitcher / Two-way type is judged on. A v2
 row also has the score and rank before the demand step, the ledger, and the
 modeled wRC+ / ERA, the role he's valued in and, on the league's boards, his
-ceiling (and on current ratings his full-time WAR and role).
+ceiling (and on current ratings his full-time WAR and role), and on a draft
+board the draft odds' range and chances.
 """
 import json
 from datetime import datetime, timezone
@@ -57,6 +58,10 @@ _RESULT_KEYS = {
     "ceiling_war": "ceiling_war",
     "full_time_war": "full_time_war",
     "full_time_role": "full_time_role",
+    "war_low": "war_low",
+    "war_high": "war_high",
+    "p_regular": "p_regular",
+    "p_outgrows": "p_outgrows",
 }
 
 # ledger deltas are stored to this many places - plenty for a waterfall, and
@@ -122,6 +127,10 @@ def result_from_scored(s) -> dict:
         "ceiling_war": getattr(s, "ceiling_war", None),
         "full_time_war": getattr(s, "full_time_war", None),
         "full_time_role": getattr(s, "full_time_role", None),
+        "war_low": getattr(s, "war_low", None),
+        "war_high": getattr(s, "war_high", None),
+        "p_regular": getattr(s, "p_regular", None),
+        "p_outgrows": getattr(s, "p_outgrows", None),
     }
 
 

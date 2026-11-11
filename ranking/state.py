@@ -25,6 +25,9 @@ class SideState:
     # for a part-time bat his playing time)
     spots: dict = None
     replacement: float = 0.0
+    # the draft odds (ranking/draft_odds.py): his ceiling, his columns in the
+    # fit, and what his value is of the odds' expectation
+    odds: dict = None
 
 
 @dataclass(slots=True)
@@ -49,3 +52,6 @@ class PlayerState:
     # his WAR and role on each of the profile's companions, by key (e.g.
     # "ceiling"; ranking/stages/companion.py)
     companions: dict = field(default_factory=dict)
+    # the draft odds on the side he's judged on: "ceiling", the likely range
+    # ("p10", "p90"), and the chances he's a "regular" and "outgrows" it
+    odds: dict = None

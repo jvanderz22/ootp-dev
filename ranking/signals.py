@@ -14,7 +14,7 @@ import contextlib
 import io
 import os
 import sys
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 
 from models.game_players import PLAYER_FIELDS, GamePlayer
 from models.scored_player import ScoredPlayer
@@ -59,6 +59,10 @@ _SCORERS = {
 }
 # the fitted layers read through ranking/ratings.py: RatingsView method -> reader
 _RATINGS_FILE = os.path.join(_ROOT, "ranking", "ratings.py")
+_COMPANION_FILE = os.path.join(_ROOT, "ranking", "stages", "companion.py")
+# the draft odds read the makeup, age and pitching ratings for both sides
+_ODDS_FILE = os.path.join(_ROOT, "ranking", "draft_odds.py")
+ODDS = "draft odds"
 _VIEWS = {
     "hitting": ("batting talent", "batting"),
     "pitching": ("pitching talent", "pitching"),
@@ -107,10 +111,23 @@ def _owner(frame, directory):
     return None
 
 
+def _in_companion(frame) -> bool:
+    while frame is not None:
+        if frame.f_code.co_filename == _COMPANION_FILE:
+            return True
+        frame = frame.f_back
+    return False
+
+
 def _reader(frame):
-    """The model / scorer / modifier whose code `frame` (or a caller) is in."""
+    """The model / scorer / modifier whose code `frame` (or a caller) is in;
+    None inside a companion profile's scoring."""
+    if _in_companion(frame):
+        return None
     while frame is not None:
         filename = frame.f_code.co_filename
+        if filename == _ODDS_FILE:
+            return ODDS
         if filename == _RATINGS_FILE:
             view = frame
             while view is not None and view.f_code.co_name not in _VIEWS:
@@ -145,6 +162,8 @@ class Inventory:
         modifier by the profile list it's on."""
         if reader in _READER_SIDES:
             return {_READER_SIDES[reader]}
+        if reader == ODDS:
+            return {"batting", "pitching"}
         p = self.profile
 
         def on(mods):
@@ -215,13 +234,10 @@ def _tracing(reads):
 
 def inventory(ranker, players) -> Inventory:
     """Rank `players` (GamePlayers) with `ranker`, recording what each part
-    read. A companion profile (the ceiling) is its own scoring, with its own
-    reads, so it's left out."""
-    from ranking.ranker import Ranker
-
+    read. A companion profile (the ceiling, readiness) is its own scoring,
+    with its own reads, so what it reads isn't counted."""
     players = list(players)
     inv = Inventory(ranker.profile, len(players))
-    ranker = Ranker(replace(ranker.profile, companions=()), ranker.pipeline, ranker.league)
     with _tracing(inv.reads), contextlib.redirect_stdout(io.StringIO()):
         ranker.rank(players, batch_size=max(len(players), 1))
     return inv

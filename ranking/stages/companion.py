@@ -11,6 +11,7 @@ only his WAR and role there are kept, on `state.companions[key]`.
 from typing import NamedTuple
 
 from ranking import value
+from ranking.ledger import MODEL
 from ranking.stages.base import BatchStage
 from ranking.stages.talent import Talent
 from ranking.stages.value import Value
@@ -22,6 +23,9 @@ class CompanionValue(NamedTuple):
     war: float
     # where he's valued there: his best position, or SP / RP
     role: str
+    # his WAR from the model lines alone, before any modifier or the two-way
+    # credit (the draft odds read readiness this way, as they were fit)
+    model: float
 
 
 class Companion(BatchStage):
@@ -45,5 +49,8 @@ class Companion(BatchStage):
             for stage in self.stages:
                 stage.run(shadows, self.profile)
         for state, shadow in zip(states, shadows):
-            war = float((shadow.value - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE)
-            state.companions[self.key] = CompanionValue(war, shadow.ledger.role)
+            ledger = shadow.ledger
+            model = sum(line.delta for line in ledger.lines if line.stage == MODEL and ledger.counted(line))
+            state.companions[self.key] = CompanionValue(
+                float((shadow.value - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE), ledger.role,
+                float((model - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE))
