@@ -184,6 +184,12 @@ export interface RankedPlayer {
   /** v2 pitchers: ERA as a starter (null when he can't start) and a reliever */
   spEra: number | null;
   rpEra: number | null;
+  /** v2 pitchers: ERA vs LHB / RHB in each role (his splits, or estimated
+   *  from his hand, slot and pitches); SP null when he can't start */
+  spEraVl: number | null;
+  spEraVr: number | null;
+  rpEraVl: number | null;
+  rpEraVr: number | null;
   /** v2 pitchers: innings in the role he's valued in */
   ip: number | null;
   /** the Compare view only (null otherwise): overall score and rank under

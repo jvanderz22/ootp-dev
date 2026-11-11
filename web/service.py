@@ -46,14 +46,17 @@ _BATTING_SIDE = (
     "position_player_score", "batting_score_component",
     "fielding_score_component", "running_score_component",
 )
-_PITCHING_SIDE = ("pitcher_score", "starter_component", "reliever_component", "sp_era", "rp_era", "ip")
+_PITCHING_SIDE = (
+    "pitcher_score", "starter_component", "reliever_component", "sp_era", "rp_era", "ip",
+    "sp_era_vl", "sp_era_vr", "rp_era_vl", "rp_era_vr",
+)
 _FLOAT_FIELDS = (
     "model_score", "position_player_score", "fielding_score_component",
     "batting_score_component", "pitcher_score", "starter_component",
     "reliever_component", "running_score_component", "raw_overall_score",
     "pre_demand_score", "wrc_plus", "era", "sp_era", "rp_era", "ip", "replacement",
     "ceiling_war", "full_time_war", "war_low", "war_high", "p_regular", "p_outgrows",
-    "wrc_vl", "wrc_vr",
+    "wrc_vl", "wrc_vr", "sp_era_vl", "sp_era_vr", "rp_era_vl", "rp_era_vr",
 )
 
 

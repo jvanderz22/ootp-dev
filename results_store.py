@@ -64,14 +64,16 @@ _RESULT_KEYS = {
     "p_outgrows": "p_outgrows",
 }
 
-# v2 hitters' values the tables show that are only in the breakdown (the
-# value stage's card entries): key -> its path there. Absent (None) for
-# legacy runs and pitchers.
+# v2 values the tables show that are only in the breakdown (the value
+# stage's entries): key -> its path there. A hitter's wRC+ by pitcher hand and
+# fielding value by position, a pitcher's ERA by batter hand in each role;
+# absent (None) for legacy runs and the side he isn't judged on.
 FIELDING_POSITIONS = ("C", "1B", "2B", "3B", "SS", "LF", "CF", "RF")
 _BREAKDOWN_KEYS = {
     "wrc_vl": "$.batting.value.wrc_vl",
     "wrc_vr": "$.batting.value.wrc_vr",
     **{f"position_value_{p}": f'$.batting.positions."{p}".value' for p in FIELDING_POSITIONS},
+    **{f"{r}_era_v{h}": f"$.pitching.value.{r}_era_v{h}" for r in ("sp", "rp") for h in ("l", "r")},
 }
 
 # ledger deltas are stored to this many places - plenty for a waterfall, and

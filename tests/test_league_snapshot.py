@@ -343,7 +343,7 @@ def test_ranked_rows_shape_and_order(built_ctx, method):
     rows = ranked_rows(built_ctx, method)
 
     assert [r["id"] for r in rows] == ["100", "200"] or [r["id"] for r in rows] == ["200", "100"]
-    assert set(rows[0]) == set(results_store._RESULT_KEYS.values())
+    assert set(rows[0]) == {*results_store._RESULT_KEYS.values(), *results_store._BREAKDOWN_KEYS}
     # best-first: model_score descending
     scores = [float(r["model_score"]) for r in rows]
     assert scores == sorted(scores, reverse=True)

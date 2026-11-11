@@ -357,20 +357,26 @@ class Value(BatchStage):
             war = rp_war
         write_runtime_component(player.id, "pitching.value.starter_war", sp_war if starting else 0.0)
         write_runtime_component(player.id, "pitching.value.reliever_war", rp_war)
-        # each role's ERA, and the valued role's against each batting hand (the card)
+        # each role's ERA, and against each batting hand: the valued role's is
+        # the card's splits row, both roles' the Pitching table's
         state.sp_era, state.rp_era = (era["sp"] if starting else None), era["rp"]
         state.innings = innings if side.role == "SP" else self.model.workloads["reliever_ip"]
         if starting:
             write_runtime_component(player.id, "pitching.value.starter_era", era["sp"])
         write_runtime_component(player.id, "pitching.value.reliever_era", era["rp"])
-        role = side.role.lower()
-        moved = era[f"{role} matched"] - era[role]
-        gap = abs(moved) / tilt[role] if tilt[role] > 0 else None
-        eras = self._side_eras(player, fitted, role, era[role], gap, split[role])
-        if eras:
+        for role in ("sp", "rp") if starting else ("rp",):
+            moved = era[f"{role} matched"] - era[role]
+            gap = abs(moved) / tilt[role] if tilt[role] > 0 else None
+            eras = self._side_eras(player, fitted, role, era[role], gap, split[role])
+            if not eras:
+                continue
+            valued = role == side.role.lower()
             for hand, e in eras.items():
-                write_runtime_component(player.id, f"pitching.value.era_v{hand[0].lower()}", e)
-            write_runtime_component(player.id, "pitching.value.splits_expected", estimated)
+                write_runtime_component(player.id, f"pitching.value.{role}_era_v{hand[0].lower()}", e)
+                if valued:
+                    write_runtime_component(player.id, f"pitching.value.era_v{hand[0].lower()}", e)
+            if valued:
+                write_runtime_component(player.id, "pitching.value.splits_expected", estimated)
         control = self.ratings.control(player)
         floor = value.control_floor(control)
         floors = [("Control floor", floor, f"Control {control}")] if floor < 1 else []

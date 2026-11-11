@@ -116,6 +116,11 @@ type RankedPlayer {
   "v2 engine only, a pitcher's ERA as a starter (null when he can't start) and as a reliever"
   spEra: Float
   rpEra: Float
+  "v2 engine only, a pitcher's ERA vs LHB / RHB in each role - his splits, or estimated from his hand, slot and pitches (SP null when he can't start)"
+  spEraVl: Float
+  spEraVr: Float
+  rpEraVl: Float
+  rpEraVr: Float
   "v2 engine only, a pitcher's innings in the role he's valued in: a starter's by stamina and efficiency, or the reliever workload"
   ip: Float
   """

@@ -780,9 +780,10 @@ const V2_MODELED_COLUMNS: ColumnDef[] = [
   ...DRAFT_COLUMNS,
 ];
 
-/** A pitcher's ERA in one role, and his innings in the role he's valued in
- *  (the Pitching view). */
-const roleEraCol = (field: 'spEra' | 'rpEra', header: string, title: string): ColumnDef => ({
+/** A pitcher's ERA in one role (overall, or against one batting hand), and
+ *  his innings in the role he's valued in (the Pitching view). */
+type RoleEraField = 'spEra' | 'rpEra' | 'spEraVl' | 'spEraVr' | 'rpEraVl' | 'rpEraVr';
+const roleEraCol = (field: RoleEraField, header: string, title: string): ColumnDef => ({
   field,
   header,
   title,
@@ -795,6 +796,10 @@ const roleEraCol = (field: 'spEra' | 'rpEra', header: string, title: string): Co
 const V2_PITCHING_MODEL: ColumnDef[] = [
   roleEraCol('spEra', 'SP ERA', 'Modeled ERA as a starter (blank when he can’t start)'),
   roleEraCol('rpEra', 'RP ERA', 'Modeled ERA as a reliever'),
+  roleEraCol('spEraVl', 'SP vL', 'Modeled ERA as a starter vs LHB (his splits, or estimated)'),
+  roleEraCol('spEraVr', 'SP vR', 'Modeled ERA as a starter vs RHB (his splits, or estimated)'),
+  roleEraCol('rpEraVl', 'RP vL', 'Modeled ERA as a reliever vs LHB (his splits, or estimated)'),
+  roleEraCol('rpEraVr', 'RP vR', 'Modeled ERA as a reliever vs RHB (his splits, or estimated)'),
   {
     field: 'ip',
     header: 'IP',

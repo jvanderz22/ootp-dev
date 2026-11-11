@@ -63,6 +63,10 @@ const PLAYER_FIELDS = gql`
     relieverWar
     spEra
     rpEra
+    spEraVl
+    spEraVr
+    rpEraVl
+    rpEraVr
     ip
     legacyScore
     legacyRank
