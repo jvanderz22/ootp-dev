@@ -54,6 +54,7 @@ from sklearn.linear_model import LogisticRegression, PoissonRegressor
 
 from context import default_base_dir
 from ranking import development
+from ranking import draft_odds as board_odds
 from ranking.fitting import ceiling_panel
 from ranking.hitter_talent import ARTIFACTS_DIR
 
@@ -76,9 +77,10 @@ MAKEUP = {
 }
 # the board's lines the odds don't replace (plans/draft-odds-plan.md, C2): they
 # stay on top of the odds as judgment, so the balance and the held-out checks
-# judge the board with them on
-KEPT = ("ScoutingAccuracyModifier", "DraftSecondaryPersonalityModifier", "DraftPitcherStuffModifier",
-        "PitcherVelocityModifier", "BatterHitProfileModifier", "switch hitter")
+# judge the board with them on - these as the ledger has them, and a
+# pitcher's velocity upside (ranking/draft_odds.py) in place of the legacy
+# velocity and Stuff modifiers (open question 4)
+KEPT = ("ScoutingAccuracyModifier", "DraftSecondaryPersonalityModifier", "BatterHitProfileModifier", "switch hitter")
 BUCKETS = [(1, 25), (26, 50), (51, 100), (101, 200), (201, 400)]
 # the growth odds (B6): outgrowing the ceiling (ranking/fitting/ceiling_panel.py)
 # fit on the panel's later classes, whose exports are closest to carrying
@@ -222,8 +224,11 @@ def report_fit(label, d, outcome, model):
 
 
 def kept(d: pd.DataFrame) -> np.ndarray:
-    """The product of each draftee's KEPT factors (1 where a line is absent)."""
-    return np.array([np.prod([f.get(k, 1.0) for k in KEPT]) for f in d.factors])
+    """The product of each draftee's KEPT factors (1 where a line is absent),
+    and a pitcher's velocity upside."""
+    lines = np.array([np.prod([f.get(k, 1.0) for k in KEPT]) for f in d.factors])
+    velocity = np.array([board_odds.velocity_factor(v) for v in d.velo])
+    return lines * np.where(d.group == "hitter", 1.0, velocity)
 
 
 def balanced(d: pd.DataFrame, pred, balance: float) -> np.ndarray:
@@ -391,6 +396,23 @@ class Odds:
         self.shape = {g: 1 / np.mean(resid[rest.group.values[pos] == g] ** 2) for g in ("hitter", "SP", "RP")}
         return self
 
+    def describe(self, growth_names, mean_names) -> dict:
+        """The artifact's distribution. The board's E[v] stays the Poisson
+        mean (decided 2026-11-10); the card's distribution is this one, with
+        the rest's mean set so the whole matches it: (E[v] - q x what
+        outgrowing is worth) / (1 - q)."""
+        return {
+            "growth": {"intercept": round(float(self.growth[0]), 4),
+                       "coef": {n: round(float(c), 4) for n, c in zip(growth_names, self.growth[1:])},
+                       "judgment": GROWTH_JUDGMENT, "reference_years": REFERENCE_YEARS,
+                       "realized_shift": round(self.shift, 4)},
+            "outgrown": {"margin": ceiling_panel.MARGIN, "excess_gamma": [round(float(self.excess[0]), 4),
+                                                                          round(float(self.excess[2]), 4)]},
+            "sticks": {"intercept": round(float(self.sticks.intercept_[0]), 4),
+                       "coef": {n: round(float(c), 4) for n, c in zip(mean_names, self.sticks.coef_[0])}},
+            "gamma_shape": {g: round(float(k), 4) for g, k in self.shape.items()},
+        }
+
     def outgrows(self, d) -> np.ndarray:
         return 1 / (1 + np.exp(-(growth_logit(self.growth, d) + self.shift)))
 
@@ -478,7 +500,12 @@ def report_odds(g: pd.DataFrame, regular: dict):
         print(f"  {label} by decile, pred/obs: " + " ".join(f"{x:.2f}/{z:.2f}" for x, z in dec.values))
     share = full.from_growth(able, scale(able, k_odds)) / full.expected(able, scale(able, k_odds))
     print(f"\n  share of E[v] from outgrowing: median {np.median(share):.0%}, P90 {np.percentile(share, 90):.0%}")
-    return full, able.assign(ev=full.expected(able, scale(able, k_odds)), growth=full.from_growth(able, scale(able, k_odds)))
+    checks = {
+        "held_out": pd.DataFrame(rows).groupby("key").mean().round(3).to_dict(orient="index"),
+        "above_p90": {"all": round(float((h.y > h.p90).mean()), 3), "top_100": round(float((h.y > h.p90)[h.top100].mean()), 3)},
+        "growth_share_of_ev": {"median": round(float(np.median(share)), 3), "p90": round(float(np.percentile(share, 90)), 3)},
+    }
+    return full, checks
 
 
 def _shares_line(label, shares) -> str:
@@ -536,9 +563,10 @@ def main(argv=None):
 
     print(f"\ngrowth odds: outgrowing the ceiling (+{ceiling_panel.MARGIN:g} WAR past draft day, and a regular):")
     g = growth_table(d, base, args.league, args.panel)
-    report_growth(g)
+    growth_fits = report_growth(g)
+    regular = ceiling_panel.regular_thresholds(base, args.league)
     print("\nthe three outcomes (outgrows / short / bust), held out:")
-    report_odds(g, ceiling_panel.regular_thresholds(base, args.league))
+    distribution, distribution_checks = report_odds(g, regular)
 
     names = list(design(able.head(1)).columns)
     coef = dict(zip(names, model_a.coef_))
@@ -562,8 +590,19 @@ def main(argv=None):
         "makeup": {label: round(float(np.exp(coef[label])), 4) for label in MAKEUP},
         "taper": [development.FULL_WEIGHT_WAR, development.TAPERED_WAR, development.TAPERED_WEIGHT],
         "pitcher_balance": round(balance, 4),
+        # the judgment on top of the odds (ranking/draft_odds.py): these
+        # ledger lines kept, a pitcher's velocity upside, and what's replaced
+        "judgment": {"kept": list(KEPT), "velocity_steps": [list(s) for s in board_odds.VELOCITY_STEPS],
+                     "replaces": list(board_odds.REPLACES)},
+        # a regular, on the full-time scale: the card's "chance he becomes a regular"
+        "regular": regular,
+        "distribution": distribution.describe(list(growth_design(g.head(1)).columns), names),
         "check": {"held_out": checks, "pitcher_share": {k: [round(x, 3) for x in v] for k, v in shares.items()},
-                  "b_fit": {n: round(float(c), 4) for n, c in zip(names, model_b.coef_)}},
+                  "b_fit": {n: round(float(c), 4) for n, c in zip(names, model_b.coef_)},
+                  "distribution": distribution_checks,
+                  "growth_90": {label: {n: [round(float(np.exp(l)), 3), round(float(np.exp(h)), 3)]
+                                        for n, l, h in zip(growth_design(g.head(1)).columns, lo, hi)}
+                                for label, (_, lo, hi) in growth_fits.items()}},
         "meta": {
             "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "league": args.league,

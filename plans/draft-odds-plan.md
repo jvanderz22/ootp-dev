@@ -148,6 +148,17 @@ yfmlb snapshot (2026-11-10, scratch):
    *Recommend deciding after B7, with the two sets of factors side by
    side.* **Agreed: decide after B7.** Until then the modifiers stay on top
    as they are.
+   **Decided 2026-11-10, after B7** (you: "I like your recommendations"):
+   - **The growth odds can't carry velocity.** Realized growth is about 2%
+     of draftees, so the velocity term barely reaches E[v].
+   - **Velocity becomes upside only**, in `ranking/draft_odds.py`
+     (`VELOCITY_STEPS`), in place of `PitcherVelocityModifier`. By the
+     bottom of his range: ≤93 ×1.00, 94–95 ×1.05, 96–97 ×1.10, 98–99 ×1.12,
+     100+ ×1.15. That's about half of what B4's finer bands showed with the
+     mean held fixed: tops of 96–97 +16% (226 pitchers), 98–99 +59% (36).
+   - **`DraftPitcherStuffModifier` is dropped.** Low Stuff beat the odds,
+     and high Stuff added nothing.
+   - The legacy engine keeps both modifiers as they are.
 5. **Growth against the makeup taper.** Growth helps low ceilings most,
    which is where the makeup factors are at full weight. A mid prospect
    with WE H, INT H and 97 mph could climb a lot. The taper exists so a
@@ -680,6 +691,24 @@ not in `ranking/artifacts/`).*
    alone marks stored runs stale. Keep it uncommitted and undeployed until
    C lands, then commit them together.
 
+   *Done 2026-11-10; the file is in the session scratchpad until C copies it
+   into `ranking/artifacts/`.* **Decided: Poisson keeps the board's mean**
+   (B7's three outcomes trailed it at the top 25). The three outcomes
+   supply the card's distribution. The rest's mean there is set so the
+   whole matches E[v]: (E[v] − q × what outgrowing is worth) / (1 − q).
+
+   The artifact adds `judgment` (the kept lines, `VELOCITY_STEPS`, what the
+   odds replace), `regular`, `distribution` (the growth, sticks and gamma
+   coefficients, the realized shift, the outgrown excess) and the
+   distribution's checks. With the new velocity steps and no Stuff line:
+   - **Pitcher balance:** ×0.87. Buckets 45 / 44 / 49 / 53 / 59%; they
+     pass.
+   - **Held out on A:** top 25 1.52, top 50 **1.36**, top 100 1.10, rho
+     0.408. The board is 1.50 / 1.27 / 1.08 / 0.366, and the legacy
+     modifiers gave 1.54 / 1.34 / 1.09.
+   - The velocity steps were set from these same classes, so this check is
+     partly in-sample for velocity.
+
 **C. The stage**
 1. **Readiness** in the draft profile, from the companion stage: his
    current ratings' full-time WAR.
@@ -689,6 +718,8 @@ not in `ranking/artifacts/`).*
    `DraftSecondaryPersonalityModifier`, the switch-hitter factor and the
    Control floor. `DraftPitcherStuffModifier` and `PitcherVelocityModifier`
    also stay, as judgment applied after the odds (open question 3).
+   *Revised 2026-11-10 (open question 4): Stuff is dropped, and velocity is
+   the upside-only `ranking/draft_odds.velocity_factor`.*
    - **Ledger:** the talent lines up to the "Ceiling" subtotal, then one
      line per factor under "Reaching his ceiling", summing to E[v]. The
      wording is in "Ledger wording" above.
