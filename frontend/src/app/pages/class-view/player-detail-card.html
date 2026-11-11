@@ -79,6 +79,35 @@
     @let v = verdict();
     <!-- v2's verdict: what he's worth, the talent behind it, where, and the game's own read -->
     <div class="verdict">
+      @if (draftScale(); as d) {
+        <!-- the draft board: its score first, then his peak and ceiling WAR -->
+        <div class="vt">
+          <span class="vt-head">Score</span>
+          <span class="vt-num"
+            ><b>{{ d.score }}</b>
+            @if (d.pre != null) {
+              <small>pre-dem {{ d.pre }}</small>
+            }</span
+          >
+        </div>
+        <div class="vt" title="Expected WAR a season at his peak">
+          <span class="vt-head">Peak</span>
+          <span class="vt-num"
+            ><b>{{ v.war == null ? '—' : (v.war | number: '1.2-2') }}</b><i>WAR</i></span
+          >
+        </div>
+        @if (p.ceilingWar != null) {
+          <div class="vt" [title]="ceilingTitle">
+            <span class="vt-head">Ceiling</span>
+            <span class="vt-num"
+              ><b>{{ p.ceilingWar | number: '1.2-2' }}</b><i>WAR</i>
+              @if (d.ceiling != null) {
+                <small>score {{ d.ceiling }}</small>
+              }</span
+            >
+          </div>
+        }
+      } @else {
       <div class="vt">
         <span class="vt-head">Value</span>
         <span class="vt-num"
@@ -93,6 +122,7 @@
             ><b>{{ p.ceilingWar | number: '1.2-2' }}</b><i>WAR</i></span
           >
         </div>
+      }
       }
       <div class="vt">
         <span class="vt-head">{{ v.talent.label === 'ERA' ? 'Pitching' : 'Batting' }}</span>
@@ -121,7 +151,7 @@
     </div>
     @if (odds(); as o) {
       <div class="verdict-odds">
-        <span title="P10–P90">Range <b>{{ o.low | number: '1.1-1' }}–{{ o.high | number: '1.1-1' }}</b></span>
+        <span title="P10–P90">Range <b>{{ o.range }}</b></span>
         <span [title]="o.regularTitle">Regular <b>{{ o.regular | percent: '1.0-0' }}</b></span>
         <span title="Outgrows his ceiling">Breakout <b>{{ o.outgrows | percent: '1.0-0' }}</b></span>
       </div>

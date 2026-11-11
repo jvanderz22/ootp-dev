@@ -169,7 +169,26 @@ export class PlayerDetailCardComponent {
     if (p.pRegular == null || p.warLow == null || p.warHigh == null || p.pOutgrows == null) return null;
     const role = this.verdict().role;
     const regular = role === 'RP' ? 'A bullpen spot' : role === 'SP' ? 'A rotation spot' : 'An everyday job';
-    return { low: p.warLow, high: p.warHigh, regular: p.pRegular, regularTitle: regular, outgrows: p.pOutgrows };
+    // on the board's 1-100 scale where it has one, else in WAR
+    const range =
+      p.scoreLow != null && p.scoreHigh != null
+        ? `${Math.round(p.scoreLow)}–${Math.round(p.scoreHigh)}`
+        : `${p.warLow.toFixed(1)}–${p.warHigh.toFixed(1)}`;
+    return { range, regular: p.pRegular, regularTitle: regular, outgrows: p.pOutgrows };
+  });
+
+  /** A draft board's 1-100 scale: the score he's ranked on, the score before
+   *  demand where demand moved it, and his ceiling's. Null off a draft board. */
+  protected readonly draftScale = computed(() => {
+    const p = this.player();
+    if (p.score == null) return null;
+    const score = Math.round(p.score);
+    const pre = p.valueScore == null ? null : Math.round(p.valueScore);
+    return {
+      score,
+      pre: pre === score ? null : pre,
+      ceiling: p.ceilingScore == null ? null : Math.round(p.ceilingScore),
+    };
   });
 
   /** Current ratings: his WAR in a full-time role, beside his value - shown

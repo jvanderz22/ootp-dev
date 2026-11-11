@@ -92,3 +92,24 @@ def test_a_reliever_realizes_less_of_his_ceiling_than_a_starter():
     odds = draft_odds.load().a
     assert odds["role"]["RP"] < odds["role"]["SP"] < 1
     assert odds["check"]["reliever"]["fit"] > odds["role"]["RP"]
+
+
+def test_the_board_reads_on_a_fixed_1_to_100_scale(ranked):
+    # the display only (2026-11-10): the curve keeps the order and the anchors
+    # sit at the 2033-42 classes' best, so nobody there passes 100
+    from web.service import _draft_scores
+    assert value.draft_score(None) is None
+    assert value.draft_score(-1.0) == value.draft_score(0.0) == 1
+    assert value.draft_score(value.DRAFT_SCALE["value"]) == value.draft_score(9.0) == 100
+    assert value.draft_score(value.DRAFT_SCALE["ceiling"] / 4, "ceiling") == 50
+    for r in ranked:
+        payload = {"model_score": r.overall_score, "war": (r.pre_demand_score - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE,
+                   "ceiling_war": r.ceiling_war, "war_low": r.war_low, "war_high": r.war_high}
+        s = _draft_scores(payload)
+        assert 1 <= s["score_low"] <= s["value_score"] <= 100 and s["score_low"] <= s["score_high"]
+        assert 1 <= s["ceiling_score"] <= 100
+    scores = [_draft_scores({"model_score": r.overall_score, "war": 0, "ceiling_war": 0, "war_low": 0,
+                             "war_high": 0})["score"] for r in sorted(ranked, key=lambda r: -r.overall_score)]
+    assert scores == sorted(scores, reverse=True)
+    assert _draft_scores({"model_score": 60.0, "war": 1.0, "ceiling_war": 2.0, "war_low": None,
+                          "war_high": None}) == dict.fromkeys(s)

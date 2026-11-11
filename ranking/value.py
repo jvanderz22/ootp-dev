@@ -124,6 +124,20 @@ def points(war):
     return DISPLAY_OFFSET + DISPLAY_SCALE * np.asarray(war)
 
 
+# judgment (2026-11-10): the draft board shows a 1-100 score, not WAR, on a
+# fixed curve, 100 x sqrt(WAR / anchor). The anchors are about the best
+# expected value (4.5, 2039) and ceiling (8.25, 2039) of the 2033-42 classes,
+# so a 70 means the same every year
+DRAFT_SCALE = {"value": 4.6, "ceiling": 8.3}
+
+
+def draft_score(war, kind: str = "value"):
+    """WAR on the draft board's 1-100 scale; None stays None."""
+    if war is None:
+        return None
+    return round(float(np.clip(100 * np.sqrt(max(war, 0.0) / DRAFT_SCALE[kind]), 1, 100)), 1)
+
+
 def control_floor(control) -> float:
     """The share of a pitcher's value above replacement his Control keeps."""
     ramp = (control - (CONTROL_FLOOR - FLOOR_RAMP)) / (2 * FLOOR_RAMP)

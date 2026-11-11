@@ -205,8 +205,11 @@ export class RankedTableComponent {
 
   private readonly engine = inject(EngineService).engine;
 
+  /** A draft board (rows with the draft odds) reads on its 1-100 scale. */
+  protected readonly draftBoard = computed(() => this.rows().some((r) => r.score != null));
+
   protected readonly columns = computed<ColumnDef[]>(() => {
-    const cols = viewColumns(this.view(), this.context(), this.engine());
+    const cols = viewColumns(this.view(), this.context(), this.engine(), this.draftBoard());
     return this.isNarrow() ? modelFirst(cols) : cols;
   });
   protected readonly headerGroups = computed(() => groupSpans(this.columns()));

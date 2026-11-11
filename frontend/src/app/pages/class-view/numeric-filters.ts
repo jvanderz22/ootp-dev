@@ -317,10 +317,14 @@ export class NumericFiltersComponent {
 
   private readonly engine = inject(EngineService).engine;
 
-  /** The picker offers the engine's own columns (v2's in WAR, legacy's in points). */
+  /** A draft board: the picker offers its 1-100 columns. */
+  readonly draftBoard = input(false);
+
+  /** The picker offers the engine's own columns (v2's in WAR, legacy's in
+   *  points), or the draft board's. */
   protected readonly groups = computed(() => {
     const m = new Map<string, { field: string; name: string }[]>();
-    for (const f of FILTER_PICKER_FIELDS[this.engine()]) {
+    for (const f of FILTER_PICKER_FIELDS[this.draftBoard() && this.engine() === 'v2' ? 'draft' : this.engine()]) {
       const name = f.label.split(' · ').slice(1).join(' · ') || f.label;
       const bucket = m.get(f.group) ?? m.set(f.group, []).get(f.group)!;
       bucket.push({ field: f.field, name });

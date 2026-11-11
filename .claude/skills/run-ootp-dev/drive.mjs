@@ -54,8 +54,10 @@ try {
   const total = await page.locator('.vb-total b').first().innerText();
   console.log(`value build: ${rows} rows, value ${total}`);
   check(rows > 2, 'card shows the value build');
-  // value, ceiling, the talent line, where he's valued, the game's read
-  check((await page.locator('.verdict .vt').count()) === 5, 'card shows the verdict band');
+  // a draft board: its score, peak and ceiling WAR, the talent line, where
+  // he's valued, the game's read
+  check((await page.locator('.verdict .vt').count()) === 6, 'card shows the verdict band');
+  check((await page.locator('.verdict .vt-head').first().innerText()).toLowerCase() === 'score', 'card leads with the score');
   check((await page.locator('.verdict-odds').count()) === 1, 'card shows the draft odds');
   const headings = await page.locator('.vb-stage').allInnerTexts();
   check(headings.some((h) => h.trim().toLowerCase() === 'reaching his ceiling'), 'value build reaches from the ceiling');

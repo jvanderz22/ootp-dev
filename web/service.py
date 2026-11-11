@@ -29,6 +29,7 @@ from load_draft_class import (
     create_dataset_from_upload,
 )
 from ranking_csv import build_upload_rows
+from ranking.value import draft_score
 from scoring.splits import score_splits
 from statsplus_api import (
     StatsPlusAuthError,
@@ -254,6 +255,7 @@ def _player_payload(rank, row, drafted_info, game_player=None, source=None):
     payload["role"] = row.get("role") or None
     payload["full_time_role"] = row.get("full_time_role") or None
     payload.update(_war_fields(payload))
+    payload.update(_draft_scores(payload))
     return payload
 
 
@@ -285,6 +287,21 @@ def _war_fields(payload) -> dict:
         value = payload[points]
         out[field] = None if value is None else round(value / _POINTS_PER_WAR, 2)
     return out
+
+
+def _draft_scores(payload) -> dict:
+    """A draft board's row on its 1-100 scale (ranking/value.py's
+    `draft_score`): the score the rank is on (after demand), before demand,
+    his ceiling, and the likely range. All None off a draft board (no odds)."""
+    if payload["war_low"] is None or payload["model_score"] is None:
+        return dict.fromkeys(("score", "value_score", "ceiling_score", "score_low", "score_high"))
+    return {
+        "score": draft_score((payload["model_score"] - _REPLACEMENT_POINTS) / _POINTS_PER_WAR),
+        "value_score": draft_score(payload["war"]),
+        "ceiling_score": draft_score(payload["ceiling_war"], "ceiling"),
+        "score_low": draft_score(payload["war_low"]),
+        "score_high": draft_score(payload["war_high"]),
+    }
 
 
 _CAMEL_RE = re.compile(r"(?<!^)(?=[A-Z])")

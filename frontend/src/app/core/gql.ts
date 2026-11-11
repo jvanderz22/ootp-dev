@@ -47,6 +47,11 @@ const PLAYER_FIELDS = gql`
     warHigh
     pRegular
     pOutgrows
+    score
+    valueScore
+    ceilingScore
+    scoreLow
+    scoreHigh
     battingWar
     fieldingWar
     runningWar

@@ -97,6 +97,12 @@ type RankedPlayer {
   warHigh: Float
   pRegular: Float
   pOutgrows: Float
+  "v2 engine on draft boards only, the board's 1-100 scale: the score the rank is on (after demand), before demand, his ceiling, and the likely range (P10 and P90)"
+  score: Float
+  valueScore: Float
+  ceilingScore: Float
+  scoreLow: Float
+  scoreHigh: Float
   "v2 engine only, a hitter's parts of it: batting (with the playing-time credit), fielding (with position and utility), baserunning"
   battingWar: Float
   fieldingWar: Float

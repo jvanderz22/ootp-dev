@@ -828,6 +828,47 @@ const V2_VIEW_COLUMNS: Record<ClassView, ColumnDef[]> = {
   compare: VIEW_COLUMNS.compare,
 };
 
+// ------------------------------------------------------ the draft board
+// A draft board (the draft odds) reads on a 1-100 score, not WAR (decided
+// 2026-11-10; ranking/value.py's `draft_score`): the score the rank is on,
+// before demand, and his ceiling. The card keeps his peak and ceiling WAR.
+
+const scoreCol = (field: keyof RankedPlayerRow, header: string, title: string): ColumnDef => ({
+  field,
+  header,
+  title,
+  numeric: true,
+  descFirst: true,
+  group: 'Model',
+  value: model(field),
+  fmt: fmtInt,
+});
+
+const SCORE_COLUMN = scoreCol('score', 'Score', 'Score (1–100), after demand: what the rank is on');
+const VALUE_SCORE_COLUMN = scoreCol('valueScore', 'Pre-dem', 'Score (1–100) before demand');
+const CEILING_SCORE_COLUMN = scoreCol('ceilingScore', 'Ceiling', 'Ceiling (1–100): at full potential');
+
+/** A v2 view's columns on the draft board's scale: WAR and the points score
+ *  become the 1-100 score, the ceiling its own; Surplus WAR is blank there. */
+const onDraftScale = (cols: ColumnDef[]): ColumnDef[] =>
+  cols
+    .filter((c) => c.field !== 'modelScore' && c.field !== 'surplusWar')
+    .map((c) => (c.field === 'war' ? SCORE_COLUMN : c.field === 'ceilingWar' ? CEILING_SCORE_COLUMN : c));
+
+const DRAFT_BOARD_COLUMNS: Record<ClassView, ColumnDef[]> = {
+  modeled: [
+    ...V2_LEAD,
+    SCORE_COLUMN,
+    VALUE_SCORE_COLUMN,
+    field_('preDemandRank'),
+    CEILING_SCORE_COLUMN,
+    ...onDraftScale(V2_MODELED_COLUMNS).filter((c) => c !== SCORE_COLUMN && c.field !== 'preDemandRank'),
+  ],
+  batting: onDraftScale(V2_VIEW_COLUMNS.batting),
+  pitching: onDraftScale(V2_VIEW_COLUMNS.pitching),
+  compare: VIEW_COLUMNS.compare,
+};
+
 const COLUMNS_BY_ENGINE: Record<RankingEngine, Record<ClassView, ColumnDef[]>> = {
   v2: V2_VIEW_COLUMNS,
   legacy: VIEW_COLUMNS,
@@ -847,13 +888,15 @@ const DROPPED_IN_LEAGUE = new Set([
 /** Columns for a view in a given context and engine. `'league'` drops the
  *  demand / drafted columns and the player-type tag, and inserts Org / Level
  *  right after Pos; under v2 it drops the score too (no demand step, so it's
- *  just his WAR in points). */
+ *  just his WAR in points). `draftBoard`: v2 rows with the draft odds, read on
+ *  the board's 1-100 scale. */
 export function viewColumns(
   view: ClassView,
   context: 'class' | 'league' = 'class',
   engine: RankingEngine = 'v2',
+  draftBoard = false,
 ): ColumnDef[] {
-  const base = COLUMNS_BY_ENGINE[engine][view];
+  const base = engine === 'v2' && draftBoard ? DRAFT_BOARD_COLUMNS[view] : COLUMNS_BY_ENGINE[engine][view];
   if (context !== 'league') return base;
   const dropped = engine === 'v2' && view !== 'compare' ? new Set([...DROPPED_IN_LEAGUE, 'modelScore']) : DROPPED_IN_LEAGUE;
   // Drop the drafted/demand columns and the Type tag; Pos stays sticky right
@@ -925,18 +968,23 @@ function filterableIn(views: Record<ClassView, ColumnDef[]>): FilterableField[] 
   return out;
 }
 
-/** What the filter picker offers: the engine's own columns. */
-export const FILTER_PICKER_FIELDS: Record<RankingEngine, FilterableField[]> = {
+/** What the filter picker offers: the engine's own columns, or the draft
+ *  board's. */
+export const FILTER_PICKER_FIELDS: Record<RankingEngine | 'draft', FilterableField[]> = {
   v2: filterableIn(V2_VIEW_COLUMNS),
   legacy: filterableIn(VIEW_COLUMNS),
+  draft: filterableIn(DRAFT_BOARD_COLUMNS),
 };
 
 /** Every filterable field under either engine - for reading a filter back
  *  (from the URL, or a column header) whichever engine wrote it. */
 export const FILTERABLE_FIELDS: FilterableField[] = [
-  ...FILTER_PICKER_FIELDS.v2,
-  ...FILTER_PICKER_FIELDS.legacy.filter((f) => !FILTER_PICKER_FIELDS.v2.some((v) => v.field === f.field)),
-];
+  FILTER_PICKER_FIELDS.v2,
+  FILTER_PICKER_FIELDS.draft,
+  FILTER_PICKER_FIELDS.legacy,
+]
+  .flat()
+  .filter((f, i, all) => all.findIndex((g) => g.field === f.field) === i);
 
 /** Contiguous group runs across a column list, for the first header row. */
 export function groupSpans(cols: ColumnDef[]): { label: ColGroup; span: number }[] {

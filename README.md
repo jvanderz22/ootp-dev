@@ -8,6 +8,23 @@ StatsPlus / C+ preference-list CSV. Usable two ways:
   players from the StatsPlus API.
 - **CLI** (original scripts) — still works, driven by `constants.py`.
 
+## What the numbers mean (v2)
+
+The v2 engine values everyone in WAR internally, but each board shows the
+scale that fits what it answers (decided 2026-11-10):
+
+- **Draft board: a 1–100 score.** The model's number is his expected
+  full-time WAR per season once he's established (his peak level, busts
+  counted as 0). That isn't useful to read as WAR, so the board shows
+  100 × √(expected WAR ÷ anchor), held to 1–100, with the anchor fixed from
+  the league's past classes so a 70 means the same every year. Ceiling gets
+  the same curve with its own anchor. The card leads with the score, then
+  his peak WAR (that expected value) and his ceiling WAR.
+- **Prospects:** the same score once the prospect odds land
+  (`plans/prospect-odds-plan.md`).
+- **Current ratings: WAR.** That board is a single-season projection, so
+  Surplus WAR is the right read and it keeps its own scale.
+
 ## Web app
 
 ### Architecture
