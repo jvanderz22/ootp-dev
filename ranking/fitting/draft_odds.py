@@ -22,19 +22,24 @@ Two outcomes, as decided 2026-11-09:
   is complete.
 
 A Poisson regression (log link) of max(outcome, 0) on log potential WAR,
-readiness, his role at potential (hitter, SP, RP), age at draft and makeup.
-The age factors change with potential (AGE_BY_POTENTIAL): a teen's runway is
-worth less the higher his ceiling already is, and a college senior's penalty
-shrinks. Without that the fit drops 22-year-olds who went on to be stars and
+readiness, his role at potential (hitter, SP, RP), his draft age and makeup.
+His draft age is his age on May 1 of the draft year, from his date of birth
+(the exports' Age is as of whenever they were pulled), blended between
+AGE_KNOTS - a straight line through the teens, then 21 to 22 - so a player
+who's nearly 22 reads mostly as a 22 (decided 2026-11-11: whole ages moved
+results a lot from one class to the next). The age factors change with
+potential: a teen's runway is worth less the higher his ceiling already is,
+and a college senior's penalty shrinks. Without that the fit drops 22-year-olds who went on to be stars and
 ranks the top 25 no better than the board (step 2, 2026-11-09); velocity,
 Stuff, pitch count, a potential curve per side and weighting the top didn't
 help.
-Readiness weighs by age (READINESS_BY_AGE, decided 2026-11-11): less for
-teens, who are all raw, and more from 21 on, as the pooled draftees and
+Readiness weighs by draft age, on the same knots (decided 2026-11-11): less
+for teens, who are all raw, and more from 21 on, as the pooled draftees and
 prospects show (plans/prospect-odds-plan.md, "On track"). On top of the fit,
 two judgments: the teens' readiness weight is held at the flat fit's
-(TEEN_READINESS), and a draftee 21 or older near MLB-ready keeps only half the
-22s' age penalty (POLISH). The checks judge the board with them on.
+(TEEN_READINESS), and a draftee near MLB-ready from 21 on keeps only half the
+penalty of his age from 21.5 to 22 (POLISH). The checks judge the board with
+them on.
 The makeup columns are tapered by potential WAR as ranking/development.py
 tapers them (decided 2026-11-09), so a fitted factor is its full-weight value.
 Fit on draftees with MIN_POTENTIAL_WAR or more: below that the board barely
@@ -80,22 +85,27 @@ REFERENCE_WAR = 3.0                 # potential WAR the age factors are read at
 READINESS_CLIP = (-4.0, 3.0)
 ALPHA = 1e-4
 BOOTSTRAPS = 200
-AGE_GROUPS = {"18": (0, 18), "19": (19, 19), "20": (20, 20), "22": (22, 99)}   # 21 is the reference
-AGE_BY_POTENTIAL = {"19": (0, 19), "22": (22, 99)}
-# readiness weighs differently by age (plans/prospect-odds-plan.md, "On
-# track", 2026-11-11): the data weighs it least for teens and 20-year-olds,
-# who are all raw, and most from 21 on
-READINESS_BY_AGE = {"20": (0, 20), "22": (22, 99)}   # 21 is the reference
-# judgment (2026-11-11, you): the teens' and 20-year-olds' weight a WAR, held
-# at the flat fit's x1.34 rather than the data's x1.21, so a raw teen doesn't
-# gain from it; the rest of the fit is fit around it
+# the draft age's knots: each age column is a knot's weight, a draft age
+# shared linearly between the two knots around it. Smooth through the teens
+# (a knot a year zig-zagged, 19 below 18 and 20); 21 is the reference
+AGE_KNOTS = (18, 21, 22)
+AGE_REFERENCE = 21
+# each knot's age factor changes with potential, and readiness weighs by age
+# (plans/prospect-odds-plan.md, "On track", 2026-11-11): the data weighs it
+# least for teens, who are all raw, and most from 21 on
+AGE_LABELS = [f"{k:g}" for k in AGE_KNOTS if k != AGE_REFERENCE]
+# judgment (2026-11-11, you): the teens' weight a WAR, held at the flat fit's
+# x1.34 rather than the data's x1.21, so a raw teen doesn't gain from it; the
+# rest of the fit is fit around it. It's the 18 knot's, so it fades to 21's
 TEEN_READINESS = 1.34
-# judgment (2026-11-11, you): a college draftee near MLB-ready keeps only half
-# his age penalty - none eased at FROM WAR now, half from FULL up - and a
-# 21-year-old gets the same credit, read off the 22s' penalty at his ceiling.
-# The data doesn't back it (draft-odds D, "Advanced college draftees"); it's
-# the value of a player close to the majors in the org right after the draft
-POLISH = {"share": 0.5, "from": -1.0, "full": 0.0, "ages": [21, 99], "penalty": "22"}
+# judgment (2026-11-11, you): a draftee near MLB-ready keeps only half the
+# penalty of his age from EASED's first age to its second - none eased at
+# FROM WAR now, half from FULL up - at draft ages past ELIGIBLE's start, in
+# full past its end. The data doesn't back it (draft-odds D, "Advanced
+# college draftees"); it's the value of a player close to the majors in the
+# org right after the draft. Eased from 21.5, where whole ages had the 21s on
+# average, so blending ages doesn't grow it
+POLISH = {"share": 0.5, "from": -1.0, "full": 0.0, "eligible": [20, 21], "eased": [21.5, 22]}
 MAKEUP = {
     "WE H": lambda d: d.we == "H", "WE L": lambda d: d.we == "L",
     "INT H": lambda d: d["int"] == "H", "INT L": lambda d: d["int"] == "L",
@@ -180,6 +190,7 @@ def draftee_table(base: Path, league: str) -> pd.DataFrame:
     for name, class_rows in read_classes([Path("datasets"), base / "datasets"], league, names).items():
         year = int(name.split("-")[1])
         players = _class_players(class_rows)
+        ages = {p.id: board_odds.draft_age(p, year) for p in players}
         board = {r.id: r for r in _rank("draft_class", players)}
         potential, current = _raw_war(board.values()), _raw_war(_rank("full_time", players))
         for r in class_rows:
@@ -191,6 +202,7 @@ def draftee_table(base: Path, league: str) -> pd.DataFrame:
             last_b = year + B_LAST_AGE - age
             rows.append({
                 "class": year, "id": int(pid), "name": r["Name"], "pos": r["POS"], "age": age,
+                "draft_age": ages[pid],
                 "we": r["WE"], "int": r["INT"], "prone": r["Prone"],
                 "velo": r.get("VT") or r.get("VELO"), "stuff": r.get("STU P"), "pitches": r.get("PIT"),
                 "stamina": r.get("STM"),
@@ -209,20 +221,22 @@ def draftee_table(base: Path, league: str) -> pd.DataFrame:
 
 
 def design(d: pd.DataFrame) -> pd.DataFrame:
-    """The regression's columns; the reference draftee is a hitter, 21 at the
-    draft, REFERENCE_WAR at potential, 0 WAR on his current ratings, normal
-    makeup."""
+    """The regression's columns; the reference draftee is a hitter, 21.0 at
+    the draft, REFERENCE_WAR at potential, 0 WAR on his current ratings,
+    normal makeup."""
     taper = np.vectorize(development.weight)(d.war_pot)
     potential = np.log(d.war_pot.clip(lower=LOG_FLOOR) / REFERENCE_WAR)
     cols = {"log potential": potential, "readiness": d.readiness.clip(*READINESS_CLIP)}
     for g in ("SP", "RP"):
         cols[g] = (d.group == g).astype(float)
-    for label, (lo, hi) in AGE_GROUPS.items():
-        cols[f"age {label}"] = d.age.between(lo, hi).astype(float)
-    for label, (lo, hi) in AGE_BY_POTENTIAL.items():
-        cols[f"age {label} x potential"] = potential * d.age.between(lo, hi)
-    for label, (lo, hi) in READINESS_BY_AGE.items():
-        cols[f"readiness x age {label}"] = cols["readiness"] * d.age.between(lo, hi)
+    weights = board_odds.knot_weights(d.draft_age.values, AGE_KNOTS)
+    ages = {label: weights[k] for label, k in zip(AGE_LABELS, [k for k in AGE_KNOTS if k != AGE_REFERENCE])}
+    for label, w in ages.items():
+        cols[f"age {label}"] = w
+    for label, w in ages.items():
+        cols[f"age {label} x potential"] = potential * w
+    for label, w in ages.items():
+        cols[f"readiness x age {label}"] = cols["readiness"] * w
     for label, test in MAKEUP.items():
         cols[label] = test(d).astype(float) * taper
     return pd.DataFrame(cols, index=d.index)
@@ -233,12 +247,12 @@ def fit(d: pd.DataFrame, outcome: str, reliever: float = None) -> PoissonRegress
     offset, so the rest is fit around it) and the reliever factor set to
     `reliever` when given."""
     x, y = design(d), d[outcome].clip(lower=0).values
-    teen = x["readiness x age 20"].values
-    free = x.drop(columns="readiness x age 20").assign(readiness=x.readiness - teen)
+    teen = x[f"readiness x age {AGE_LABELS[0]}"].values
+    free = x.drop(columns=f"readiness x age {AGE_LABELS[0]}").assign(readiness=x.readiness - teen)
     offset = np.exp(np.log(TEEN_READINESS) * teen)
     model = PoissonRegressor(alpha=ALPHA, max_iter=5000).fit(free.values, y / offset, sample_weight=offset)
     coef = dict(zip(free.columns, model.coef_))
-    coef["readiness x age 20"] = np.log(TEEN_READINESS) - coef["readiness"]
+    coef[f"readiness x age {AGE_LABELS[0]}"] = np.log(TEEN_READINESS) - coef["readiness"]
     model.coef_, model.n_features_in_ = np.array([coef[c] for c in x.columns]), x.shape[1]
     if reliever is not None:
         model.coef_[_column("RP")] = np.log(reliever)
@@ -246,7 +260,7 @@ def fit(d: pd.DataFrame, outcome: str, reliever: float = None) -> PoissonRegress
 
 
 def _column(name) -> int:
-    return list(design(pd.DataFrame({"war_pot": [1.0], "readiness": [0.0], "group": ["hitter"], "age": [21],
+    return list(design(pd.DataFrame({"war_pot": [1.0], "readiness": [0.0], "group": ["hitter"], "draft_age": [21.0],
                                      "we": ["N"], "int": ["N"], "prone": ["Normal"]})).columns).index(name)
 
 
@@ -297,14 +311,19 @@ def balanced(d: pd.DataFrame, pred, balance: float) -> np.ndarray:
 
 
 def polish(d: pd.DataFrame, coef) -> np.ndarray:
-    """The POLISH factor on each draftee's prediction: the share of the 22s'
-    age penalty at his ceiling (`coef`'s, a fit's) that his readiness eases."""
-    x = design(d)
-    names, label = list(x.columns), POLISH["penalty"]
-    penalty = coef[names.index(f"age {label}")] + coef[names.index(f"age {label} x potential")] * x["log potential"].values
-    lo, hi = POLISH["ages"]
+    """The POLISH factor on each draftee's prediction: the share of his age
+    penalty from EASED's first age to its second, at his ceiling (`coef`'s, a
+    fit's), that his readiness eases."""
+    names, lp = list(design(d.head(1)).columns), design(d)["log potential"].values
+
+    def logit(age):
+        weights = board_odds.knot_weights(age, AGE_KNOTS)
+        return sum(weights[k] * (coef[names.index(f"age {label}")] + coef[names.index(f"age {label} x potential")] * lp)
+                   for label, k in zip(AGE_LABELS, [k for k in AGE_KNOTS if k != AGE_REFERENCE]))
+    penalty = logit(POLISH["eased"][1]) - logit(POLISH["eased"][0])
+    lo, hi = POLISH["eligible"]
     ready = np.clip((d.readiness.values - POLISH["from"]) / (POLISH["full"] - POLISH["from"]), 0, 1)
-    w = POLISH["share"] * ready * d.age.between(lo, hi).values
+    w = POLISH["share"] * ready * np.clip((d.draft_age.values - lo) / (hi - lo), 0, 1)
     return np.exp(-w * np.minimum(penalty, 0))
 
 
@@ -356,7 +375,7 @@ def growth_design(d: pd.DataFrame) -> pd.DataFrame:
         "log potential": np.log(d.war_pot.clip(lower=LOG_FLOOR) / REFERENCE_WAR),
         "readiness": d.readiness.clip(*READINESS_CLIP),
         "SP": (d.group == "SP").astype(float), "RP": (d.group == "RP").astype(float),
-        "age 19-": (d.age <= 19).astype(float), "age 22+": (d.age >= 22).astype(float),
+        "age 19-": (np.floor(d.draft_age) <= 19).astype(float), "age 22+": (np.floor(d.draft_age) >= 22).astype(float),
         "years": d.years - REFERENCE_YEARS,
     }
     for label, test in {**MAKEUP, "AD H": lambda d: d.ad == "H", "AD L": lambda d: d.ad == "L"}.items():
@@ -663,16 +682,16 @@ def main(argv=None):
         "base": round(float(np.exp(model_a.intercept_)), 5),
         "potential_exponent": round(float(coef["log potential"]), 4),
         # per WAR at 21; the factor per WAR at another age is per_war x by_age's
+        # by_age: a knot's factor a WAR on top, his draft age's knot weights
+        # the exponents
         "readiness": {"per_war": round(float(np.exp(coef["readiness"])), 4), "clip": list(READINESS_CLIP),
-                      "by_age": {label: [lo, hi, round(float(np.exp(coef[f"readiness x age {label}"])), 4)]
-                                 for label, (lo, hi) in READINESS_BY_AGE.items()}},
+                      "by_age": {label: round(float(np.exp(coef[f"readiness x age {label}"])), 4) for label in AGE_LABELS}},
         "role": {g: round(float(np.exp(coef[g])), 4) for g in ("SP", "RP")},
-        # [youngest, oldest, factor at the reference]
-        "age": {label: [lo, hi, round(float(np.exp(coef[f"age {label}"])), 4)]
-                for label, (lo, hi) in AGE_GROUPS.items()},
-        # [youngest, oldest, exponent]: the age factor x (potential WAR / reference) ^ exponent
-        "age_by_potential": {label: [lo, hi, round(float(coef[f"age {label} x potential"]), 4)]
-                             for label, (lo, hi) in AGE_BY_POTENTIAL.items()},
+        # his draft age (on `date`, [month, day], of the draft year) between
+        # the knots; at a knot, factor x (potential WAR / reference) ^ by_potential
+        "age": {"date": list(board_odds.AGE_DATE), "knots": list(AGE_KNOTS), "reference": AGE_REFERENCE,
+                "factor": {label: round(float(np.exp(coef[f"age {label}"])), 4) for label in AGE_LABELS},
+                "by_potential": {label: round(float(coef[f"age {label} x potential"]), 4) for label in AGE_LABELS}},
         "makeup": {label: round(float(np.exp(coef[label])), 4) for label in MAKEUP},
         "taper": [development.FULL_WEIGHT_WAR, development.TAPERED_WAR, development.TAPERED_WEIGHT],
         "pitcher_balance": round(balance, 4),

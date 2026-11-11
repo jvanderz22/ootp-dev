@@ -7,10 +7,12 @@ profile's model lines). What he's expected to realize is a Poisson fit on the
 past classes' value now: the ceiling's base rate, then a factor each for how
 developed he already is (readiness: his current ratings' full-time WAR), his
 age, his role and his makeup (tapered by the ceiling, as ranking/development.py
-tapers it). Readiness weighs by age, more from 21 on; and a draftee 21 or
-older near MLB-ready keeps only half the 22s' age penalty (the "polish"
-judgment, 2026-11-11: the value of a player close to the majors right after
-the draft). Part of that expectation is the chance he outgrows his ceiling:
+tapers it). His age is his draft age - on May 1 of the draft year, from his
+date of birth - blended between the fit's age knots, so a player who's nearly
+22 reads mostly as a 22 (decided 2026-11-11). Readiness weighs by age, more
+from 21 on; and a draftee near MLB-ready from 21 on keeps only half the
+penalty of his age from 21.5 to 22 (the "polish" judgment, 2026-11-11: the
+value of a player close to the majors right after the draft). Part of that expectation is the chance he outgrows his ceiling:
 the growth odds (fit on the ceiling panel, with your work ethic and velocity
 judgment) and what outgrowing is worth. On the ledger the factors scale the
 rest, and the growth is its own line, so the lines sum to the expectation.
@@ -30,6 +32,8 @@ odds and the high end added nothing, so its legacy cuts are dropped.
 """
 import json
 import re
+from collections import Counter
+from datetime import date
 from functools import lru_cache
 
 import numpy as np
@@ -81,6 +85,45 @@ def _top_velocity(velocity) -> float:
     return float(found[-1]) if found else np.nan
 
 
+# the draft age: his age on this day of the draft year, from his date of birth
+# (decided 2026-11-11). The exports' Age is as of whenever they were pulled,
+# late April to June; May 1 is the nearest to most of them
+AGE_DATE = (5, 1)
+
+
+def draft_year(players):
+    """The year an export was pulled in, read off it: birth year plus Age for
+    the players born in January or February, whose birthday has passed by any
+    spring export. None without dates of birth."""
+    years = Counter(p.birth_date.year + p.age for p in players if p.birth_date and p.birth_date.month <= 2)
+    return years.most_common(1)[0][0] if years else None
+
+
+def draft_age(player, year) -> float:
+    """His age on AGE_DATE of the draft `year`, in years; the export's Age +
+    0.5 without a date of birth or a year."""
+    if player.birth_date is None or year is None:
+        return player.age + 0.5
+    return (date(year, *AGE_DATE) - player.birth_date).days / 365.2425
+
+
+def knot_weights(age, knots) -> dict:
+    """{knot: weight}: `age` (a number or an array) shared linearly between
+    the two knots around it, held at the end knots."""
+    a = np.clip(np.asarray(age, dtype=float), knots[0], knots[-1])
+    out = {}
+    for i, k in enumerate(knots):
+        w = np.zeros_like(a)
+        if i:
+            lo = knots[i - 1]
+            w = np.where((a >= lo) & (a <= k), (a - lo) / (k - lo), w)
+        if i + 1 < len(knots):
+            hi = knots[i + 1]
+            w = np.where((a >= k) & (a <= hi), (hi - a) / (hi - k), w)
+        out[k] = w
+    return out
+
+
 def _number(value, default) -> float:
     try:
         return float(value)
@@ -113,26 +156,34 @@ class DraftOdds:
     def readiness(self, readiness) -> float:
         return float(np.clip(readiness, *self.a["readiness"]["clip"]))
 
-    def mean_columns(self, player, ceiling, readiness, group) -> dict:
+    def ages(self, age) -> dict:
+        """{label: weight} of a draft age on the fit's age knots, the
+        reference left out."""
+        a = self.a["age"]
+        weights = knot_weights(age, a["knots"])
+        return {f"{k:g}": float(weights[k]) for k in a["knots"] if k != a["reference"]}
+
+    def mean_columns(self, player, ceiling, readiness, group, age) -> dict:
         """The Poisson fit's columns (ranking/fitting/draft_odds.py's
-        `design`) for one side of him."""
-        lp, age, taper = self.log_potential(ceiling), player.age, development.weight(ceiling)
+        `design`) for one side of him, `age` his draft age."""
+        lp, taper = self.log_potential(ceiling), development.weight(ceiling)
         cols = {"log potential": lp, "readiness": self.readiness(readiness),
                 "SP": float(group == "SP"), "RP": float(group == "RP")}
-        for label, (lo, hi, _) in self.a["age"].items():
-            cols[f"age {label}"] = float(lo <= age <= hi)
-        for label, (lo, hi, _) in self.a["age_by_potential"].items():
-            cols[f"age {label} x potential"] = lp * (lo <= age <= hi)
-        for label, (lo, hi, _) in self.a["readiness"]["by_age"].items():
-            cols[f"readiness x age {label}"] = cols["readiness"] * (lo <= age <= hi)
+        ages = self.ages(age)
+        for label, w in ages.items():
+            cols[f"age {label}"] = w
+        for label, w in ages.items():
+            cols[f"age {label} x potential"] = lp * w
+        for label, w in ages.items():
+            cols[f"readiness x age {label}"] = cols["readiness"] * w
         for label, (attr, values) in MAKEUP.items():
             cols[label] = float(getattr(player, attr) in values) * taper
         return cols
 
-    def growth_columns(self, player, ceiling, readiness, group, pitches) -> dict:
+    def growth_columns(self, player, ceiling, readiness, group, pitches, age) -> dict:
         """The growth odds' columns (`growth_design`), read at the reference
-        years after the draft."""
-        age, pitcher = player.age, float(group != "hitter")
+        years after the draft; `age` his draft age, in whole years here."""
+        age, pitcher = int(np.floor(age)), float(group != "hitter")
         cols = {"log potential": self.log_potential(ceiling), "readiness": self.readiness(readiness),
                 "SP": float(group == "SP"), "RP": float(group == "RP"),
                 "age 19-": float(age <= 19), "age 22+": float(age >= 22), "years": 0.0}
@@ -148,35 +199,43 @@ class DraftOdds:
 
     def expected(self, cols, age) -> float:
         """The Poisson mean: base x (ceiling / reference) ^ exponent x the
-        factors, with the polish judgment for a draftee `age` years old."""
-        return float(np.exp(self._mean_logit(cols) + self.polish(cols, age, self._penalty(cols))))
+        factors, with the polish judgment for a draftee of draft age `age`."""
+        z = self._mean_logit(cols)
+        return float(np.exp(z + self.polish(cols, age, self.penalty(cols["log potential"], self._mean_age))))
 
     def polish(self, cols, age, penalty) -> float:
         """The logit the polish judgment (the artifact's) adds back: its share
-        of `penalty`, the 22s' age penalty at his ceiling - none at `from` WAR
-        now, `share` from `full` up, at its ages only."""
+        of `penalty` - none at `from` WAR now, `share` from `full` up - for a
+        draft age past `eligible`'s start, in full past its end."""
         p = self.a["judgment"]["polish"]
-        lo, hi = p["ages"]
-        if not lo <= age <= hi:
-            return 0.0
+        lo, hi = p["eligible"]
+        eligible = np.clip((age - lo) / (hi - lo), 0.0, 1.0)
         ready = np.clip((cols["readiness"] - p["from"]) / (p["full"] - p["from"]), 0.0, 1.0)
-        return float(-p["share"] * ready * min(penalty, 0.0))
+        return float(-p["share"] * ready * eligible * min(penalty, 0.0))
 
-    def _penalty(self, cols) -> float:
-        """The polish judgment's age group's factor at his ceiling, on the logit."""
-        label = self.a["judgment"]["polish"]["penalty"]
-        return float(np.log(self.a["age"][label][2]) + self.a["age_by_potential"][label][2] * cols["log potential"])
+    def penalty(self, lp, at) -> float:
+        """The age logit's drop between the polish judgment's `eased` ages at
+        log potential `lp`; `at(label)` is a knot's (logit, potential tilt)."""
+        lo, hi = self.a["judgment"]["polish"]["eased"]
+
+        def logit(age):
+            return sum(w * (at(label)[0] + at(label)[1] * lp) for label, w in self.ages(age).items())
+        return float(logit(hi) - logit(lo))
+
+    def _mean_age(self, label) -> tuple:
+        a = self.a["age"]
+        return np.log(a["factor"][label]), a["by_potential"][label]
 
     def _age_logit(self, cols) -> float:
-        a = self.a
-        z = sum(np.log(f) * cols[f"age {label}"] for label, (_, _, f) in a["age"].items())
-        return z + sum(e * cols[f"age {label} x potential"] for label, (_, _, e) in a["age_by_potential"].items())
+        a = self.a["age"]
+        return sum(np.log(a["factor"][label]) * cols[f"age {label}"] + a["by_potential"][label] * cols[f"age {label} x potential"]
+                   for label in a["factor"])
 
     def _mean_logit(self, cols) -> float:
         a = self.a
         z = np.log(a["base"]) + a["potential_exponent"] * cols["log potential"]
         z += np.log(a["readiness"]["per_war"]) * cols["readiness"]
-        z += sum(np.log(f) * cols[f"readiness x age {label}"] for label, (_, _, f) in a["readiness"]["by_age"].items())
+        z += sum(np.log(f) * cols[f"readiness x age {label}"] for label, f in a["readiness"]["by_age"].items())
         z += self._age_logit(cols)
         z += sum(np.log(a["role"][g]) * cols[g] for g in ("SP", "RP"))
         z += sum(np.log(f) * cols[label] for label, f in a["makeup"].items())
@@ -193,13 +252,14 @@ class DraftOdds:
         shape, scale = self.excess
         return ceiling + self.margin + shape * scale
 
-    def reaching(self, player, ceiling, readiness, group, growth_cols, switch=None) -> tuple:
+    def reaching(self, player, ceiling, readiness, group, growth_cols, age, switch=None) -> tuple:
         """(ledger lines, E[v]) for one side: lines are (kind, label, value,
         stat, note), kind "add" (value in WAR) or "scale" (value a factor),
-        from his ceiling to what he's expected to realize. `switch` is the
-        switch hitter's (label, factor, note), applied with the factors."""
-        a, cols = self.a, self.mean_columns(player, ceiling, readiness, group)
-        expected = self.expected(cols, player.age)
+        from his ceiling to what he's expected to realize; `age` his draft
+        age. `switch` is the switch hitter's (label, factor, note), applied
+        with the factors."""
+        a, cols = self.a, self.mean_columns(player, ceiling, readiness, group, age)
+        expected = self.expected(cols, age)
         q = self.outgrows(growth_cols)
         rest = max((expected - q * self.outgrown_worth(ceiling)) / (1 - q), REST_FLOOR * expected)
         growth = expected - rest
@@ -207,13 +267,13 @@ class DraftOdds:
         base = reference * (1 - growth / expected)
         share = f"{reference / ceiling:.0%}" if ceiling > a["log_floor"] else f"{reference:.2f} WAR"
         lines = [("add", "Base rate", base - ceiling, share, None)]
-        by_age = np.prod([f ** cols[f"readiness x age {label}"] for label, (_, _, f) in a["readiness"]["by_age"].items()])
+        by_age = np.prod([f ** cols[f"readiness x age {label}"] for label, f in a["readiness"]["by_age"].items()])
         lines.append(("scale", "Readiness", a["readiness"]["per_war"] ** cols["readiness"] * by_age, None,
                       f"{readiness:+.1f} WAR now"))
-        age = self._age_logit(cols)
-        if age:
-            lines.append(("scale", f"Age {player.age}", float(np.exp(age)), None, None))
-        eased = self.polish(cols, player.age, self._penalty(cols))
+        logit = self._age_logit(cols)
+        if logit:
+            lines.append(("scale", f"Age {age:.1f}", float(np.exp(logit)), None, None))
+        eased = self.polish(cols, age, self.penalty(cols["log potential"], self._mean_age))
         if eased:
             lines.append(("scale", "Polish", float(np.exp(eased)), None, "near MLB-ready"))
         if group == "SP":
@@ -229,14 +289,14 @@ class DraftOdds:
         if switch:
             lines.append(("scale", "Switch hitter", switch[1], None, None))
             factor = switch[1]
-        lines.append(("add", "Breakout", growth * factor, f"{q:.0%}", self._growth_note(player, growth_cols)))
+        lines.append(("add", "Breakout", growth * factor, f"{q:.0%}", self._growth_note(player, growth_cols, age)))
         return lines, expected * factor
 
-    def _growth_note(self, player, cols) -> str:
+    def _growth_note(self, player, cols, age) -> str:
         """What lifts his chance of outgrowing his ceiling, in a few words."""
         out = []
         if cols["age 19-"]:
-            out.append(f"age {player.age}")
+            out.append(f"age {int(np.floor(age))}")
         if cols["velocity"] >= 3 and self.growth["coef"]["velocity"] > 0:
             out.append(f"{_top_velocity(player.velocity):.0f} mph")
         if cols["WE H"]:
@@ -252,9 +312,10 @@ class DraftOdds:
         chance he outgrows his ceiling, for a side whose odds come to
         `expected` WAR and whose value is `scale` x that."""
         q = self.outgrows(growth_cols)
-        coef, label = self.sticks["coef"], self.a["judgment"]["polish"]["penalty"]
+        coef = self.sticks["coef"]
         z = self.sticks["intercept"] + sum(c * cols[n] for n, c in coef.items())
-        z += self.polish(cols, age, coef[f"age {label}"] + coef[f"age {label} x potential"] * cols["log potential"])
+        at = lambda label: (coef[f"age {label}"], coef[f"age {label} x potential"])   # noqa: E731
+        z += self.polish(cols, age, self.penalty(cols["log potential"], at))
         p = 1 / (1 + np.exp(-z))
         rest = max((expected - q * self.outgrown_worth(ceiling)) / (1 - q), REST_FLOOR * expected)
         k = self.shape[group]

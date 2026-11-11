@@ -1,4 +1,5 @@
 import string
+from datetime import date
 
 
 def _int(value, default=0):
@@ -13,6 +14,7 @@ PLAYER_FIELDS = {
     "id": "ID",
     "name": "Name",
     "age": "Age",
+    "birth_date": "DOB",
     "org": "ORG",
     "level": "Lev",
     "overall": "OVR",
@@ -229,6 +231,15 @@ class GamePlayer:
     @property
     def age(self):
         return _int(self._age)
+
+    @property
+    def birth_date(self):
+        """His date of birth (the export's DOB, MM/DD/YYYY), or None."""
+        try:
+            month, day, year = (int(part) for part in str(self._birth_date).split("/"))
+            return date(year, month, day)
+        except (TypeError, ValueError):
+            return None
 
     @property
     def throw_hand(self):

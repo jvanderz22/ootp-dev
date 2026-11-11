@@ -84,6 +84,9 @@ class Value(BatchStage):
         # the draft odds (ranking/draft_odds.py) replace the development
         # factors and the modifiers they cover, wherever the profile has them
         self.odds = draft_odds.load() if profile.odds else None
+        # the draft year his draft age is read on (`prepare`); None reads the
+        # export's Age
+        self.draft_year = None
         self.develops = profile.ratings == "potential" and profile.development and not self.odds
         drop = {*value.PLATOON_REPLACES, *(development.REPLACES if self.develops or self.odds else ()),
                 *(draft_odds.REPLACES if self.odds else ())}
@@ -91,6 +94,11 @@ class Value(BatchStage):
             side: [in_war(m, side) for m in profile.shared_modifiers + own if modifier_name(m) not in drop]
             for side, own in ((BATTING, profile.batting_modifiers), (PITCHING, profile.pitching_modifiers))
         }
+
+    def prepare(self, players):
+        """Before the batches: the draft year, read off the whole export."""
+        if self.odds:
+            self.draft_year = draft_odds.draft_year(players)
 
     @property
     def artifacts(self) -> dict:
@@ -133,7 +141,7 @@ class Value(BatchStage):
         if odds is None:
             return
         out = self.odds.distribution(odds["columns"], odds["growth"], odds["ceiling"], odds["group"],
-                                     odds["expected"], odds["scale"], state.player.age)
+                                     odds["expected"], odds["scale"], odds["age"])
         state.odds = {"ceiling": odds["ceiling"], **out}
 
     # -- hitters ---------------------------------------------------------------
@@ -447,8 +455,9 @@ class Value(BatchStage):
         ceiling /= SCALE
         readiness = state.companions["readiness"].model
         pitches = self.ratings.pitch_count(player)
-        growth = self.odds.growth_columns(player, ceiling, readiness, group, pitches)
-        lines, expected = self.odds.reaching(player, ceiling, readiness, group, growth, switch)
+        age = draft_odds.draft_age(player, self.draft_year)
+        growth = self.odds.growth_columns(player, ceiling, readiness, group, pitches, age)
+        lines, expected = self.odds.reaching(player, ceiling, readiness, group, growth, age, switch)
         points = SCALE * ceiling
         for kind, label, amount, stat, note in lines:
             if kind == "add":
@@ -468,7 +477,8 @@ class Value(BatchStage):
         side.score = points
         side.odds = {"ceiling": ceiling, "group": group, "expected": expected / (switch[1] if switch else 1.0),
                      "scale": modified / expected * (switch[1] if switch else 1.0) if expected > 0 else 0.0,
-                     "columns": self.odds.mean_columns(player, ceiling, readiness, group), "growth": growth}
+                     "columns": self.odds.mean_columns(player, ceiling, readiness, group, age), "growth": growth,
+                     "age": age}
         write_runtime_component(player.id, f"{side_name}.value.war", modified)
         return modified
 

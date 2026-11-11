@@ -39,15 +39,16 @@ def test_the_board_reads_the_columns_the_fit_was_fit_on(rows):
     players = [GamePlayer(dict(r)) for r in rows]
     frame = pd.DataFrame([{
         "war_pot": float(rng.uniform(-0.5, 7)), "readiness": float(rng.uniform(-5, 4)),
-        "group": rng.choice(["hitter", "SP", "RP"]), "age": p.age, "we": p.work_ethic, "int": p.intelligence,
+        "group": rng.choice(["hitter", "SP", "RP"]), "draft_age": float(rng.uniform(16.5, 23.5)),
+        "we": p.work_ethic, "int": p.intelligence,
         "prone": p.injury_prone, "ad": p.adaptibility, "velo": r.get("VT"), "stuff": r.get("STU P"),
         "pitches": view.pitch_count(p), "years": fit.REFERENCE_YEARS,
     } for p, r in zip(players, rows)])
     mean, growth = fit.design(frame), fit.growth_design(frame)
     for i, (player, row) in enumerate(zip(players, frame.itertuples())):
-        runtime = odds.mean_columns(player, row.war_pot, row.readiness, row.group)
+        runtime = odds.mean_columns(player, row.war_pot, row.readiness, row.group, row.draft_age)
         assert runtime == pytest.approx(mean.iloc[i].to_dict()), player.name
-        runtime = odds.growth_columns(player, row.war_pot, row.readiness, row.group, row.pitches)
+        runtime = odds.growth_columns(player, row.war_pot, row.readiness, row.group, row.pitches, row.draft_age)
         assert runtime == pytest.approx(growth.iloc[i].to_dict()), player.name
 
 
@@ -115,26 +116,58 @@ def test_the_board_reads_on_a_fixed_1_to_100_scale(ranked):
                           "war_high": None}) == dict.fromkeys(s)
 
 
-def test_a_college_draftee_near_mlb_ready_keeps_half_his_age_penalty(rows):
-    # judgment (2026-11-11): none of it eased at -1 WAR now, half from 0 up,
-    # 21 and older, a 21-year-old by the 22s' penalty at his ceiling; the
-    # Regular chance eases with it
+def test_the_draft_age_is_on_may_1_of_the_year_the_export_was_pulled():
+    def player(born, age):
+        return GamePlayer({"DOB": born, "Age": str(age)})
+    # the export's Age runs a year ahead for whoever's birthday passed before
+    # it was pulled; the January and February births give the year away
+    export = [player("01/15/2021", 21), player("02/03/2020", 22), player("05/02/2020", 22), player("09/30/2020", 21)]
+    assert draft_odds.draft_year(export) == 2042
+    assert draft_odds.draft_age(export[2], 2042) == pytest.approx(21.997, abs=0.001)
+    assert draft_odds.draft_age(export[3], 2042) == pytest.approx(21.58, abs=0.01)
+    # no date of birth: the export's Age, halfway through the year
+    assert draft_odds.draft_age(player("", 21), 2042) == 21.5
+    assert draft_odds.draft_year([player("", 21)]) is None
+
+
+def test_a_draft_age_reads_between_the_knots(rows):
+    # a draftee nearly 22 reads mostly as a 22, one just 21 as a 21; no cliff
+    # at the birthday, and nobody gets cheaper by being younger past 21
+    odds = draft_odds.load()
+
+    def ev(age):
+        player = GamePlayer(dict(rows[0]))
+        return odds.expected(odds.mean_columns(player, 4.0, -1.5, "hitter", age), age)
+    assert ev(21.99) == pytest.approx(ev(22.01), rel=0.03)   # the ramp, not a cliff
+    assert ev(21.0) > ev(21.5) > ev(21.9) > ev(22.0)
+    assert odds.ages(21.75) == pytest.approx({"18": 0.0, "22": 0.75})
+    assert odds.ages(19.5) == pytest.approx({"18": 0.5, "22": 0.0})
+
+
+def test_a_draftee_near_mlb_ready_keeps_half_his_age_penalty_from_21_5(rows):
+    # judgment (2026-11-11): half the penalty of his age from 21.5 to 22 eased
+    # - none at -1 WAR now, half from 0 up - from a draft age of 20, in full
+    # from 21; the Regular chance eases with it
     odds = draft_odds.load()
 
     def lines(age, readiness):
-        player = GamePlayer({**rows[0], "Age": str(age)})
-        growth = odds.growth_columns(player, 4.0, readiness, "hitter", 0)
-        return dict((label, value) for _, label, value, _, _ in odds.reaching(player, 4.0, readiness, "hitter", growth)[0])
+        player = GamePlayer(dict(rows[0]))
+        growth = odds.growth_columns(player, 4.0, readiness, "hitter", 0, age)
+        return dict((label, value) for _, label, value, _, _ in
+                    odds.reaching(player, 4.0, readiness, "hitter", growth, age)[0])
 
-    full, part, none = lines(22, 0.5), lines(22, -0.5), lines(22, -1.5)
-    assert full["Age 22"] < 1
-    assert full["Polish"] == pytest.approx(full["Age 22"] ** -0.5)
-    assert part["Polish"] == pytest.approx(part["Age 22"] ** -0.25)
-    assert "Polish" not in none and "Polish" not in lines(20, 1.0)
-    assert lines(21, 0.5)["Polish"] == pytest.approx(full["Polish"])
+    full, part, none = lines(22.0, 0.5), lines(22.0, -0.5), lines(22.0, -1.5)
+    assert full["Age 22.0"] < 1
+    # 21.5 to 22 is half the age line's drop from 21 to 22, on the logit
+    assert full["Polish"] == pytest.approx(full["Age 22.0"] ** -0.25)
+    assert part["Polish"] == pytest.approx(full["Age 22.0"] ** -0.125)
+    assert lines(20.5, 0.5)["Polish"] == pytest.approx(part["Polish"])
+    assert lines(21.0, 0.5)["Polish"] == pytest.approx(full["Polish"])
+    assert "Polish" not in none and "Polish" not in lines(19.9, 1.0)
 
     def regular(age, readiness):
-        player = GamePlayer({**rows[0], "Age": str(age)})
-        cols, growth = odds.mean_columns(player, 4.0, readiness, "hitter"), odds.growth_columns(player, 4.0, readiness, "hitter", 0)
+        player = GamePlayer(dict(rows[0]))
+        cols = odds.mean_columns(player, 4.0, readiness, "hitter", age)
+        growth = odds.growth_columns(player, 4.0, readiness, "hitter", 0, age)
         return odds.distribution(cols, growth, 4.0, "hitter", odds.expected(cols, age), 1.0, age)["regular"]
-    assert regular(22, 0.0) > regular(22, -1.0) and regular(21, 0.0) > regular(21, -1.0)
+    assert regular(22.0, 0.0) > regular(22.0, -1.0) and regular(21.0, 0.0) > regular(21.0, -1.0)

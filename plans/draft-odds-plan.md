@@ -406,6 +406,38 @@ and he has a better than 37% chance to be a regular.
   - Held back: a blended ×1.45 for 21s, to soften the raw 21s' drop. You
     kept the data's weight.
 
+### Draft age (2026-11-11, D)
+
+You: results moved a lot from one class to the next; a 22 who just turned
+22 and one turning 23 next month shouldn't weigh the same. Age as of a fixed
+day of the draft year, from the date of birth.
+
+- **The exports' Age** is as of whenever they were pulled: 4–19% of a class
+  is a year "older" than on April 1 (225 players in 2036). May 1 is nearest
+  to most exports (0–2% off; 2036's was pulled later). The draft year is read
+  off the export: birth year plus Age of the January and February births
+  (right for all ten classes).
+- **Blended:** the age columns are weights on knots, a draft age shared
+  linearly between the two around it. A knot a year zig-zagged (19 ×0.75
+  between 18 ×1.05 and 20 ×1.18; where the dip lands moves with the knots)
+  and took Jonathan Lee (19.10) from #2 to #7. **Knots 18, 21, 22:** a
+  straight line through the teens, 21 to 22, flat after. Readiness by age
+  and the ceiling tilt ride the same knots.
+- **The history backs the ramp** (realized against a no-age fit, 21.0–21.5
+  = 1.00): 21.5–22 0.69, 22.0–22.5 0.42, 22.5–23 0.49, 23+ 0.25. Nobody
+  comes back up past 22.
+- **Polish eases the drop from 21.5 to 22,** not from 21.0: blended, the
+  penalty measured from 21.0 grew (×0.55 → ×0.35), and half of it took the
+  22s up 25–30% (Calhoon 3.12 → 4.03). From 21.5, where whole ages had the
+  21s on average, its credit stays about ×1.3. Eligibility ramps in from 20
+  to 21.
+- **After** (held out, top 25 / 50 / 100): 1.635 / 1.386 / 1.093, against
+  1.479 / 1.355 / 1.106. Pitcher shares 40–60% in every bucket. On 2042,
+  by draft age: teens +1%, 19–20 −16% (the teen ceiling tilt now fades out
+  from 18 to 21; you were fine with it), 21.0–21.5 +13% (Rod Parr #105 →
+  #34, Alex Kellough #71 → #24), 21.5–22 −25% (Brad Nelson #55 → #163, Jose
+  Osorio #21 → #56), 22+ +3% (Calhoon 3.12, Tapia 2.09).
+
 ### Order of work (2026-11-10)
 
 This replaces "Order of work" below. Nothing gets built until you say so.

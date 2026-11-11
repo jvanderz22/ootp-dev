@@ -19,8 +19,9 @@ def test_draft_reads_are_attributed_to_their_readers():
     inv = inventory(get_ranker("draft_class"), _players())
     assert inv.players == 160
     assert inv.reads["DraftDemandModifier"] == {"DEM"}  # read off the result
-    # the draft odds read his age and makeup, and a pitcher's velocity and Stuff
-    assert {"Age", "WE", "INT", "Prone", "AD", "VT", "STU P"} == inv.reads["draft odds"]
+    # the draft odds read his draft age (his date of birth, the export's Age
+    # for the draft year), makeup, and a pitcher's velocity and Stuff
+    assert {"DOB", "Age", "WE", "INT", "Prone", "AD", "VT", "STU P"} == inv.reads["draft odds"]
     assert {"K P", "POW P"} <= inv.reads["batting talent"]
     # a class without BABIP is read through Contact, so the legacy batting grid never runs
     assert "batting model" not in inv.reads

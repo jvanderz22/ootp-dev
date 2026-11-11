@@ -86,6 +86,13 @@ class Ranker:
             gc_was_enabled = gc.isenabled()
             gc.disable()
             try:
+                if self.profile.odds:
+                    # the draft odds read every draftee's age on the export's
+                    # draft year, read off all of them (ranking/draft_odds.py)
+                    players = list(players)
+                    for stage in self.batch_stages:
+                        if hasattr(stage, "prepare"):
+                            stage.prepare(players)
                 results, batch, done = [], [], 0
                 for player in players:
                     batch.append(player)
