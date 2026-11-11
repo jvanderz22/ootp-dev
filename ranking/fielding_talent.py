@@ -17,6 +17,10 @@ last FLOOR_RAMP points above the floor: half at the floor itself, a DH's one
 step below it (ratings move in steps of 5). A left-handed thrower is below
 the floor at C, 2B, 3B and SS (RIGHT_HANDED; decided 2026-11-10).
 
+A player no position values above a DH is a DH (decided 2026-11-11): no
+fielding runs, the DH's adjustment. A tie goes to DH, so a player below the
+floor everywhere is a DH rather than the first position in the list.
+
 The value of a position is its runs plus its adjustment. The adjustments come
 from where OOTP's managers play regulars, pulled lightly toward StatsPlus's
 (decided 2026-11-09): StatsPlus's put SS only 2 runs above 2B, so a true SS
@@ -41,6 +45,7 @@ from ranking.hitter_talent import ARTIFACTS_DIR
 
 ARTIFACT = "fielding_talent_v2"
 POSITIONS = ("C", "1B", "2B", "3B", "SS", "LF", "CF", "RF")
+DH = "DH"
 SEASON_INNINGS = 1350
 STEPS = tuple(range(20, 81, 5))
 RATINGS = (
@@ -137,18 +142,26 @@ class FieldingTalent:
             out[pos] = f * (runs + self.position_adjustment[pos]) + (1 - f) * self.dh_adjustment
         return out
 
+    def adjustment(self, position) -> float:
+        """The position's adjustment, DH included."""
+        return self.dh_adjustment if position == DH else self.position_adjustment[position]
+
     def runs(self, ratings: dict) -> dict:
         """{position: runs against its average fielder, after its floors}."""
         return {pos: v - self.position_adjustment[pos] for pos, v in self.value(ratings).items()}
 
     def best(self, ratings: dict):
         """(value at the best position, that position, his runs there): the
-        most valuable position."""
+        most valuable position, or DH (no runs) when none beats a DH's."""
         value = self.value(ratings)
-        index = np.column_stack([value[pos] for pos in POSITIONS]).argmax(axis=1)
-        best = [POSITIONS[i] for i in index]
-        top = np.array([value[pos][j] for j, pos in enumerate(best)])
-        adjustment = np.array([self.position_adjustment[pos] for pos in best])
+        options = (DH,) + POSITIONS
+        dh = np.full(len(value[POSITIONS[0]]), self.dh_adjustment)
+        # DH first, so a tie goes to it
+        stacked = np.column_stack([dh] + [value[pos] for pos in POSITIONS])
+        index = stacked.argmax(axis=1)
+        best = [options[i] for i in index]
+        top = stacked[np.arange(len(index)), index]
+        adjustment = np.array([self.adjustment(pos) for pos in best])
         return top, best, top - adjustment
 
     def covers(self, ratings: dict) -> dict:

@@ -107,6 +107,7 @@ def test_calibration_is_a_line_per_read(model):
     # fielding: within the position (a level each, one stretch), apart from its adjustment
     field = model.calibration["fielding"]
     assert model.fielding_runs(5, "CF") == pytest.approx(field["by_position"]["CF"] + 5 * field["per_run"])
+    assert model.fielding_runs(0, "DH") == 0
     a, b = field["value"]
     assert model.fielding_value(5, 2) == pytest.approx(a + 7 * b)
     for role in ("sp", "rp"):

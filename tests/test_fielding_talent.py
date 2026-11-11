@@ -77,6 +77,15 @@ def test_best_position_takes_the_adjustment_and_is_worth_the_most(model):
     assert value[0] == max(v[0] for v in model.value(ratings).values())
 
 
+def test_a_player_no_position_values_above_a_dh_is_a_dh(model):
+    # 2026-11-11: below the floor everywhere he tied a DH at C and was valued there
+    nowhere = _ratings(**dict.fromkeys(fielding_talent.RATINGS, 20))
+    value, best, runs = model.best(nowhere)
+    assert best == [fielding_talent.DH] and runs[0] == 0
+    assert value[0] == pytest.approx(model.dh_adjustment) == pytest.approx(model.adjustment(fielding_talent.DH))
+    assert max(v[0] for v in model.value(nowhere).values()) <= model.dh_adjustment
+
+
 def test_a_true_shortstop_is_worth_the_most_at_short(model):
     # 2026-11-09: StatsPlus's adjustments put SS 2 runs over 2B, so he went to 2B
     _, best, _ = model.best(_ratings(if_range=70, if_arm=70, if_error=65, turn_dp=60))

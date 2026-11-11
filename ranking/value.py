@@ -93,6 +93,7 @@ from pathlib import Path
 
 import numpy as np
 
+from ranking.fielding_talent import DH
 from ranking.hitter_talent import ARTIFACTS_DIR
 
 ARTIFACT = "value_v1"
@@ -199,9 +200,9 @@ class ValueModel:
 
     def fielding_runs(self, runs, position) -> float:
         """Fielding runs against an average fielder at `position`, as MLB
-        fielders there actually played to them."""
+        fielders there actually played to them; a DH fields nowhere."""
         fit = (self.calibration or {}).get("fielding")
-        if fit is None:
+        if fit is None or position == DH:
             return runs
         return fit["by_position"][position] + fit["per_run"] * runs
 

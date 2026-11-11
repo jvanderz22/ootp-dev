@@ -171,7 +171,7 @@ class Value(BatchStage):
         sides = reads["sides"] and {s: float(cal("wrc_plus", w)) for s, w in reads["sides"].items()}
         position = reads["position"]
         runs = float(self.model.fielding_runs(reads["fielding"], position))
-        fielding = float(self.model.fielding_value(runs, self.fielding_model.position_adjustment[position]))
+        fielding = float(self.model.fielding_value(runs, self.fielding_model.adjustment(position)))
         pa = self.model.hitter_pa
         batting_runs = (wrc / 100 - 1) * self.hitting_model.mlb_runs_per_pa * pa
         running = float(cal("baserunning", reads["baserunning"])) * pa / 600
@@ -190,7 +190,7 @@ class Value(BatchStage):
         ledger.add(MODEL, "batting", SCALE * (parts["batting"] + parts["allowance"]), BATTING,
                    f"{wrc:.0f} wRC+", " · ".join(h for h in how if h))
         ledger.add(MODEL, "fielding", SCALE * parts["fielding"], BATTING,
-                   f"{position} {runs:+.0f} runs", f"{fielding:+.0f} with position")
+                   position if position == fielding_talent.DH else f"{position} {runs:+.0f} runs", f"{fielding:+.0f} with position")
         if field.covers:
             ledger.add(MODEL, "utility", SCALE * parts["utility"], BATTING, f"covers {', '.join(field.covers)}")
         ledger.add(MODEL, "baserunning", SCALE * parts["running"], BATTING, f"{running:+.1f} runs")
