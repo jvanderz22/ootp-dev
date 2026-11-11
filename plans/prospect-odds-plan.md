@@ -84,6 +84,69 @@ his traits earn, but gets no credit for growth he's already shown.
 **The distribution and the card** are as on the draft board: bust, short
 of ceiling, outgrows. The rest's mean is set so the whole matches E[v].
 
+## On track (2026-11-11)
+
+You: define an "on track" model for prospects and draftees both, that sets
+how much to weigh the POT − CUR difference by age. Judgment calls are fine
+where the data is thin; don't overfit it.
+
+A draftee is a prospect on draft day: Jordan Tapia at 22 (draft-odds D,
+"Advanced college draftees") and a 22-year-old in AA ask the same question.
+So both boards share one piece:
+
+- **The gap:** ceiling WAR − WAR now (both full-time, model lines).
+- **Expected gap by age:** the typical gap, at each age and ceiling, of
+  players who went on to reach their ceiling. Smoothed across age; a
+  judgment shape where the data is thin.
+- **On track:** expected gap − his gap, in WAR. Positive is ahead of
+  schedule.
+- **The odds** of closing the gap are fit on on-track and the gap,
+  replacing the draft fit's flat Age and Readiness lines. Readiness then
+  barely matters at 18, when everyone is raw, and a lot at 22–24.
+- **The card:** one line, e.g. "On track +0.8 WAR ahead · ×1.18".
+- **Fallback:** if the pooled data can't size it, the judgment from D:
+  readiness halves the 22+ age penalty (none at −1 WAR now, half at 0+).
+
+Order:
+1. **Describe,** pooled: every prospect per export (2038–41) and every
+   draftee per class (2033–41), judged on outcome A. Expected gap by age
+   and ceiling; realized share of the gap by on-track bins, by age.
+2. **Fit on-track** into the draft odds and check held out. Tapia is the
+   test case.
+3. **The prospect board** is built on it (order of work below).
+
+### Step 1 findings (2026-11-11)
+
+`ranking/fitting/prospect_odds.py`. Pooled: settled rows with a 0.5+
+ceiling, about 2,700 draftee looks and 6,400 prospect looks.
+
+- **The shape holds.** Ahead of the typical gap for his age and ceiling
+  (WAR), by age, ceiling 2+, the share who became regulars:
+
+  | Age | 1.5+ behind | 0.5–1.5 behind | typical | 0.5–1.5 ahead | 1.5+ ahead |
+  |---|---|---|---|---|---|
+  | ≤20 | 13% | 24% | 17% | 17% | — |
+  | 21 | 11% | 11% | 19% | 24% | 44% |
+  | 22 | 6% | 6% | 16% | 27% | 53% |
+  | 23 | 4% | 8% | 19% | 36% | 61% |
+  | 24 | 8% | 10% | 19% | 36% | 64% |
+
+  Flat for teens, steep from 21 on.
+- **Peers have to be the same stage.** A 22-year-old pro has had years of
+  development: with Tapia's 5.84 ceiling he's typically 4.6 WAR short.
+  Tapia is 5.7 short, so against the pooled curve he's 1.1 behind. On
+  track is measured against draftees on the draft board, and against
+  prospects (by age, likely level too) on the prospect board.
+- **Draftees alone, the readiness weight by age** (classes 2033–37, 90%
+  ranges): ≤20 ×1.21 a WAR (1.10–1.32), 21 ×1.51 (1.38–1.67), 22+ ×1.44
+  (1.19–1.90), against the flat ×1.34. With it, the 22+ age line reads
+  ×0.50 (×0.54 flat).
+- **It doesn't lift Tapia.** On 2042 the data version moves him 6th → 7th:
+  his readiness (+0.1) sits at the reference, so the steeper weight doesn't
+  touch him, and the teens' raw readiness costs them less. Pat Calhoon
+  (+1.6) goes 2nd → 1st. Settled 22+ draftees well ahead of their draft-age
+  peers realized 0.22 of the ceiling and 11% became regulars (36 of them).
+
 ## Open questions
 
 1. **The gap form.** *Recommend it.* The draft's multiplier form overshoots
