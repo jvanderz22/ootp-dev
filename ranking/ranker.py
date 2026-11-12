@@ -87,9 +87,11 @@ class Ranker:
             gc_was_enabled = gc.isenabled()
             gc.disable()
             try:
-                if self.profile.odds:
-                    # the odds read every player's age on the export's year,
-                    # read off all of them (ranking/draft_odds.py)
+                if self.profile.odds == "draft":
+                    # the draft odds read every draftee's age on the export's
+                    # draft year, read off all of them (ranking/draft_odds.py).
+                    # A draft class is small; the prospect board streams the
+                    # league's ~11k players (its ages are the snapshot's)
                     players = list(players)
                     for stage in self.batch_stages:
                         if hasattr(stage, "prepare"):

@@ -98,8 +98,9 @@ class Value(BatchStage):
         }
 
     def prepare(self, players):
-        """Before the batches: the draft year, read off the whole export."""
-        if self.odds:
+        """Before the batches: the draft year, read off the whole export (the
+        draft odds only; the prospect board reads the export's Age + 0.5)."""
+        if self.odds and not self.prospects:
             self.draft_year = draft_odds.draft_year(players)
 
     @property
