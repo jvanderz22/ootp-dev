@@ -65,10 +65,11 @@ class ScoringProfile:
     # v2: (key, profile) pairs each player is also scored on, alongside this
     # profile (ranking/stages/companion.py) - e.g. his ceiling
     companions: tuple = ()
-    # v2: the draft odds (ranking/draft_odds.py) take his potential ratings'
-    # WAR to what he's expected to realize, in place of the development
-    # factors and the modifiers they replace; reads the "readiness" companion
-    odds: bool = False
+    # v2: the odds - "draft" (ranking/draft_odds.py) or "prospect"
+    # (ranking/prospect_odds.py) - take his potential ratings' WAR to what
+    # he's expected to realize, in place of the development factors and the
+    # modifiers they replace; reads the "readiness" companion
+    odds: str = None
 
     def without(self, *modifiers) -> "ScoringProfile":
         """This profile minus `modifiers` (matched by name) on every side."""
@@ -149,7 +150,9 @@ POTENTIAL = ScoringProfile(
         PitcherVelocityModifier,
         PitcherInjuryModifier,
     ),
-    companions=(("ceiling", CEILING),),
+    # how developed he already is: his current ratings' full-time WAR
+    companions=(("readiness", FULL_TIME),),
+    odds="prospect",
 )
 
 # A draft class (legacy DraftClassRanker).
@@ -169,7 +172,7 @@ DRAFT = ScoringProfile(
     two_way_threshold=2.2,
     # how developed he already is: his current ratings' full-time WAR
     companions=(("readiness", FULL_TIME),),
-    odds=True,
+    odds="draft",
 )
 
 # keyed by ranking method, as `rankers.get_ranker.RANKERS` is (full_time has

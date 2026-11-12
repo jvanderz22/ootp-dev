@@ -147,10 +147,187 @@ ceiling, about 2,700 draftee looks and 6,400 prospect looks.
   (+1.6) goes 2nd → 1st. Settled 22+ draftees well ahead of their draft-age
   peers realized 0.22 of the ceiling and 11% became regulars (36 of them).
 
+### Steps 2–3 findings (2026-11-11)
+
+`ranking/fitting/prospect_odds.py`. Settled prospects with a 0.5+ ceiling:
+6,422 looks, 2,538 players. Held out by player (all of a player's exports in
+one fold), each export ranked on its own. Unsigned amateurs (level "-") are
+left out, and A+ reads as A, as in the snapshot.
+
+- **Prospects often end below their WAR now.** 45% finish 0.25+ WAR under
+  it, 47% of those already in the majors, and more the more developed they
+  are. The plan's "WAR now + odds on the gap" with now as a floor would
+  overshoot, so his WAR now gets its own odds (keep).
+- **The gap form wins at the top.** A multiplier in the draft fit's shape
+  ranks as well (rho 0.65) but puts half its top 25 past their own ceiling.
+  They realized 0.76 of predicted. The gap form is calibrated there (0.96)
+  and everywhere else: 0.95–1.05 by rank, level, age and age for level.
+  Relievers come out 1.18.
+
+  | Held out, mean per export | rho | Top 25 | Top 50 | Top 100 |
+  |---|---|---|---|---|
+  | Today's prospect board | 0.42 | 2.07 | 1.96 | 1.67 |
+  | The draft fit as it is | 0.57 | 2.62 | 2.36 | 2.04 |
+  | Multiplier, refit | 0.65 | 2.96 | 2.53 | 2.19 |
+  | Gap form | 0.66 | 2.95 | 2.53 | 2.14 |
+
+- **The fit:** E = keep × WAR now + close × (ceiling − WAR now).
+  - keep: about 45% at three years out. It rises with WAR now (2 WAR now
+    keeps about two-thirds) and falls with age.
+  - close: about 30% from 20 to 22, 21% at 24, 18% at 25. Readiness weighs
+    more each year (the on-track shape).
+  - Role: SP closes less (log-odds −0.89), RP −0.30.
+  - Makeup: WE H +0.41, fragile −0.70.
+- **Level drops out** (open question 3): once age and readiness are in,
+  level adds nothing held out, and age for level comes out ×0.95 a year.
+  keep on level instead of WAR now does no better. Short-season A
+  realizes 0.89 of predicted, the only level off.
+- **Pitchers:** unbalanced, the buckets are 41 / 61 / 52 / 61 / 56% held
+  out. The draft's balance (50% on average) would cut them ×0.92 and drop
+  the top 25 to 33%. So the balance is the factor that keeps the worst
+  bucket nearest 40–60%: ×0.99.
+- **Ceiling matters little for the young, and the data backs it.** In
+  close, E grows with about ceiling^0.1–0.2 at 21–23, against ceiling^1.17
+  in the draft fit. Held out, it's calibrated even for young high ceilings
+  (under 21 with a 4+ ceiling: 1.24 realized, 1.25 predicted, n = 10). The
+  draft fit predicts 2.39 for them. But the cells are thin, and a
+  21-year-old in the 2038 export is judged at 25. Draftees with 3+ ceilings
+  realized 22% of the ceiling at 25 and 37% at 28, though class confounds
+  that.
+
+**On the 2042 snapshot** (scratch, not the stage yet: 9,614 prospects under
+a year of service):
+- The top 8 are all MLB rookies (Isaiah Ghant 3rd → 1st, Chris Metzen 25th
+  → 4th). Oscar Canas goes 1st → 14th.
+- Held at 21, teens nearly vanish. The top 100 has 2 under 20, against 26
+  on the board, and Harvey Sanchez (18, POT 80) goes 18th → 1,864th: an
+  18-year-old at −3 WAR now reads as a 21-year-old at −3, a bust profile.
+  Two bridges:
+
+  | Bridge | 20 and under in top 100 | Sanchez | Morrison | Lang | Canas |
+  |---|---|---|---|---|---|
+  | Held at 21 | 2 | 1,864 | 758 | 219 | 14 |
+  | On track (readiness moved to 21's typical) | 10 | 292 | 175 | 127 | 16 |
+  | The draft fit under 20, blended to 22 | 15 | 152 | 69 | 25 | 9 |
+  | Today's board | 26 | 18 | 11 | 4 | 1 |
+
+- Pitchers are 20% of the live top 25 (the board: 12%). The live pool's
+  MLB rookies are mostly hitters.
+- The pool runs past the exports' age 26. The fit holds 27+ at 25.
+
+### Step 5, the stage (2026-11-11)
+
+`ranking/prospect_odds.py`, `prospect_odds_v1.json`. The `potential`
+profile has `odds="prospect"` (the draft profile `odds="draft"`) and the
+readiness companion. The ceiling companion is gone: the odds carry the
+ceiling, as on the draft board. The development factors and the draft
+odds' REPLACES are off. Kept: scouting accuracy, the hit profile, a switch
+hitter, velocity as an upside, and pitchers ×0.99.
+- **The ledger:** Ceiling → "WAR now" (keeps X%) → "Gap" (closes Y%) →
+  "Runway" (the teen bridge's difference, under 22) → the kept lines. A
+  prospect whose WAR now is past his ceiling gets a "Past his ceiling" line
+  first. There's no distribution yet (step 4), so the card shows no range
+  strip and no 1-100 score; the board stays in WAR.
+- **Readiness by side.** The companion keeps each side's model WAR, and the
+  prospect odds read the side's own WAR now (the table is rebuilt that
+  way). Before, a side read the WAR now of whichever side he was judged on
+  now: Esteban Ricalde, a 3.3 WAR bat, was valued as a reliever on his
+  bat's readiness. The draft board still reads the judged side, as it was
+  fit. Per side, 942 of 970 in the 2042 class move and 39 change sides
+  (Chad Steedley 25th → 48th), so it waits for a draft refit.
+- **On the 2042 snapshot:** 9,614 prospects score in about 15 s.
+  - 15 MLB rookies in the top 25.
+  - 15 aged 20 and under in the top 100 (the board: 26).
+  - Pitchers are 20 / 26 / 25% of the top 25 / 50 / 100, against 40–61%
+    held out. The live pool's MLB rookies are mostly bats.
+  - Harvey Sanchez is 220th, Mike Morrison 60th, Marc Lang 21st and Oscar
+    Canas 8th.
+- **The goldens** for the potential board, its evals and the org rankings
+  are regenerated. The org rankings' curve is still in potential WAR (step
+  6).
+
+### Upside (2026-11-11)
+
+You, on the movers: Montano very overrated; Calhoon punished too hard for
+being 23; Blankenship, Englund too low; Mass, Thacker dropped too far; Canas
+up to 2nd–3rd. "Probably still weighting present production a little too
+much over upside."
+
+- **The data backs the fit on outcome A**, so these are judgment:
+  - Montano is graded as a 187-inning starter (3.0 WAR now). Held out,
+    relievers with WAR now realized more than predicted.
+  - A readiness × ceiling term is real in the data (−0.30), but it moves
+    the named players the wrong way.
+  - Outcome A sees at most 4.4 years, and young prospects are judged at
+    about 25, before a high ceiling usually pays off.
+- **Decided** (in `ranking/fitting/prospect_odds.py`, held to the value by a
+  tight prior, the rest refit around it):
+  - **Neutral ceiling slope:** the share of the gap he closes doesn't fall
+    as his ceiling rises (the data: −0.80 in log-odds per log ceiling).
+  - **Upside ×2:** the board ranks on what he keeps of his WAR now, plus 2
+    × what he's expected to add by developing. It's an "Upside" ledger
+    line after the expectation's lines.
+  - **The starter penalty is reworked,** −0.93 → −0.40. You: at least 5
+    starters in the top 25 (10–12 is fine), about 30–35 pitchers in the
+    top 100. One penalty can't reach 10–12 at the top without passing 35
+    in the top 100, so it's set at 6 / 36. The pitcher balance is off
+    (×1.00).
+- **Held out**, what the board ranks on realizes 2.58 WAR in its top 25
+  and 2.29 in its top 50. The expectation alone: 2.87 / 2.48. The legacy
+  board: 2.07 / 1.96.
+- **On 2042** (legacy rank → new):
+  - Canas 1 → 8, Thacker 12 → 20, Calhoon 10 → 21, Mass 2 → 23.
+  - Blankenship 9 → 85, Englund 16 → 112, Montano 436 → 46.
+  - 6 starters in the top 25; 34 starters and 2 relievers in the top 100.
+- **Canas tops out around 5th–8th** under every setting tried. The players
+  ahead of him gain from upside too.
+
+### On schedule (2026-11-11)
+
+You: still too punishing on Blankenship and Englund, 22 in AA at about
+replacement.
+- **The neutral ceiling now holds at every age.** Held alone, the refit
+  had moved the ceiling penalty into the age × ceiling terms (−0.20 to
+  −0.26 in log-odds near 21), so those are held at 0 too. Canas goes to
+  2nd.
+- **Why 22s still lagged.** On the same live players, the draft fit's
+  expectation is 2.4× the prospect fit's at 19, 2.2× at 20, 1.3× at 21 and
+  1.0× at 22. A raw 22 competes with teens still valued partly on the draft
+  fit.
+- **Levers that barely moved them** (Blankenship / Englund):
+
+  | Lever | Ranks | Side effect |
+  |---|---|---|
+  | An age-22 knot held at 21's level | 54 / 78 | — |
+  | A lighter readiness weight | — | The refit moves it into the age-25 term |
+  | Upside ×3 / ×4 | 51 / 73, 48 / 72 | Montano 118 / 207 |
+  | The bridge anchored at the prospect fit's level | 37 / 59 | No teens in the top 25 |
+
+- **Decided: on schedule.** Near replacement, the closing odds and the
+  bridge read the age curve as flat from 21.5 to 23.5. The age catches up
+  to his own by 24.5. The relief is in full at 0 WAR now and none from 1
+  WAR (`ON_TRACK`). A raw 22- or 23-year-old reads as 21.5; Calhoon, at 1.0
+  WAR now, gets none. The card's Gap note reads "on schedule".
+- **Held out**, value rho 0.62 → 0.56, top 25 2.53 → 2.48, top 50 2.29 →
+  2.25.
+- **The judgment's optimism, on settled raw 22–23s** (WAR now ≤ 1, 2,336
+  looks): they realized 0.46 WAR on average. The fit alone predicted 0.44
+  (calibrated, 1.04); with on schedule it predicts 0.60, so they realized
+  0.77 of it. With 4+ ceilings (61 looks): realized 1.28, fit 1.29, with
+  the judgment 1.55 (0.83).
+- **On 2042** (legacy → new):
+  - Blankenship 9 → 32, Englund 16 → 36, Mass 2 → 6, Thacker 12 → 7,
+    Calhoon 10 → 19, Canas 1 → 2.
+  - Montano 436 → 62, Morrison 11 → 43, Sanchez 18 → 208.
+  - The top 25: 6 starters, 6 aged 20 and under, 8 aged 22–23.
+  - The top 100: 37 pitchers (5 relievers), 23 aged 20 and under, 49 aged
+    22–23.
+
 ## Open questions
 
 1. **The gap form.** *Recommend it.* The draft's multiplier form overshoots
-   developed players.
+   developed players. Confirmed held out (steps 2–3), with keep fit rather
+   than 1.
 2. **Unsettled teens.** Either:
    - bridge them with the draft fit's teen factors (judgment) until the
      season snapshots settle them, or
@@ -158,8 +335,20 @@ ceiling, about 2,700 draftee looks and 6,400 prospect looks.
 
    *Recommend the bridge,* refit at each new season snapshot (draft-odds
    F; the first is April 2043).
+
+   *Decided 2026-11-11:* the draft fit's expectation under 20, blended
+   linearly into the prospect fit by 22.
+5. **Past the exports' ages** (decided 2026-11-11). Players past 25 stay
+   on the board, but by then much more development is hard to get, even
+   short of his potential. The closing odds taper from 25's to none at 27.
+   From 27 he's valued at the WAR now he holds.
+6. **The card** (decided 2026-11-11): the lines, e.g. "WAR now · keeps X%"
+   and "Gap · closes Y%". Their breakdown into drivers comes second, but
+   the model keeps its components visible (keep, close, WAR now, the gap)
+   so the card can show them.
 3. **Age for level, or age and level apart.** Test both; the held-out
-   check decides.
+   check decides. Neither: level drops out once readiness is in (steps
+   2–3).
 4. **Overlap with the draft fit.** The 2033–37 draftees appear in the 2038
    export as pros. Fit them in both, or keep each player in one? *Recommend
    both:* the two boards ask different questions on different days.

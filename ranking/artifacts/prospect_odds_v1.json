@@ -1,0 +1,180 @@
+{
+ "version": "prospect_odds_v1",
+ "outcome": "A: v2 full-time WAR on current ratings in the latest snapshot, 25+, 0 once gone",
+ "min_potential_war": 0.5,
+ "log_floor": 0.1,
+ "reference_war": 3.0,
+ "close": {
+  "intercept": -0.9699,
+  "coef": {
+   "log potential": -0.0088,
+   "readiness": 1.0,
+   "SP": -0.4086,
+   "RP": -0.0034,
+   "age 21": 0.4158,
+   "age 25": -1.8106,
+   "age 21 x potential": -0.0028,
+   "age 25 x potential": -0.0009,
+   "readiness x age 21": -0.6094,
+   "readiness x age 25": 0.3224,
+   "WE H": 0.4457,
+   "WE L": 0.0225,
+   "INT H": 0.1158,
+   "INT L": -0.2545,
+   "fragile": -0.7379,
+   "durable": 0.1367,
+   "years": 0.13
+  },
+  "readiness_clip": [
+   -4.0,
+   3.0
+  ],
+  "judgment": {
+   "log potential": 0.0,
+   "age 21 x potential": 0.0,
+   "age 25 x potential": 0.0,
+   "SP": -0.4
+  }
+ },
+ "keep": {
+  "intercept": 0.0325,
+  "coef": {
+   "age": -0.3941,
+   "years": -0.3856,
+   "now": 0.4141
+  },
+  "now_clip": 3.0
+ },
+ "age": {
+  "knots": [
+   21,
+   23,
+   25
+  ],
+  "reference": 23
+ },
+ "bridge": {
+  "draft_odds": "draft_odds_v1",
+  "ages": [
+   20,
+   22
+  ]
+ },
+ "development_end": [
+  25,
+  27
+ ],
+ "on_track": {
+  "ages": [
+   21.5,
+   23.5,
+   24.5
+  ],
+  "now": [
+   0.0,
+   1.0
+  ]
+ },
+ "taper": [
+  2.5,
+  5.0,
+  0.35
+ ],
+ "pitcher_balance": 1.0,
+ "upside": 2.0,
+ "judgment": {
+  "kept": [
+   "ScoutingAccuracyModifier",
+   "DraftSecondaryPersonalityModifier",
+   "BatterHitProfileModifier",
+   "switch hitter"
+  ],
+  "velocity_steps": [
+   [
+    100,
+    1.15
+   ],
+   [
+    98,
+    1.12
+   ],
+   [
+    96,
+    1.1
+   ],
+   [
+    94,
+    1.05
+   ]
+  ],
+  "replaces": [
+   "AgeModifier",
+   "DraftBatterOverallModifier",
+   "DraftPitcherOverallModifier",
+   "DraftPitcherStuffModifier",
+   "PitcherVelocityModifier"
+  ]
+ },
+ "regular": {
+  "hitter": 1.707,
+  "SP": 1.981,
+  "RP": 0.187
+ },
+ "check": {
+  "held_out": {
+   "board": {
+    "rho": 0.42,
+    "top 25": 2.07,
+    "top 50": 1.956,
+    "top 100": 1.667
+   },
+   "expected": {
+    "rho": 0.608,
+    "top 25": 2.832,
+    "top 50": 2.452,
+    "top 100": 2.087
+   },
+   "value (upside x2)": {
+    "rho": 0.564,
+    "top 25": 2.476,
+    "top 50": 2.252,
+    "top 100": 1.952
+   }
+  },
+  "pitcher_share": {
+   "board": [
+    0.19,
+    0.44,
+    0.37,
+    0.417,
+    0.53
+   ],
+   "expected": [
+    0.47,
+    0.63,
+    0.615,
+    0.627,
+    0.575
+   ],
+   "value": [
+    0.42,
+    0.51,
+    0.605,
+    0.583,
+    0.551
+   ]
+  }
+ },
+ "meta": {
+  "created_at": "2026-11-12T03:55:32+00:00",
+  "league": "yfmlb",
+  "exports": [
+   2038,
+   2041
+  ],
+  "prospects": {
+   "rows": 6422,
+   "players": 2538
+  }
+ }
+}

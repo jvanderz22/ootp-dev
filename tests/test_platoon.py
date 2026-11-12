@@ -3,6 +3,7 @@
 in proportion to how close he is to an average regular there."""
 import csv
 import io
+from dataclasses import replace
 
 import numpy as np
 import pytest
@@ -10,9 +11,18 @@ import pytest
 from models.game_players import PLAYER_FIELDS, GamePlayer
 from ranking import get_ranker, hitter_talent
 from ranking.ledger import MODIFIERS
+from ranking.profiles import POTENTIAL
+from ranking.ranker import Ranker
 from tests.e2e_fixtures import make_draft_class_csv
 
 _BATTING = ("babip", "avoid_k", "gap", "power", "eye")
+# potential ratings on the development factors (ranking/development.py), as
+# the prospect board was before the prospect odds
+DEVELOPING = replace(POTENTIAL, name="developing", odds=None, companions=())
+
+
+def _ranker(method):
+    return Ranker(DEVELOPING) if method == "developing" else get_ranker(method)
 
 
 def _hitter(bats, level, pid):
@@ -27,7 +37,7 @@ def _ranked(method, levels=(45, 50, 65)):
     players = [_hitter(b, lvl, 900000 + 10 * i + j)
                for i, lvl in enumerate(levels) for j, b in enumerate(("Left", "Right", "Switch"))]
     out = {}
-    for r in get_ranker(method).rank(players):
+    for r in _ranker(method).rank(players):
         out[(r.position, int(r.id))] = r
     return {(b, lvl): out[("LF", 900000 + 10 * i + j)]
             for i, lvl in enumerate(levels) for j, b in enumerate(("Left", "Right", "Switch"))}
@@ -53,7 +63,7 @@ def test_a_regular_on_both_sides_isnt_platooned():
 
 def test_a_bat_below_replacement_on_both_sides_is_valued_at_his_full_time_war():
     # no starts to credit, but the bottom of the board stays ordered (decided 2026-11-08)
-    ranked = _ranked("potential", levels=(40,))
+    ranked = _ranked("developing", levels=(40,))
     for b in ("Left", "Right", "Switch"):
         assert _war(ranked[b, 40]) < 0
         assert [line.delta for line in _platoon(ranked[b, 40])] == [0.0]
@@ -63,7 +73,7 @@ def test_below_replacement_good_makeup_shrinks_the_deficit():
     def war(**makeup):
         player = _hitter("Right", 40, 900100)
         player = GamePlayer({**player.attrs(), **makeup})
-        (r,) = get_ranker("potential").rank([player])
+        (r,) = Ranker(DEVELOPING).rank([player])
         return _war(r)
 
     plain, good, poor = war(), war(WE="H", INT="H"), war(WE="L")
@@ -74,9 +84,9 @@ def test_below_replacement_good_makeup_shrinks_the_deficit():
 def test_switch_hitting_prospects_get_a_lineup_flexibility_factor():
     def switch_lines(method):
         r = _ranked(method)["Switch", 65]
-        return [line for line in r.ledger.lines if line.label.startswith("switch hitter")]
+        return [line for line in r.ledger.lines if line.label.lower().startswith("switch hitter")]
 
-    assert switch_lines("potential") and not switch_lines("overall")
+    assert switch_lines("potential") and switch_lines("developing") and not switch_lines("overall")
 
 
 def test_v2_drops_the_legacy_handedness_modifier():

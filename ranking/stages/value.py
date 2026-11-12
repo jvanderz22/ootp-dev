@@ -28,7 +28,7 @@ replacement, with a ledger line saying so.
 """
 import numpy as np
 
-from ranking import development, draft_odds, fielding_talent, hitter_talent, pitcher_talent, value
+from ranking import development, draft_odds, fielding_talent, hitter_talent, pitcher_talent, prospect_odds, value
 from ranking.ledger import BATTING, DEVELOPMENT, MODEL, MODIFIERS, PITCHING, TWO_WAY, Ledger
 from ranking.modifiers import in_war
 from ranking.profiles import modifier_name
@@ -81,9 +81,11 @@ class Value(BatchStage):
         self.hitting_model = hitter_talent.load()
         self.fielding_model = fielding_talent.load()
         self.pitching_model = pitcher_talent.load()
-        # the draft odds (ranking/draft_odds.py) replace the development
-        # factors and the modifiers they cover, wherever the profile has them
-        self.odds = draft_odds.load() if profile.odds else None
+        # the draft or prospect odds (ranking/draft_odds.py,
+        # ranking/prospect_odds.py) replace the development factors and the
+        # modifiers they cover, wherever the profile has them
+        self.prospects = profile.odds == "prospect"
+        self.odds = {"draft": draft_odds.load, "prospect": prospect_odds.load}[profile.odds]() if profile.odds else None
         # the draft year his draft age is read on (`prepare`); None reads the
         # export's Age
         self.draft_year = None
@@ -106,7 +108,9 @@ class Value(BatchStage):
         if self.league_replacement:
             out["replacement"] = f"{value.REPLACEMENT_ARTIFACT}:{self.league or value.DEFAULT_LEAGUE}"
         if self.odds:
-            out["draft_odds"] = self.odds.version
+            out["prospect_odds" if self.prospects else "draft_odds"] = self.odds.version
+            if self.prospects:
+                out["draft_odds"] = self.odds.draft.version
         return out
 
     def _spot(self, side, spots, spot) -> list:
@@ -139,6 +143,9 @@ class Value(BatchStage):
         outgrows his ceiling."""
         odds = (state.batting if state.ledger.side == BATTING else state.pitching).odds
         if odds is None:
+            return
+        if self.prospects:   # no distribution fit yet (plans/prospect-odds-plan.md, step 4)
+            state.odds = {"ceiling": odds["ceiling"]}
             return
         out = self.odds.distribution(odds["columns"], odds["growth"], odds["ceiling"], odds["group"],
                                      odds["expected"], odds["scale"], odds["age"])
@@ -439,7 +446,7 @@ class Value(BatchStage):
         write_runtime_component(player.id, f"{side_name}.modifier_total", product)
 
     def _odds(self, state, side, side_name, war, group, floors=(), switch=None) -> float:
-        """The draft odds for a side: his ceiling (the WAR after its floors),
+        """The odds for a side: his ceiling (the WAR after its floors),
         then the lines that take it to what he's expected to realize, then the
         judgment the odds keep - the profile's remaining modifiers, a
         pitcher's velocity upside and the hitter-pitcher balance. Never below
@@ -449,11 +456,16 @@ class Value(BatchStage):
         for name, factor, note in floors:
             ceiling = ledger.scale(MODEL, name, ceiling, factor, side_name, note)
         ceiling /= SCALE
-        readiness = state.companions["readiness"].model
-        pitches = self.ratings.pitch_count(player)
+        # the prospect odds read the side's own WAR now; the draft odds the
+        # side he's judged on now, as each was fit
+        companion = state.companions["readiness"]
+        readiness = companion.sides[side_name] if self.prospects else companion.model
         age = draft_odds.draft_age(player, self.draft_year)
-        growth = self.odds.growth_columns(player, ceiling, readiness, group, pitches, age)
-        lines, expected = self.odds.reaching(player, ceiling, readiness, group, growth, age, switch)
+        if self.prospects:
+            lines, expected, parts = self.odds.reaching(player, ceiling, readiness, group, age, switch)
+        else:
+            growth = self.odds.growth_columns(player, ceiling, readiness, group, self.ratings.pitch_count(player), age)
+            lines, expected = self.odds.reaching(player, ceiling, readiness, group, growth, age, switch)
         points = SCALE * ceiling
         for kind, label, amount, stat, note in lines:
             if kind == "add":
@@ -468,13 +480,18 @@ class Value(BatchStage):
             fast = draft_odds.velocity_factor(player.velocity, knuckleball)
             if fast != 1:
                 points = ledger.scale(MODIFIERS, "velocity", points, fast, side_name, f"{player.velocity} mph")
-            points = ledger.scale(MODIFIERS, "pitcher balance", points, self.odds.balance, side_name)
+            if self.odds.balance != 1:
+                points = ledger.scale(MODIFIERS, "pitcher balance", points, self.odds.balance, side_name)
         modified = points / SCALE
         side.score = points
-        side.odds = {"ceiling": ceiling, "group": group, "expected": expected / (switch[1] if switch else 1.0),
-                     "scale": modified / expected * (switch[1] if switch else 1.0) if expected > 0 else 0.0,
-                     "columns": self.odds.mean_columns(player, ceiling, readiness, group, age), "growth": growth,
-                     "age": age}
+        if self.prospects:
+            side.odds = {"ceiling": ceiling, "group": group, "expected": self.odds.expected(parts), "value": expected,
+                         "parts": parts, "age": age}
+        else:
+            side.odds = {"ceiling": ceiling, "group": group, "expected": expected / (switch[1] if switch else 1.0),
+                         "scale": modified / expected * (switch[1] if switch else 1.0) if expected > 0 else 0.0,
+                         "columns": self.odds.mean_columns(player, ceiling, readiness, group, age), "growth": growth,
+                         "age": age}
         write_runtime_component(player.id, f"{side_name}.value.war", modified)
         return modified
 

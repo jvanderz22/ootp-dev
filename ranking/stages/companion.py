@@ -11,7 +11,7 @@ only his WAR and role there are kept, on `state.companions[key]`.
 from typing import NamedTuple
 
 from ranking import value
-from ranking.ledger import MODEL
+from ranking.ledger import BATTING, MODEL, PITCHING
 from ranking.stages.base import BatchStage
 from ranking.stages.talent import Talent
 from ranking.stages.value import Value
@@ -26,6 +26,9 @@ class CompanionValue(NamedTuple):
     # his WAR from the model lines alone, before any modifier or the two-way
     # credit (the draft odds read readiness this way, as they were fit)
     model: float
+    # the same for each side, BATTING and PITCHING: the odds read a side's
+    # readiness off that side, so a ready bat doesn't lift his pitching
+    sides: dict = None
 
 
 class Companion(BatchStage):
@@ -51,6 +54,8 @@ class Companion(BatchStage):
         for state, shadow in zip(states, shadows):
             ledger = shadow.ledger
             model = sum(line.delta for line in ledger.lines if line.stage == MODEL and ledger.counted(line))
+            sides = {side: float(sum(line.delta for line in ledger.lines if line.stage == MODEL and line.side == side)
+                                 / value.DISPLAY_SCALE) for side in (BATTING, PITCHING)}
             state.companions[self.key] = CompanionValue(
                 float((shadow.value - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE), ledger.role,
-                float((model - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE))
+                float((model - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE), sides)

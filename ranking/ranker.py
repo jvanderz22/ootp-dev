@@ -55,8 +55,9 @@ def _war(companion):
 
 
 def _odds(odds) -> dict:
-    """The draft odds' fields of a result (None without them)."""
-    if odds is None:
+    """The draft odds' fields of a result (None without them, or with the
+    prospect odds, which have no distribution yet)."""
+    if odds is None or "p10" not in odds:
         return {}
     return {"war_low": round(odds["p10"], 2), "war_high": round(odds["p90"], 2),
             "p_regular": round(odds["regular"], 3), "p_outgrows": round(odds["outgrows"], 3)}
@@ -87,8 +88,8 @@ class Ranker:
             gc.disable()
             try:
                 if self.profile.odds:
-                    # the draft odds read every draftee's age on the export's
-                    # draft year, read off all of them (ranking/draft_odds.py)
+                    # the odds read every player's age on the export's year,
+                    # read off all of them (ranking/draft_odds.py)
                     players = list(players)
                     for stage in self.batch_stages:
                         if hasattr(stage, "prepare"):
