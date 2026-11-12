@@ -275,9 +275,9 @@ class DraftOdds:
             lines.append(("scale", f"Age {age:.1f}", float(np.exp(logit)), None, None))
         eased = self.polish(cols, age, self.penalty(cols["log potential"], self._mean_age))
         if eased:
-            lines.append(("scale", "Polish", float(np.exp(eased)), None, "near MLB-ready"))
+            lines.append(("scale", "Polish", float(np.exp(eased)), None, None))
         if group == "SP":
-            lines.append(("scale", "Starter", a["role"]["SP"], None, "most end up relieving"))
+            lines.append(("scale", "Starter", a["role"]["SP"], None, None))
         elif group == "RP":
             lines.append(("scale", "Reliever", a["role"]["RP"], None, None))
         taper = development.weight(ceiling)

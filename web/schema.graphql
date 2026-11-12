@@ -78,6 +78,8 @@ type RankedPlayer {
   "v2 engine only: the score and rank before the draft demand step (null for legacy)"
   preDemandScore: Float
   preDemandRank: Int
+  "Draft classes only: the model's rank, by score - where a custom order has moved `rank` off it"
+  modelRank: Int
   "v2 engine only: the fitted talent model's wRC+ (hitters) and ERA (pitchers, in the role they're judged in), on the ranking's ratings - potential for prospects and draft classes"
   wrcPlus: Float
   era: Float

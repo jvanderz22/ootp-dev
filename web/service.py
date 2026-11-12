@@ -149,6 +149,7 @@ def _ratings_payload(gp):
         "workEthic": gp.work_ethic or None,
         "intelligence": gp.intelligence or None,
         "leadership": gp.leadership or None,
+        "adaptability": gp.adaptibility or None,
         "scoutingAccuracy": gp.scouting_accuracy or None,
         "batting": {
             "contact": gp.contact,
@@ -351,7 +352,7 @@ _GRADE_ORDINALS = {
     "very low": 0, "low": 1, "average": 2, "high": 3, "very high": 4,
 }
 _RATING_META_KEYS = {
-    "injuryProne", "workEthic", "intelligence", "leadership", "scoutingAccuracy",
+    "injuryProne", "workEthic", "intelligence", "leadership", "adaptability", "scoutingAccuracy",
 }
 
 

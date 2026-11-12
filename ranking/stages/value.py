@@ -193,10 +193,8 @@ class Value(BatchStage):
             for s, w in sides.items():
                 write_runtime_component(state.player.id, f"batting.value.wrc_{s.lower()}", w)
             write_runtime_component(state.player.id, "batting.value.splits_expected", not batting.platoon)
-        how = [f"{batting_runs:+.1f} runs vs avg",
-               "BABIP from Contact" if batting and batting.babip_implied else None]
         ledger.add(MODEL, "batting", SCALE * (parts["batting"] + parts["allowance"]), BATTING,
-                   f"{wrc:.0f} wRC+", " · ".join(h for h in how if h))
+                   f"{wrc:.0f} wRC+", f"{batting_runs:+.1f} runs vs avg")
         ledger.add(MODEL, "fielding", SCALE * parts["fielding"], BATTING,
                    position if position == fielding_talent.DH else f"{position} {runs:+.0f} runs", f"{fielding:+.0f} with position")
         if field.covers:
@@ -344,8 +342,7 @@ class Value(BatchStage):
             if shown:
                 # his ERA against each hand is the card's splits row
                 weak, _ = _hands(self.ratings.throws(player), split["sp"])
-                ledger.add(MODEL, "matchups", matchups, PITCHING, f"+{tilt['sp']:.0%} vs {weak}",
-                           "lineups stack his weak side")
+                ledger.add(MODEL, "matchups", matchups, PITCHING, f"+{tilt['sp']:.0%} vs {weak}")
             ledger.add(MODEL, "innings", SCALE * starting["innings"], PITCHING,
                        f"{innings:.0f} IP", f"stamina {stamina}")
             war = sp_war
@@ -358,10 +355,9 @@ class Value(BatchStage):
             ledger.add(MODEL, "leverage", SCALE * normal["leverage"], PITCHING, f"LI {leverage:.2f}", how)
             if shown:
                 _, strong = _hands(self.ratings.throws(player), split["rp"])
-                ledger.add(MODEL, "matchups", matchups, PITCHING, f"+{rp_tilt:.0%} vs {strong}",
-                           "how you'd use him")
+                ledger.add(MODEL, "matchups", matchups, PITCHING, f"+{rp_tilt:.0%} vs {strong}")
             ledger.add(MODEL, "innings", SCALE * relieving["innings"], PITCHING,
-                       f"{self.model.workloads['reliever_ip']:.0f} IP", "relief workload")
+                       f"{self.model.workloads['reliever_ip']:.0f} IP")
             war = rp_war
         write_runtime_component(player.id, "pitching.value.starter_war", sp_war if starting else 0.0)
         write_runtime_component(player.id, "pitching.value.reliever_war", rp_war)

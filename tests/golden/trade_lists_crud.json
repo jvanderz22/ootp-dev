@@ -122,6 +122,7 @@
     "priority": "MEDIUM",
     "rank": 26,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -382,6 +383,7 @@
     "priority": "HIGH",
     "rank": 30,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -553,6 +555,7 @@
     "priority": "LOW",
     "rank": 23,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 75,

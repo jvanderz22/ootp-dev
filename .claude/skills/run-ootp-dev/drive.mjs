@@ -60,7 +60,7 @@ try {
   check((await page.locator('.verdict .vt-head').first().innerText()).toLowerCase() === 'score', 'card leads with the score');
   check((await page.locator('.verdict-odds').count()) === 1, 'card shows the draft odds');
   const headings = await page.locator('.vb-stage').allInnerTexts();
-  check(headings.some((h) => h.trim().toLowerCase() === 'reaching his ceiling'), 'value build reaches from the ceiling');
+  check(headings.some((h) => h.trim().toLowerCase() === 'development'), 'value build reaches from the ceiling');
 
   // --- legacy: the toggle reloads the page
   await Promise.all([page.waitForNavigation(), page.click('.engine-toggle button:has-text("legacy")')]);

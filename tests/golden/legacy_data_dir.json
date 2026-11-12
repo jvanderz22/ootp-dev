@@ -48,6 +48,7 @@
     "positionPlayerScore": 82.33,
     "rank": 1,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 60,
@@ -149,6 +150,7 @@
     "positionPlayerScore": 91.13,
     "rank": 2,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 75,
@@ -239,6 +241,7 @@
     "positionPlayerScore": 93.78,
     "rank": 3,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 60,
@@ -329,6 +332,7 @@
     "positionPlayerScore": 97.13,
     "rank": 4,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -419,6 +423,7 @@
     "positionPlayerScore": 105.9,
     "rank": 5,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 65,
@@ -509,6 +514,7 @@
     "positionPlayerScore": 106.7,
     "rank": 6,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -599,6 +605,7 @@
     "positionPlayerScore": 88.62,
     "rank": 7,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -689,6 +696,7 @@
     "positionPlayerScore": 84.37,
     "rank": 8,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Switch",
      "batting": {
       "avoidK": 70,
@@ -779,6 +787,7 @@
     "positionPlayerScore": 83.65,
     "rank": 9,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -869,6 +878,7 @@
     "positionPlayerScore": 83.29,
     "rank": 10,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Switch",
      "batting": {
       "avoidK": 55,
@@ -959,6 +969,7 @@
     "positionPlayerScore": 81.29,
     "rank": 11,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 60,
@@ -1049,6 +1060,7 @@
     "positionPlayerScore": 77.16,
     "rank": 12,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -1139,6 +1151,7 @@
     "positionPlayerScore": 76.94,
     "rank": 13,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 45,
@@ -1229,6 +1242,7 @@
     "positionPlayerScore": null,
     "rank": 14,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 20,
@@ -1335,6 +1349,7 @@
     "positionPlayerScore": 72.57,
     "rank": 15,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Switch",
      "batting": {
       "avoidK": 50,
@@ -1425,6 +1440,7 @@
     "positionPlayerScore": null,
     "rank": 16,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -1536,6 +1552,7 @@
     "positionPlayerScore": null,
     "rank": 17,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -1652,6 +1669,7 @@
     "positionPlayerScore": null,
     "rank": 18,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 20,
@@ -1763,6 +1781,7 @@
     "positionPlayerScore": 70.92,
     "rank": 19,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 55,
@@ -1853,6 +1872,7 @@
     "positionPlayerScore": 69.14,
     "rank": 20,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 45,
@@ -1943,6 +1963,7 @@
     "positionPlayerScore": 68.53,
     "rank": 21,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -2033,6 +2054,7 @@
     "positionPlayerScore": 63.09,
     "rank": 22,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -2134,6 +2156,7 @@
     "positionPlayerScore": null,
     "rank": 23,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -2250,6 +2273,7 @@
     "positionPlayerScore": 66.4,
     "rank": 24,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -2340,6 +2364,7 @@
     "positionPlayerScore": null,
     "rank": 25,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -2451,6 +2476,7 @@
     "positionPlayerScore": 65.66,
     "rank": 26,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -2541,6 +2567,7 @@
     "positionPlayerScore": null,
     "rank": 27,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -2662,6 +2689,7 @@
     "positionPlayerScore": null,
     "rank": 28,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -2778,6 +2806,7 @@
     "positionPlayerScore": 64.43,
     "rank": 29,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -2868,6 +2897,7 @@
     "positionPlayerScore": 47.3,
     "rank": 30,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 45,
@@ -2969,6 +2999,7 @@
     "positionPlayerScore": 64.51,
     "rank": 31,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 60,
@@ -3059,6 +3090,7 @@
     "positionPlayerScore": null,
     "rank": 32,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -3165,6 +3197,7 @@
     "positionPlayerScore": 61.48,
     "rank": 33,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -3255,6 +3288,7 @@
     "positionPlayerScore": 60.88,
     "rank": 34,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 50,
@@ -3345,6 +3379,7 @@
     "positionPlayerScore": 59.26,
     "rank": 35,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 40,
@@ -3461,6 +3496,7 @@
     "positionPlayerScore": null,
     "rank": 36,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -3577,6 +3613,7 @@
     "positionPlayerScore": 57.45,
     "rank": 37,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 35,
@@ -3667,6 +3704,7 @@
     "positionPlayerScore": 57.4,
     "rank": 38,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -3757,6 +3795,7 @@
     "positionPlayerScore": 57.05,
     "rank": 39,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Left",
      "batting": {
       "avoidK": 40,
@@ -3847,6 +3886,7 @@
     "positionPlayerScore": null,
     "rank": 40,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -3953,6 +3993,7 @@
     "positionPlayerScore": 55.39,
     "rank": 41,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 45,
@@ -4043,6 +4084,7 @@
     "positionPlayerScore": null,
     "rank": 42,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -4159,6 +4201,7 @@
     "positionPlayerScore": null,
     "rank": 43,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -4265,6 +4308,7 @@
     "positionPlayerScore": 54.55,
     "rank": 44,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -4355,6 +4399,7 @@
     "positionPlayerScore": null,
     "rank": 45,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -4461,6 +4506,7 @@
     "positionPlayerScore": null,
     "rank": 46,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -4567,6 +4613,7 @@
     "positionPlayerScore": 55.31,
     "rank": 47,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -4657,6 +4704,7 @@
     "positionPlayerScore": 52.86,
     "rank": 48,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -4747,6 +4795,7 @@
     "positionPlayerScore": 51.32,
     "rank": 49,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 75,
@@ -4837,6 +4886,7 @@
     "positionPlayerScore": 51.3,
     "rank": 50,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Left",
      "batting": {
       "avoidK": 55,
@@ -4927,6 +4977,7 @@
     "positionPlayerScore": 51.26,
     "rank": 51,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -5017,6 +5068,7 @@
     "positionPlayerScore": 49.91,
     "rank": 52,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -5107,6 +5159,7 @@
     "positionPlayerScore": null,
     "rank": 53,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -5223,6 +5276,7 @@
     "positionPlayerScore": null,
     "rank": 54,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -5329,6 +5383,7 @@
     "positionPlayerScore": null,
     "rank": 55,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -5445,6 +5500,7 @@
     "positionPlayerScore": 49.15,
     "rank": 56,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Switch",
      "batting": {
       "avoidK": 70,
@@ -5535,6 +5591,7 @@
     "positionPlayerScore": null,
     "rank": 57,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -5641,6 +5698,7 @@
     "positionPlayerScore": null,
     "rank": 58,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Switch",
      "batting": {
       "avoidK": 20,
@@ -5747,6 +5805,7 @@
     "positionPlayerScore": 49.19,
     "rank": 59,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 60,
@@ -5837,6 +5896,7 @@
     "positionPlayerScore": null,
     "rank": 60,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -5948,6 +6008,7 @@
     "positionPlayerScore": null,
     "rank": 61,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -6059,6 +6120,7 @@
     "positionPlayerScore": null,
     "rank": 62,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -6160,6 +6222,7 @@
     "positionPlayerScore": 44.88,
     "rank": 63,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 45,
@@ -6250,6 +6313,7 @@
     "positionPlayerScore": null,
     "rank": 64,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -6366,6 +6430,7 @@
     "positionPlayerScore": null,
     "rank": 65,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -6477,6 +6542,7 @@
     "positionPlayerScore": 44.34,
     "rank": 66,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -6567,6 +6633,7 @@
     "positionPlayerScore": 43.88,
     "rank": 67,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 35,
@@ -6657,6 +6724,7 @@
     "positionPlayerScore": null,
     "rank": 68,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Left",
      "batting": {
       "avoidK": 20,
@@ -6763,6 +6831,7 @@
     "positionPlayerScore": 43.42,
     "rank": 69,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -6853,6 +6922,7 @@
     "positionPlayerScore": 42.62,
     "rank": 70,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Left",
      "batting": {
       "avoidK": 55,
@@ -6943,6 +7013,7 @@
     "positionPlayerScore": 42.61,
     "rank": 71,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -7033,6 +7104,7 @@
     "positionPlayerScore": null,
     "rank": 72,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 20,
@@ -7139,6 +7211,7 @@
     "positionPlayerScore": null,
     "rank": 73,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -7250,6 +7323,7 @@
     "positionPlayerScore": null,
     "rank": 74,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -7356,6 +7430,7 @@
     "positionPlayerScore": 41.51,
     "rank": 75,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -7446,6 +7521,7 @@
     "positionPlayerScore": null,
     "rank": 76,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -7557,6 +7633,7 @@
     "positionPlayerScore": 41.07,
     "rank": 77,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 35,
@@ -7647,6 +7724,7 @@
     "positionPlayerScore": null,
     "rank": 78,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -7753,6 +7831,7 @@
     "positionPlayerScore": null,
     "rank": 79,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -7864,6 +7943,7 @@
     "positionPlayerScore": null,
     "rank": 80,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -7965,6 +8045,7 @@
     "positionPlayerScore": 20.66,
     "rank": 81,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -8066,6 +8147,7 @@
     "positionPlayerScore": 47.09,
     "rank": 82,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 35,
@@ -8156,6 +8238,7 @@
     "positionPlayerScore": null,
     "rank": 83,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -8272,6 +8355,7 @@
     "positionPlayerScore": null,
     "rank": 84,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -8378,6 +8462,7 @@
     "positionPlayerScore": 36.98,
     "rank": 85,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 45,
@@ -8468,6 +8553,7 @@
     "positionPlayerScore": null,
     "rank": 86,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -8579,6 +8665,7 @@
     "positionPlayerScore": null,
     "rank": 87,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Left",
      "batting": {
       "avoidK": 25,
@@ -8680,6 +8767,7 @@
     "positionPlayerScore": 35.07,
     "rank": 88,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Switch",
      "batting": {
       "avoidK": 50,
@@ -8770,6 +8858,7 @@
     "positionPlayerScore": null,
     "rank": 89,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Left",
      "batting": {
       "avoidK": 25,
@@ -8881,6 +8970,7 @@
     "positionPlayerScore": 28.72,
     "rank": 90,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 40,
@@ -8997,6 +9087,7 @@
     "positionPlayerScore": 19.12,
     "rank": 91,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -9113,6 +9204,7 @@
     "positionPlayerScore": 32.63,
     "rank": 92,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 40,
@@ -9203,6 +9295,7 @@
     "positionPlayerScore": 32.02,
     "rank": 93,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -9293,6 +9386,7 @@
     "positionPlayerScore": 31.75,
     "rank": 94,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 35,
@@ -9383,6 +9477,7 @@
     "positionPlayerScore": null,
     "rank": 95,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -9494,6 +9589,7 @@
     "positionPlayerScore": null,
     "rank": 96,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -9600,6 +9696,7 @@
     "positionPlayerScore": null,
     "rank": 97,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -9701,6 +9798,7 @@
     "positionPlayerScore": null,
     "rank": 98,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -9812,6 +9910,7 @@
     "positionPlayerScore": null,
     "rank": 99,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -9928,6 +10027,7 @@
     "positionPlayerScore": 28.26,
     "rank": 100,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -10018,6 +10118,7 @@
     "positionPlayerScore": 27.88,
     "rank": 101,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Switch",
      "batting": {
       "avoidK": 50,
@@ -10108,6 +10209,7 @@
     "positionPlayerScore": 27.76,
     "rank": 102,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 35,
@@ -10198,6 +10300,7 @@
     "positionPlayerScore": null,
     "rank": 103,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -10299,6 +10402,7 @@
     "positionPlayerScore": null,
     "rank": 104,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Switch",
      "batting": {
       "avoidK": 30,
@@ -10415,6 +10519,7 @@
     "positionPlayerScore": 27.08,
     "rank": 105,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 55,
@@ -10505,6 +10610,7 @@
     "positionPlayerScore": 26.94,
     "rank": 106,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 45,
@@ -10595,6 +10701,7 @@
     "positionPlayerScore": null,
     "rank": 107,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -10701,6 +10808,7 @@
     "positionPlayerScore": null,
     "rank": 108,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -10802,6 +10910,7 @@
     "positionPlayerScore": 15.71,
     "rank": 109,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -10908,6 +11017,7 @@
     "positionPlayerScore": null,
     "rank": 110,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -11019,6 +11129,7 @@
     "positionPlayerScore": null,
     "rank": 111,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -11120,6 +11231,7 @@
     "positionPlayerScore": null,
     "rank": 112,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Left",
      "batting": {
       "avoidK": 25,
@@ -11231,6 +11343,7 @@
     "positionPlayerScore": 60.88,
     "rank": 113,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 60,
@@ -11321,6 +11434,7 @@
     "positionPlayerScore": 11.66,
     "rank": 114,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -11422,6 +11536,7 @@
     "positionPlayerScore": null,
     "rank": 115,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -11533,6 +11648,7 @@
     "positionPlayerScore": 19.7,
     "rank": 116,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -11634,6 +11750,7 @@
     "positionPlayerScore": null,
     "rank": 117,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -11735,6 +11852,7 @@
     "positionPlayerScore": null,
     "rank": 118,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -11836,6 +11954,7 @@
     "positionPlayerScore": 50.29,
     "rank": 119,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 45,
@@ -11926,6 +12045,7 @@
     "positionPlayerScore": null,
     "rank": 120,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -12027,6 +12147,7 @@
     "positionPlayerScore": null,
     "rank": 121,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -12138,6 +12259,7 @@
     "positionPlayerScore": null,
     "rank": 122,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -12244,6 +12366,7 @@
     "positionPlayerScore": null,
     "rank": 123,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 25,
@@ -12345,6 +12468,7 @@
     "positionPlayerScore": 44.81,
     "rank": 124,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 45,
@@ -12435,6 +12559,7 @@
     "positionPlayerScore": null,
     "rank": 125,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -12536,6 +12661,7 @@
     "positionPlayerScore": null,
     "rank": 126,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -12642,6 +12768,7 @@
     "positionPlayerScore": null,
     "rank": 127,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 25,
@@ -12743,6 +12870,7 @@
     "positionPlayerScore": 16.18,
     "rank": 128,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -12833,6 +12961,7 @@
     "positionPlayerScore": 8.89,
     "rank": 129,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 25,
@@ -12949,6 +13078,7 @@
     "positionPlayerScore": 39.78,
     "rank": 130,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -13039,6 +13169,7 @@
     "positionPlayerScore": null,
     "rank": 131,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -13140,6 +13271,7 @@
     "positionPlayerScore": 37.4,
     "rank": 132,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 75,
@@ -13230,6 +13362,7 @@
     "positionPlayerScore": 18.67,
     "rank": 133,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 60,
@@ -13320,6 +13453,7 @@
     "positionPlayerScore": 8.93,
     "rank": 134,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -13421,6 +13555,7 @@
     "positionPlayerScore": null,
     "rank": 135,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Switch",
      "batting": {
       "avoidK": 20,
@@ -13537,6 +13672,7 @@
     "positionPlayerScore": 36.9,
     "rank": 136,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -13627,6 +13763,7 @@
     "positionPlayerScore": 14.69,
     "rank": 137,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -13717,6 +13854,7 @@
     "positionPlayerScore": 36.45,
     "rank": 138,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -13807,6 +13945,7 @@
     "positionPlayerScore": null,
     "rank": 139,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -13923,6 +14062,7 @@
     "positionPlayerScore": 14.07,
     "rank": 140,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -14029,6 +14169,7 @@
     "positionPlayerScore": 20.25,
     "rank": 141,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -14130,6 +14271,7 @@
     "positionPlayerScore": 33.35,
     "rank": 142,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 45,
@@ -14220,6 +14362,7 @@
     "positionPlayerScore": 10.89,
     "rank": 143,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 25,
@@ -14331,6 +14474,7 @@
     "positionPlayerScore": null,
     "rank": 144,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -14432,6 +14576,7 @@
     "positionPlayerScore": 11.02,
     "rank": 145,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -14538,6 +14683,7 @@
     "positionPlayerScore": 16.0,
     "rank": 146,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Switch",
      "batting": {
       "avoidK": 35,
@@ -14649,6 +14795,7 @@
     "positionPlayerScore": null,
     "rank": 147,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -14750,6 +14897,7 @@
     "positionPlayerScore": 14.4,
     "rank": 148,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 45,
@@ -14851,6 +14999,7 @@
     "positionPlayerScore": null,
     "rank": 149,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -14967,6 +15116,7 @@
     "positionPlayerScore": null,
     "rank": 150,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -15068,6 +15218,7 @@
     "positionPlayerScore": 9.36,
     "rank": 151,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -15169,6 +15320,7 @@
     "positionPlayerScore": null,
     "rank": 152,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -15275,6 +15427,7 @@
     "positionPlayerScore": 4.98,
     "rank": 153,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -15386,6 +15539,7 @@
     "positionPlayerScore": 23.28,
     "rank": 154,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Left",
      "batting": {
       "avoidK": 65,
@@ -15476,6 +15630,7 @@
     "positionPlayerScore": 8.95,
     "rank": 155,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -15577,6 +15732,7 @@
     "positionPlayerScore": 8.06,
     "rank": 156,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -15683,6 +15839,7 @@
     "positionPlayerScore": 9.68,
     "rank": 157,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 50,
@@ -15773,6 +15930,7 @@
     "positionPlayerScore": null,
     "rank": 158,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -15874,6 +16032,7 @@
     "positionPlayerScore": null,
     "rank": 159,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -15985,6 +16144,7 @@
     "positionPlayerScore": null,
     "rank": 160,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -16250,6 +16410,7 @@
     "positionPlayerScore": 53.14,
     "rank": 1,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Left",
      "batting": {
       "avoidK": 40,
@@ -16340,6 +16501,7 @@
     "positionPlayerScore": null,
     "rank": 2,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -16451,6 +16613,7 @@
     "positionPlayerScore": 42.88,
     "rank": 3,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Switch",
      "batting": {
       "avoidK": 55,
@@ -16541,6 +16704,7 @@
     "positionPlayerScore": 41.84,
     "rank": 4,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 60,
@@ -16631,6 +16795,7 @@
     "positionPlayerScore": 41.8,
     "rank": 5,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 65,
@@ -16721,6 +16886,7 @@
     "positionPlayerScore": null,
     "rank": 6,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Left",
      "batting": {
       "avoidK": 25,
@@ -16842,6 +17008,7 @@
     "positionPlayerScore": 36.86,
     "rank": 7,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 75,
@@ -16932,6 +17099,7 @@
     "positionPlayerScore": null,
     "rank": 8,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -17033,6 +17201,7 @@
     "positionPlayerScore": 34.02,
     "rank": 9,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -17123,6 +17292,7 @@
     "positionPlayerScore": 33.97,
     "rank": 10,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 40,
@@ -17213,6 +17383,7 @@
     "positionPlayerScore": 32.17,
     "rank": 11,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -17303,6 +17474,7 @@
     "positionPlayerScore": 31.8,
     "rank": 12,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 60,
@@ -17393,6 +17565,7 @@
     "positionPlayerScore": 30.81,
     "rank": 13,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 55,
@@ -17483,6 +17656,7 @@
     "positionPlayerScore": 29.62,
     "rank": 14,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Switch",
      "batting": {
       "avoidK": 65,
@@ -17573,6 +17747,7 @@
     "positionPlayerScore": 29.29,
     "rank": 15,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 75,
@@ -17674,6 +17849,7 @@
     "positionPlayerScore": null,
     "rank": 16,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -17790,6 +17966,7 @@
     "positionPlayerScore": 25.13,
     "rank": 17,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -17880,6 +18057,7 @@
     "positionPlayerScore": 13.25,
     "rank": 18,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -17981,6 +18159,7 @@
     "positionPlayerScore": 24.51,
     "rank": 19,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Left",
      "batting": {
       "avoidK": 50,
@@ -18071,6 +18250,7 @@
     "positionPlayerScore": 23.74,
     "rank": 20,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 60,
@@ -18172,6 +18352,7 @@
     "positionPlayerScore": 23.65,
     "rank": 21,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 60,
@@ -18262,6 +18443,7 @@
     "positionPlayerScore": null,
     "rank": 22,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Switch",
      "batting": {
       "avoidK": 30,
@@ -18373,6 +18555,7 @@
     "positionPlayerScore": 21.87,
     "rank": 23,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -18463,6 +18646,7 @@
     "positionPlayerScore": 21.72,
     "rank": 24,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 60,
@@ -18553,6 +18737,7 @@
     "positionPlayerScore": 20.92,
     "rank": 25,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Switch",
      "batting": {
       "avoidK": 20,
@@ -18664,6 +18849,7 @@
     "positionPlayerScore": 20.05,
     "rank": 26,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -18770,6 +18956,7 @@
     "positionPlayerScore": 14.84,
     "rank": 27,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -18876,6 +19063,7 @@
     "positionPlayerScore": 19.94,
     "rank": 28,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Switch",
      "batting": {
       "avoidK": 40,
@@ -18966,6 +19154,7 @@
     "positionPlayerScore": 17.85,
     "rank": 29,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Switch",
      "batting": {
       "avoidK": 20,
@@ -19082,6 +19271,7 @@
     "positionPlayerScore": 18.41,
     "rank": 30,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Switch",
      "batting": {
       "avoidK": 20,
@@ -19198,6 +19388,7 @@
     "positionPlayerScore": 16.56,
     "rank": 31,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -19299,6 +19490,7 @@
     "positionPlayerScore": 15.42,
     "rank": 32,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -19410,6 +19602,7 @@
     "positionPlayerScore": 15.19,
     "rank": 33,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -19516,6 +19709,7 @@
     "positionPlayerScore": 15.17,
     "rank": 34,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 45,
@@ -19606,6 +19800,7 @@
     "positionPlayerScore": 14.29,
     "rank": 35,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -19696,6 +19891,7 @@
     "positionPlayerScore": 14.04,
     "rank": 36,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 45,
@@ -19786,6 +19982,7 @@
     "positionPlayerScore": 13.4,
     "rank": 37,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 35,
@@ -19876,6 +20073,7 @@
     "positionPlayerScore": 12.74,
     "rank": 38,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -19982,6 +20180,7 @@
     "positionPlayerScore": 12.06,
     "rank": 39,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 40,
@@ -20072,6 +20271,7 @@
     "positionPlayerScore": 11.98,
     "rank": 40,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -20162,6 +20362,7 @@
     "positionPlayerScore": 11.53,
     "rank": 41,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -20278,6 +20479,7 @@
     "positionPlayerScore": 11.28,
     "rank": 42,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -20389,6 +20591,7 @@
     "positionPlayerScore": 10.82,
     "rank": 43,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -20495,6 +20698,7 @@
     "positionPlayerScore": 10.56,
     "rank": 44,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 35,
@@ -20585,6 +20789,7 @@
     "positionPlayerScore": 10.2,
     "rank": 45,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -20696,6 +20901,7 @@
     "positionPlayerScore": 9.09,
     "rank": 46,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 55,
@@ -20786,6 +20992,7 @@
     "positionPlayerScore": 9.01,
     "rank": 47,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -20897,6 +21104,7 @@
     "positionPlayerScore": 5.6,
     "rank": 48,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Left",
      "batting": {
       "avoidK": 20,
@@ -21008,6 +21216,7 @@
     "positionPlayerScore": 8.39,
     "rank": 49,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 35,
@@ -21098,6 +21307,7 @@
     "positionPlayerScore": 7.84,
     "rank": 50,
     "ratings": {
+     "adaptability": "H",
      "batHand": "Left",
      "batting": {
       "avoidK": 25,
@@ -21204,6 +21414,7 @@
     "positionPlayerScore": 7.35,
     "rank": 51,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 45,
@@ -21294,6 +21505,7 @@
     "positionPlayerScore": 7.34,
     "rank": 52,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Left",
      "batting": {
       "avoidK": 20,
@@ -21395,6 +21607,7 @@
     "positionPlayerScore": 6.53,
     "rank": 53,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Right",
      "batting": {
       "avoidK": 60,
@@ -21485,6 +21698,7 @@
     "positionPlayerScore": 5.99,
     "rank": 54,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -21601,6 +21815,7 @@
     "positionPlayerScore": 4.15,
     "rank": 55,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -21717,6 +21932,7 @@
     "positionPlayerScore": 4.54,
     "rank": 56,
     "ratings": {
+     "adaptability": "L",
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -21823,6 +22039,7 @@
     "positionPlayerScore": 4.42,
     "rank": 57,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 25,
@@ -21924,6 +22141,7 @@
     "positionPlayerScore": 4.27,
     "rank": 58,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -22035,6 +22253,7 @@
     "positionPlayerScore": 3.34,
     "rank": 59,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 25,
@@ -22146,6 +22365,7 @@
     "positionPlayerScore": 2.09,
     "rank": 60,
     "ratings": {
+     "adaptability": "N",
      "batHand": "Left",
      "batting": {
       "avoidK": 20,
@@ -22338,6 +22558,7 @@
     "positionPlayerScore": 49.36,
     "rank": 1,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 70,
@@ -22428,6 +22649,7 @@
     "positionPlayerScore": null,
     "rank": 2,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -22539,6 +22761,7 @@
     "positionPlayerScore": 43.29,
     "rank": 3,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 75,
@@ -22629,6 +22852,7 @@
     "positionPlayerScore": 41.63,
     "rank": 4,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 70,
@@ -22719,6 +22943,7 @@
     "positionPlayerScore": 40.27,
     "rank": 5,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -22809,6 +23034,7 @@
     "positionPlayerScore": null,
     "rank": 6,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 30,
@@ -22920,6 +23146,7 @@
     "positionPlayerScore": 36.81,
     "rank": 7,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -23010,6 +23237,7 @@
     "positionPlayerScore": 36.8,
     "rank": 8,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 65,
@@ -23100,6 +23328,7 @@
     "positionPlayerScore": 36.5,
     "rank": 9,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -23190,6 +23419,7 @@
     "positionPlayerScore": 35.18,
     "rank": 10,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -23280,6 +23510,7 @@
     "positionPlayerScore": 34.29,
     "rank": 11,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -23370,6 +23601,7 @@
     "positionPlayerScore": 34.25,
     "rank": 12,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 65,
@@ -23460,6 +23692,7 @@
     "positionPlayerScore": 33.32,
     "rank": 13,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 65,
@@ -23550,6 +23783,7 @@
     "positionPlayerScore": 29.76,
     "rank": 14,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 55,
@@ -23640,6 +23874,7 @@
     "positionPlayerScore": 29.37,
     "rank": 15,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 75,
@@ -23730,6 +23965,7 @@
     "positionPlayerScore": 29.14,
     "rank": 16,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 45,
@@ -23820,6 +24056,7 @@
     "positionPlayerScore": 24.45,
     "rank": 17,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 75,
@@ -23910,6 +24147,7 @@
     "positionPlayerScore": 24.31,
     "rank": 18,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 50,
@@ -24000,6 +24238,7 @@
     "positionPlayerScore": 24.27,
     "rank": 19,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -24090,6 +24329,7 @@
     "positionPlayerScore": 23.6,
     "rank": 20,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 75,
@@ -24180,6 +24420,7 @@
     "positionPlayerScore": 22.77,
     "rank": 21,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 35,
@@ -24270,6 +24511,7 @@
     "positionPlayerScore": null,
     "rank": 22,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -24371,6 +24613,7 @@
     "positionPlayerScore": 22.64,
     "rank": 23,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 75,
@@ -24461,6 +24704,7 @@
     "positionPlayerScore": 22.5,
     "rank": 24,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 40,
@@ -24551,6 +24795,7 @@
     "positionPlayerScore": 22.36,
     "rank": 25,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 70,
@@ -24641,6 +24886,7 @@
     "positionPlayerScore": null,
     "rank": 26,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -24752,6 +24998,7 @@
     "positionPlayerScore": null,
     "rank": 27,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 20,
@@ -24853,6 +25100,7 @@
     "positionPlayerScore": 20.52,
     "rank": 28,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 50,
@@ -24943,6 +25191,7 @@
     "positionPlayerScore": 20.43,
     "rank": 29,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -25033,6 +25282,7 @@
     "positionPlayerScore": null,
     "rank": 30,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -25144,6 +25394,7 @@
     "positionPlayerScore": null,
     "rank": 31,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 30,
@@ -25250,6 +25501,7 @@
     "positionPlayerScore": null,
     "rank": 32,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -25361,6 +25613,7 @@
     "positionPlayerScore": 18.58,
     "rank": 33,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 75,
@@ -25451,6 +25704,7 @@
     "positionPlayerScore": 18.32,
     "rank": 34,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 70,
@@ -25541,6 +25795,7 @@
     "positionPlayerScore": 18.1,
     "rank": 35,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 55,
@@ -25631,6 +25886,7 @@
     "positionPlayerScore": 17.76,
     "rank": 36,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -25721,6 +25977,7 @@
     "positionPlayerScore": 17.63,
     "rank": 37,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -25811,6 +26068,7 @@
     "positionPlayerScore": 17.63,
     "rank": 38,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 70,
@@ -25901,6 +26159,7 @@
     "positionPlayerScore": null,
     "rank": 39,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -26002,6 +26261,7 @@
     "positionPlayerScore": 16.9,
     "rank": 40,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 35,
@@ -26092,6 +26352,7 @@
     "positionPlayerScore": null,
     "rank": 41,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -26193,6 +26454,7 @@
     "positionPlayerScore": null,
     "rank": 42,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -26294,6 +26556,7 @@
     "positionPlayerScore": 15.51,
     "rank": 43,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 50,
@@ -26384,6 +26647,7 @@
     "positionPlayerScore": null,
     "rank": 44,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 20,
@@ -26485,6 +26749,7 @@
     "positionPlayerScore": 14.56,
     "rank": 45,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 65,
@@ -26575,6 +26840,7 @@
     "positionPlayerScore": 14.49,
     "rank": 46,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 45,
@@ -26665,6 +26931,7 @@
     "positionPlayerScore": 14.02,
     "rank": 47,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 70,
@@ -26755,6 +27022,7 @@
     "positionPlayerScore": null,
     "rank": 48,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -26856,6 +27124,7 @@
     "positionPlayerScore": 11.19,
     "rank": 49,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 70,
@@ -26946,6 +27215,7 @@
     "positionPlayerScore": 11.05,
     "rank": 50,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -27036,6 +27306,7 @@
     "positionPlayerScore": 10.29,
     "rank": 51,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -27142,6 +27413,7 @@
     "positionPlayerScore": null,
     "rank": 52,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -27248,6 +27520,7 @@
     "positionPlayerScore": 9.28,
     "rank": 53,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 35,
@@ -27338,6 +27611,7 @@
     "positionPlayerScore": 8.94,
     "rank": 54,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -27428,6 +27702,7 @@
     "positionPlayerScore": 8.76,
     "rank": 55,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 75,
@@ -27518,6 +27793,7 @@
     "positionPlayerScore": 8.72,
     "rank": 56,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -27624,6 +27900,7 @@
     "positionPlayerScore": 8.68,
     "rank": 57,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 75,
@@ -27714,6 +27991,7 @@
     "positionPlayerScore": 7.96,
     "rank": 58,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -27804,6 +28082,7 @@
     "positionPlayerScore": 7.94,
     "rank": 59,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -27920,6 +28199,7 @@
     "positionPlayerScore": 7.71,
     "rank": 60,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -28010,6 +28290,7 @@
     "positionPlayerScore": 7.68,
     "rank": 61,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 35,
@@ -28100,6 +28381,7 @@
     "positionPlayerScore": 7.3,
     "rank": 62,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -28190,6 +28472,7 @@
     "positionPlayerScore": 6.06,
     "rank": 63,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 20,
@@ -28306,6 +28589,7 @@
     "positionPlayerScore": 6.58,
     "rank": 64,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -28396,6 +28680,7 @@
     "positionPlayerScore": 6.28,
     "rank": 65,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 40,
@@ -28486,6 +28771,7 @@
     "positionPlayerScore": 3.33,
     "rank": 66,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 20,
@@ -28597,6 +28883,7 @@
     "positionPlayerScore": 5.9,
     "rank": 67,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -28687,6 +28974,7 @@
     "positionPlayerScore": null,
     "rank": 68,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 20,
@@ -28793,6 +29081,7 @@
     "positionPlayerScore": 5.78,
     "rank": 69,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 50,
@@ -28883,6 +29172,7 @@
     "positionPlayerScore": 5.68,
     "rank": 70,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -28973,6 +29263,7 @@
     "positionPlayerScore": 5.61,
     "rank": 71,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -29063,6 +29354,7 @@
     "positionPlayerScore": 5.5,
     "rank": 72,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -29174,6 +29466,7 @@
     "positionPlayerScore": 5.5,
     "rank": 73,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -29285,6 +29578,7 @@
     "positionPlayerScore": 5.42,
     "rank": 74,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -29391,6 +29685,7 @@
     "positionPlayerScore": 5.26,
     "rank": 75,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -29507,6 +29802,7 @@
     "positionPlayerScore": 5.15,
     "rank": 76,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 35,
@@ -29597,6 +29893,7 @@
     "positionPlayerScore": 4.85,
     "rank": 77,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 20,
@@ -29713,6 +30010,7 @@
     "positionPlayerScore": 4.83,
     "rank": 78,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 45,
@@ -29803,6 +30101,7 @@
     "positionPlayerScore": 4.73,
     "rank": 79,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -29904,6 +30203,7 @@
     "positionPlayerScore": 4.45,
     "rank": 80,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 35,
@@ -29994,6 +30294,7 @@
     "positionPlayerScore": 4.12,
     "rank": 81,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 20,
@@ -30100,6 +30401,7 @@
     "positionPlayerScore": 4.08,
     "rank": 82,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -30211,6 +30513,7 @@
     "positionPlayerScore": 3.96,
     "rank": 83,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 45,
@@ -30301,6 +30604,7 @@
     "positionPlayerScore": 3.89,
     "rank": 84,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -30407,6 +30711,7 @@
     "positionPlayerScore": 3.86,
     "rank": 85,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -30523,6 +30828,7 @@
     "positionPlayerScore": 3.69,
     "rank": 86,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 70,
@@ -30613,6 +30919,7 @@
     "positionPlayerScore": 3.44,
     "rank": 87,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -30729,6 +31036,7 @@
     "positionPlayerScore": 3.26,
     "rank": 88,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 60,
@@ -30819,6 +31127,7 @@
     "positionPlayerScore": 3.07,
     "rank": 89,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 70,
@@ -30909,6 +31218,7 @@
     "positionPlayerScore": 2.93,
     "rank": 90,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 50,
@@ -30999,6 +31309,7 @@
     "positionPlayerScore": 2.89,
     "rank": 91,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 35,
@@ -31089,6 +31400,7 @@
     "positionPlayerScore": 2.72,
     "rank": 92,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 70,
@@ -31179,6 +31491,7 @@
     "positionPlayerScore": 2.62,
     "rank": 93,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -31285,6 +31598,7 @@
     "positionPlayerScore": 2.59,
     "rank": 94,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 35,
@@ -31375,6 +31689,7 @@
     "positionPlayerScore": 2.26,
     "rank": 95,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -31465,6 +31780,7 @@
     "positionPlayerScore": 2.25,
     "rank": 96,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -31566,6 +31882,7 @@
     "positionPlayerScore": 2.21,
     "rank": 97,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -31656,6 +31973,7 @@
     "positionPlayerScore": 2.18,
     "rank": 98,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 45,
@@ -31746,6 +32064,7 @@
     "positionPlayerScore": 2.13,
     "rank": 99,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 30,
@@ -31857,6 +32176,7 @@
     "positionPlayerScore": 1.89,
     "rank": 100,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 20,
@@ -31958,6 +32278,7 @@
     "positionPlayerScore": 1.49,
     "rank": 101,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 35,
@@ -32048,6 +32369,7 @@
     "positionPlayerScore": 1.41,
     "rank": 102,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -32149,6 +32471,7 @@
     "positionPlayerScore": 1.29,
     "rank": 103,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -32260,6 +32583,7 @@
     "positionPlayerScore": 1.25,
     "rank": 104,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 35,
@@ -32350,6 +32674,7 @@
     "positionPlayerScore": 1.21,
     "rank": 105,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 60,
@@ -32440,6 +32765,7 @@
     "positionPlayerScore": 1.14,
     "rank": 106,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -32556,6 +32882,7 @@
     "positionPlayerScore": 97.11,
     "rank": 1,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 75,
@@ -32646,6 +32973,7 @@
     "positionPlayerScore": null,
     "rank": 2,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -32757,6 +33085,7 @@
     "positionPlayerScore": 78.76,
     "rank": 3,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 65,
@@ -32847,6 +33176,7 @@
     "positionPlayerScore": 72.86,
     "rank": 4,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 70,
@@ -32937,6 +33267,7 @@
     "positionPlayerScore": 72.02,
     "rank": 5,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 35,
@@ -33027,6 +33358,7 @@
     "positionPlayerScore": null,
     "rank": 6,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 30,
@@ -33138,6 +33470,7 @@
     "positionPlayerScore": 68.07,
     "rank": 7,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -33228,6 +33561,7 @@
     "positionPlayerScore": 66.95,
     "rank": 8,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -33318,6 +33652,7 @@
     "positionPlayerScore": 63.03,
     "rank": 9,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 70,
@@ -33408,6 +33743,7 @@
     "positionPlayerScore": 62.39,
     "rank": 10,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -33498,6 +33834,7 @@
     "positionPlayerScore": 59.86,
     "rank": 11,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -33588,6 +33925,7 @@
     "positionPlayerScore": 55.53,
     "rank": 12,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 70,
@@ -33678,6 +34016,7 @@
     "positionPlayerScore": 55.43,
     "rank": 13,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -33768,6 +34107,7 @@
     "positionPlayerScore": 52.28,
     "rank": 14,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 75,
@@ -33858,6 +34198,7 @@
     "positionPlayerScore": 50.6,
     "rank": 15,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 55,
@@ -33948,6 +34289,7 @@
     "positionPlayerScore": 49.45,
     "rank": 16,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 50,
@@ -34038,6 +34380,7 @@
     "positionPlayerScore": null,
     "rank": 17,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -34139,6 +34482,7 @@
     "positionPlayerScore": null,
     "rank": 18,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 20,
@@ -34255,6 +34599,7 @@
     "positionPlayerScore": 48.1,
     "rank": 19,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 35,
@@ -34345,6 +34690,7 @@
     "positionPlayerScore": 48.03,
     "rank": 20,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 40,
@@ -34435,6 +34781,7 @@
     "positionPlayerScore": null,
     "rank": 21,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -34546,6 +34893,7 @@
     "positionPlayerScore": 47.12,
     "rank": 22,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 35,
@@ -34636,6 +34984,7 @@
     "positionPlayerScore": 46.96,
     "rank": 23,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 75,
@@ -34726,6 +35075,7 @@
     "positionPlayerScore": 46.9,
     "rank": 24,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 70,
@@ -34816,6 +35166,7 @@
     "positionPlayerScore": 45.61,
     "rank": 25,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 40,
@@ -34906,6 +35257,7 @@
     "positionPlayerScore": 45.49,
     "rank": 26,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -34996,6 +35348,7 @@
     "positionPlayerScore": 44.7,
     "rank": 27,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 45,
@@ -35086,6 +35439,7 @@
     "positionPlayerScore": 43.01,
     "rank": 28,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 75,
@@ -35176,6 +35530,7 @@
     "positionPlayerScore": null,
     "rank": 29,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -35282,6 +35637,7 @@
     "positionPlayerScore": 41.72,
     "rank": 30,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -35372,6 +35728,7 @@
     "positionPlayerScore": null,
     "rank": 31,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -35473,6 +35830,7 @@
     "positionPlayerScore": 39.97,
     "rank": 32,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 50,
@@ -35563,6 +35921,7 @@
     "positionPlayerScore": null,
     "rank": 33,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 30,
@@ -35669,6 +36028,7 @@
     "positionPlayerScore": 38.68,
     "rank": 34,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 55,
@@ -35759,6 +36119,7 @@
     "positionPlayerScore": null,
     "rank": 35,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -35870,6 +36231,7 @@
     "positionPlayerScore": 37.61,
     "rank": 36,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 50,
@@ -35960,6 +36322,7 @@
     "positionPlayerScore": null,
     "rank": 37,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -36061,6 +36424,7 @@
     "positionPlayerScore": 35.23,
     "rank": 38,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -36151,6 +36515,7 @@
     "positionPlayerScore": 34.79,
     "rank": 39,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 50,
@@ -36241,6 +36606,7 @@
     "positionPlayerScore": null,
     "rank": 40,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -36347,6 +36713,7 @@
     "positionPlayerScore": null,
     "rank": 41,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 30,
@@ -36463,6 +36830,7 @@
     "positionPlayerScore": 32.92,
     "rank": 42,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 60,
@@ -36553,6 +36921,7 @@
     "positionPlayerScore": 32.24,
     "rank": 43,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -36643,6 +37012,7 @@
     "positionPlayerScore": 31.64,
     "rank": 44,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 35,
@@ -36733,6 +37103,7 @@
     "positionPlayerScore": null,
     "rank": 45,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -36844,6 +37215,7 @@
     "positionPlayerScore": 30.78,
     "rank": 46,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 70,
@@ -36934,6 +37306,7 @@
     "positionPlayerScore": 30.1,
     "rank": 47,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -37024,6 +37397,7 @@
     "positionPlayerScore": 28.84,
     "rank": 48,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -37114,6 +37488,7 @@
     "positionPlayerScore": 28.81,
     "rank": 49,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 70,
@@ -37204,6 +37579,7 @@
     "positionPlayerScore": 28.52,
     "rank": 50,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 45,
@@ -37294,6 +37670,7 @@
     "positionPlayerScore": 26.71,
     "rank": 51,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 45,
@@ -37384,6 +37761,7 @@
     "positionPlayerScore": null,
     "rank": 52,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 25,
@@ -37485,6 +37863,7 @@
     "positionPlayerScore": null,
     "rank": 53,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 20,
@@ -37591,6 +37970,7 @@
     "positionPlayerScore": 25.25,
     "rank": 54,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 35,
@@ -37681,6 +38061,7 @@
     "positionPlayerScore": 22.83,
     "rank": 55,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -37771,6 +38152,7 @@
     "positionPlayerScore": 21.49,
     "rank": 56,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 70,
@@ -37861,6 +38243,7 @@
     "positionPlayerScore": 20.99,
     "rank": 57,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -37951,6 +38334,7 @@
     "positionPlayerScore": 19.42,
     "rank": 58,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -38041,6 +38425,7 @@
     "positionPlayerScore": null,
     "rank": 59,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -38157,6 +38542,7 @@
     "positionPlayerScore": null,
     "rank": 60,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -38273,6 +38659,7 @@
     "positionPlayerScore": 18.03,
     "rank": 61,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 60,
@@ -38363,6 +38750,7 @@
     "positionPlayerScore": null,
     "rank": 62,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -38469,6 +38857,7 @@
     "positionPlayerScore": null,
     "rank": 63,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 20,
@@ -38570,6 +38959,7 @@
     "positionPlayerScore": null,
     "rank": 64,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -38676,6 +39066,7 @@
     "positionPlayerScore": null,
     "rank": 65,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 20,
@@ -38777,6 +39168,7 @@
     "positionPlayerScore": 16.18,
     "rank": 66,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 45,
@@ -38867,6 +39259,7 @@
     "positionPlayerScore": 16.1,
     "rank": 67,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 35,
@@ -38957,6 +39350,7 @@
     "positionPlayerScore": 14.77,
     "rank": 68,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 40,
@@ -39047,6 +39441,7 @@
     "positionPlayerScore": null,
     "rank": 69,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 30,
@@ -39158,6 +39553,7 @@
     "positionPlayerScore": 12.09,
     "rank": 70,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 45,
@@ -39248,6 +39644,7 @@
     "positionPlayerScore": null,
     "rank": 71,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -39349,6 +39746,7 @@
     "positionPlayerScore": null,
     "rank": 72,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 20,
@@ -39450,6 +39848,7 @@
     "positionPlayerScore": 8.82,
     "rank": 73,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 35,

@@ -81,6 +81,7 @@ export interface ColumnDef {
 const N = (v: unknown) => Number(v);
 const isBlank = (v: unknown) => v == null || v === '' || Number.isNaN(N(v));
 
+export const fmtNum1 = (v: unknown): string => (isBlank(v) ? '—' : N(v).toFixed(1));
 export const fmtNum2 = (v: unknown): string => (isBlank(v) ? '—' : N(v).toFixed(2));
 export const fmtInt = (v: unknown): string => (isBlank(v) ? '—' : String(Math.round(N(v))));
 export const fmtText = (v: unknown): string => (v == null || v === '' ? '—' : String(v));
@@ -759,13 +760,27 @@ const V2_SCORE_COLUMN: ColumnDef = {
   ...LEADING_COLUMNS.find((c) => c.field === 'modelScore')!,
   header: 'Score',
   title: 'Score the rank is on: after the demand step, 50 + 10 × WAR',
+  fmt: fmtNum1,
 };
 
 const V2_LEAD = LEADING_COLUMNS.filter((c) => c.field !== 'modelScore');
 
+/** The model's rank by score, beside #: a custom order can move # off it. */
+const MODEL_RANK_COLUMN: ColumnDef = {
+  field: 'modelRank',
+  header: 'Score #',
+  title: 'Rank by score',
+  numeric: true,
+  descFirst: false,
+  group: 'Model',
+  value: model('modelRank'),
+  fmt: fmtInt,
+};
+
 const V2_MODELED_COLUMNS: ColumnDef[] = [
   WAR_COLUMN,
   V2_SCORE_COLUMN,
+  MODEL_RANK_COLUMN,
   field_('preDemandRank'),
   ROLE_COLUMN,
   field_('wrcPlus'),
@@ -880,7 +895,7 @@ const V2_VIEW_COLUMNS: Record<ClassView, ColumnDef[]> = {
 // ------------------------------------------------------ the draft board
 // A draft board (the draft odds) reads on a 1-100 score, not WAR (decided
 // 2026-11-10; ranking/value.py's `draft_score`): the score the rank is on,
-// before demand, and his ceiling. The card keeps his peak and ceiling WAR.
+// and before demand; his ceiling stays in WAR. The card keeps his peak WAR.
 
 const scoreCol = (field: keyof RankedPlayerRow, header: string, title: string): ColumnDef => ({
   field,
@@ -890,28 +905,30 @@ const scoreCol = (field: keyof RankedPlayerRow, header: string, title: string): 
   descFirst: true,
   group: 'Model',
   value: model(field),
-  fmt: fmtInt,
+  fmt: fmtNum1,
 });
 
 const SCORE_COLUMN = scoreCol('score', 'Score', 'Score (1–100), after demand: what the rank is on');
 const VALUE_SCORE_COLUMN = scoreCol('valueScore', 'Pre-dem', 'Score (1–100) before demand');
-const CEILING_SCORE_COLUMN = scoreCol('ceilingScore', 'Ceiling', 'Ceiling (1–100): at full potential');
 
 /** A v2 view's columns on the draft board's scale: WAR and the points score
- *  become the 1-100 score, the ceiling its own; Surplus WAR is blank there. */
+ *  become the 1-100 score; Surplus WAR is blank there. */
 const onDraftScale = (cols: ColumnDef[]): ColumnDef[] =>
   cols
     .filter((c) => c.field !== 'modelScore' && c.field !== 'surplusWar')
-    .map((c) => (c.field === 'war' ? SCORE_COLUMN : c.field === 'ceilingWar' ? CEILING_SCORE_COLUMN : c));
+    .map((c) => (c.field === 'war' ? SCORE_COLUMN : c));
 
 const DRAFT_BOARD_COLUMNS: Record<ClassView, ColumnDef[]> = {
   modeled: [
     ...V2_LEAD,
     SCORE_COLUMN,
+    MODEL_RANK_COLUMN,
     VALUE_SCORE_COLUMN,
     field_('preDemandRank'),
-    CEILING_SCORE_COLUMN,
-    ...onDraftScale(V2_MODELED_COLUMNS).filter((c) => c !== SCORE_COLUMN && c.field !== 'preDemandRank'),
+    ceilingCol('Model'),
+    ...onDraftScale(V2_MODELED_COLUMNS).filter(
+      (c) => c !== SCORE_COLUMN && c !== MODEL_RANK_COLUMN && c.field !== 'preDemandRank',
+    ),
   ],
   batting: onDraftScale(V2_VIEW_COLUMNS.batting),
   pitching: onDraftScale(V2_VIEW_COLUMNS.pitching),
@@ -924,7 +941,8 @@ const COLUMNS_BY_ENGINE: Record<RankingEngine, Record<ClassView, ColumnDef[]>> =
 };
 
 /** Columns with no meaning for a live-league snapshot: the drafted/demand
- *  columns (pre-demand included) and the draft-class player-type tag. */
+ *  columns (pre-demand included), the score rank (no custom order) and the
+ *  draft-class player-type tag. */
 const DROPPED_IN_LEAGUE = new Set([
   'demandKey',
   'draftedPick',
@@ -932,6 +950,7 @@ const DROPPED_IN_LEAGUE = new Set([
   'type',
   'preDemandScore',
   'preDemandRank',
+  'modelRank',
 ]);
 
 /** Columns for a view in a given context and engine. `'league'` drops the

@@ -113,6 +113,7 @@ export function makeupRows(p: RankedPlayer): [string, string][] {
     ['Work ethic', r.workEthic],
     ['Intelligence', r.intelligence],
     ['Leadership', r.leadership],
+    ['Adaptability', r.adaptability],
   ];
   return rows.filter(([, v]) => !!v) as [string, string][];
 }
@@ -241,7 +242,7 @@ export function splitRows(s: PlayerSplits | null | undefined, side: 'batting' | 
 /** The card's names for the judgment lines (modifiers) it shows by name. */
 const MODIFIER_LABELS: Record<string, string> = {
   ScoutingAccuracyModifier: 'Scouting accuracy',
-  DraftSecondaryPersonalityModifier: 'Leadership and personality',
+  DraftSecondaryPersonalityModifier: 'Leadership',
   BatterHitProfileModifier: 'Batted-ball profile',
   PitcherVelocityModifier: 'Velocity',
   DraftPitcherStuffModifier: 'Stuff',
@@ -365,17 +366,12 @@ export interface ValueBuild {
   /** the score after demand, in WAR and in points */
   finalWar: number;
   score: number;
-  /** lines with no effect (modifiers at x1.00) aren't drawn */
-  hidden: number;
-  /** the side he isn't judged on - listed, not counted - when he'd be worth
-   *  something there (a two-way candidate); null at or below replacement */
-  other: { title: string; war: number; steps: ValueStep[] } | null;
 }
 
 const VALUE_STAGE_TITLES: Record<string, string> = {
   model: 'Talent & role',
   modifiers: 'Adjustments',
-  development: 'Reaching his ceiling',
+  development: 'Development',
   'two-way': 'Two-way',
   demand: 'Demand',
 };
@@ -388,7 +384,7 @@ function ledgerLabel(line: LedgerLine): string {
 }
 
 /** A line that moves nothing is still shown when it's a talent read (the
- *  platoon's "no starts"); a modifier at x1.00 isn't. */
+ *  platoon's "no starts"); a modifier at x1.00 isn't drawn. */
 function shown(line: LedgerLine): boolean {
   return Math.abs(line.delta) >= LEDGER_MIN_DELTA || (line.stage === 'model' && !!line.stat);
 }
@@ -452,7 +448,6 @@ export function valueBuild(b: ScoreBreakdown | null): ValueBuild | null {
   const groups: ValueGroup[] = [];
   const demand: ValueStep[] = [];
   const replacement: ValueStep[] = [];
-  let hidden = 0;
   let war = 0;
   let finalWar = 0;
   let talent = 0;
@@ -463,7 +458,7 @@ export function valueBuild(b: ScoreBreakdown | null): ValueBuild | null {
     if (isReplacement(line)) {
       replacement.push(step);
     } else if (!shown(line)) {
-      hidden++;
+      // a modifier at x1.00: in the total, not drawn
     } else if (line.stage === 'demand') {
       demand.push(step);
     } else {
@@ -475,17 +470,6 @@ export function valueBuild(b: ScoreBreakdown | null): ValueBuild | null {
       group.steps.push(step);
     }
   }
-  const rest = b.ledger.filter((l) => !l.counted);
-  const otherWar = rest.reduce((sum, l) => sum + l.delta, 0) / POINTS_PER_WAR;
-  const other = otherWar > 0
-    ? {
-        title: rest[0].side === 'pitching' ? 'As a pitcher' : 'As a hitter',
-        war: otherWar,
-        steps: waterfall(rest)
-          .filter(({ line }) => shown(line))
-          .map(({ step }) => step),
-      }
-    : null;
   return {
     groups,
     ceiling: counted.some((l) => l.stage === 'development') ? talent : null,
@@ -495,8 +479,6 @@ export function valueBuild(b: ScoreBreakdown | null): ValueBuild | null {
     demand,
     finalWar,
     score: REPLACEMENT_POINTS + finalWar * POINTS_PER_WAR,
-    hidden,
-    other,
   };
 }
 
@@ -526,13 +508,16 @@ export const FIELDING_HEADS = {
   catcher: ['Frame', 'Block', 'Arm'],
 };
 
-/** v2's fielding at every position, best value first, so the card shows
- *  why his position won: runs there against its average fielder, and the
- *  value once the position's adjustment is in. */
-export function positionFielding(b: ScoreBreakdown | null): PositionFielding[] {
+/** v2's fielding at every position, so the card shows why his position
+ *  won: runs there against its average fielder, and the value once the
+ *  position's adjustment is in. The position he's valued at leads, the rest
+ *  follow best value first, and those below a rating floor (valued as a DH
+ *  there) go last - catcher dropped, since few can play it at all. */
+export function positionFielding(b: ScoreBreakdown | null, valued: string | null): PositionFielding[] {
+  const rank = (p: PositionFielding) => (p.position === valued ? 0 : p.floor === 0 ? 2 : 1);
   return [...(b?.batting?.positions ?? [])]
-    .filter((p) => p.value != null)
-    .sort((x, y) => (y.value ?? 0) - (x.value ?? 0));
+    .filter((p) => p.value != null && !(p.position === 'C' && p.floor === 0 && p.position !== valued))
+    .sort((x, y) => rank(x) - rank(y) || (y.value ?? 0) - (x.value ?? 0));
 }
 
 export function fieldingMatrix(p: RankedPlayer, position: string | null): FieldingGroup[] {

@@ -3,6 +3,7 @@ import { DecimalPipe, NgTemplateOutlet, PercentPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TagModule } from 'primeng/tag';
 import { PanelModule } from 'primeng/panel';
+import { TooltipModule } from 'primeng/tooltip';
 
 import { ApiService } from '../../core/api';
 import {
@@ -45,7 +46,7 @@ import { CEILING_TITLE } from '../../core/ranked-columns';
  *  ratings. Legacy keeps its model-score column. */
 @Component({
   selector: 'app-player-detail-card',
-  imports: [DecimalPipe, PercentPipe, NgTemplateOutlet, FormsModule, TagModule, PanelModule],
+  imports: [DecimalPipe, PercentPipe, NgTemplateOutlet, FormsModule, TagModule, PanelModule, TooltipModule],
   templateUrl: './player-detail-card.html',
   styleUrl: './player-detail-card.scss',
 })
@@ -178,12 +179,12 @@ export class PlayerDetailCardComponent {
   protected readonly draftScale = computed(() => {
     const p = this.player();
     if (p.score == null) return null;
-    const score = Math.round(p.score);
-    const pre = p.valueScore == null ? null : Math.round(p.valueScore);
+    const score = p.score.toFixed(1);
+    const pre = p.valueScore == null ? null : p.valueScore.toFixed(1);
     return {
       score,
       pre: pre === score ? null : pre,
-      ceiling: p.ceilingScore == null ? null : Math.round(p.ceilingScore),
+      ceiling: p.ceilingScore == null ? null : p.ceilingScore.toFixed(1),
     };
   });
 
@@ -203,7 +204,8 @@ export class PlayerDetailCardComponent {
 
   /** The v2 verdict band. It reads the table row, so it's there before the
    *  breakdown lands; the breakdown then adds the role he's valued in and
-   *  what it reads. His WAR is before demand (the model's value); the score
+   *  what it reads (a pitcher's innings inline, his other role in the
+   *  tooltip). His WAR is before demand (the model's value); the score
    *  under it is what he's ranked on. */
   protected readonly verdict = computed(() => {
     const p = this.player();
@@ -214,14 +216,11 @@ export class PlayerDetailCardComponent {
     const role = b?.role ?? p.role ?? (pitching ? p.position : (p.bestPosition ?? p.position));
     const alt = b?.roleWar.find((r) => r.name !== role && r.value != null);
     const altEra = alt && b?.roleEra.find((r) => r.name === alt.name)?.value;
-    const roleNote = pitching
-      ? [
-          ledgerStat(b, 'innings'),
-          alt
-            ? `${alt.name} ${altEra != null ? `${altEra.toFixed(2)} ERA, ` : ''}${alt.value!.toFixed(2)} WAR`
-            : null,
-        ]
-      : [ledgerStat(b, 'utility')];
+    const roleTip = pitching
+      ? alt
+        ? `${alt.name} ${altEra != null ? `${altEra.toFixed(2)} ERA · ` : ''}${alt.value!.toFixed(2)} WAR`
+        : null
+      : ledgerStat(b, 'utility');
     const talentNote = b?.ledger.find(
       (l) => l.counted && l.label === (pitching ? 'pitching' : 'batting'),
     )?.note;
@@ -233,7 +232,8 @@ export class PlayerDetailCardComponent {
         ? { value: p.era == null ? null : p.era.toFixed(2), label: 'ERA' }
         : { value: p.wrcPlus == null ? null : p.wrcPlus.toFixed(0), label: 'wRC+' },
       role,
-      roleNote: roleNote.filter(Boolean).join(' · '),
+      roleStat: pitching ? ledgerStat(b, 'innings') : null,
+      roleTip,
     };
   });
 
@@ -243,8 +243,10 @@ export class PlayerDetailCardComponent {
   );
   protected readonly fieldingHeads = FIELDING_HEADS;
 
-  /** v2: his fielding at every position, best first. */
-  protected readonly positions = computed(() => positionFielding(this.breakdown()));
+  /** v2: his fielding by position, the one he's valued at first. */
+  protected readonly positions = computed(() =>
+    positionFielding(this.breakdown(), this.verdict().role ?? null),
+  );
 
   /** "Org · Team · Level" for live-league rows; empty in the draft-class view. */
   protected readonly orgLine = computed(() => {
@@ -274,6 +276,13 @@ export class PlayerDetailCardComponent {
   }
 
   protected readonly signedWar = signedWar;
+
+  /** Why a position is closed to him: a lefty at C / 2B / 3B / SS, or a
+   *  rating below its floor. */
+  protected cantPlay(position: string): string {
+    const lefty = this.player().ratings?.throwHand === 'L' && ['C', '2B', '3B', 'SS'].includes(position);
+    return lefty ? 'Throws left' : 'A rating below the position’s floor';
+  }
 
   /** "+5" / "−4" / "0": whole runs, signed with a true minus. */
   protected signedRuns(v: number | null): string {

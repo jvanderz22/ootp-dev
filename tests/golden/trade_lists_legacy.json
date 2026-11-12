@@ -28,6 +28,7 @@
     "priority": "HIGH",
     "rank": 30,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 55,
@@ -160,6 +161,7 @@
     "priority": "MEDIUM",
     "rank": 72,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -313,6 +315,7 @@
     "priority": "LOW",
     "rank": 106,
     "ratings": {
+     "adaptability": null,
      "batHand": "Switch",
      "batting": {
       "avoidK": 25,
@@ -468,6 +471,7 @@
     "priority": "LOW",
     "rank": 26,
     "ratings": {
+     "adaptability": null,
      "batHand": "Right",
      "batting": {
       "avoidK": 65,
@@ -561,6 +565,7 @@
     "priority": "LOW",
     "rank": 63,
     "ratings": {
+     "adaptability": null,
      "batHand": "Left",
      "batting": {
       "avoidK": 20,

@@ -140,6 +140,8 @@ export interface RankedPlayer {
   /** v2 engine only: the score and rank before the draft demand step */
   preDemandScore: number | null;
   preDemandRank: number | null;
+  /** draft classes: the model's rank, by score (a custom order moves `rank`) */
+  modelRank: number | null;
   /** v2 engine only: the fitted model's wRC+ (hitters) and ERA (pitchers) */
   wrcPlus: number | null;
   era: number | null;
@@ -373,6 +375,7 @@ export interface PlayerRatings {
   workEthic: string | null;
   intelligence: string | null;
   leadership: string | null;
+  adaptability: string | null;
   scoutingAccuracy: string | null;
   batting: Record<string, number | null>;
   fielding: Record<string, number | null>;

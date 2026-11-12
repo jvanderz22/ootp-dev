@@ -85,6 +85,11 @@ def _build_index(ctx) -> ClassIndex:
             )
             for i, row in enumerate(ordered)
         ]
+        # the model's own rank (its score order), which a custom order can move
+        # `rank` off
+        model_rank = {row["id"]: i + 1 for i, row in enumerate(rows)}
+        for p in payloads:
+            p["model_rank"] = model_rank[p["id"]]
     return ClassIndex(
         name=ctx.name,
         ranking_method=ctx.ranking_method,

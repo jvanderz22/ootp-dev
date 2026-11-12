@@ -349,7 +349,7 @@
 .fm-group.primary { color: var(--text); font-weight: 600; }
 .fm-cell.primary { color: var(--text); font-weight: 700; }
 
-/* v2: fielding at every position, best value first; his position bold */
+/* v2: fielding by position, his first and bold; ones he can't play faded */
 .pos-table {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 2.6rem 2.6rem;
@@ -377,6 +377,7 @@
 }
 .pt-tag.pick { color: var(--accent); font-weight: 600; }
 .pt-tag.floor { color: var(--tone-weak); }
+.pos-table .out { opacity: 0.55; }
 
 /* v2 value build: each line's name and what it read, a waterfall bar from the
    running total before it to the one after, and the WAR it adds */
@@ -459,6 +460,3 @@
 }
 .vb-splits .muted { font-size: 11px; }
 .vb-loading { font-size: 12px; }
-.vb-other-head { font-size: 12px; font-weight: 500; }
-.vb-other-head b { margin-left: 6px; font-variant-numeric: tabular-nums; }
-.vb-other-head .muted { margin-left: 6px; font-weight: 400; font-size: 11px; }
