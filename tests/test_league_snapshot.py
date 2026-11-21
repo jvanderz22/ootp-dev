@@ -13,7 +13,9 @@ import league_snapshot
 from league_snapshot import (
     LeagueSnapshotContext,
     UNSOURCED_FIELDS,
+    _is_amateur,
     build_snapshot,
+    draft_nations,
     gf_from_gb,
     join_rows,
     ranked_rows,
@@ -41,6 +43,7 @@ PLAYERS_HEADER = [
     "Role", "Age", "Organization ID", "League ID", "bats", "throws",
     "mlb_service_years", "pro_service_years", "pro_service_days", "last_team_id",
     "draft_eligible", "is_on_secondary", "years_protected_from_rule_5",
+    "nation_id", "free_agent",
 ]
 
 # `League ID` is negative for a player in the international complex (see
@@ -371,17 +374,66 @@ def test_potential_ranking_excludes_established_mlb_players(data_dir, snapshot_c
 def test_amateur_pools_flagged_on_join(snapshot_csvs):
     ratings, _p, teams = snapshot_csvs
     players = _csv(PLAYERS_HEADER, [
-        # draft class: draft_eligible flag, level 0, no history
-        _players_row(ID="100", Level="0", **{"draft_eligible": "1", "last_team_id": "0"}),
-        # int'l / undrafted amateur FA: not draft eligible but never signed
-        _players_row(ID="200", Level="0", **{
+        # draft class: draft_eligible flag, level 0, no history (US -> domestic)
+        _players_row(ID="100", Level="0", **{
+            "draft_eligible": "1", "last_team_id": "0", "nation_id": "206",
+        }),
+        # int'l amateur: not draft eligible, never signed, a teenager (DR)
+        _players_row(ID="200", Level="0", Age="16", **{
             "draft_eligible": "0", "pro_service_years": "0",
-            "pro_service_days": "0", "last_team_id": "0",
+            "pro_service_days": "0", "last_team_id": "0", "nation_id": "56",
         }),
     ])
     rows = {r["ID"]: r for r in join_rows(ratings, players, teams)}
     assert rows["100"]["is_amateur"] == "1"
     assert rows["200"]["is_amateur"] == "1"
+
+
+def test_draft_nations_are_the_draft_class_majority_nations():
+    # 195 US + 4 PR draftees clear the 1% share; the lone Cuban (0.5%) at a US school doesn't
+    players = (
+        [{"draft_eligible": "1", "nation_id": "206"}] * 195
+        + [{"draft_eligible": "1", "nation_id": "151"}] * 4
+        + [{"draft_eligible": "1", "nation_id": "49"}]
+        + [{"draft_eligible": "0", "nation_id": "56"}] * 500   # int'l pool: ignored
+    )
+    assert draft_nations(players) == {"206", "151"}
+    assert draft_nations([]) == set()
+
+
+def _unsigned(age, nation, **over):
+    return {
+        "Age": str(age), "nation_id": nation, "draft_eligible": "0",
+        "pro_service_years": "0", "pro_service_days": "0", "last_team_id": "0",
+        "free_agent": "1", **over,
+    }
+
+
+@pytest.mark.parametrize(
+    "ply, expected",
+    [
+        # draft class at any age - a 23-year-old college senior is still in it
+        (_unsigned(23, "206", draft_eligible="1"), True),
+        # domestic, undrafted / never drafted: a free agent at any age
+        (_unsigned(24, "206"), False),
+        (_unsigned(18, "206"), False),
+        # international, never signed: the amateur pool through 21 ...
+        (_unsigned(16, "56"), True),
+        (_unsigned(21, "56"), True),
+        # ... and a free agent after (a foreign pro, a long-unsigned prospect)
+        (_unsigned(22, "56"), False),
+        (_unsigned(30, "98"), False),
+        # a young international with pro history is a released pro
+        (_unsigned(19, "56", pro_service_years="2", last_team_id="46"), False),
+    ],
+)
+def test_is_amateur_domestic_vs_international(ply, expected):
+    assert _is_amateur(ply, "0", {"206", "151"}) is expected
+
+
+def test_is_amateur_without_a_draft_class_treats_everyone_as_international():
+    assert _is_amateur(_unsigned(17, "206"), "0", set()) is True
+    assert _is_amateur(_unsigned(24, "206"), "0", set()) is False
 
 
 def test_released_free_agent_is_not_flagged_amateur(snapshot_csvs):

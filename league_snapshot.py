@@ -70,9 +70,9 @@ UNSOURCED_FIELDS = {"DEM", "Sign", "AD"}
 #                                 league when a StatsPlus export spans several
 #                                 (see `web/leagues.py` `game_league_ids`).
 #   mlb_service_years           - gates the potential ranking to < 1 year MLS
-#   is_amateur ("1" / "")       - the amateur draft class + international /
-#                                 undrafted amateur FA pool; excluded from BOTH
-#                                 rankings (see `_is_amateur`)
+#   is_amateur ("1" / "")       - the amateur draft class + international
+#                                 amateur pool; excluded from BOTH rankings
+#                                 (see `_is_amateur`)
 #   rule_5_eligible ("1" / "")  - exposed in the upcoming Rule 5 draft (see
 #                                 `_is_rule5_eligible`)
 SNAPSHOT_META_FIELDS = [
@@ -196,25 +196,60 @@ def _int(value, default=None):
         return default
 
 
-def _is_amateur(ply: dict, level_code: str) -> bool:
-    """Whether a player is in an amateur pool - the upcoming Rule 4 draft class or
-    the international / undrafted amateur FA pool - rather than a real free agent.
+# A never-signed international player at level 0 this age or younger is in the
+# international amateur pool; older, he's a regular free agent (a foreign pro, a
+# long-unsigned prospect). StatsPlus has no flag for the pool. Verified vs `yfmlb`
+# 2026-11-20: every never-pro, non-draft player under 22 is an international
+# amateur.
+INTL_AMATEUR_MAX_AGE = 21
 
-    Both amateur pools sit at level 0 with no team, no org, and no history of
-    affiliated ball; a genuine free agent (a released pro) carries pro service
-    time or a `last_team_id`. `draft_eligible == 1` is the draft class exactly and
-    is a strict subset of this; the rest are the international / undrafted pool.
+# A nation is "domestic" - covered by the Rule 4 draft rather than the
+# international pool - when it supplies at least this share of the league's draft
+# class. On `yfmlb` (2026-11-20) the US (93%), Puerto Rico (3.3%) and Canada
+# (2.3%) clear it, then a sharp drop to Cuba at 0.27% (players at US schools).
+DRAFT_NATION_MIN_SHARE = 0.01
+
+
+def draft_nations(players) -> set:
+    """Nation ids the league's amateur draft covers, read off its own draft class
+    (`draft_eligible == 1`) since StatsPlus doesn't expose the draft rules."""
+    counts: dict = {}
+    for ply in players:
+        if (ply.get("draft_eligible") or "").strip() != "1":
+            continue
+        nation = (ply.get("nation_id") or "").strip()
+        if nation:
+            counts[nation] = counts.get(nation, 0) + 1
+    total = sum(counts.values())
+    return {n for n, c in counts.items() if c >= DRAFT_NATION_MIN_SHARE * total}
+
+
+def _is_amateur(ply: dict, level_code: str, domestic_nations=frozenset()) -> bool:
+    """Whether a player is in an amateur pool - the upcoming Rule 4 draft class or
+    the international amateur pool - rather than a real free agent.
+
+    `draft_eligible == 1` is the draft class exactly, at any age. A domestic
+    player (from one of `domestic_nations`) is otherwise a free agent - an
+    undrafted college senior, a commissioner-created player. The international
+    pool has no flag: like every unsigned player it sits at level 0 with no
+    service time and no `last_team_id`, so it's told apart from foreign free
+    agents by age. With no draft class to read nations from, everyone is treated
+    as international.
     """
     if not ply or (level_code or "").strip() not in ("", "0"):
         return False
     if (ply.get("draft_eligible") or "").strip() == "1":
         return True
+    if (ply.get("nation_id") or "").strip() in domestic_nations:
+        return False
     never_pro = (
         _int(ply.get("pro_service_years"), 0) == 0
         and _int(ply.get("pro_service_days"), 0) == 0
     )
     no_last_team = (ply.get("last_team_id") or "").strip() in ("", "0")
-    return never_pro and no_last_team
+    age = _int(ply.get("Age"))
+    young = age is not None and age <= INTL_AMATEUR_MAX_AGE
+    return never_pro and no_last_team and young
 
 
 def _is_rule5_eligible(ply: dict, org_id: str) -> bool:
@@ -339,7 +374,7 @@ def _rows(csv_text: str):
     return csv.DictReader(io.StringIO(csv_text))
 
 
-def _map_row(rat: dict, ply: dict, teams: dict) -> dict:
+def _map_row(rat: dict, ply: dict, teams: dict, domestic_nations=frozenset()) -> dict:
     row = {name: "" for name in SNAPSHOT_FIELDNAMES}
 
     for src, dst in RATINGS_COLUMN_MAP.items():
@@ -416,7 +451,7 @@ def _map_row(rat: dict, ply: dict, teams: dict) -> dict:
     row["mlb_service_years"] = (
         (ply.get("mlb_service_years") if ply else "") or ""
     ).strip()
-    row["is_amateur"] = "1" if _is_amateur(ply, level_code) else ""
+    row["is_amateur"] = "1" if _is_amateur(ply, level_code, domestic_nations) else ""
     row["rule_5_eligible"] = (
         "1" if not row["is_amateur"] and _is_rule5_eligible(ply, org_id) else ""
     )
@@ -460,12 +495,13 @@ def join_rows(ratings_csv: str, players_csv: str, teams_csv: str) -> list[dict]:
     rename every column to its OOTP scouting-export header."""
     teams = {r["ID"]: r for r in _rows(teams_csv) if r.get("ID")}
     players = {r["ID"]: r for r in _rows(players_csv) if r.get("ID")}
+    domestic = draft_nations(players.values())
     out = []
     for rat in _rows(ratings_csv):
         pid = (rat.get("ID") or "").strip()
         if not pid:
             continue
-        out.append(_map_row(rat, players.get(pid, {}), teams))
+        out.append(_map_row(rat, players.get(pid, {}), teams, domestic))
     return out
 
 

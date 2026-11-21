@@ -314,11 +314,11 @@ def make_statsplus_csvs(seed=11):
     for _ in range(4):  # amateur draft class
         add(rng.choice(API_POSITIONS),
             {"League": "0", "Team": "0", "Org": "0", "LgLvl": "0", "Age": "18"},
-            {"Level": "0", "draft_eligible": "1"})
-    for _ in range(3):  # international / undrafted amateur FA pool
+            {"Level": "0", "draft_eligible": "1", "nation_id": "206"})
+    for _ in range(3):  # international amateur pool
         add(rng.choice(API_POSITIONS),
             {"League": "0", "Team": "0", "Org": "0", "LgLvl": "0", "Age": "16"},
-            {"Level": "0"})
+            {"Level": "0", "Age": "16", "nation_id": "56"})
     add("RP",  # released pro free agent
         {"League": "0", "Team": "0", "Org": "0", "LgLvl": "0", "Age": "29"},
         {"Level": "0", "pro_service_years": "7", "last_team_id": "46",
