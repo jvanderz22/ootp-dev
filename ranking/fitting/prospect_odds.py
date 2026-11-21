@@ -44,6 +44,7 @@ from context import default_base_dir
 from ranking import development
 from ranking import draft_odds as board_odds
 from ranking.fitting import draft_odds
+from ranking.fitting import playing_time as pt
 from ranking.stages.companion import BAT_LINES
 from ranking.hitter_talent import ARTIFACTS_DIR
 from ranking.fitting.ceiling_panel import _prospects
@@ -394,13 +395,98 @@ class GapFit:
         return held + UPSIDE * (self.predict(d) - held)
 
 
+# the playing-time factor (2026-11-21, plans/draft-glove-plan.md; the model is
+# shared, ranking/playing_time.py): his share of a regular's season in the
+# PLAYS_SEASONS seasons after the export, for the exports with those seasons
+# played, on the draft terms plus his age (from PLAYS_AGE) and level (from
+# PLAYS_LEVEL, A ball). Held out by player, age and level took the log loss
+# 0.1695 -> 0.1564
+PLAYS_SEASONS = 2
+PLAYS_AGE, PLAYS_LEVEL = 21, 3
+
+
+def odds_view(d: pd.DataFrame) -> pd.DataFrame:
+    """The prospects as the board's odds read them: a hitter's glove, when
+    worth anything, at GLOVE_WEIGHT in his ceiling and his WAR now (as on the
+    draft board; the fit itself is on the whole)."""
+    hitter = d.group == "hitter"
+    cut = lambda glove: np.where(hitter, (1 - board_odds.GLOVE_WEIGHT) * glove.clip(lower=0), 0.0)   # noqa: E731
+    return d.assign(war_pot=d.war_pot - cut(d.pot_glove), readiness=d.readiness - cut(d.now_glove))
+
+
+def plays_design(d: pd.DataFrame) -> pd.DataFrame:
+    age = d.age_exact.values - PLAYS_AGE
+    return pd.DataFrame({"bat": d.pot_bat.values, "bat now": d.bat.clip(*draft_odds.READINESS_CLIP).values,
+                         "glove": d.pot_glove.values, "run": d.pot_run.values,
+                         "C": (d.role == "C").values.astype(float), "age": age, "age^2": age ** 2,
+                         "level": d.level_n.values - PLAYS_LEVEL}, index=d.index)
+
+
+def plays_pool(prospects: pd.DataFrame, last_season: int) -> pd.DataFrame:
+    """The hitters with a ceiling worth judging whose PLAYS_SEASONS are played."""
+    d = prospects[(prospects.group == "hitter") & (prospects.war_pot >= draft_odds.MIN_POTENTIAL_WAR)
+                  & (prospects["class"] + PLAYS_SEASONS <= last_season)]
+    return d.assign(share=[pt.season_share(m, range(y + 1, y + 1 + PLAYS_SEASONS)) for m, y in zip(d.mlb_pa, d["class"])])
+
+
+def fit_plays(pool: pd.DataFrame) -> tuple:
+    """(the logistic, the reference glove and run)."""
+    return pt.fit(plays_design(pool), pool.share.values), pt.reference(pool.pot_glove, pool.pot_run)
+
+
+def playing(w, ref: dict, d: pd.DataFrame) -> np.ndarray:
+    """The factor, read at PLAYS_AGE in A ball: age and level are in the fit
+    so the glove's and run's effects are clean, but read at his own, a
+    27-year-old in AAA has so small a chance that any glove or speed is a big
+    ratio (Kennedy, 3B, 29: 60 -> 20 on the board)."""
+    x = plays_design(d).assign(**{"age": 0.0, "age^2": 0.0, "level": 0.0})
+    return pt.factor(w, x, ref, d.group == "hitter")
+
+
+def report_plays(pool: pd.DataFrame) -> tuple:
+    """The prospect chance he plays: the fit, and held out by player,
+    predicted over observed by glove band and for catchers."""
+    w, ref = fit_plays(pool)
+    names = ["intercept"] + list(plays_design(pool.head(1)).columns)
+    print(f"\nthe chance he plays: share of a {pt.REGULAR_PA}-PA season in the {PLAYS_SEASONS} seasons after the "
+          f"export, {len(pool)} hitter exports ({pool.id.nunique()} players), mean {pool.share.mean():.3f}")
+    print("  " + "  ".join(f"{n} {c:+.2f}" for n, c in zip(names, w)))
+    p = np.zeros(len(pool))
+    for f in range(FOLDS):
+        test = pool.id.values % FOLDS == f
+        p[test] = pt.chance(fit_plays(pool[~test])[0], plays_design(pool[test]))
+    band = _glove_bands(pool)
+    cells = [f"{b} {p[(band == b).values].mean():.3f}/{pool.share[(band == b).values].mean():.3f}" for b in band.cat.categories]
+    c = (pool.role == "C").values
+    print(f"  held out, predicted / observed: " + "   ".join(cells) + f"   catchers {p[c].mean():.3f}/{pool.share[c].mean():.3f}")
+    return w, ref
+
+
+def _glove_bands(d: pd.DataFrame) -> pd.Series:
+    edges, labels = draft_odds.GLOVE_BANDS
+    return pd.cut((d.pot_glove / d.war_pot.clip(lower=draft_odds.MIN_POTENTIAL_WAR)).clip(-1, 1.5), edges, labels=labels)
+
+
+def glove_check(d: pd.DataFrame, value, outcome: str) -> dict:
+    """Hitters' realized over predicted `outcome` by glove band and for
+    catchers, the predictions scaled to each export's hitters' total."""
+    h = d[d.group == "hitter"].assign(x=np.asarray(value)[(d.group == "hitter").values])
+    h = h.assign(y=h[outcome].clip(lower=0))
+    scale = h.groupby("class").apply(lambda g: g.y.sum() / g.x.sum())
+    h = h.assign(x=h.x * h["class"].map(scale))
+    out = {str(b): float(g.y.sum() / g.x.sum()) for b, g in h.groupby(_glove_bands(h), observed=True)}
+    c = h[h.role == "C"]
+    out["catchers"] = float(c.y.sum() / c.x.sum())
+    return {k: round(v, 3) for k, v in out.items()}
+
+
 def able(prospects: pd.DataFrame) -> pd.DataFrame:
     """The settled prospects with a ceiling worth judging."""
     d = prospects[prospects.a_settled & (prospects.war_pot >= draft_odds.MIN_POTENTIAL_WAR)]
     return d.reset_index(drop=True)
 
 
-def held_out(d: pd.DataFrame, scale=None) -> tuple:
+def held_out(d: pd.DataFrame, scale=None, pool=None, outcome="a") -> tuple:
     """(by key, {key: predictions}): FOLDS fits, a player's every export in
     one fold, so none is judged by a fit that saw him; each export ranked on
     its own, the mean over exports of rho and the top k's mean A - for the
@@ -409,17 +495,24 @@ def held_out(d: pd.DataFrame, scale=None) -> tuple:
     expectation's ("fit") and the value's ("value"), without `scale`."""
     folds = d.id.values % FOLDS
     pred, value = np.zeros(len(d)), np.zeros(len(d))
+    view = odds_view(d)
     for f in range(FOLDS):
         train, test = folds != f, folds == f
         model = GapFit().fit(d[train])
-        pred[test] = model.predict(d[test])
-        value[test] = model.value(d[test])
+        factor = 1.0
+        if pool is not None:
+            # read as the board reads them: the glove at GLOVE_WEIGHT and the
+            # playing-time factor, fit on the other players
+            w, ref = fit_plays(pool[pool.id % FOLDS != f])
+            factor = playing(w, ref, d[test])
+        pred[test] = model.predict(view[test] if pool is not None else d[test]) * factor
+        value[test] = model.value(view[test] if pool is not None else d[test]) * factor
     scale = 1.0 if scale is None else scale
     scores = {"board": d.board.values, "expected": pred * scale, f"value (upside x{UPSIDE:g})": value * scale}
     rows = []
     for key, s in scores.items():
         for year, g in d.groupby("class"):
-            y, x = g.a.clip(lower=0).values, s[g.index]
+            y, x = g[outcome].clip(lower=0).values, s[g.index]
             order = np.argsort(-x)
             rows.append({"key": key, "class": year, "rho": spearmanr(x, y)[0],
                          **{f"top {k}": y[order[:k]].mean() for k in draft_odds.TOP_K}})
@@ -489,9 +582,13 @@ def main(argv=None):
         return
 
     d = able(prospects)
+    d["mlb"] = d.mlb_war.apply(lambda m: sum(m.values()))
     model = GapFit().fit(d)
     report_fit(d, model)
-    _, scores = held_out(d)
+    last_season = int(max(max(m) for m in prospects.mlb_pa if m))
+    pool = plays_pool(prospects, last_season)
+    plays_w, plays_ref = report_plays(pool)
+    _, scores = held_out(d, pool=pool)
     pred = scores["fit"]
     report_calibration(d, pred)
 
@@ -503,9 +600,15 @@ def main(argv=None):
               "value": draft_odds.pitcher_shares(d.assign(x=scores["value"] * kept), "x")}
     for label, x in shares.items():
         print(draft_odds._shares_line(label, x))
-    table, _ = held_out(d, kept)
-    print(f"\nheld out ({FOLDS} folds by player), mean per export, judged on A, with the kept lines:")
-    print("\n".join("  " + line for line in table.round(3).to_string().splitlines()))
+    checks = {}
+    for outcome, label in (("a", "A"), ("mlb", "MLB WAR after the export")):
+        for reading, extra in (("today's reading", {}), ("the glove at half and playing time", {"pool": pool})):
+            table, sc = held_out(d, kept, outcome=outcome, **extra)
+            glove = glove_check(d, sc["value"] * kept, outcome)
+            checks[f"{outcome}, {reading}"] = {"rank": table.round(3).to_dict(orient="index"), "glove": glove}
+            print(f"\nheld out ({FOLDS} folds by player), mean per export, judged on {label}, {reading}, with the kept lines:")
+            print("\n".join("  " + line for line in table.round(3).to_string().splitlines()))
+            print("  hitters' realized / predicted: " + "  ".join(f"{k} {v:.2f}" for k, v in glove.items()))
 
     close_names, keep_names = _names(d)
     draft = board_odds.load()
@@ -538,12 +641,17 @@ def main(argv=None):
         "bridge": {"draft_odds": draft.version, "ages": list(BRIDGE)}, "anchor_ages": list(ANCHOR_AGES),
         "taper": [development.FULL_WEIGHT_WAR, development.TAPERED_WAR, development.TAPERED_WEIGHT],
         "pitcher_balance": 1.0,
+        # the playing-time factor (ranking/playing_time.py), on plays_design's
+        # columns: age from age_center, level from level_center on levels
+        "plays": pt.block(plays_w, plays_design(pool.head(1)).columns, plays_ref, regular_pa=pt.REGULAR_PA,
+                          seasons=PLAYS_SEASONS, clip=list(draft_odds.READINESS_CLIP), age_center=PLAYS_AGE,
+                          level_center=PLAYS_LEVEL, levels=LEVELS),
         # what the board ranks on: kept x WAR now + upside x (E - kept x WAR now)
         "upside": UPSIDE,
         "judgment": {"kept": list(draft_odds.KEPT), "velocity_steps": [list(x) for x in board_odds.VELOCITY_STEPS],
                      "replaces": list(board_odds.REPLACES)},
         "regular": draft.regular,
-        "check": {"held_out": table.round(3).to_dict(orient="index"),
+        "check": {"held_out": checks,
                   "pitcher_share": {k: [round(x, 3) for x in v] for k, v in shares.items()}},
         "meta": {
             "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),

@@ -55,7 +55,7 @@ def test_the_lines_take_his_ceiling_to_what_hes_expected_to_realize(ranked):
     for r in ranked:
         lines = [l for l in r.ledger.lines if r.ledger.counted(l)]
         labels = {l.label for l in lines if l.stage == DEVELOPMENT}
-        assert labels <= {"Past his ceiling", "WAR now", "Gap", "Runway", "Upside", "Switch hitter"}
+        assert labels <= {"Glove", "Past his ceiling", "WAR now", "Gap", "Playing time", "Runway", "Upside", "Switch hitter"}
         assert sum(l.delta for l in lines if l.stage != DEMAND) == pytest.approx(r.pre_demand_score)
         assert r.pre_demand_score >= value.DISPLAY_OFFSET
         # no distribution yet: the ceiling, but no range
@@ -92,13 +92,13 @@ def test_the_bridge_values_a_teen_as_the_draft_board_does(players):
     # same on both boards
     odds, player = prospect_odds.load(), players[0]
     bat, glove, run = 2.0, 1.5, 0.3
-    parts = odds.parts(player, 4.0, 0.5, -2.0, "hitter", 19.0, (bat, glove, run, False))
+    parts = odds.parts(player, 4.0, 0.5, -2.0, "hitter", 19.0, prospect_odds.Hitter(bat, glove, run, False))
     ceiling = 4.0 - (1 - draft_odds.GLOVE_WEIGHT) * glove
     draft = odds.draft.expected(odds.draft.mean_columns(player, ceiling, -2.0, "hitter", 19.0), 19.0)
     draft *= odds.draft.playing(bat, -2.0, glove, run, 19.0)
     assert parts["draft"] == pytest.approx(draft_odds.realistic(draft, 4.0))
     # a catcher's bridge takes no playing time
-    catcher = odds.parts(player, 4.0, 0.5, -2.0, "hitter", 19.0, (bat, glove, run, True))["draft"]
+    catcher = odds.parts(player, 4.0, 0.5, -2.0, "hitter", 19.0, prospect_odds.Hitter(bat, glove, run, True))["draft"]
     assert catcher == pytest.approx(draft_odds.realistic(draft / odds.draft.playing(bat, -2.0, glove, run, 19.0), 4.0))
 
 
@@ -137,3 +137,26 @@ def test_the_board_weighs_upside_over_present_production(players):
         upside = [amount for kind, label, amount, _, _ in lines if label == "Upside"]
         assert sum(upside) == pytest.approx(value - expected)
 
+
+def test_a_prospects_glove_counts_at_half_and_his_playing_time_scales_it(players):
+    # 2026-11-21, as on the draft board: his glove at GLOVE_WEIGHT in his
+    # ceiling and his WAR now, and the prospect playing-time factor (read at
+    # the fit's reference age and level) on this fit's expectation
+    from ranking.fitting import prospect_odds as fit
+    odds, player = prospect_odds.load(), players[0]
+    hitter = prospect_odds.Hitter(2.5, 1.2, 0.3, False, 0.8, "AA")
+    parts = odds.parts(player, 4.0, 1.5, 0.5, "hitter", 23.0, hitter)
+    cut = 1 - draft_odds.GLOVE_WEIGHT
+    plain = odds.parts(player, 4.0 - cut * 1.2, 1.5 - cut * 0.8, 0.5, "hitter", 23.0)
+    assert parts["raw"] == pytest.approx(plain["prospect"])
+    assert parts["prospect"] == pytest.approx(plain["prospect"] * parts["plays"]) and parts["plays"] > 1
+    # the runtime factor is the fit's, and the same at any level or age
+    w = np.array([odds.plays.block["intercept"], *odds.plays.block["coef"].values()])
+    frame = pd.DataFrame({"group": ["hitter"], "pot_bat": [2.5], "bat": [0.5], "pot_glove": [1.2], "pot_run": [0.3],
+                          "role": ["SS"], "age_exact": [23.0], "level_n": [4]})
+    assert parts["plays"] == pytest.approx(fit.playing(w, odds.plays.block["reference"], frame)[0])
+    assert odds.playing(hitter._replace(level="A"), 0.5, 19.0) == pytest.approx(parts["plays"])
+    # none for a catcher; the ledger shows the glove and the playing time
+    assert odds.playing(hitter._replace(catcher=True), 0.5, 23.0) == 1.0
+    labels = [l[1] for l in odds.reaching(player, 4.0, 1.5, 0.5, "hitter", 23.0, hitter=hitter)[0]]
+    assert labels[0] == "Glove" and "Playing time" in labels

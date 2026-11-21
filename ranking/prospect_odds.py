@@ -39,13 +39,26 @@ from functools import lru_cache
 
 import numpy as np
 
-from ranking import development, draft_odds
+from typing import NamedTuple
+
+from ranking import development, draft_odds, playing_time
 from ranking.hitter_talent import ARTIFACTS_DIR
 
 ARTIFACT = "prospect_odds_v1"
 REPLACES = draft_odds.REPLACES
 # the closing odds' personality: the draft odds' makeup, and adaptability
 MAKEUP = {**draft_odds.MAKEUP, "AD H": ("adaptibility", ("H",)), "AD L": ("adaptibility", ("L",))}
+
+
+class Hitter(NamedTuple):
+    """A hitter's parts the prospect odds read (WAR): his bat, glove and run
+    at potential, his glove now, whether he's a catcher and his level."""
+    bat: float
+    glove: float
+    run: float
+    catcher: bool = False
+    glove_now: float = 0.0
+    level: str = None
 
 
 def _sigmoid(z) -> float:
@@ -58,6 +71,7 @@ class ProspectOdds:
         self.a = artifact
         self.balance = artifact["pitcher_balance"]
         self.draft = draft
+        self.plays = playing_time.PlayingTime.of(artifact)
 
     # -- the fit's columns ------------------------------------------------------
 
@@ -102,18 +116,43 @@ class ProspectOdds:
         gap and the odds he closes it (at 21, then at his age), this fit's
         expectation, and the draft odds' share and theirs (the teen bridge,
         reading him as developed as this fit does, and as the draft board
-        values him: `bridge_value`). `hitter` is a hitter's (bat, glove, run)
-        WAR at potential and whether he's a catcher."""
-        now = max(readiness, 0.0)
-        gap = max(ceiling - now, 0.0)
-        keep = self._odds("keep", self.keep_columns(readiness, age))
-        at_21 = self._odds("close", self.close_columns(player, ceiling, developed, group))
+        values him: `bridge_value`). `hitter` is a hitter's parts (Hitter):
+        his glove counts at GLOVE_WEIGHT in his ceiling and his WAR now, and
+        this fit's expectation takes the playing-time factor (2026-11-21,
+        as on the draft board)."""
+        cut = cut_now = 0.0
+        if hitter is not None:
+            cut = (1 - draft_odds.GLOVE_WEIGHT) * max(hitter.glove, 0.0)
+            cut_now = (1 - draft_odds.GLOVE_WEIGHT) * max(hitter.glove_now, 0.0)
+        odds_ceiling, odds_now = ceiling - cut, readiness - cut_now
+        now = max(odds_now, 0.0)
+        gap = max(odds_ceiling - now, 0.0)
+        keep = self._odds("keep", self.keep_columns(odds_now, age))
+        at_21 = self._odds("close", self.close_columns(player, odds_ceiling, developed, group))
         close = at_21 * self.age_curve(age)
-        out = {"now": now, "keep": keep, "gap": gap, "close_21": at_21, "close": close,
-               "prospect": keep * now + close * gap, "held": keep * now, "bridged": self.bridged(age), "draft": None}
+        plays = self.playing(hitter, developed, age)
+        out = {"now": now, "keep": keep, "gap": gap, "close_21": at_21, "close": close, "glove": cut,
+               "odds_ceiling": odds_ceiling, "plays": plays, "raw": keep * now + close * gap,
+               "prospect": (keep * now + close * gap) * plays, "held": keep * now * plays,
+               "bridged": self.bridged(age), "draft": None}
         if out["bridged"] > 0:
             out["draft"] = self.bridge_value(player, ceiling, developed, group, age, hitter)
         return out
+
+    def playing(self, hitter, developed, age) -> float:
+        """The prospect playing-time factor (ranking/playing_time.py): on his
+        bat's ceiling and WAR now and his glove and run at potential, at the
+        fit's reference age and level. 1 for a pitcher, without the fit, and
+        for a catcher."""
+        if hitter is None or self.plays is None:
+            return 1.0
+        # read at the fit's reference age and level (age and level 0): at his
+        # own, an older player in AAA has so small a chance that any glove or
+        # speed is a big ratio
+        b = self.plays.block
+        cols = {"bat": hitter.bat, "bat now": float(np.clip(developed, *b["clip"])), "glove": hitter.glove,
+                "run": hitter.run, playing_time.CATCHER: float(hitter.catcher)}
+        return self.plays.factor(cols, hitter.catcher)
 
     def bridge_value(self, player, ceiling, developed, group, age, hitter=None) -> float:
         """The draft board's value of him (2026-11-21, plans/draft-glove-plan.md),
@@ -123,12 +162,11 @@ class ProspectOdds:
         on both boards."""
         odds_ceiling = ceiling
         if hitter is not None:
-            bat, glove, run, catcher = hitter
-            odds_ceiling = ceiling - (1 - draft_odds.GLOVE_WEIGHT) * max(glove, 0.0)
+            odds_ceiling = ceiling - (1 - draft_odds.GLOVE_WEIGHT) * max(hitter.glove, 0.0)
         cols = self.draft.mean_columns(player, odds_ceiling, developed, group, age)
         value = self.draft.expected(cols, age)
         if hitter is not None:
-            value *= self.draft.playing(bat, developed, glove, run, age, catcher)
+            value *= self.draft.playing(hitter.bat, developed, hitter.glove, hitter.run, age, hitter.catcher)
         return draft_odds.realistic(value, ceiling)
 
     @staticmethod
@@ -148,14 +186,19 @@ class ProspectOdds:
         upside the board adds on top. `switch` is the switch hitter's (label,
         factor, note), applied last."""
         parts = self.parts(player, ceiling, readiness, developed, group, age, hitter)
-        now, gap = parts["now"], parts["gap"]
+        now, gap, ceiling = parts["now"], parts["gap"], parts["odds_ceiling"]
         lines = []
+        if parts["glove"] > 0:
+            lines.append(("add", "Glove", -parts["glove"], f"counts {draft_odds.GLOVE_WEIGHT:.0%}",
+                          f"{hitter.glove:.1f} WAR"))
         if now > ceiling:
             lines.append(("add", "Past his ceiling", now - ceiling, None, None))
         if now > 0:
             lines.append(("add", "WAR now", (parts["keep"] - 1) * now, f"keeps {parts['keep']:.0%}", f"{now:.1f} WAR"))
         if gap > 0:
             lines.append(("add", "Gap", (parts["close"] - 1) * gap, f"closes {parts['close']:.0%}", f"{gap:.1f} WAR"))
+        if parts["plays"] != 1:
+            lines.append(("scale", "Playing time", parts["plays"], None, None))
         expected = self.expected(parts)
         if parts["bridged"]:
             lines.append(("add", "Runway", expected - parts["prospect"], f"age {age:.1f}", None))

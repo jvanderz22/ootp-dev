@@ -473,7 +473,8 @@ class Value(BatchStage):
         points = SCALE * ceiling
         odds_ceiling = ceiling
         if self.prospects:
-            hitter = (bat, glove, run, side.role == "C") if group == "hitter" else None
+            hitter = (prospect_odds.Hitter(bat, glove, run, side.role == "C", companion.glove or 0.0, player.level)
+                      if group == "hitter" else None)
             lines, expected, parts = self.odds.reaching(player, ceiling, readiness, developed, group, age, switch, hitter)
         else:
             static = (1 - draft_odds.GLOVE_WEIGHT) * max(glove, 0.0)

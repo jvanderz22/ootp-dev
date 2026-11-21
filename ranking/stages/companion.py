@@ -21,6 +21,7 @@ from scoring.runtime_components import runtime_components_scope
 # a hitter's bat on the ledger (ranking/stages/value.py): what develops - his
 # glove and legs have no potential ratings
 BAT_LINES = ("batting", "platoon")
+GLOVE_LINES = ("fielding", "utility")
 
 
 class CompanionValue(NamedTuple):
@@ -36,6 +37,9 @@ class CompanionValue(NamedTuple):
     # his bat's WAR alone (BAT_LINES): how developed a hitter is, as the
     # prospect odds read it
     bat: float = None
+    # his glove's WAR (GLOVE_LINES): the prospect odds count it at
+    # GLOVE_WEIGHT in his WAR now (plans/draft-glove-plan.md)
+    glove: float = None
 
 
 class Companion(BatchStage):
@@ -63,8 +67,10 @@ class Companion(BatchStage):
             model = sum(line.delta for line in ledger.lines if line.stage == MODEL and ledger.counted(line))
             sides = {side: float(sum(line.delta for line in ledger.lines if line.stage == MODEL and line.side == side)
                                  / value.DISPLAY_SCALE) for side in (BATTING, PITCHING)}
-            bat = sum(line.delta for line in ledger.lines
-                      if line.stage == MODEL and line.side == BATTING and line.label in BAT_LINES)
+            bat, glove = (sum(line.delta for line in ledger.lines
+                              if line.stage == MODEL and line.side == BATTING and line.label in labels)
+                          for labels in (BAT_LINES, GLOVE_LINES))
             state.companions[self.key] = CompanionValue(
                 float((shadow.value - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE), ledger.role,
-                float((model - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE), sides, float(bat / value.DISPLAY_SCALE))
+                float((model - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE), sides, float(bat / value.DISPLAY_SCALE),
+                float(glove / value.DISPLAY_SCALE))

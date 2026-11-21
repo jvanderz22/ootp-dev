@@ -262,6 +262,18 @@ the top 25, about 30–35 pitchers in the top 100).
 1. The prospect table gains each prospect's potential and current lines
    split into bat, glove and run, and his MLB WAR and PA after the export.
    *Done, with the shared playing-time model (6f2a9cc).*
-2. The bridge reads the draft board's value.
-3. Fit the prospect chance he plays, and put the factor on the board.
-4. Checks and movers, for your review.
+2. The bridge reads the draft board's value. *Done (1c84f00).*
+3. Fit the prospect chance he plays, and put the factor on the board, with
+   the glove at half in his ceiling and WAR now. *Done.* The fit, on the
+   two seasons after the export (2038–40 exports, 5,304 hitter rows): bat
+   +0.43, bat now +0.87, glove +0.71, run +0.81, catcher −0.34, level +0.73,
+   a small age curve. The factor is read at 21 in A ball: at his own age and
+   level, a 27-year-old in AAA has so small a chance that any glove reads as
+   a big ratio (Kennedy, 3B, 29: 60 → 20).
+4. Checks and movers, for your review. Held out on MLB WAR after the
+   export, the board's value: rho 0.450 → 0.438, top 25 5.56 → 5.50, top
+   50 4.20 → 4.27, top 100 3.39 → 3.36; glove-first realized 0.83 → 1.00
+   of predicted, bat only 1.04 → 1.12, catchers 0.42 → 0.56. On the yfmlb
+   snapshot: Mass 48 → 17, Sandoval 95 → 18, Maruri 129 → 45; 1B and corner
+   bats fall (Lock 41 → 123, Caudill 25 → 96). 7 starters in the top 25,
+   44 pitchers in the top 100 (43 before).
