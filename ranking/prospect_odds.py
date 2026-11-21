@@ -97,11 +97,13 @@ class ProspectOdds:
         lo, hi = self.a["bridge"]["ages"]
         return float(np.clip((hi - age) / (hi - lo), 0.0, 1.0))
 
-    def parts(self, player, ceiling, readiness, developed, group, age) -> dict:
+    def parts(self, player, ceiling, readiness, developed, group, age, hitter=None) -> dict:
         """The expectation's parts: his WAR now and the odds he keeps it, the
         gap and the odds he closes it (at 21, then at his age), this fit's
         expectation, and the draft odds' share and theirs (the teen bridge,
-        reading him as developed as this fit does)."""
+        reading him as developed as this fit does, and as the draft board
+        values him: `bridge_value`). `hitter` is a hitter's (bat, glove, run)
+        WAR at potential and whether he's a catcher."""
         now = max(readiness, 0.0)
         gap = max(ceiling - now, 0.0)
         keep = self._odds("keep", self.keep_columns(readiness, age))
@@ -110,9 +112,24 @@ class ProspectOdds:
         out = {"now": now, "keep": keep, "gap": gap, "close_21": at_21, "close": close,
                "prospect": keep * now + close * gap, "held": keep * now, "bridged": self.bridged(age), "draft": None}
         if out["bridged"] > 0:
-            cols = self.draft.mean_columns(player, ceiling, developed, group, age)
-            out["draft"] = self.draft.expected(cols, age)
+            out["draft"] = self.bridge_value(player, ceiling, developed, group, age, hitter)
         return out
+
+    def bridge_value(self, player, ceiling, developed, group, age, hitter=None) -> float:
+        """The draft board's value of him (2026-11-21, plans/draft-glove-plan.md),
+        before the lines both boards keep on top and its ranking judgments:
+        the odds on his ceiling with a hitter's glove at GLOVE_WEIGHT, the
+        draft playing-time factor and the share cap - so a teen reads the same
+        on both boards."""
+        odds_ceiling = ceiling
+        if hitter is not None:
+            bat, glove, run, catcher = hitter
+            odds_ceiling = ceiling - (1 - draft_odds.GLOVE_WEIGHT) * max(glove, 0.0)
+        cols = self.draft.mean_columns(player, odds_ceiling, developed, group, age)
+        value = self.draft.expected(cols, age)
+        if hitter is not None:
+            value *= self.draft.playing(bat, developed, glove, run, age, catcher)
+        return draft_odds.realistic(value, ceiling)
 
     @staticmethod
     def expected(parts) -> float:
@@ -124,13 +141,13 @@ class ProspectOdds:
         to add to the WAR now he keeps, never below none."""
         return (self.a["upside"] - 1) * max(self.expected(parts) - parts["held"], 0.0)
 
-    def reaching(self, player, ceiling, readiness, developed, group, age, switch=None) -> tuple:
+    def reaching(self, player, ceiling, readiness, developed, group, age, switch=None, hitter=None) -> tuple:
         """(ledger lines, value, parts) for one side: lines are (kind, label,
         value, stat, note), kind "add" (value in WAR) or "scale" (value a
         factor), from his ceiling to what he's expected to realize, then the
         upside the board adds on top. `switch` is the switch hitter's (label,
         factor, note), applied last."""
-        parts = self.parts(player, ceiling, readiness, developed, group, age)
+        parts = self.parts(player, ceiling, readiness, developed, group, age, hitter)
         now, gap = parts["now"], parts["gap"]
         lines = []
         if now > ceiling:

@@ -228,40 +228,40 @@ What carries over, and what doesn't:
   ceiling, so `GLOVE_WEIGHT` doesn't reach teen prospects on this board, and
   a glove-first teen is valued higher here than on the draft board.
 
-**The change:** split his WAR now the same way.
+**The data (2026-11-21):** the same miss as the draft board's. Settled
+prospect exports (2038–41, 6,496 rows), held out, hitters' realized over
+predicted by glove share:
 
-    E = keep × bat now + close × (bat ceiling − bat now) + P(he plays) × glove
+| | Bat only | 0–25% | 25–45% | 45%+ | Catchers |
+|---|---|---|---|---|---|
+| Value now (what the fit trains on) | 0.92 | 1.05 | 1.14 | 0.93 | 0.74 |
+| MLB WAR after the export | 1.17 | 0.97 | 1.13 | 0.71 | 0.38 |
 
-- **keep and close** read the bat alone, refit on the bat's part of the
-  outcome.
-- **The chance he plays** is fit on prospects' MLB playing time. It uses the
-  draft fit's terms plus what a prospect has that a draftee doesn't: his
-  level, his age for that level, and his bat now. A glove-first catcher in
-  AAA at 24 is a different bet from one in A ball at 20.
-- **Run** goes wherever open question 1 lands for draftees.
-- **The bridge** reads the draft board's split expectation, so a teen's
-  glove is valued the same way on both boards.
-- **The upside weight** stays on the bat's gap. A glove adds no upside.
+**The change (2026-11-21, revised):** not the additive split, which failed
+on the draft board. What shipped there carries over, through one shared
+model so a change lands on both boards (`ranking/playing_time.py`, its fit
+`ranking/fitting/playing_time.py`):
 
-**The data:** the 2038–41 exports settle only prospects 21 and older, so the
-chance he plays is fit on them and the teens get it through the bridge. MLB
-PA come from the league stats (2038–42); a 2038 export's 21-year-old has
-four seasons, a 2041 one has one. The prospect fit's years-to-outcome
-column takes that in, as it does for keep and close.
+1. **The bridge reads the draft board's value**: the glove at half in the
+   odds' ceiling, the playing-time factor and the share cap, before the
+   pitcher balance and Upside (the prospect board has its own upside ×2).
+   A glove-first teen reads the same on both boards.
+2. **A prospect playing-time factor**, fit on prospects' share of a 600-PA
+   season in the seasons after the export, on the draft terms plus his
+   level. It's on his whole value, at half strength, capped at ×1.5, none
+   for catchers, as on the draft board.
+3. **The upside weight** stays on what he's expected to add by developing.
 
 **Checks:** held out by player, as the prospect fit is now; realized over
 predicted flat by glove share on MLB WAR; the named players (Myers, Boyer,
 Maddux, Schmidt, Mass, Montano); and the pitcher mix (at least 5 starters in
 the top 25, about 30–35 pitchers in the top 100).
 
-**Order:** after the draft board's steps 1–3, since the bridge needs the
-draft board's split:
+**Order:**
 
 1. The prospect table gains each prospect's potential and current lines
-   split into bat, glove and run, and his MLB PA after the export.
-2. Fit the chance he plays, and refit keep and close on the bat.
-3. The stage and the bridge; review the movers with you.
-
-Until then, an open question: should the interim `GLOVE_WEIGHT` also apply
-to the teen bridge, so the two boards agree on glove-first teens? It's a
-small change, the bridge's ceiling only. *Recommend yes.*
+   split into bat, glove and run, and his MLB WAR and PA after the export.
+   *Done, with the shared playing-time model (6f2a9cc).*
+2. The bridge reads the draft board's value.
+3. Fit the prospect chance he plays, and put the factor on the board.
+4. Checks and movers, for your review.

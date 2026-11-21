@@ -82,8 +82,24 @@ def test_the_bridge_reads_a_hitter_on_his_bat(players):
     odds, player = prospect_odds.load(), players[0]
     parts = odds.parts(player, 4.0, 0.5, -2.0, "hitter", 19.0)
     on_bat = odds.draft.expected(odds.draft.mean_columns(player, 4.0, -2.0, "hitter", 19.0), 19.0)
-    assert parts["draft"] == pytest.approx(on_bat)
+    assert parts["draft"] == pytest.approx(draft_odds.realistic(on_bat, 4.0))
     assert parts["draft"] < odds.parts(player, 4.0, 0.5, 0.5, "hitter", 19.0)["draft"]
+
+
+def test_the_bridge_values_a_teen_as_the_draft_board_does(players):
+    # 2026-11-21: his glove at half in the odds' ceiling, the draft
+    # playing-time factor and the share cap, so a glove-first teen reads the
+    # same on both boards
+    odds, player = prospect_odds.load(), players[0]
+    bat, glove, run = 2.0, 1.5, 0.3
+    parts = odds.parts(player, 4.0, 0.5, -2.0, "hitter", 19.0, (bat, glove, run, False))
+    ceiling = 4.0 - (1 - draft_odds.GLOVE_WEIGHT) * glove
+    draft = odds.draft.expected(odds.draft.mean_columns(player, ceiling, -2.0, "hitter", 19.0), 19.0)
+    draft *= odds.draft.playing(bat, -2.0, glove, run, 19.0)
+    assert parts["draft"] == pytest.approx(draft_odds.realistic(draft, 4.0))
+    # a catcher's bridge takes no playing time
+    catcher = odds.parts(player, 4.0, 0.5, -2.0, "hitter", 19.0, (bat, glove, run, True))["draft"]
+    assert catcher == pytest.approx(draft_odds.realistic(draft / odds.draft.playing(bat, -2.0, glove, run, 19.0), 4.0))
 
 
 def test_the_share_he_closes_follows_the_age_curve(players):
