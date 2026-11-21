@@ -98,6 +98,12 @@ field depends on his glove. A good glove makes a weaker bat playable, and a
   like Nakasone (89% of 2.62; WBF 2122 6 → 11). With it, on MLB WAR to 26:
   rho 0.320, top 25 4.86, top 50 3.65, top 100 2.48; pitchers 48/50/46/50/55%
   (ramp 0.25).
+- **An upside weight** (2026-11-21, you; open question 2): the board ranks
+  on value^0.85 × ceiling^0.15, as an "Upside" line over a typical top-100
+  draftee's ratio (ceiling 3.4× his value) so the top keeps its scale. WBF
+  2122: Figueroa 8 → 5, Nakasone 11 → 15. On MLB WAR to 26: rho 0.321, top
+  25 4.71, top 50 3.61, top 100 2.41 (0.1 raised the top 10, 6.06 → 6.22).
+  Tracked with `print_draft_watch.py` (draft_watchlist.csv).
 
 Held out one class at a time, on MLB WAR to 26:
 

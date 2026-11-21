@@ -1,0 +1,227 @@
+{
+ "WBF 2122.csv:49490": {
+  "rank": 1,
+  "value": 3.83,
+  "ceiling": 6.26,
+  "range": [
+   0.0,
+   7.57
+  ],
+  "lines": {
+   "Base rate": "67%",
+   "Readiness": "x2.12",
+   "Polish": "x1.18",
+   "Intelligence": "x1.04",
+   "Breakout": "1%",
+   "velocity": "x1.10",
+   "pitcher balance": "x1.36"
+  }
+ },
+ "WBF 2122.csv:53569": {
+  "rank": 2,
+  "value": 2.41,
+  "ceiling": 6.45,
+  "range": [
+   0.19,
+   5.57
+  ],
+  "lines": {
+   "Glove": "counts 50%",
+   "Base rate": "75%",
+   "Readiness": "x0.58",
+   "Polish": "x1.00",
+   "Work ethic": "x1.13",
+   "Intelligence": "x0.91",
+   "Breakout": "3%",
+   "Playing time": "x1.07"
+  }
+ },
+ "WBF 2122.csv:48223": {
+  "rank": 4,
+  "value": 1.87,
+  "ceiling": 4.88,
+  "range": [
+   0.0,
+   4.22
+  ],
+  "lines": {
+   "Base rate": "72%",
+   "Readiness": "x1.44",
+   "Polish": "x1.17",
+   "Breakout": "2%",
+   "velocity": "x1.05",
+   "pitcher balance": "x1.13"
+  }
+ },
+ "WBF 2122.csv:50148": {
+  "rank": 5,
+  "value": 1.78,
+  "ceiling": 7.65,
+  "range": [
+   0.0,
+   3.4
+  ],
+  "lines": {
+   "Base rate": "87%",
+   "Readiness": "x0.70",
+   "Work ethic": "x1.13",
+   "Breakout": "3%",
+   "velocity": "x1.15",
+   "pitcher balance": "x1.10"
+  }
+ },
+ "WBF 2122.csv:52343": {
+  "rank": 10,
+  "value": 1.64,
+  "ceiling": 4.87,
+  "range": [
+   0.0,
+   3.81
+  ],
+  "lines": {
+   "Base rate": "72%",
+   "Readiness": "x0.47",
+   "Work ethic": "x1.14",
+   "Intelligence": "x1.04",
+   "Breakout": "3%",
+   "Playing time": "x1.19"
+  }
+ },
+ "WBF 2122.csv:52263": {
+  "rank": 15,
+  "value": 1.42,
+  "ceiling": 2.62,
+  "range": [
+   0.05,
+   3.14
+  ],
+  "lines": {
+   "Glove": "counts 50%",
+   "Base rate": "44%",
+   "Readiness": "x0.66",
+   "Polish": "x1.06",
+   "Work ethic": "x1.42",
+   "Intelligence": "x1.11",
+   "Breakout": "2%",
+   "Playing time": "x1.24"
+  }
+ },
+ "WBF 2122.csv:48125": {
+  "rank": 16,
+  "value": 1.4,
+  "ceiling": 3.07,
+  "range": [
+   0.0,
+   3.65
+  ],
+  "lines": {
+   "Glove": "counts 50%",
+   "Base rate": "54%",
+   "Readiness": "x0.69",
+   "Polish": "x1.12",
+   "Work ethic": "x1.41",
+   "Intelligence": "x1.11",
+   "Breakout": "2%",
+   "Playing time": "x1.50"
+  }
+ },
+ "WBF 2122.csv:53846": {
+  "rank": 11,
+  "value": 1.46,
+  "ceiling": 4.39,
+  "range": [
+   0.0,
+   3.41
+  ],
+  "lines": {
+   "Base rate": "71%",
+   "Readiness": "x0.48",
+   "Work ethic": "x1.19",
+   "Intelligence": "x1.05",
+   "Breakout": "3%",
+   "Playing time": "x0.90"
+  }
+ },
+ "WBF 2122.csv:50714": {
+  "rank": 17,
+  "value": 1.39,
+  "ceiling": 4.44,
+  "range": [
+   0.0,
+   3.57
+  ],
+  "lines": {
+   "Glove": "counts 50%",
+   "Base rate": "68%",
+   "Readiness": "x0.73",
+   "Polish": "x1.14",
+   "Work ethic": "x1.30",
+   "Breakout": "1%"
+  }
+ },
+ "WBF 2122.csv:53827": {
+  "rank": 28,
+  "value": 1.01,
+  "ceiling": 2.41,
+  "range": [
+   0.0,
+   2.77
+  ],
+  "lines": {
+   "Glove": "counts 50%",
+   "Base rate": "52%",
+   "Readiness": "x0.40",
+   "Work ethic": "x1.42",
+   "Breakout": "2%",
+   "Playing time": "x1.50"
+  }
+ },
+ "WBF 2122.csv:50568": {
+  "rank": 30,
+  "value": 1.0,
+  "ceiling": 3.54,
+  "range": [
+   0.0,
+   2.67
+  ],
+  "lines": {
+   "Glove": "counts 50%",
+   "Base rate": "68%",
+   "Readiness": "x0.67",
+   "Polish": "x1.11",
+   "Intelligence": "x1.09",
+   "Breakout": "1%"
+  }
+ },
+ "WBF 2122.csv:53773": {
+  "rank": 42,
+  "value": 0.85,
+  "ceiling": 2.95,
+  "range": [
+   0.0,
+   2.26
+  ],
+  "lines": {
+   "Glove": "counts 50%",
+   "Base rate": "60%",
+   "Readiness": "x0.47",
+   "Work ethic": "x1.42",
+   "Breakout": "3%"
+  }
+ },
+ "WBF 2122.csv:53658": {
+  "rank": 59,
+  "value": 0.7,
+  "ceiling": 3.3,
+  "range": [
+   0.0,
+   1.91
+  ],
+  "lines": {
+   "Glove": "counts 50%",
+   "Base rate": "66%",
+   "Readiness": "x0.39",
+   "Breakout": "2%"
+  }
+ }
+}

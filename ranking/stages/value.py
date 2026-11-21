@@ -510,6 +510,10 @@ class Value(BatchStage):
             balance = self.odds.balance if self.prospects else self.odds.pitcher_balance(points / SCALE)
             if balance != 1:
                 points = ledger.scale(MODIFIERS, "pitcher balance", points, balance, side_name)
+        if not self.prospects and "upside" in self.odds.a:
+            lift = draft_odds.upside(points / SCALE, ceiling, self.odds.a["upside"]["reference"])
+            if lift != 1:
+                points = ledger.scale(MODIFIERS, "Upside", points, lift, side_name, f"{ceiling:.1f} WAR ceiling")
         modified = points / SCALE
         side.score = points
         if self.prospects:

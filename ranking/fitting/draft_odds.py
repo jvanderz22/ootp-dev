@@ -535,7 +535,8 @@ def held_out(d: pd.DataFrame, pool: pd.DataFrame, outcome: str, balance: tuple, 
         test = test[test[f"{outcome}_settled"]]
         rest = pool[pool["class"] != year]
         model, plays_w, reference = fit(train, "a", reliever), fit_plays(rest), plays_reference(rest)
-        test["fit"] = predicted(test, model, plays_w, reference, balance)
+        test["ev"] = predicted(test, model, plays_w, reference, balance)
+        test["fit"] = ranked(test, test.ev.values)
         y = test[outcome].clip(lower=0)
         hitters = test.group == "hitter"
         for key, sub in (("board", test), ("fit", test), ("fit, hitters", test[hitters])):
@@ -552,6 +553,7 @@ def glove_check(preds: pd.DataFrame, outcome: str) -> pd.DataFrame:
     catchers, the predictions scaled to the hitters' total (the ship check:
     flat across the bands, catchers near 1)."""
     h = preds[preds.group == "hitter"]
+    h = h.assign(fit=h.ev) if "ev" in h else h
     y = h[outcome].clip(lower=0)
     scale = y.sum() / h.fit.sum()
     groups = {str(band): x.index for band, x in h.groupby(glove_bands(h), observed=True)}
@@ -577,21 +579,28 @@ def side_balance(d: pd.DataFrame, pred: pd.Series) -> float:
     return float(np.sqrt(lo * hi))
 
 
+def ranked(d: pd.DataFrame, value, reference: float = 1.0) -> np.ndarray:
+    """What the board ranks on: his value with the upside weight on his
+    (whole) ceiling (board_odds.upside)."""
+    return np.asarray(value) * board_odds.upside(value, d.war_pot.values, reference)
+
+
 def side_ramp(d: pd.DataFrame, pred: pd.Series) -> tuple:
     """(factor, ramp): the pitcher balance with a ramp by value that brings
-    every bucket nearest 50% (least squares over the buckets), the factor
-    set at each ramp so the buckets average 50%. The playing-time factor
-    spreads hitters' values, so one factor left the top 25 hitter-heavy
-    (38% pitchers) and the 101-400 buckets pitcher-heavy."""
+    every bucket nearest 50% (least squares over the buckets) as the board
+    ranks (`ranked`), the factor set at each ramp so the buckets average
+    50%. The playing-time factor spreads hitters' values, so one factor left
+    the top 25 hitter-heavy (38% pitchers) and the 101-400 buckets
+    pitcher-heavy."""
     best = None
     for ramp in RAMPS:
         lo, hi = 0.2, 5.0
         for _ in range(40):
             k = np.sqrt(lo * hi)
-            shares = pitcher_shares(d.assign(x=balanced(d, pred, k, ramp)), "x")
+            shares = pitcher_shares(d.assign(x=ranked(d, balanced(d, pred, k, ramp))), "x")
             lo, hi = (k, hi) if np.mean(shares) < 0.5 else (lo, k)
         k = float(np.sqrt(lo * hi))
-        miss = float(np.sum((np.array(pitcher_shares(d.assign(x=balanced(d, pred, k, ramp)), "x")) - 0.5) ** 2))
+        miss = float(np.sum((np.array(pitcher_shares(d.assign(x=ranked(d, balanced(d, pred, k, ramp))), "x")) - 0.5) ** 2))
         if best is None or miss < best[0]:
             best = (miss, k, float(ramp))
     return best[1], best[2]
@@ -912,12 +921,17 @@ def main(argv=None):
 
     pred = predicted(able, model_a, plays_w, reference)
     balance = side_ramp(able, pd.Series(pred, index=able.index))
+    final = balanced(able, pred, *balance)
+    # a typical top-100 draftee's ceiling over his value, so the top of the
+    # board keeps its scale (the 1-100 draft score's anchors)
+    top = (able.assign(x=final).groupby("class").x.rank(ascending=False) <= 100) & (final > 0)
+    upside_reference = float(np.median(able.war_pot.clip(lower=board_odds.MIN_SHARE_CEILING)[top] / final[top]))
     print(f"\npitcher share by rank within class, classes {able['class'].min()}-{able['class'].max()}:")
     shares = {"board": pitcher_shares(able, "board"),
               "fit": pitcher_shares(able.assign(x=pred), "x"),
               "fit, no judgment lines": pitcher_shares(able.assign(x=model_a.predict(design(odds_view(able)).values)), "x"),
               "fit, one factor": pitcher_shares(able.assign(x=balanced(able, pred, side_balance(able, pd.Series(pred, index=able.index)))), "x"),
-              "fit, balanced": pitcher_shares(able.assign(x=balanced(able, pred, *balance)), "x")}
+              "fit, balanced": pitcher_shares(able.assign(x=ranked(able, final)), "x")}
     for label, s in shares.items():
         print(_shares_line(label if label != "fit, balanced" else f"fit, pitchers x{balance[0]:.2f} ramp {balance[1]:g}", s))
 
@@ -966,6 +980,9 @@ def main(argv=None):
         # x (his value / war) ^ ramp on top, his value as the board has it
         # before the balance
         "pitcher_ramp": {"ramp": balance[1], "war": RAMP_WAR},
+        # the board ranks on value x upside: (ceiling / value / reference) ^
+        # weight, reference a typical draftee's ceiling over his value
+        "upside": {"weight": board_odds.UPSIDE_WEIGHT, "reference": round(upside_reference, 4)},
         # a hitter's glove and run at potential count times the chance he
         # plays: a logistic of his share of a regular's season on these
         # columns (plays_design), the bat's ceiling and WAR now unlogged

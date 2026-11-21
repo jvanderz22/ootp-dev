@@ -78,6 +78,24 @@ def realistic(value, ceiling):
 
 
 MIN_SHARE_CEILING = 0.5
+# judgment (2026-11-21, you): the board ranks on his value with a little
+# weight on his ceiling - value^(1-w) x ceiling^w - so a high ceiling counts
+# for something past what it's expected to return (WBF 2122's Figueroa, POT
+# 80 at 17, 8 -> 5; Nakasone, a modest bat, 11 -> 14). Held out on MLB WAR
+# to 26: top 10 rose (6.06 -> 6.22 at 0.1), the rest slipped a little (top
+# 25 4.86 -> 4.81 at 0.1, 4.61 at 0.2)
+UPSIDE_WEIGHT = 0.15
+
+
+def upside(value, ceiling, reference=1.0):
+    """The "Upside" factor on a value: (ceiling / value / `reference`) ^
+    UPSIDE_WEIGHT, the ceiling at least MIN_SHARE_CEILING, so his value comes
+    to value^(1-w) x ceiling^w over `reference`^w; `reference` is a typical
+    draftee's ceiling over his value, so he stays near x1. 1 at or below 0."""
+    v = np.asarray(value, dtype=float)
+    ratio = np.maximum(ceiling, MIN_SHARE_CEILING) / np.maximum(v, 1e-9) / reference
+    out = np.where(v > 0, ratio ** UPSIDE_WEIGHT, 1.0)
+    return float(out) if np.ndim(out) == 0 else out
 # the legacy modifiers the odds replace on the draft board, and the two
 # judgment lines replaced here: velocity by `velocity_factor`, Stuff by nothing
 REPLACES = (

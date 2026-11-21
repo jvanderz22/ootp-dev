@@ -268,3 +268,18 @@ def test_the_cap_is_folded_into_the_base_rate():
     assert run(moved) == pytest.approx(draft_odds.realistic(run(steps), 2.62))
     assert [s[3] for s in moved[1:]] == [s[3] for s in steps[1:]]
     assert moved[0][3] < steps[0][3]
+
+
+def test_the_board_ranks_on_value_with_a_little_weight_on_the_ceiling(ranked):
+    # 2026-11-21: value^(1-w) x ceiling^w, over a typical draftee's ratio; a
+    # higher ceiling at the same value ranks higher, and the line is last
+    odds = draft_odds.load()
+    ref = odds.a["upside"]["reference"]
+    assert odds.a["upside"]["weight"] == draft_odds.UPSIDE_WEIGHT
+    assert draft_odds.upside(1.0, ref, ref) == pytest.approx(1.0)
+    assert 1.5 * draft_odds.upside(1.5, 6.0, ref) > 1.5 * draft_odds.upside(1.5, 3.0, ref)
+    assert draft_odds.upside(1.5, 6.0, ref) * 1.5 == pytest.approx(1.5 ** 0.85 * 6.0 ** 0.15 / ref ** 0.15)
+    for r in ranked:
+        lines = [l for l in r.ledger.lines if r.ledger.counted(l) and l.stage in (DEVELOPMENT, MODIFIERS)]
+        if any(l.label == "Upside" for l in lines):
+            assert lines[-1].label == "Upside"
