@@ -38,7 +38,7 @@ from datetime import date
 from functools import lru_cache
 
 import numpy as np
-from scipy import stats
+from scipy import special, stats
 
 from ranking import development
 from ranking.hitter_talent import ARTIFACTS_DIR
@@ -118,6 +118,70 @@ MAKEUP_LABELS = {
 # the share of his E[v] the rest keeps at least, where outgrowing is worth
 # nearly all of it
 REST_FLOOR = 0.05
+# how far past his ceiling the card lets a draftee land without outgrowing
+# it (WAR; 2026-11-21). Cut off at the ceiling itself, the range ran tight
+# (13% of past draftees above P90, 12% of the top 100, against 10%); at 0.5
+# it's as calibrated as before (12%, 9%) and a modest ceiling bounds it
+SHORT_REACH = 0.5
+
+
+def _truncated_theta(mean, k, bound):
+    """The gamma scale whose shape-`k` gamma, cut off at `bound`, has mean
+    `mean` (arrays or numbers). Its mean rises with the scale toward
+    bound x k / (k + 1); a mean past that takes the largest scale tried."""
+    mean, k, bound = np.broadcast_arrays(np.asarray(mean, float), np.asarray(k, float), np.asarray(bound, float))
+    lo, hi = np.full(mean.shape, 1e-6), np.maximum(bound, 1e-6) * 1e3
+
+    def cut_mean(theta):
+        return k * theta * special.gammainc(k + 1, bound / theta) / np.maximum(special.gammainc(k, bound / theta), 1e-300)
+    for _ in range(40):
+        mid = np.sqrt(lo * hi)
+        low = cut_mean(mid) < mean
+        lo, hi = np.where(low, mid, lo), np.where(low, hi, mid)
+    return np.sqrt(lo * hi)
+
+
+def card(expected, q, p, k, ceiling, margin, excess) -> dict:
+    """The card's three outcomes (2026-11-21), in WAR: he outgrows his ceiling
+    (chance `q`: past it by `margin` and then a gamma, `excess` its (shape,
+    scale)); or he doesn't, and busts (0, chance 1 - `p`) or lands short of
+    it - a shape-`k` gamma cut off SHORT_REACH past his `ceiling`, its mean
+    set so the whole comes to `expected`. Arrays or numbers; read with `card_cdf` and
+    `card_quantile`."""
+    shape, scale = excess
+    expected, q, p, k, ceiling = (np.asarray(x, float) for x in (expected, q, p, k, ceiling))
+    bound = np.maximum(ceiling, MIN_SHARE_CEILING) + SHORT_REACH
+    worth = np.maximum(ceiling, MIN_SHARE_CEILING) + margin + shape * scale
+    rest = np.maximum((expected - q * worth) / (1 - q), REST_FLOOR * expected)
+    # a value near his ceiling can't come from a spread cut off there and his
+    # bust chance both: the most a cut-off gamma averages is bound x k / (k +
+    # 1), so past that he busts less, as often as the mean needs
+    most = 0.98 * bound * k / (k + 1)
+    p = np.clip(np.maximum(p, rest / most), 0.0, 1.0)
+    theta = _truncated_theta(np.minimum(rest / p, most), k, bound)
+    return {"q": q, "p": p, "k": k, "theta": theta, "bound": bound, "norm": special.gammainc(k, bound / theta),
+            "floor": np.maximum(ceiling, MIN_SHARE_CEILING) + margin, "excess": (shape, scale)}
+
+
+def card_cdf(v, c: dict):
+    """P(his value <= `v`) on `card`'s outcomes."""
+    v = np.asarray(v, float)
+    short = (1 - c["p"]) + c["p"] * np.minimum(special.gammainc(c["k"], np.maximum(v, 0) / c["theta"]) / c["norm"], 1.0)
+    grown = special.gammainc(c["excess"][0], np.maximum(v - c["floor"], 0) / c["excess"][1])
+    return np.where(v < 0, 0.0, (1 - c["q"]) * short + c["q"] * grown)
+
+
+def card_quantile(level, c: dict, top=40.0):
+    """The `level` quantile of `card`'s outcomes, in WAR (0 when the bust
+    alone reaches it)."""
+    lo = np.zeros(np.shape(c["theta"]))
+    hi = lo + top
+    for _ in range(32):
+        mid = (lo + hi) / 2
+        below = card_cdf(mid, c) < level
+        lo, hi = np.where(below, mid, lo), np.where(below, hi, mid)
+    out = np.where(card_cdf(np.zeros_like(lo), c) >= level, 0.0, hi)
+    return float(out) if np.ndim(out) == 0 else out
 
 
 def velocity_factor(velocity, knuckleball=False) -> float:
@@ -394,37 +458,20 @@ class DraftOdds:
     def distribution(self, cols, growth_cols, ceiling, group, expected, scale, age) -> dict:
         """The likely range (P10, P90), the chance he becomes a regular and the
         chance he outgrows his ceiling, for a side whose odds come to
-        `expected` WAR and whose value is `scale` x that."""
+        `expected` WAR and whose value before the board's ranking judgments
+        (the pitcher balance, Upside) is `scale` x that, with his whole
+        `ceiling`. In real WAR (2026-11-21): short of outgrowing he lands at
+        most SHORT_REACH past his ceiling, and outgrowing is past it by the
+        margin."""
         q = self.outgrows(growth_cols)
         coef = self.sticks["coef"]
         z = self.sticks["intercept"] + sum(c * cols[n] for n, c in coef.items())
         at = lambda label: (coef[f"age {label}"], coef[f"age {label} x potential"])   # noqa: E731
         z += self.polish(cols, age, self.penalty(cols["log potential"], at))
         p = 1 / (1 + np.exp(-z))
-        rest = max((expected - q * self.outgrown_worth(ceiling)) / (1 - q), REST_FLOOR * expected)
-        k = self.shape[group]
-        theta = rest / p / k
-        floor = ceiling + self.margin
-        shape, excess = self.excess
-
-        def cdf(v):   # in the odds' WAR, before `scale`
-            if v < 0:
-                return 0.0
-            short = (1 - p) + p * stats.gamma.cdf(v, k, scale=theta)
-            return (1 - q) * short + q * stats.gamma.cdf(v - floor, shape, scale=excess)
-
-        def quantile(level):
-            if cdf(0.0) >= level:
-                return 0.0
-            lo, hi = 0.0, max(40.0, floor + 20 * excess)
-            for _ in range(50):
-                mid = (lo + hi) / 2
-                lo, hi = (mid, hi) if cdf(mid) < level else (lo, mid)
-            return hi
-
-        regular = self.regular[group] / scale if scale > 0 else np.inf
-        return {"p10": quantile(0.1) * scale, "p90": quantile(0.9) * scale,
-                "regular": 1 - cdf(regular), "outgrows": q}
+        c = card(expected * scale, q, p, self.shape[group], ceiling, self.margin, self.excess)
+        return {"p10": card_quantile(0.1, c), "p90": card_quantile(0.9, c),
+                "regular": float(1 - card_cdf(self.regular[group], c)), "outgrows": q}
 
 
 @lru_cache(maxsize=None)

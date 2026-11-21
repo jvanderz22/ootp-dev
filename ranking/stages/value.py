@@ -148,7 +148,7 @@ class Value(BatchStage):
         if self.prospects:   # no distribution fit yet (plans/prospect-odds-plan.md, step 4)
             state.odds = {"ceiling": odds["ceiling"]}
             return
-        out = self.odds.distribution(odds["columns"], odds["growth"], odds["odds_ceiling"], odds["group"],
+        out = self.odds.distribution(odds["columns"], odds["growth"], odds["ceiling"], odds["group"],
                                      odds["expected"], odds["scale"], odds["age"])
         state.odds = {"ceiling": odds["ceiling"], **out}
 
@@ -506,6 +506,8 @@ class Value(BatchStage):
                 points += SCALE * amount
             else:
                 points = ledger.scale(stage, label, points, amount, side_name, note)
+        # what the card's odds read: his value before the ranking judgments
+        outcome = points / SCALE
         if side_name == PITCHING:
             balance = self.odds.balance if self.prospects else self.odds.pitcher_balance(points / SCALE)
             if balance != 1:
@@ -522,7 +524,7 @@ class Value(BatchStage):
         else:
             side.odds = {"ceiling": ceiling, "odds_ceiling": odds_ceiling, "group": group,
                          "expected": expected / (switch[1] if switch else 1.0),
-                         "scale": modified / expected * (switch[1] if switch else 1.0) if expected > 0 else 0.0,
+                         "scale": outcome / expected * (switch[1] if switch else 1.0) if expected > 0 else 0.0,
                          "columns": self.odds.mean_columns(player, odds_ceiling, developed, group, age), "growth": growth,
                          "age": age}
         write_runtime_component(player.id, f"{side_name}.value.war", modified)

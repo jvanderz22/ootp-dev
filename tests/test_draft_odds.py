@@ -177,7 +177,11 @@ def test_a_draftee_near_mlb_ready_keeps_half_his_age_penalty_from_21_5(rows):
         cols = odds.mean_columns(player, 4.0, readiness, "hitter", age)
         growth = odds.growth_columns(player, 4.0, readiness, "hitter", 0, age)
         return odds.distribution(cols, growth, 4.0, "hitter", odds.expected(cols, age), 1.0, age)["regular"]
-    assert regular(22.0, 0.0) > regular(22.0, -1.0) and regular(21.0, 0.0) > regular(21.0, -1.0)
+    assert regular(22.0, 0.0) > regular(22.0, -1.0)
+    # at 21 the expected value nears this 4 WAR ceiling, where the card's
+    # chance saturates (2026-11-21: short of outgrowing he's at most his
+    # ceiling, so he busts less instead)
+    assert regular(21.0, 0.0) == pytest.approx(regular(21.0, -1.0), abs=0.005) or regular(21.0, 0.0) > regular(21.0, -1.0)
 
 
 def test_a_hitters_glove_counts_at_the_glove_weight(ranked):
@@ -283,3 +287,17 @@ def test_the_board_ranks_on_value_with_a_little_weight_on_the_ceiling(ranked):
         lines = [l for l in r.ledger.lines if r.ledger.counted(l) and l.stage in (DEVELOPMENT, MODIFIERS)]
         if any(l.label == "Upside" for l in lines):
             assert lines[-1].label == "Upside"
+
+
+def test_the_cards_range_stays_under_a_modest_ceiling():
+    # 2026-11-21: short of outgrowing he lands at most SHORT_REACH past his
+    # ceiling (Nakasone's P90 had read 3.49 on a 2.62 ceiling), and the
+    # outcomes still average to his expected value
+    c = draft_odds.card(1.57, 0.02, 0.8, 1.5, 2.62, 1.0, (1.2, 0.7))
+    assert draft_odds.card_quantile(0.9, c) <= 2.62 + draft_odds.SHORT_REACH
+    grid = np.linspace(0, 40, 40001)
+    mean = np.sum(1 - draft_odds.card_cdf(grid, c)) * (grid[1] - grid[0])
+    assert mean == pytest.approx(1.57, rel=0.02)
+    # and outgrowing starts past the ceiling by the margin
+    reach = 2.62 + draft_odds.SHORT_REACH
+    assert draft_odds.card_cdf(3.6, c) == pytest.approx(draft_odds.card_cdf(reach + 0.01, c))

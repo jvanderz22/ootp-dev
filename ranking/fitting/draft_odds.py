@@ -794,20 +794,18 @@ class Odds:
         c = self.parts(d, scale)
         return c["q"] * (c["floor"] + self.excess[0] * c["excess"] - c["mean"])
 
-    def cdf(self, d, v, scale=1.0) -> np.ndarray:
+    def card(self, d, scale=1.0) -> dict:
+        """The card's outcomes as the board reads them (board_odds.card): his
+        expected WAR here, short of outgrowing cut off at his ceiling."""
         c = self.parts(d, scale)
-        theta = c["mean"] / c["p"] / c["k"]
-        rest = (1 - c["p"]) + c["p"] * stats.gamma.cdf(v, c["k"], scale=theta)
-        grown = stats.gamma.cdf(v - c["floor"], self.excess[0], scale=c["excess"])
-        return np.where(v < 0, 0.0, (1 - c["q"]) * rest + c["q"] * grown)
+        return board_odds.card(self.expected(d, scale), c["q"], c["p"], c["k"], d.war_pot.values,
+                               ceiling_panel.MARGIN, (self.excess[0], self.excess[2]))
+
+    def cdf(self, d, v, scale=1.0) -> np.ndarray:
+        return board_odds.card_cdf(v, self.card(d, scale))
 
     def quantile(self, d, q, scale=1.0) -> np.ndarray:
-        lo, hi = np.zeros(len(d)), np.full(len(d), 40.0)
-        for _ in range(50):
-            mid = (lo + hi) / 2
-            below = self.cdf(d, mid, scale) < q
-            lo, hi = np.where(below, mid, lo), np.where(below, hi, mid)
-        return np.where(self.cdf(d, np.zeros(len(d)), scale) >= q, 0.0, hi)
+        return board_odds.card_quantile(q, self.card(d, scale))
 
 
 def report_odds(g: pd.DataFrame, regular: dict, reliever: float):

@@ -394,7 +394,7 @@
    },
    "above_p90": {
     "all": 0.122,
-    "top_100": 0.088
+    "top_100": 0.09
    },
    "growth_share_of_ev": {
     "median": 0.152,
@@ -627,7 +627,7 @@
   }
  },
  "meta": {
-  "created_at": "2026-11-21T18:55:00+00:00",
+  "created_at": "2026-11-21T19:09:29+00:00",
   "league": "yfmlb",
   "fit_classes": [
    2033,

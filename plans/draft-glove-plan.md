@@ -104,6 +104,13 @@ field depends on his glove. A good glove makes a weaker bat playable, and a
   2122: Figueroa 8 → 5, Nakasone 11 → 15. On MLB WAR to 26: rho 0.321, top
   25 4.71, top 50 3.61, top 100 2.41 (0.1 raised the top 10, 6.06 → 6.22).
   Tracked with `print_draft_watch.py` (draft_watchlist.csv).
+- **The card's range respects the ceiling** (2026-11-21). Short of
+  outgrowing, a draftee lands at most 0.5 WAR past his ceiling (a cut-off
+  gamma, its mean held to his value; near the ceiling he busts less
+  instead). Outgrowing starts 1 WAR past it, in real WAR. The card reads his
+  value before the pitcher balance and Upside, which rank him and don't
+  change his outcomes. Above P90 on the past classes: 12% (top 100 9%), as
+  before. WBF 2122: Nakasone 0.1–3.1 → 0.1–2.9, Mosegi 0.0–7.6 → 0.0–5.8.
 
 Held out one class at a time, on MLB WAR to 26:
 
