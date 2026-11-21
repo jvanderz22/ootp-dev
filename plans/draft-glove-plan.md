@@ -90,6 +90,14 @@ field depends on his glove. A good glove makes a weaker bat playable, and a
   at 38% pitchers. Ramped: 48/52/45/50/55% by bucket. On MLB WAR to 26,
   held out: rho 0.321 (board 0.313), top 25 4.80 (4.92), top 50 3.52
   (3.62), top 100 2.47 (2.37).
+- **A soft cap on the share of his ceiling** (2026-11-21, folded into the
+  base rate): s / √(1 + (s / 0.8)²). Each factor is calibrated alone, but
+  stacked they overshoot. Held out, draftees predicted to realize 50%+ of
+  their ceiling realized 0.64 (value now) / 0.73 (MLB WAR to 26) of it, and
+  70%+ realized 0.38 / 0.67. Most had high work ethic on a modest ceiling,
+  like Nakasone (89% of 2.62; WBF 2122 6 → 11). With it, on MLB WAR to 26:
+  rho 0.320, top 25 4.86, top 50 3.65, top 100 2.48; pitchers 48/50/46/50/55%
+  (ramp 0.25).
 
 Held out one class at a time, on MLB WAR to 26:
 

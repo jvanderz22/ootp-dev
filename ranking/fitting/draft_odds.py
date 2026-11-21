@@ -283,11 +283,12 @@ def playing(plays_w, reference: dict, d: pd.DataFrame) -> np.ndarray:
 
 def predicted(d: pd.DataFrame, model, plays_w, reference: dict, balance=(1.0, 0.0)) -> np.ndarray:
     """What the board expects him to realize: the odds on the ceiling it
-    reads (`odds_view`), the judgment lines (KEPT, POLISH) and the
-    playing-time factor; pitchers balanced by `balance` (factor, ramp)."""
+    reads (`odds_view`), the judgment lines (KEPT, POLISH), the playing-time
+    factor and the soft cap on the share of his (whole) ceiling
+    (board_odds.realistic); pitchers balanced by `balance` (factor, ramp)."""
     o = odds_view(d)
     value = model.predict(design(o).values) * kept(d) * polish(o, model.coef_) * playing(plays_w, reference, d)
-    return balanced(d, value, *balance)
+    return balanced(d, board_odds.realistic(value, d.war_pot.values), *balance)
 
 
 def catcher_factor(d: pd.DataFrame, model, plays_w, reference: dict) -> tuple:
@@ -980,7 +981,7 @@ def main(argv=None):
         "judgment": {"kept": list(KEPT), "velocity_steps": [list(s) for s in board_odds.VELOCITY_STEPS],
                      "replaces": list(board_odds.REPLACES), "polish": POLISH,
                      "teen_readiness": TEEN_READINESS, "age_22_factor": AGE_22_FACTOR,
-                     "glove_weight": board_odds.GLOVE_WEIGHT},
+                     "glove_weight": board_odds.GLOVE_WEIGHT, "share_cap": board_odds.SHARE_CAP},
         # a regular, on the full-time scale: the card's "chance he becomes a regular"
         "regular": regular,
         "distribution": distribution.describe(list(growth_design(g.head(1)).columns), names),

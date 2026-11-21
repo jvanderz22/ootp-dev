@@ -55,6 +55,29 @@ VELOCITY_STEPS = ((100, 1.15), (98, 1.12), (96, 1.10), (94, 1.05))
 # bats with a little glove; at half, 1.07 and 0.71. Interim, until the
 # ceiling is split into bat and glove (plans/draft-glove-plan.md)
 GLOVE_WEIGHT = 0.5
+# judgment (2026-11-21, you): a soft cap on the share of his ceiling a
+# draftee is expected to realize, folded into his base rate. Each factor is
+# calibrated alone, but stacked they overshoot: held out, draftees predicted
+# to realize 50%+ of their ceiling realized 0.64 (value now) / 0.73 (MLB WAR
+# to 26) of it, 70%+ 0.38 / 0.67 - mostly high work ethic on a modest
+# ceiling (WBF 2122's Nakasone, 89% of 2.62). At 0.8, MLB WAR to 26's top 25
+# went 4.80 -> 4.86 and top 50 3.52 -> 3.65; tighter helped no further
+SHARE_CAP = 0.8
+
+
+def realistic(value, ceiling):
+    """`value` (a number or an array) with the share of `ceiling` (at least
+    MIN_SHARE_CEILING) it comes to softly capped at SHARE_CAP: s / sqrt(1 +
+    (s / SHARE_CAP)^2). A typical draftee's 30% stays near 28%; 89% comes to
+    60%. Unchanged at or below 0."""
+    c = np.maximum(ceiling, MIN_SHARE_CEILING)
+    share = np.asarray(value, dtype=float) / c
+    capped = c * share / np.sqrt(1 + (share / SHARE_CAP) ** 2)
+    out = np.where(share > 0, capped, value)
+    return float(out) if np.ndim(out) == 0 else out
+
+
+MIN_SHARE_CEILING = 0.5
 # the legacy modifiers the odds replace on the draft board, and the two
 # judgment lines replaced here: velocity by `velocity_factor`, Stuff by nothing
 REPLACES = (

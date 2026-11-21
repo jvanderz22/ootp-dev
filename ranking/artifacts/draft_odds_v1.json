@@ -54,9 +54,9 @@
   5.0,
   0.35
  ],
- "pitcher_balance": 0.994,
+ "pitcher_balance": 0.9836,
  "pitcher_ramp": {
-  "ramp": 0.3,
+  "ramp": 0.25,
   "war": 1.0
  },
  "plays": {
@@ -134,7 +134,8 @@
   },
   "teen_readiness": 1.34,
   "age_22_factor": 0.55,
-  "glove_weight": 0.5
+  "glove_weight": 0.5,
+  "share_cap": 0.8
  },
  "regular": {
   "hitter": 1.707,
@@ -216,38 +217,38 @@
       "top 100": 1.087
      },
      "fit": {
-      "rho": 0.401,
-      "top 25": 1.559,
-      "top 50": 1.372,
-      "top 100": 1.129
+      "rho": 0.399,
+      "top 25": 1.593,
+      "top 50": 1.397,
+      "top 100": 1.112
      },
      "fit, hitters": {
-      "rho": 0.384,
-      "top 25": 1.334,
-      "top 50": 1.14,
-      "top 100": 0.877
+      "rho": 0.381,
+      "top 25": 1.357,
+      "top 50": 1.125,
+      "top 100": 0.883
      }
     },
     "glove": {
      "bat only": {
       "n": 556.0,
-      "realized / predicted": 0.849
+      "realized / predicted": 0.85
      },
      "glove 0-25%": {
       "n": 225.0,
-      "realized / predicted": 1.091
+      "realized / predicted": 1.098
      },
      "glove 25-45%": {
       "n": 108.0,
-      "realized / predicted": 1.214
+      "realized / predicted": 1.213
      },
      "glove 45%+": {
       "n": 114.0,
-      "realized / predicted": 1.398
+      "realized / predicted": 1.343
      },
      "catchers": {
       "n": 73.0,
-      "realized / predicted": 0.961
+      "realized / predicted": 0.935
      }
     }
    },
@@ -260,38 +261,38 @@
       "top 100": 2.366
      },
      "fit": {
-      "rho": 0.321,
-      "top 25": 4.797,
-      "top 50": 3.522,
-      "top 100": 2.471
+      "rho": 0.32,
+      "top 25": 4.863,
+      "top 50": 3.651,
+      "top 100": 2.48
      },
      "fit, hitters": {
-      "rho": 0.323,
-      "top 25": 4.314,
-      "top 50": 2.969,
-      "top 100": 2.026
+      "rho": 0.32,
+      "top 25": 4.243,
+      "top 50": 2.896,
+      "top 100": 2.029
      }
     },
     "glove": {
      "bat only": {
       "n": 392.0,
-      "realized / predicted": 0.834
+      "realized / predicted": 0.836
      },
      "glove 0-25%": {
       "n": 175.0,
-      "realized / predicted": 1.249
+      "realized / predicted": 1.262
      },
      "glove 25-45%": {
       "n": 90.0,
-      "realized / predicted": 1.012
+      "realized / predicted": 0.997
      },
      "glove 45%+": {
       "n": 97.0,
-      "realized / predicted": 0.886
+      "realized / predicted": 0.848
      },
      "catchers": {
       "n": 45.0,
-      "realized / predicted": 0.401
+      "realized / predicted": 0.38
      }
     }
    }
@@ -305,11 +306,11 @@
     0.573
    ],
    "fit": [
-    0.422,
-    0.524,
-    0.529,
-    0.59,
-    0.573
+    0.449,
+    0.547,
+    0.542,
+    0.58,
+    0.57
    ],
    "fit, no judgment lines": [
     0.489,
@@ -320,24 +321,24 @@
    ],
    "fit, one factor": [
     0.391,
-    0.449,
-    0.504,
-    0.576,
-    0.58
+    0.453,
+    0.502,
+    0.573,
+    0.578
    ],
    "fit, balanced": [
     0.484,
-    0.516,
-    0.449,
-    0.503,
-    0.547
+    0.502,
+    0.458,
+    0.504,
+    0.552
    ]
   },
   "catcher": [
-   0.415,
+   0.391,
    [
-    0.118,
-    0.72
+    0.111,
+    0.681
    ]
   ],
   "reliever": {
@@ -622,7 +623,7 @@
   }
  },
  "meta": {
-  "created_at": "2026-11-21T18:25:37+00:00",
+  "created_at": "2026-11-21T18:36:12+00:00",
   "league": "yfmlb",
   "fit_classes": [
    2033,

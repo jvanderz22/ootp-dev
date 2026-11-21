@@ -484,24 +484,29 @@ class Value(BatchStage):
             growth = self.odds.growth_columns(player, odds_ceiling, developed, group,
                                               self.ratings.pitch_count(player), age)
             lines, expected = self.odds.reaching(player, odds_ceiling, developed, group, growth, age, switch)
-        for kind, label, amount, stat, note in lines:
-            if kind == "add":
-                ledger.add(DEVELOPMENT, label, SCALE * amount, side_name, stat, note)
-                points += SCALE * amount
-            else:
-                points = ledger.scale(DEVELOPMENT, label, points, amount, side_name, note)
+        # every line to his value before the balance, as (stage, kind, label,
+        # amount, stat, note) - "add" amounts in WAR, "scale" factors
+        steps = [(DEVELOPMENT, *line) for line in lines]
         if not self.prospects and group == "hitter":
             catcher = side.role == "C"
             plays = self.odds.playing(bat, developed, glove, run, age, catcher)
             if plays != 1:
-                points = ledger.scale(DEVELOPMENT, "Playing time", points, plays, side_name)
-        for name, factor in side.modifiers:
-            points = ledger.scale(MODIFIERS, name, points, factor, side_name, _modifier_note(name, player))
+                steps.append((DEVELOPMENT, "scale", "Playing time", plays, None, None))
+        steps += [(MODIFIERS, "scale", name, factor, None, _modifier_note(name, player)) for name, factor in side.modifiers]
         if side_name == PITCHING:
             knuckleball = "knuckleball" in player.get_pitches()
             fast = draft_odds.velocity_factor(player.velocity, knuckleball)
             if fast != 1:
-                points = ledger.scale(MODIFIERS, "velocity", points, fast, side_name, f"{player.velocity} mph")
+                steps.append((MODIFIERS, "scale", "velocity", fast, None, f"{player.velocity} mph"))
+        if not self.prospects:
+            steps = self._realistic(steps, points / SCALE, ceiling)
+        for stage, kind, label, amount, stat, note in steps:
+            if kind == "add":
+                ledger.add(stage, label, SCALE * amount, side_name, stat, note)
+                points += SCALE * amount
+            else:
+                points = ledger.scale(stage, label, points, amount, side_name, note)
+        if side_name == PITCHING:
             balance = self.odds.balance if self.prospects else self.odds.pitcher_balance(points / SCALE)
             if balance != 1:
                 points = ledger.scale(MODIFIERS, "pitcher balance", points, balance, side_name)
@@ -518,6 +523,37 @@ class Value(BatchStage):
                          "age": age}
         write_runtime_component(player.id, f"{side_name}.value.war", modified)
         return modified
+
+    @staticmethod
+    def _realistic(steps, start, ceiling) -> list:
+        """`steps` with the base rate moved so his value before the balance
+        comes to `draft_odds.realistic` of it: the soft cap on the share of
+        his ceiling he's expected to realize, folded into the base rate
+        (2026-11-21). The lines are linear in the base rate's WAR, so moving
+        it by the cap's cut over the factors after it lands the value there."""
+        value, after, base = start, 1.0, None
+        for i, (stage, kind, label, amount, stat, note) in enumerate(steps):
+            if kind == "add":
+                value += amount
+            else:
+                value *= amount
+                if base is not None:
+                    after *= amount
+            if label == "Base rate":
+                base = i
+        if base is None or after <= 0:
+            return steps
+        cut = draft_odds.realistic(value, ceiling) - value
+        if not cut:
+            return steps
+        stage, kind, label, amount, stat, note = steps[base]
+        moved = amount + cut / after
+        if stat and stat.endswith("%") and start + amount > 0:
+            # the line's share of his ceiling, moved with it
+            stat = f"{float(stat[:-1]) * (start + moved) / (start + amount):.0f}%"
+        steps = list(steps)
+        steps[base] = (stage, kind, label, moved, stat, note)
+        return steps
 
     def _development(self, state, war) -> list:
         return development.factors(state.player, war) if self.develops else []

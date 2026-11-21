@@ -240,3 +240,31 @@ def test_the_pitcher_balance_ramps_with_his_value():
     frame = pd.DataFrame({"group": ["SP", "RP", "hitter"]})
     assert list(fit.balanced(frame, [3.0, 0.3, 2.0], odds.balance, r["ramp"])) == pytest.approx(
         [3.0 * odds.pitcher_balance(3.0), 0.3 * odds.pitcher_balance(0.3), 2.0])
+
+
+def test_the_share_of_his_ceiling_he_realizes_is_softly_capped():
+    # 2026-11-21: stacked factors overshot at the top; a typical share barely
+    # moves, a stacked one comes down, and the order never flips
+    assert draft_odds.realistic(0.3 * 3.0, 3.0) == pytest.approx(3.0 * 0.3 / np.sqrt(1 + (0.3 / draft_odds.SHARE_CAP) ** 2))
+    assert draft_odds.realistic(0.89 * 2.62, 2.62) / 2.62 == pytest.approx(0.60, abs=0.01)
+    shares = np.linspace(0.01, 3, 50)
+    assert np.all(np.diff(draft_odds.realistic(shares * 2.0, 2.0)) > 0)
+    assert draft_odds.realistic(-0.5, 2.0) == -0.5
+
+
+def test_the_cap_is_folded_into_the_base_rate():
+    # the base rate moves; every other line keeps its factor, and the chain
+    # lands on the cap of what it came to
+    from ranking.stages.value import Value
+    steps = [(DEVELOPMENT, "add", "Base rate", -1.2, "60%", None), (DEVELOPMENT, "scale", "Work ethic", 1.42, None, None),
+             (DEVELOPMENT, "add", "Breakout", 0.05, "2%", None), (DEVELOPMENT, "scale", "Playing time", 1.24, None, None),
+             (MODIFIERS, "scale", "BatterHitProfileModifier", 1.04, None, None)]
+
+    def run(steps, v=2.62):
+        for _, kind, _, amount, _, _ in steps:
+            v = v + amount if kind == "add" else v * amount
+        return v
+    moved = Value._realistic(steps, 2.62, 2.62)
+    assert run(moved) == pytest.approx(draft_odds.realistic(run(steps), 2.62))
+    assert [s[3] for s in moved[1:]] == [s[3] for s in steps[1:]]
+    assert moved[0][3] < steps[0][3]
