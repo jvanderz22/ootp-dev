@@ -732,7 +732,8 @@ def main(argv=None):
         # ledger lines kept, a pitcher's velocity upside, and what's replaced
         "judgment": {"kept": list(KEPT), "velocity_steps": [list(s) for s in board_odds.VELOCITY_STEPS],
                      "replaces": list(board_odds.REPLACES), "polish": POLISH,
-                     "teen_readiness": TEEN_READINESS, "age_22_factor": AGE_22_FACTOR},
+                     "teen_readiness": TEEN_READINESS, "age_22_factor": AGE_22_FACTOR,
+                     "glove_weight": board_odds.GLOVE_WEIGHT},
         # a regular, on the full-time scale: the card's "chance he becomes a regular"
         "regular": regular,
         "distribution": distribution.describe(list(growth_design(g.head(1)).columns), names),

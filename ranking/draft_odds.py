@@ -47,6 +47,14 @@ ARTIFACT = "draft_odds_v1"
 # (lowest bottom of his range, factor), checked from the top; below the last
 # step he's x1.00
 VELOCITY_STEPS = ((100, 1.15), (98, 1.12), (96, 1.10), (94, 1.05))
+# judgment (2026-11-21, you): the share of a hitter's glove (fielding and
+# utility at potential, when worth anything) his odds work from. The bat has
+# the range of outcomes; a glove is static and pays only if the bat gets him
+# on the field. On the past classes' MLB WAR to 26, glove-first ceilings
+# (45%+ glove) realized 0.77 of predicted and catchers 0.66, against 1.42 for
+# bats with a little glove; at half, 1.07 and 0.71. Interim, until the
+# ceiling is split into bat and glove (plans/draft-glove-plan.md)
+GLOVE_WEIGHT = 0.5
 # the legacy modifiers the odds replace on the draft board, and the two
 # judgment lines replaced here: velocity by `velocity_factor`, Stuff by nothing
 REPLACES = (

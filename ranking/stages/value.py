@@ -148,7 +148,7 @@ class Value(BatchStage):
         if self.prospects:   # no distribution fit yet (plans/prospect-odds-plan.md, step 4)
             state.odds = {"ceiling": odds["ceiling"]}
             return
-        out = self.odds.distribution(odds["columns"], odds["growth"], odds["ceiling"], odds["group"],
+        out = self.odds.distribution(odds["columns"], odds["growth"], odds["odds_ceiling"], odds["group"],
                                      odds["expected"], odds["scale"], odds["age"])
         state.odds = {"ceiling": odds["ceiling"], **out}
 
@@ -229,7 +229,8 @@ class Value(BatchStage):
         if self.odds:
             self._modifiers(state, side, BATTING, war)
             switch = development.switch_hitter(war) if batting and batting.bats == "S" else None
-            return self._odds(state, side, BATTING, war, "hitter", switch=switch)
+            return self._odds(state, side, BATTING, war, "hitter", switch=switch,
+                              glove=parts["fielding"] + parts["utility"])
         developing = self._development(state, war)
         if self.develops and batting and batting.bats == "S":
             developing.append(development.switch_hitter(war))
@@ -446,12 +447,14 @@ class Value(BatchStage):
             product *= factor
         write_runtime_component(player.id, f"{side_name}.modifier_total", product)
 
-    def _odds(self, state, side, side_name, war, group, floors=(), switch=None) -> float:
+    def _odds(self, state, side, side_name, war, group, floors=(), switch=None, glove=0.0) -> float:
         """The odds for a side: his ceiling (the WAR after its floors),
         then the lines that take it to what he's expected to realize, then the
         judgment the odds keep - the profile's remaining modifiers, a
         pitcher's velocity upside and the hitter-pitcher balance. Never below
-        replacement: the odds order the bottom of the board."""
+        replacement: the odds order the bottom of the board. On the draft
+        board the odds work from a ceiling with a hitter's `glove` (its WAR)
+        counted at GLOVE_WEIGHT."""
         player, ledger = state.player, state.ledger
         ceiling = SCALE * war
         for name, factor, note in floors:
@@ -464,12 +467,20 @@ class Value(BatchStage):
         readiness = companion.sides[side_name] if self.prospects else companion.model
         developed = companion.bat if side_name == BATTING else readiness
         age = draft_odds.draft_age(player, self.draft_year)
+        points = SCALE * ceiling
+        odds_ceiling = ceiling
         if self.prospects:
             lines, expected, parts = self.odds.reaching(player, ceiling, readiness, developed, group, age, switch)
         else:
-            growth = self.odds.growth_columns(player, ceiling, developed, group, self.ratings.pitch_count(player), age)
-            lines, expected = self.odds.reaching(player, ceiling, developed, group, growth, age, switch)
-        points = SCALE * ceiling
+            static = (1 - draft_odds.GLOVE_WEIGHT) * max(glove, 0.0)
+            if static > 0:
+                odds_ceiling = ceiling - static
+                ledger.add(DEVELOPMENT, "Glove", -SCALE * static, side_name,
+                           f"counts {draft_odds.GLOVE_WEIGHT:.0%}", f"{max(glove, 0.0):.1f} WAR")
+                points -= SCALE * static
+            growth = self.odds.growth_columns(player, odds_ceiling, developed, group,
+                                              self.ratings.pitch_count(player), age)
+            lines, expected = self.odds.reaching(player, odds_ceiling, developed, group, growth, age, switch)
         for kind, label, amount, stat, note in lines:
             if kind == "add":
                 ledger.add(DEVELOPMENT, label, SCALE * amount, side_name, stat, note)
@@ -491,9 +502,10 @@ class Value(BatchStage):
             side.odds = {"ceiling": ceiling, "group": group, "expected": self.odds.expected(parts), "value": expected,
                          "parts": parts, "age": age}
         else:
-            side.odds = {"ceiling": ceiling, "group": group, "expected": expected / (switch[1] if switch else 1.0),
+            side.odds = {"ceiling": ceiling, "odds_ceiling": odds_ceiling, "group": group,
+                         "expected": expected / (switch[1] if switch else 1.0),
                          "scale": modified / expected * (switch[1] if switch else 1.0) if expected > 0 else 0.0,
-                         "columns": self.odds.mean_columns(player, ceiling, developed, group, age), "growth": growth,
+                         "columns": self.odds.mean_columns(player, odds_ceiling, developed, group, age), "growth": growth,
                          "age": age}
         write_runtime_component(player.id, f"{side_name}.value.war", modified)
         return modified

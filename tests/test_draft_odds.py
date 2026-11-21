@@ -9,7 +9,7 @@ import pytest
 from models.game_players import GamePlayer
 from ranking import draft_odds, get_ranker, value
 from ranking.fitting import draft_odds as fit
-from ranking.ledger import DEMAND, DEVELOPMENT, MODIFIERS
+from ranking.ledger import DEMAND, DEVELOPMENT, MODEL, MODIFIERS
 from ranking.ratings import RatingsView
 from tests.e2e_fixtures import make_draft_class_csv
 
@@ -63,6 +63,9 @@ def test_the_lines_take_his_ceiling_to_what_hes_expected_to_realize(ranked):
     for r in ranked:
         lines = [l for l in r.ledger.lines if r.ledger.counted(l)]
         labels = [l.label for l in lines if l.stage == DEVELOPMENT]
+        # a hitter's static glove first, when it counts at less than all
+        if labels[0] == "Glove":
+            labels = labels[1:]
         assert labels[0] == "Base rate" and labels[-1] == "Breakout"
         before_demand = sum(l.delta for l in lines if l.stage != DEMAND)
         assert before_demand == pytest.approx(r.pre_demand_score)
@@ -172,3 +175,15 @@ def test_a_draftee_near_mlb_ready_keeps_half_his_age_penalty_from_21_5(rows):
         growth = odds.growth_columns(player, 4.0, readiness, "hitter", 0, age)
         return odds.distribution(cols, growth, 4.0, "hitter", odds.expected(cols, age), 1.0, age)["regular"]
     assert regular(22.0, 0.0) > regular(22.0, -1.0) and regular(21.0, 0.0) > regular(21.0, -1.0)
+
+
+def test_a_hitters_glove_counts_at_the_glove_weight(ranked):
+    # interim judgment (2026-11-21): the odds work from a ceiling with the
+    # glove at GLOVE_WEIGHT; the card keeps the full ceiling
+    gloves = [r for r in ranked if any(l.label == "Glove" for l in r.ledger.lines)]
+    assert gloves
+    for r in gloves:
+        line = next(l for l in r.ledger.lines if l.label == "Glove")
+        assert line.delta < 0 and line.stat == f"counts {draft_odds.GLOVE_WEIGHT:.0%}"
+        model = sum(l.delta for l in r.ledger.lines if l.stage == MODEL and r.ledger.counted(l))
+        assert r.ceiling_war == pytest.approx((model - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE, abs=0.01)
