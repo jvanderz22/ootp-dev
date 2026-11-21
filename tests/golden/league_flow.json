@@ -106,7 +106,7 @@
   {
    "orgId": "60",
    "orgName": "Austin Armadillos",
-   "orgScore": 24.557499999999976,
+   "orgScore": 24.232500000000012,
    "prospectCount": 18,
    "top10": 2,
    "top100": 18,
@@ -117,14 +117,14 @@
     {
      "id": "1076",
      "level": "INT",
-     "modelScore": 107.71,
+     "modelScore": 107.61,
      "name": "Quinn Kettering",
      "rank": 1
     },
     {
      "id": "1077",
      "level": "R",
-     "modelScore": 74.0,
+     "modelScore": 73.93,
      "name": "Reese Jessop",
      "rank": 10
     },
@@ -140,28 +140,28 @@
      "level": "AAA",
      "modelScore": 60.82,
      "name": "Blake Calder",
-     "rank": 22
+     "rank": 23
     },
     {
      "id": "1075",
      "level": "A",
      "modelScore": 58.36,
      "name": "Parker Quimby",
-     "rank": 30
+     "rank": 31
     },
     {
      "id": "1064",
      "level": "AAA",
      "modelScore": 56.53,
      "name": "Emery Ingram",
-     "rank": 35
+     "rank": 36
     },
     {
      "id": "1066",
      "level": "AA",
      "modelScore": 56.49,
      "name": "Gray Pembroke",
-     "rank": 36
+     "rank": 37
     },
     {
      "id": "1069",
@@ -203,21 +203,21 @@
      "level": "A",
      "modelScore": 52.39,
      "name": "Logan Oakes",
-     "rank": 57
+     "rank": 58
     },
     {
      "id": "1073",
      "level": "A",
      "modelScore": 52.21,
      "name": "Noel Merritt",
-     "rank": 58
+     "rank": 59
     },
     {
      "id": "1067",
      "level": "AA",
      "modelScore": 51.4,
      "name": "Harper Pembroke",
-     "rank": 60
+     "rank": 61
     },
     {
      "id": "1070",
@@ -314,49 +314,49 @@
      "level": "AAA",
      "modelScore": 61.97,
      "name": "Parker Oakes",
-     "rank": 20
+     "rank": 21
     },
     {
      "id": "1049",
      "level": "A",
      "modelScore": 60.59,
      "name": "Jordan Merritt",
-     "rank": 23
+     "rank": 24
     },
     {
      "id": "1036",
      "level": "AAA",
      "modelScore": 59.95,
      "name": "Quinn Barrow",
-     "rank": 25
+     "rank": 26
     },
     {
      "id": "1047",
      "level": "A",
      "modelScore": 59.4,
      "name": "Harper Radley",
-     "rank": 28
+     "rank": 29
     },
     {
      "id": "1046",
      "level": "A",
      "modelScore": 57.99,
      "name": "Gray Barrow",
-     "rank": 32
+     "rank": 33
     },
     {
      "id": "1050",
      "level": "INT",
      "modelScore": 57.23,
      "name": "Kai Radley",
-     "rank": 34
+     "rank": 35
     },
     {
      "id": "1043",
      "level": "AA",
      "modelScore": 55.8,
      "name": "Dakota Oakes",
-     "rank": 40
+     "rank": 41
     },
     {
      "id": "1045",
@@ -366,18 +366,18 @@
      "rank": 42
     },
     {
+     "id": "1040",
+     "level": "AA",
+     "modelScore": 52.46,
+     "name": "Avery Ingram",
+     "rank": 57
+    },
+    {
      "id": "1039",
      "level": "AAA",
      "modelScore": 51.7,
      "name": "Tatum Thorne",
-     "rank": 59
-    },
-    {
-     "id": "1040",
-     "level": "AA",
-     "modelScore": 51.26,
-     "name": "Avery Ingram",
-     "rank": 62
+     "rank": 60
     }
    ]
   },
@@ -395,14 +395,14 @@
     {
      "id": "1019",
      "level": "A",
-     "modelScore": 80.68,
+     "modelScore": 79.44,
      "name": "Tatum Jessop",
      "rank": 5
     },
     {
      "id": "1009",
      "level": "AAA",
-     "modelScore": 69.13,
+     "modelScore": 68.97,
      "name": "Jordan Hollis",
      "rank": 14
     },
@@ -418,42 +418,42 @@
      "level": "AAA",
      "modelScore": 61.47,
      "name": "Logan Quimby",
-     "rank": 21
+     "rank": 22
     },
     {
      "id": "1015",
      "level": "AA",
      "modelScore": 60.41,
      "name": "Parker Fenwick",
-     "rank": 24
+     "rank": 25
     },
     {
      "id": "1025",
      "level": "R",
      "modelScore": 59.45,
      "name": "Finley Thorne",
-     "rank": 27
+     "rank": 28
     },
     {
      "id": "1022",
      "level": "A",
      "modelScore": 58.3,
      "name": "Casey Norcross",
-     "rank": 31
+     "rank": 32
     },
     {
      "id": "1024",
      "level": "INT",
      "modelScore": 57.61,
      "name": "Emery Jessop",
-     "rank": 33
+     "rank": 34
     },
     {
      "id": "1014",
      "level": "AA",
-     "modelScore": 55.61,
+     "modelScore": 56.32,
      "name": "Oakley Lowell",
-     "rank": 41
+     "rank": 38
     },
     {
      "id": "1008",
@@ -1077,7 +1077,7 @@
    },
    {
     "id": "1076",
-    "modelScore": 53.59,
+    "modelScore": 54.7,
     "rank": 4
    },
    {
@@ -1762,33 +1762,33 @@
     "rule5Eligible": true
    },
    {
+    "id": "1099",
+    "level": "A",
+    "rank": 19,
+    "rule5Eligible": true
+   },
+   {
     "id": "1096",
     "level": "AA",
-    "rank": 19,
+    "rank": 20,
     "rule5Eligible": true
    },
    {
     "id": "1015",
     "level": "AA",
-    "rank": 24,
+    "rank": 25,
     "rule5Eligible": true
    },
    {
     "id": "1066",
     "level": "AA",
-    "rank": 36,
-    "rule5Eligible": true
-   },
-   {
-    "id": "1099",
-    "level": "A",
     "rank": 37,
     "rule5Eligible": true
    },
    {
     "id": "1100",
     "level": "A",
-    "rank": 38,
+    "rank": 39,
     "rule5Eligible": true
    },
    {
@@ -1804,15 +1804,15 @@
     "rule5Eligible": true
    },
    {
-    "id": "1073",
-    "level": "A",
-    "rank": 58,
+    "id": "1040",
+    "level": "AA",
+    "rank": 57,
     "rule5Eligible": true
    },
    {
-    "id": "1040",
-    "level": "AA",
-    "rank": 62,
+    "id": "1073",
+    "level": "A",
+    "rank": 59,
     "rule5Eligible": true
    },
    {
@@ -1841,7 +1841,7 @@
    {
     "id": "1035",
     "modelScore": 61.97,
-    "rank": 20
+    "rank": 21
    },
    {
     "id": "1068",
@@ -1861,7 +1861,7 @@
    {
     "id": "1102",
     "modelScore": 58.95,
-    "rank": 29
+    "rank": 30
    },
    {
     "id": "1034",
@@ -1906,7 +1906,7 @@
    {
     "id": "1043",
     "modelScore": 55.8,
-    "rank": 40
+    "rank": 41
    },
    {
     "id": "1091",
@@ -1916,17 +1916,17 @@
    {
     "id": "1049",
     "modelScore": 60.59,
-    "rank": 23
+    "rank": 24
    },
    {
     "id": "1101",
     "modelScore": 59.63,
-    "rank": 26
+    "rank": 27
    },
    {
     "id": "1050",
     "modelScore": 57.23,
-    "rank": 34
+    "rank": 35
    },
    {
     "id": "1060",
@@ -1941,37 +1941,37 @@
    {
     "id": "1096",
     "modelScore": 62.98,
-    "rank": 19
+    "rank": 20
    },
    {
     "id": "1047",
     "modelScore": 59.4,
-    "rank": 28
+    "rank": 29
    },
    {
     "id": "1022",
     "modelScore": 58.3,
-    "rank": 31
+    "rank": 32
    },
    {
     "id": "1073",
     "modelScore": 52.21,
-    "rank": 58
+    "rank": 59
+   },
+   {
+    "id": "1099",
+    "modelScore": 63.28,
+    "rank": 19
    },
    {
     "id": "1061",
     "modelScore": 60.82,
-    "rank": 22
+    "rank": 23
    },
    {
     "id": "1064",
     "modelScore": 56.53,
-    "rank": 35
-   },
-   {
-    "id": "1099",
-    "modelScore": 56.45,
-    "rank": 37
+    "rank": 36
    },
    {
     "id": "1045",
@@ -2010,7 +2010,7 @@
    },
    {
     "id": "1019",
-    "modelScore": 80.68,
+    "modelScore": 79.44,
     "rank": 5
    },
    {
@@ -2020,48 +2020,48 @@
    },
    {
     "id": "1077",
-    "modelScore": 74.0,
+    "modelScore": 73.93,
     "rank": 10
    },
    {
     "id": "1011",
     "modelScore": 61.47,
-    "rank": 21
+    "rank": 22
    },
    {
     "id": "1015",
     "modelScore": 60.41,
-    "rank": 24
+    "rank": 25
    },
    {
     "id": "1036",
     "modelScore": 59.95,
-    "rank": 25
+    "rank": 26
    },
    {
     "id": "1025",
     "modelScore": 59.45,
-    "rank": 27
+    "rank": 28
    },
    {
     "id": "1046",
     "modelScore": 57.99,
-    "rank": 32
+    "rank": 33
+   },
+   {
+    "id": "1014",
+    "modelScore": 56.32,
+    "rank": 38
    },
    {
     "id": "1100",
     "modelScore": 56.08,
-    "rank": 38
+    "rank": 39
    },
    {
     "id": "1112",
     "modelScore": 55.99,
-    "rank": 39
-   },
-   {
-    "id": "1014",
-    "modelScore": 55.61,
-    "rank": 41
+    "rank": 40
    },
    {
     "id": "1093",
@@ -2091,12 +2091,12 @@
    {
     "id": "1039",
     "modelScore": 51.7,
-    "rank": 59
+    "rank": 60
    },
    {
     "id": "1089",
     "modelScore": 51.35,
-    "rank": 61
+    "rank": 62
    },
    {
     "id": "1016",
@@ -2110,7 +2110,7 @@
    },
    {
     "id": "1076",
-    "modelScore": 107.71,
+    "modelScore": 107.61,
     "rank": 1
    },
    {
@@ -2130,7 +2130,7 @@
    },
    {
     "id": "1009",
-    "modelScore": 69.13,
+    "modelScore": 68.97,
     "rank": 14
    },
    {
@@ -2141,17 +2141,17 @@
    {
     "id": "1075",
     "modelScore": 58.36,
-    "rank": 30
+    "rank": 31
    },
    {
     "id": "1024",
     "modelScore": 57.61,
-    "rank": 33
+    "rank": 34
    },
    {
     "id": "1066",
     "modelScore": 56.49,
-    "rank": 36
+    "rank": 37
    },
    {
     "id": "1088",
@@ -2159,19 +2159,19 @@
     "rank": 49
    },
    {
+    "id": "1040",
+    "modelScore": 52.46,
+    "rank": 57
+   },
+   {
     "id": "1071",
     "modelScore": 52.39,
-    "rank": 57
+    "rank": 58
    },
    {
     "id": "1067",
     "modelScore": 51.4,
-    "rank": 60
-   },
-   {
-    "id": "1040",
-    "modelScore": 51.26,
-    "rank": 62
+    "rank": 61
    },
    {
     "id": "1095",
@@ -2222,27 +2222,27 @@
    },
    {
     "id": "1011",
-    "rank": 21
+    "rank": 22
    },
    {
     "id": "1015",
-    "rank": 24
+    "rank": 25
    },
    {
     "id": "1025",
-    "rank": 27
+    "rank": 28
    },
    {
     "id": "1022",
-    "rank": 31
+    "rank": 32
    },
    {
     "id": "1024",
-    "rank": 33
+    "rank": 34
    },
    {
     "id": "1014",
-    "rank": 41
+    "rank": 38
    },
    {
     "id": "1008",
@@ -2307,22 +2307,22 @@
    {
     "age": 19,
     "id": "1061",
-    "rank": 22
+    "rank": 23
    },
    {
     "age": 19,
     "id": "1025",
-    "rank": 27
-   },
-   {
-    "age": 19,
-    "id": "1071",
-    "rank": 57
+    "rank": 28
    },
    {
     "age": 19,
     "id": "1040",
-    "rank": 62
+    "rank": 57
+   },
+   {
+    "age": 19,
+    "id": "1071",
+    "rank": 58
    }
   ],
   "totalRecords": 61
@@ -2371,66 +2371,66 @@
    },
    {
     "id": "1035",
-    "rank": 20
-   },
-   {
-    "id": "1011",
     "rank": 21
    },
    {
+    "id": "1011",
+    "rank": 22
+   },
+   {
     "id": "1049",
-    "rank": 23
+    "rank": 24
    },
    {
     "id": "1036",
-    "rank": 25
-   },
-   {
-    "id": "1101",
     "rank": 26
    },
    {
-    "id": "1025",
+    "id": "1101",
     "rank": 27
    },
    {
-    "id": "1047",
+    "id": "1025",
     "rank": 28
    },
    {
-    "id": "1102",
+    "id": "1047",
     "rank": 29
    },
    {
-    "id": "1075",
+    "id": "1102",
     "rank": 30
    },
    {
-    "id": "1022",
+    "id": "1075",
     "rank": 31
    },
    {
-    "id": "1046",
+    "id": "1022",
     "rank": 32
    },
    {
-    "id": "1024",
+    "id": "1046",
     "rank": 33
    },
    {
-    "id": "1050",
+    "id": "1024",
     "rank": 34
    },
    {
-    "id": "1112",
-    "rank": 39
-   },
-   {
-    "id": "1043",
-    "rank": 40
+    "id": "1050",
+    "rank": 35
    },
    {
     "id": "1014",
+    "rank": 38
+   },
+   {
+    "id": "1112",
+    "rank": 40
+   },
+   {
+    "id": "1043",
     "rank": 41
    },
    {
@@ -2487,15 +2487,15 @@
    },
    {
     "id": "1071",
-    "rank": 57
+    "rank": 58
    },
    {
     "id": "1067",
-    "rank": 60
+    "rank": 61
    },
    {
     "id": "1089",
-    "rank": 61
+    "rank": 62
    },
    {
     "id": "1095",
@@ -2540,11 +2540,11 @@
    },
    {
     "id": "1015",
-    "rank": 24
+    "rank": 25
    },
    {
     "id": "1014",
-    "rank": 41
+    "rank": 38
    },
    {
     "id": "1016",
@@ -2899,7 +2899,7 @@
    {
     "age": 17,
     "batHand": "Right",
-    "battingScoreComponent": 25.44,
+    "battingScoreComponent": 24.95,
     "bestPosition": "C",
     "demand": null,
     "drafted": false,
@@ -2908,17 +2908,17 @@
     "draftedRoundPick": null,
     "draftedTeam": null,
     "era": null,
-    "fieldingScoreComponent": -3.9,
+    "fieldingScoreComponent": -2.25,
     "id": "1076",
     "inGameOverall": 55,
     "inGamePotential": 70,
     "level": "INT",
-    "modelScore": 53.59,
+    "modelScore": 54.7,
     "name": "Quinn Kettering",
     "org": "Austin Armadillos",
     "pitcherScore": null,
     "position": "LF",
-    "positionPlayerScore": 3.59,
+    "positionPlayerScore": 4.7,
     "rank": 4,
     "ratings": {
      "adaptability": null,
@@ -2976,7 +2976,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 53.5853023258917,
+    "rawOverallScore": 54.699927832065356,
     "relieverComponent": null,
     "rule5Eligible": false,
     "runningScoreComponent": -0.74,
@@ -4390,7 +4390,7 @@
    {
     "age": 22,
     "batHand": "Right",
-    "battingScoreComponent": 5.53,
+    "battingScoreComponent": 2.89,
     "bestPosition": "C",
     "demand": null,
     "drafted": false,
@@ -4399,7 +4399,7 @@
     "draftedRoundPick": null,
     "draftedTeam": null,
     "era": null,
-    "fieldingScoreComponent": -2.95,
+    "fieldingScoreComponent": 0.37,
     "id": "1009",
     "inGameOverall": 30,
     "inGamePotential": 55,
@@ -4409,7 +4409,7 @@
     "org": "Milwaukee Brewers",
     "pitcherScore": null,
     "position": "2B",
-    "positionPlayerScore": -17.05,
+    "positionPlayerScore": -16.37,
     "rank": 19,
     "ratings": {
      "adaptability": null,
@@ -4481,7 +4481,7 @@
    {
     "age": 24,
     "batHand": "Left",
-    "battingScoreComponent": 3.28,
+    "battingScoreComponent": 0.83,
     "bestPosition": "C",
     "demand": null,
     "drafted": false,
@@ -4490,7 +4490,7 @@
     "draftedRoundPick": null,
     "draftedTeam": null,
     "era": null,
-    "fieldingScoreComponent": -1.51,
+    "fieldingScoreComponent": 1.81,
     "id": "1019",
     "inGameOverall": 55,
     "inGamePotential": 60,
@@ -4500,7 +4500,7 @@
     "org": "Milwaukee Brewers",
     "pitcherScore": null,
     "position": "C",
-    "positionPlayerScore": -16.22,
+    "positionPlayerScore": -15.35,
     "rank": 20,
     "ratings": {
      "adaptability": null,
@@ -7987,7 +7987,7 @@
     "draftedRoundPick": null,
     "draftedTeam": null,
     "era": null,
-    "fieldingScoreComponent": -4.97,
+    "fieldingScoreComponent": -3.32,
     "id": "1014",
     "inGameOverall": 50,
     "inGamePotential": 40,
@@ -7997,7 +7997,7 @@
     "org": "Milwaukee Brewers",
     "pitcherScore": null,
     "position": "3B",
-    "positionPlayerScore": -34.33,
+    "positionPlayerScore": -32.68,
     "rank": 55,
     "ratings": {
      "adaptability": null,
@@ -8717,7 +8717,7 @@
    {
     "age": 20,
     "batHand": "Right",
-    "battingScoreComponent": 11.64,
+    "battingScoreComponent": 9.73,
     "bestPosition": "C",
     "demand": null,
     "drafted": false,
@@ -8726,7 +8726,7 @@
     "draftedRoundPick": null,
     "draftedTeam": null,
     "era": null,
-    "fieldingScoreComponent": -4.85,
+    "fieldingScoreComponent": -1.53,
     "id": "1099",
     "inGameOverall": 30,
     "inGamePotential": 65,
@@ -8736,7 +8736,7 @@
     "org": "Boise Bison",
     "pitcherScore": null,
     "position": "2B",
-    "positionPlayerScore": -13.14,
+    "positionPlayerScore": -11.73,
     "rank": 63,
     "ratings": {
      "adaptability": null,
@@ -8900,7 +8900,7 @@
     "age": 19,
     "batHand": "Left",
     "battingScoreComponent": -17.43,
-    "bestPosition": "DH",
+    "bestPosition": "C",
     "demand": null,
     "drafted": false,
     "draftedPick": null,
@@ -8908,7 +8908,7 @@
     "draftedRoundPick": null,
     "draftedTeam": null,
     "era": null,
-    "fieldingScoreComponent": -10.21,
+    "fieldingScoreComponent": -10.31,
     "id": "1077",
     "inGameOverall": 60,
     "inGamePotential": 50,
@@ -8918,7 +8918,7 @@
     "org": "Austin Armadillos",
     "pitcherScore": null,
     "position": "RF",
-    "positionPlayerScore": -48.3,
+    "positionPlayerScore": -48.4,
     "rank": 65,
     "ratings": {
      "adaptability": null,
@@ -10003,7 +10003,7 @@
     "age": 23,
     "batHand": "Left",
     "battingScoreComponent": -11.57,
-    "bestPosition": "1B",
+    "bestPosition": "C",
     "demand": null,
     "drafted": false,
     "draftedPick": null,
@@ -10011,7 +10011,7 @@
     "draftedRoundPick": null,
     "draftedTeam": null,
     "era": null,
-    "fieldingScoreComponent": -9.02,
+    "fieldingScoreComponent": -7.27,
     "id": "1020",
     "inGameOverall": 40,
     "inGamePotential": 55,
@@ -10021,7 +10021,7 @@
     "org": "Milwaukee Brewers",
     "pitcherScore": null,
     "position": "SS",
-    "positionPlayerScore": -40.51,
+    "positionPlayerScore": -38.76,
     "rank": 77,
     "ratings": {
      "adaptability": null,
@@ -11396,7 +11396,7 @@
     "draftedRoundPick": null,
     "draftedTeam": null,
     "era": null,
-    "fieldingScoreComponent": 3.16,
+    "fieldingScoreComponent": 6.48,
     "id": "1040",
     "inGameOverall": 35,
     "inGamePotential": 45,
@@ -11406,7 +11406,7 @@
     "org": "Pittsburgh Pirates",
     "pitcherScore": null,
     "position": "3B",
-    "positionPlayerScore": -48.67,
+    "positionPlayerScore": -45.35,
     "rank": 91,
     "ratings": {
      "adaptability": null,
@@ -12065,7 +12065,7 @@
     "draftedRoundPick": null,
     "draftedTeam": null,
     "era": null,
-    "fieldingScoreComponent": -6.58,
+    "fieldingScoreComponent": -4.93,
     "id": "1033",
     "inGameOverall": 50,
     "inGamePotential": 45,
@@ -12075,7 +12075,7 @@
     "org": "Pittsburgh Pirates",
     "pitcherScore": null,
     "position": "LF",
-    "positionPlayerScore": -36.08,
+    "positionPlayerScore": -34.43,
     "rank": 98,
     "ratings": {
      "adaptability": null,
@@ -12921,17 +12921,17 @@
     "draftedRoundPick": null,
     "draftedTeam": null,
     "era": null,
-    "fieldingScoreComponent": -3.9,
+    "fieldingScoreComponent": -2.25,
     "id": "1076",
     "inGameOverall": 55,
     "inGamePotential": 70,
     "level": "INT",
-    "modelScore": 107.71,
+    "modelScore": 107.61,
     "name": "Quinn Kettering",
     "org": "Austin Armadillos",
     "pitcherScore": null,
     "position": "LF",
-    "positionPlayerScore": 57.71,
+    "positionPlayerScore": 57.61,
     "rank": 1,
     "ratings": {
      "adaptability": null,
@@ -12989,7 +12989,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 107.71143728946181,
+    "rawOverallScore": 107.60528438473797,
     "relieverComponent": null,
     "rule5Eligible": false,
     "runningScoreComponent": -0.74,
@@ -13306,17 +13306,17 @@
     "draftedRoundPick": null,
     "draftedTeam": null,
     "era": null,
-    "fieldingScoreComponent": -1.51,
+    "fieldingScoreComponent": 1.81,
     "id": "1019",
     "inGameOverall": 55,
     "inGamePotential": 60,
     "level": "A",
-    "modelScore": 80.68,
+    "modelScore": 79.44,
     "name": "Tatum Jessop",
     "org": "Milwaukee Brewers",
     "pitcherScore": null,
     "position": "C",
-    "positionPlayerScore": 30.68,
+    "positionPlayerScore": 29.44,
     "rank": 5,
     "ratings": {
      "adaptability": null,
@@ -13374,7 +13374,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 80.6782996348927,
+    "rawOverallScore": 79.43835343350382,
     "relieverComponent": null,
     "rule5Eligible": true,
     "runningScoreComponent": -0.92,
@@ -13773,8 +13773,8 @@
    {
     "age": 19,
     "batHand": "Left",
-    "battingScoreComponent": 47.82,
-    "bestPosition": "DH",
+    "battingScoreComponent": 47.8,
+    "bestPosition": "C",
     "demand": null,
     "drafted": false,
     "draftedPick": null,
@@ -13782,17 +13782,17 @@
     "draftedRoundPick": null,
     "draftedTeam": null,
     "era": null,
-    "fieldingScoreComponent": -10.21,
+    "fieldingScoreComponent": -10.31,
     "id": "1077",
     "inGameOverall": 60,
     "inGamePotential": 50,
     "level": "R",
-    "modelScore": 74.0,
+    "modelScore": 73.93,
     "name": "Reese Jessop",
     "org": "Austin Armadillos",
     "pitcherScore": null,
     "position": "RF",
-    "positionPlayerScore": 24.0,
+    "positionPlayerScore": 23.93,
     "rank": 10,
     "ratings": {
      "adaptability": null,
@@ -13850,7 +13850,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 73.9982731856827,
+    "rawOverallScore": 73.92935899713046,
     "relieverComponent": null,
     "rule5Eligible": false,
     "runningScoreComponent": -3.59,
@@ -14199,17 +14199,17 @@
     "draftedRoundPick": null,
     "draftedTeam": null,
     "era": null,
-    "fieldingScoreComponent": -2.95,
+    "fieldingScoreComponent": 0.37,
     "id": "1009",
     "inGameOverall": 30,
     "inGamePotential": 55,
     "level": "AAA",
-    "modelScore": 69.13,
+    "modelScore": 68.97,
     "name": "Jordan Hollis",
     "org": "Milwaukee Brewers",
     "pitcherScore": null,
     "position": "2B",
-    "positionPlayerScore": 19.13,
+    "positionPlayerScore": 18.97,
     "rank": 14,
     "ratings": {
      "adaptability": null,
@@ -14267,7 +14267,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 69.13497798480728,
+    "rawOverallScore": 68.96608679379467,
     "relieverComponent": null,
     "rule5Eligible": false,
     "runningScoreComponent": -2.55,
@@ -14701,6 +14701,97 @@
     "wrcPlus": 134.0
    },
    {
+    "age": 20,
+    "batHand": "Right",
+    "battingScoreComponent": 11.83,
+    "bestPosition": "C",
+    "demand": null,
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "era": null,
+    "fieldingScoreComponent": -1.53,
+    "id": "1099",
+    "inGameOverall": 30,
+    "inGamePotential": 65,
+    "level": "A",
+    "modelScore": 63.28,
+    "name": "Tatum Ellery",
+    "org": "Boise Bison",
+    "pitcherScore": null,
+    "position": "2B",
+    "positionPlayerScore": 13.28,
+    "rank": 19,
+    "ratings": {
+     "adaptability": null,
+     "batHand": "Right",
+     "batting": {
+      "avoidK": 50,
+      "avoidKCur": 40,
+      "babip": 40,
+      "babipCur": 20,
+      "contact": 45,
+      "contactCur": 30,
+      "eye": 45,
+      "eyeCur": 35,
+      "gap": 40,
+      "gapCur": 25,
+      "power": 55,
+      "powerCur": 30,
+      "running": 30,
+      "speed": 45,
+      "steal": 50
+     },
+     "fielding": {
+      "cArm": 40,
+      "cBlocking": 55,
+      "cFraming": 50,
+      "ifArm": 60,
+      "ifError": 45,
+      "ifRange": 30,
+      "ofArm": 25,
+      "ofError": 25,
+      "ofRange": 50,
+      "turnDp": 25
+     },
+     "injuryProne": "Normal",
+     "intelligence": "N",
+     "leadership": "N",
+     "pitching": {
+      "armSlot": "Normal",
+      "control": 20,
+      "controlCur": 20,
+      "groundballType": "EX GB",
+      "hra": 25,
+      "hraCur": 20,
+      "movement": 25,
+      "movementCur": 20,
+      "pbabip": 25,
+      "pbabipCur": 20,
+      "pitches": [],
+      "stamina": 30,
+      "stuff": 30,
+      "stuffCur": 20,
+      "velocity": "86-88"
+     },
+     "scoutingAccuracy": "High",
+     "throwHand": "Right",
+     "workEthic": "H"
+    },
+    "rawOverallScore": 63.27988082469588,
+    "relieverComponent": null,
+    "rule5Eligible": true,
+    "runningScoreComponent": -2.85,
+    "starterComponent": null,
+    "statsPlusUrl": "https://statsplus.net/goldenfx/player/1099",
+    "team": "Boise Single Bison Single",
+    "throwHand": "Right",
+    "type": "Hitter",
+    "wrcPlus": 98.0
+   },
+   {
     "age": 21,
     "batHand": "Switch",
     "battingScoreComponent": null,
@@ -14723,7 +14814,7 @@
     "pitcherScore": 12.98,
     "position": "RP",
     "positionPlayerScore": null,
-    "rank": 19,
+    "rank": 20,
     "ratings": {
      "adaptability": null,
      "batHand": "Switch",
@@ -14840,7 +14931,7 @@
     "pitcherScore": 11.97,
     "position": "SP",
     "positionPlayerScore": null,
-    "rank": 20,
+    "rank": 21,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
@@ -14947,7 +15038,7 @@
     "pitcherScore": null,
     "position": "CF",
     "positionPlayerScore": 11.47,
-    "rank": 21,
+    "rank": 22,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
@@ -15038,7 +15129,7 @@
     "pitcherScore": null,
     "position": "2B",
     "positionPlayerScore": 10.82,
-    "rank": 22,
+    "rank": 23,
     "ratings": {
      "adaptability": null,
      "batHand": "Left",
@@ -15129,7 +15220,7 @@
     "pitcherScore": 10.59,
     "position": "SP",
     "positionPlayerScore": null,
-    "rank": 23,
+    "rank": 24,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
@@ -15246,7 +15337,7 @@
     "pitcherScore": null,
     "position": "C",
     "positionPlayerScore": 10.41,
-    "rank": 24,
+    "rank": 25,
     "ratings": {
      "adaptability": null,
      "batHand": "Left",
@@ -15337,7 +15428,7 @@
     "pitcherScore": null,
     "position": "SS",
     "positionPlayerScore": 9.95,
-    "rank": 25,
+    "rank": 26,
     "ratings": {
      "adaptability": null,
      "batHand": "Left",
@@ -15428,7 +15519,7 @@
     "pitcherScore": 9.63,
     "position": "SP",
     "positionPlayerScore": null,
-    "rank": 26,
+    "rank": 27,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
@@ -15540,7 +15631,7 @@
     "pitcherScore": null,
     "position": "SS",
     "positionPlayerScore": 9.45,
-    "rank": 27,
+    "rank": 28,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
@@ -15631,7 +15722,7 @@
     "pitcherScore": 9.4,
     "position": "SP",
     "positionPlayerScore": null,
-    "rank": 28,
+    "rank": 29,
     "ratings": {
      "adaptability": null,
      "batHand": "Switch",
@@ -15733,7 +15824,7 @@
     "pitcherScore": 8.95,
     "position": "RP",
     "positionPlayerScore": null,
-    "rank": 29,
+    "rank": 30,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
@@ -15840,7 +15931,7 @@
     "pitcherScore": null,
     "position": "CF",
     "positionPlayerScore": 8.36,
-    "rank": 30,
+    "rank": 31,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
@@ -15931,7 +16022,7 @@
     "pitcherScore": 8.3,
     "position": "SP",
     "positionPlayerScore": null,
-    "rank": 31,
+    "rank": 32,
     "ratings": {
      "adaptability": null,
      "batHand": "Left",
@@ -16048,7 +16139,7 @@
     "pitcherScore": null,
     "position": "RF",
     "positionPlayerScore": 7.99,
-    "rank": 32,
+    "rank": 33,
     "ratings": {
      "adaptability": null,
      "batHand": "Left",
@@ -16139,7 +16230,7 @@
     "pitcherScore": null,
     "position": "CF",
     "positionPlayerScore": 7.61,
-    "rank": 33,
+    "rank": 34,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
@@ -16230,7 +16321,7 @@
     "pitcherScore": 6.48,
     "position": "RP",
     "positionPlayerScore": 7.23,
-    "rank": 34,
+    "rank": 35,
     "ratings": {
      "adaptability": null,
      "batHand": "Switch",
@@ -16337,7 +16428,7 @@
     "pitcherScore": null,
     "position": "SS",
     "positionPlayerScore": 6.53,
-    "rank": 35,
+    "rank": 36,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
@@ -16428,7 +16519,7 @@
     "pitcherScore": null,
     "position": "RF",
     "positionPlayerScore": 6.49,
-    "rank": 36,
+    "rank": 37,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
@@ -16497,9 +16588,9 @@
     "wrcPlus": 130.0
    },
    {
-    "age": 20,
+    "age": 24,
     "batHand": "Right",
-    "battingScoreComponent": 11.61,
+    "battingScoreComponent": 27.71,
     "bestPosition": "C",
     "demand": null,
     "drafted": false,
@@ -16508,84 +16599,84 @@
     "draftedRoundPick": null,
     "draftedTeam": null,
     "era": null,
-    "fieldingScoreComponent": -4.85,
-    "id": "1099",
-    "inGameOverall": 30,
-    "inGamePotential": 65,
-    "level": "A",
-    "modelScore": 56.45,
-    "name": "Tatum Ellery",
-    "org": "Boise Bison",
+    "fieldingScoreComponent": -3.32,
+    "id": "1014",
+    "inGameOverall": 50,
+    "inGamePotential": 40,
+    "level": "AA",
+    "modelScore": 56.32,
+    "name": "Oakley Lowell",
+    "org": "Milwaukee Brewers",
     "pitcherScore": null,
-    "position": "2B",
-    "positionPlayerScore": 6.45,
-    "rank": 37,
+    "position": "3B",
+    "positionPlayerScore": 6.32,
+    "rank": 38,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
      "batting": {
-      "avoidK": 50,
-      "avoidKCur": 40,
-      "babip": 40,
-      "babipCur": 20,
-      "contact": 45,
-      "contactCur": 30,
-      "eye": 45,
-      "eyeCur": 35,
-      "gap": 40,
-      "gapCur": 25,
-      "power": 55,
-      "powerCur": 30,
-      "running": 30,
-      "speed": 45,
-      "steal": 50
+      "avoidK": 35,
+      "avoidKCur": 20,
+      "babip": 80,
+      "babipCur": 80,
+      "contact": 60,
+      "contactCur": 50,
+      "eye": 50,
+      "eyeCur": 40,
+      "gap": 50,
+      "gapCur": 40,
+      "power": 65,
+      "powerCur": 65,
+      "running": 20,
+      "speed": 40,
+      "steal": 30
      },
      "fielding": {
-      "cArm": 40,
-      "cBlocking": 55,
-      "cFraming": 50,
-      "ifArm": 60,
-      "ifError": 45,
+      "cArm": 35,
+      "cBlocking": 60,
+      "cFraming": 55,
+      "ifArm": 40,
+      "ifError": 60,
       "ifRange": 30,
-      "ofArm": 25,
-      "ofError": 25,
-      "ofRange": 50,
-      "turnDp": 25
+      "ofArm": 45,
+      "ofError": 50,
+      "ofRange": 20,
+      "turnDp": 40
      },
      "injuryProne": "Normal",
-     "intelligence": "N",
+     "intelligence": "H",
      "leadership": "N",
      "pitching": {
       "armSlot": "Normal",
-      "control": 20,
+      "control": 30,
       "controlCur": 20,
-      "groundballType": "EX GB",
-      "hra": 25,
+      "groundballType": "NEU",
+      "hra": 30,
       "hraCur": 20,
-      "movement": 25,
+      "movement": 30,
       "movementCur": 20,
-      "pbabip": 25,
+      "pbabip": 30,
       "pbabipCur": 20,
       "pitches": [],
-      "stamina": 30,
-      "stuff": 30,
+      "stamina": 35,
+      "stuff": 25,
       "stuffCur": 20,
-      "velocity": "86-88"
+      "velocity": "85-87"
      },
      "scoutingAccuracy": "High",
      "throwHand": "Right",
-     "workEthic": "H"
+     "workEthic": "N"
     },
-    "rawOverallScore": 56.45354874735966,
+    "rawOverallScore": 56.321522349476744,
     "relieverComponent": null,
-    "rule5Eligible": true,
-    "runningScoreComponent": -2.85,
+    "rule5Eligible": false,
+    "runningScoreComponent": -4.46,
     "starterComponent": null,
-    "statsPlusUrl": "https://statsplus.net/goldenfx/player/1099",
-    "team": "Boise Single Bison Single",
+    "statsPlusUrl": "https://statsplus.net/goldenfx/player/1014",
+    "team": "Milwaukee Double Brewers Double",
     "throwHand": "Right",
     "type": "Hitter",
-    "wrcPlus": 98.0
+    "wrcPlus": 117.0
    },
    {
     "age": 21,
@@ -16610,7 +16701,7 @@
     "pitcherScore": null,
     "position": "RF",
     "positionPlayerScore": 6.08,
-    "rank": 38,
+    "rank": 39,
     "ratings": {
      "adaptability": null,
      "batHand": "Switch",
@@ -16701,7 +16792,7 @@
     "pitcherScore": null,
     "position": "SS",
     "positionPlayerScore": 5.99,
-    "rank": 39,
+    "rank": 40,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
@@ -16792,7 +16883,7 @@
     "pitcherScore": 5.8,
     "position": "RP",
     "positionPlayerScore": null,
-    "rank": 40,
+    "rank": 41,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
@@ -16870,97 +16961,6 @@
     "throwHand": "Right",
     "type": "Pitcher",
     "wrcPlus": null
-   },
-   {
-    "age": 24,
-    "batHand": "Right",
-    "battingScoreComponent": 27.12,
-    "bestPosition": "C",
-    "demand": null,
-    "drafted": false,
-    "draftedPick": null,
-    "draftedRound": null,
-    "draftedRoundPick": null,
-    "draftedTeam": null,
-    "era": null,
-    "fieldingScoreComponent": -4.97,
-    "id": "1014",
-    "inGameOverall": 50,
-    "inGamePotential": 40,
-    "level": "AA",
-    "modelScore": 55.61,
-    "name": "Oakley Lowell",
-    "org": "Milwaukee Brewers",
-    "pitcherScore": null,
-    "position": "3B",
-    "positionPlayerScore": 5.61,
-    "rank": 41,
-    "ratings": {
-     "adaptability": null,
-     "batHand": "Right",
-     "batting": {
-      "avoidK": 35,
-      "avoidKCur": 20,
-      "babip": 80,
-      "babipCur": 80,
-      "contact": 60,
-      "contactCur": 50,
-      "eye": 50,
-      "eyeCur": 40,
-      "gap": 50,
-      "gapCur": 40,
-      "power": 65,
-      "powerCur": 65,
-      "running": 20,
-      "speed": 40,
-      "steal": 30
-     },
-     "fielding": {
-      "cArm": 35,
-      "cBlocking": 60,
-      "cFraming": 55,
-      "ifArm": 40,
-      "ifError": 60,
-      "ifRange": 30,
-      "ofArm": 45,
-      "ofError": 50,
-      "ofRange": 20,
-      "turnDp": 40
-     },
-     "injuryProne": "Normal",
-     "intelligence": "H",
-     "leadership": "N",
-     "pitching": {
-      "armSlot": "Normal",
-      "control": 30,
-      "controlCur": 20,
-      "groundballType": "NEU",
-      "hra": 30,
-      "hraCur": 20,
-      "movement": 30,
-      "movementCur": 20,
-      "pbabip": 30,
-      "pbabipCur": 20,
-      "pitches": [],
-      "stamina": 35,
-      "stuff": 25,
-      "stuffCur": 20,
-      "velocity": "85-87"
-     },
-     "scoutingAccuracy": "High",
-     "throwHand": "Right",
-     "workEthic": "N"
-    },
-    "rawOverallScore": 55.61379677249465,
-    "relieverComponent": null,
-    "rule5Eligible": false,
-    "runningScoreComponent": -4.46,
-    "starterComponent": null,
-    "statsPlusUrl": "https://statsplus.net/goldenfx/player/1014",
-    "team": "Milwaukee Double Brewers Double",
-    "throwHand": "Right",
-    "type": "Hitter",
-    "wrcPlus": 117.0
    },
    {
     "age": 23,
@@ -18390,6 +18390,97 @@
    {
     "age": 19,
     "batHand": "Right",
+    "battingScoreComponent": 1.09,
+    "bestPosition": "C",
+    "demand": null,
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "era": null,
+    "fieldingScoreComponent": 6.48,
+    "id": "1040",
+    "inGameOverall": 35,
+    "inGamePotential": 45,
+    "level": "AA",
+    "modelScore": 52.46,
+    "name": "Avery Ingram",
+    "org": "Pittsburgh Pirates",
+    "pitcherScore": null,
+    "position": "3B",
+    "positionPlayerScore": 2.46,
+    "rank": 57,
+    "ratings": {
+     "adaptability": null,
+     "batHand": "Right",
+     "batting": {
+      "avoidK": 65,
+      "avoidKCur": 40,
+      "babip": 35,
+      "babipCur": 20,
+      "contact": 50,
+      "contactCur": 30,
+      "eye": 35,
+      "eyeCur": 20,
+      "gap": 75,
+      "gapCur": 70,
+      "power": 40,
+      "powerCur": 40,
+      "running": 40,
+      "speed": 40,
+      "steal": 25
+     },
+     "fielding": {
+      "cArm": 40,
+      "cBlocking": 50,
+      "cFraming": 60,
+      "ifArm": 30,
+      "ifError": 25,
+      "ifRange": 55,
+      "ofArm": 55,
+      "ofError": 20,
+      "ofRange": 60,
+      "turnDp": 30
+     },
+     "injuryProne": "Durable",
+     "intelligence": "N",
+     "leadership": "N",
+     "pitching": {
+      "armSlot": "Normal",
+      "control": 30,
+      "controlCur": 20,
+      "groundballType": "NEU",
+      "hra": 20,
+      "hraCur": 20,
+      "movement": 20,
+      "movementCur": 20,
+      "pbabip": 20,
+      "pbabipCur": 20,
+      "pitches": [],
+      "stamina": 30,
+      "stuff": 20,
+      "stuffCur": 20,
+      "velocity": "88-90"
+     },
+     "scoutingAccuracy": "Low",
+     "throwHand": "Right",
+     "workEthic": "N"
+    },
+    "rawOverallScore": 52.45808474808575,
+    "relieverComponent": null,
+    "rule5Eligible": true,
+    "runningScoreComponent": -2.26,
+    "starterComponent": null,
+    "statsPlusUrl": "https://statsplus.net/goldenfx/player/1040",
+    "team": "Pittsburgh Double Pirates Double",
+    "throwHand": "Right",
+    "type": "Hitter",
+    "wrcPlus": 82.0
+   },
+   {
+    "age": 19,
+    "batHand": "Right",
     "battingScoreComponent": -5.1,
     "bestPosition": "1B",
     "demand": null,
@@ -18410,7 +18501,7 @@
     "pitcherScore": null,
     "position": "2B",
     "positionPlayerScore": 2.39,
-    "rank": 57,
+    "rank": 58,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
@@ -18501,7 +18592,7 @@
     "pitcherScore": 2.21,
     "position": "RP",
     "positionPlayerScore": null,
-    "rank": 58,
+    "rank": 59,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
@@ -18613,7 +18704,7 @@
     "pitcherScore": null,
     "position": "C",
     "positionPlayerScore": 1.7,
-    "rank": 59,
+    "rank": 60,
     "ratings": {
      "adaptability": null,
      "batHand": "Left",
@@ -18704,7 +18795,7 @@
     "pitcherScore": null,
     "position": "3B",
     "positionPlayerScore": 1.4,
-    "rank": 60,
+    "rank": 61,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
@@ -18795,7 +18886,7 @@
     "pitcherScore": null,
     "position": "C",
     "positionPlayerScore": 1.35,
-    "rank": 61,
+    "rank": 62,
     "ratings": {
      "adaptability": null,
      "batHand": "Right",
@@ -18862,97 +18953,6 @@
     "throwHand": "Right",
     "type": "Hitter",
     "wrcPlus": 87.0
-   },
-   {
-    "age": 19,
-    "batHand": "Right",
-    "battingScoreComponent": 1.49,
-    "bestPosition": "C",
-    "demand": null,
-    "drafted": false,
-    "draftedPick": null,
-    "draftedRound": null,
-    "draftedRoundPick": null,
-    "draftedTeam": null,
-    "era": null,
-    "fieldingScoreComponent": 3.16,
-    "id": "1040",
-    "inGameOverall": 35,
-    "inGamePotential": 45,
-    "level": "AA",
-    "modelScore": 51.26,
-    "name": "Avery Ingram",
-    "org": "Pittsburgh Pirates",
-    "pitcherScore": null,
-    "position": "3B",
-    "positionPlayerScore": 1.26,
-    "rank": 62,
-    "ratings": {
-     "adaptability": null,
-     "batHand": "Right",
-     "batting": {
-      "avoidK": 65,
-      "avoidKCur": 40,
-      "babip": 35,
-      "babipCur": 20,
-      "contact": 50,
-      "contactCur": 30,
-      "eye": 35,
-      "eyeCur": 20,
-      "gap": 75,
-      "gapCur": 70,
-      "power": 40,
-      "powerCur": 40,
-      "running": 40,
-      "speed": 40,
-      "steal": 25
-     },
-     "fielding": {
-      "cArm": 40,
-      "cBlocking": 50,
-      "cFraming": 60,
-      "ifArm": 30,
-      "ifError": 25,
-      "ifRange": 55,
-      "ofArm": 55,
-      "ofError": 20,
-      "ofRange": 60,
-      "turnDp": 30
-     },
-     "injuryProne": "Durable",
-     "intelligence": "N",
-     "leadership": "N",
-     "pitching": {
-      "armSlot": "Normal",
-      "control": 30,
-      "controlCur": 20,
-      "groundballType": "NEU",
-      "hra": 20,
-      "hraCur": 20,
-      "movement": 20,
-      "movementCur": 20,
-      "pbabip": 20,
-      "pbabipCur": 20,
-      "pitches": [],
-      "stamina": 30,
-      "stuff": 20,
-      "stuffCur": 20,
-      "velocity": "88-90"
-     },
-     "scoutingAccuracy": "Low",
-     "throwHand": "Right",
-     "workEthic": "N"
-    },
-    "rawOverallScore": 51.25713293715644,
-    "relieverComponent": null,
-    "rule5Eligible": true,
-    "runningScoreComponent": -2.26,
-    "starterComponent": null,
-    "statsPlusUrl": "https://statsplus.net/goldenfx/player/1040",
-    "team": "Pittsburgh Double Pirates Double",
-    "throwHand": "Right",
-    "type": "Hitter",
-    "wrcPlus": 82.0
    },
    {
     "age": 19,
@@ -19788,7 +19788,7 @@
     "age": 23,
     "batHand": "Left",
     "battingScoreComponent": -3.06,
-    "bestPosition": "1B",
+    "bestPosition": "C",
     "demand": null,
     "drafted": false,
     "draftedPick": null,
@@ -19796,7 +19796,7 @@
     "draftedRoundPick": null,
     "draftedTeam": null,
     "era": null,
-    "fieldingScoreComponent": -9.02,
+    "fieldingScoreComponent": -7.27,
     "id": "1020",
     "inGameOverall": 40,
     "inGamePotential": 55,

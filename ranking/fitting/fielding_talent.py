@@ -24,7 +24,8 @@ step 2):
   are worth the most at SS; and centred so the regulars' average matches
   StatsPlus's. StatsPlus's (from its WAR: an allowance per PA at each position
   against the average of all nine, DH included) put SS only 2 runs above 2B,
-  so a true SS came out worth more at 2B. RF is then kept RF_OVER_LF above LF.
+  so a true SS came out worth more at 2B. RF is then kept RF_OVER_LF above LF,
+  and C raised by C_RAISE: catching at all, which usage can't see.
 """
 import argparse
 import gzip
@@ -85,6 +86,12 @@ SHARED = {"LF": ("LF", "RF"), "RF": ("LF", "RF")}
 # RF is worth a little more than LF whatever the arm (your call, 2026-11-09):
 # a ball that gets by in RF puts runners on third
 RF_OVER_LF = 1.5
+# catching at all is worth more than where managers play regulars says (your
+# call, 2026-11-12): hardly anyone else clears C's floors, so usage barely
+# constrains its adjustment. On 2041-42's MLB regulars (300+ PA) the model's
+# full-time WAR ran 0.26 per 600 PA under StatsPlus's for catchers and 0.15
+# over on average elsewhere - 0.41 WAR, these runs at 0.109 WAR a run
+C_RAISE = 3.8
 USAGE_INNINGS = 400
 USAGE_YEARS = 2
 # how hard the usage fit is pulled toward StatsPlus's adjustments (your call,
@@ -305,6 +312,7 @@ def main(argv=None):
     # a first baseman is no worse than a DH, who fields nowhere
     artifact["position_adjustment"]["1B"] = max(adjustment["1B"], war_adjustment[DH])
     artifact["position_adjustment"]["RF"] = max(adjustment["RF"], round(adjustment["LF"] + RF_OVER_LF, 2))
+    artifact["position_adjustment"]["C"] = round(adjustment["C"] + C_RAISE, 2)
 
     adj = {**artifact["position_adjustment"], DH: war_adjustment[DH]}
     order = [(a, b, adj[a] > adj[b]) for a, b in POSITION_ORDER]
@@ -330,6 +338,7 @@ def main(argv=None):
         "positions": report,
         "statsplus_adjustment": war_adjustment,
         "usage": usage,
+        "c_raise": C_RAISE,
         "dp_runs": DP_RUNS,
         "war_per_fielding_run": round(per_run, 4),
         "rules": {f"position order: {a} > {b}": {"passed": bool(ok)} for a, b, ok in order},
