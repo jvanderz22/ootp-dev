@@ -184,6 +184,33 @@ def test_a_draftee_near_mlb_ready_keeps_half_his_age_penalty_from_21_5(rows):
     assert regular(21.0, 0.0) == pytest.approx(regular(21.0, -1.0), abs=0.005) or regular(21.0, 0.0) > regular(21.0, -1.0)
 
 
+def test_an_advanced_22_year_old_pitcher_keeps_more_of_his_age_factor(rows):
+    # judgment (2026-11-21): a pitcher's 22 age factor eases toward the
+    # judgment's by his percentile of WAR now among 22-year-old pitchers -
+    # none behind the curve, in full for the truly advanced; hitters as before
+    odds = draft_odds.load()
+    p = odds.a["judgment"]["pitcher_polish"]
+    player = GamePlayer(dict(rows[0]))
+
+    def ev(group, readiness, age=22.0):
+        return odds.expected(odds.mean_columns(player, 3.0, readiness, group, age), age)
+
+    def polish_free(group, readiness):   # the hitters' polish alone
+        cols = odds.mean_columns(player, 3.0, readiness, group, 22.0)
+        return float(np.exp(odds._mean_logit(cols)))
+
+    behind, median, ahead = p["percentiles"][2][0] - 0.5, p["percentiles"][3][0], p["percentiles"][-1][0] + 0.5
+    assert draft_odds.pitcher_ease(behind, p) == 0 and draft_odds.pitcher_ease(ahead, p) == 1
+    assert 0 < draft_odds.pitcher_ease(median, p) < draft_odds.pitcher_ease(-0.2, p) < 1
+    # in full, the 22 knot's factor becomes the judgment's
+    lift = ev("SP", ahead) / ev("hitter", ahead) / (polish_free("SP", ahead) / polish_free("hitter", ahead))
+    assert lift == pytest.approx(p["age_22_factor"] / odds.a["age"]["factor"]["22"])
+    # none behind the curve, and none for a teen
+    assert ev("SP", behind) / ev("hitter", behind) == pytest.approx(polish_free("SP", behind) / polish_free("hitter", behind))
+    assert odds.pitcher_polish(odds.mean_columns(player, 3.0, ahead, "SP", 18.0)) == 0
+    assert odds.pitcher_polish(odds.mean_columns(player, 3.0, ahead, "hitter", 22.0)) == 0
+
+
 def test_a_hitters_glove_counts_at_the_glove_weight(ranked):
     # interim judgment (2026-11-21): the odds work from a ceiling with the
     # glove at GLOVE_WEIGHT; the card keeps the full ceiling

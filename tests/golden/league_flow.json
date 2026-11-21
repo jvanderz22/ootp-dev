@@ -291,7 +291,7 @@
     {
      "id": "1022",
      "level": "A",
-     "modelScore": 58.13,
+     "modelScore": 58.62,
      "name": "Casey Norcross",
      "rank": 28
     },
@@ -1756,14 +1756,14 @@
     "rule5Eligible": true
    },
    {
-    "id": "1098",
-    "level": "A",
+    "id": "1096",
+    "level": "AA",
     "rank": 17,
     "rule5Eligible": true
    },
    {
-    "id": "1096",
-    "level": "AA",
+    "id": "1098",
+    "level": "A",
     "rank": 18,
     "rule5Eligible": true
    },
@@ -1891,7 +1891,7 @@
    {
     "id": "1098",
     "modelScore": 63.28,
-    "rank": 17
+    "rank": 18
    },
    {
     "id": "1086",
@@ -1940,8 +1940,8 @@
    },
    {
     "id": "1096",
-    "modelScore": 62.88,
-    "rank": 18
+    "modelScore": 63.68,
+    "rank": 17
    },
    {
     "id": "1047",
@@ -1950,7 +1950,7 @@
    },
    {
     "id": "1022",
-    "modelScore": 58.13,
+    "modelScore": 58.62,
     "rank": 28
    },
    {
@@ -14493,6 +14493,123 @@
     "wrcPlus": null
    },
    {
+    "age": 21,
+    "batHand": "Switch",
+    "battingScoreComponent": null,
+    "bestPosition": null,
+    "demand": null,
+    "drafted": false,
+    "draftedPick": null,
+    "draftedRound": null,
+    "draftedRoundPick": null,
+    "draftedTeam": null,
+    "era": 4.25,
+    "fieldingScoreComponent": null,
+    "id": "1096",
+    "inGameOverall": 50,
+    "inGamePotential": 70,
+    "level": "AA",
+    "modelScore": 63.68,
+    "name": "Quinn Radley",
+    "org": "Boise Bison",
+    "pitcherScore": 13.68,
+    "position": "RP",
+    "positionPlayerScore": null,
+    "rank": 17,
+    "ratings": {
+     "adaptability": null,
+     "batHand": "Switch",
+     "batting": {
+      "avoidK": 25,
+      "avoidKCur": 25,
+      "babip": 35,
+      "babipCur": 20,
+      "contact": 30,
+      "contactCur": 20,
+      "eye": 20,
+      "eyeCur": 20,
+      "gap": 20,
+      "gapCur": 20,
+      "power": 20,
+      "powerCur": 20,
+      "running": 30,
+      "speed": 45,
+      "steal": 30
+     },
+     "fielding": {
+      "cArm": 40,
+      "cBlocking": 35,
+      "cFraming": 20,
+      "ifArm": 60,
+      "ifError": 35,
+      "ifRange": 50,
+      "ofArm": 55,
+      "ofError": 60,
+      "ofRange": 55,
+      "turnDp": 60
+     },
+     "injuryProne": "Normal",
+     "intelligence": "N",
+     "leadership": "N",
+     "pitching": {
+      "armSlot": "Normal",
+      "control": 50,
+      "controlCur": 30,
+      "groundballType": "EX GB",
+      "hra": 65,
+      "hraCur": 65,
+      "movement": 65,
+      "movementCur": 65,
+      "pbabip": 65,
+      "pbabipCur": 65,
+      "pitches": [
+       {
+        "current": 60,
+        "name": "Fastball",
+        "potential": 65
+       },
+       {
+        "current": 35,
+        "name": "Slider",
+        "potential": 50
+       },
+       {
+        "current": 40,
+        "name": "Sinker",
+        "potential": 50
+       },
+       {
+        "current": 20,
+        "name": "Changeup",
+        "potential": 35
+       },
+       {
+        "current": 20,
+        "name": "Curveball",
+        "potential": 35
+       }
+      ],
+      "stamina": 35,
+      "stuff": 35,
+      "stuffCur": 20,
+      "velocity": "96-98"
+     },
+     "scoutingAccuracy": "Average",
+     "throwHand": "Right",
+     "workEthic": "N"
+    },
+    "rawOverallScore": 63.68327881237845,
+    "relieverComponent": 10.08,
+    "rule5Eligible": true,
+    "runningScoreComponent": null,
+    "starterComponent": 24.12,
+    "statsPlusUrl": "https://statsplus.net/goldenfx/player/1096",
+    "team": "Boise Double Bison Double",
+    "throwHand": "Right",
+    "type": "Pitcher",
+    "wrcPlus": null
+   },
+   {
     "age": 20,
     "batHand": "Switch",
     "battingScoreComponent": null,
@@ -14515,7 +14632,7 @@
     "pitcherScore": 13.28,
     "position": "SP",
     "positionPlayerScore": null,
-    "rank": 17,
+    "rank": 18,
     "ratings": {
      "adaptability": null,
      "batHand": "Switch",
@@ -14605,123 +14722,6 @@
     "starterComponent": 26.18,
     "statsPlusUrl": "https://statsplus.net/goldenfx/player/1098",
     "team": "Boise Single Bison Single",
-    "throwHand": "Right",
-    "type": "Pitcher",
-    "wrcPlus": null
-   },
-   {
-    "age": 21,
-    "batHand": "Switch",
-    "battingScoreComponent": null,
-    "bestPosition": null,
-    "demand": null,
-    "drafted": false,
-    "draftedPick": null,
-    "draftedRound": null,
-    "draftedRoundPick": null,
-    "draftedTeam": null,
-    "era": 4.25,
-    "fieldingScoreComponent": null,
-    "id": "1096",
-    "inGameOverall": 50,
-    "inGamePotential": 70,
-    "level": "AA",
-    "modelScore": 62.88,
-    "name": "Quinn Radley",
-    "org": "Boise Bison",
-    "pitcherScore": 12.88,
-    "position": "RP",
-    "positionPlayerScore": null,
-    "rank": 18,
-    "ratings": {
-     "adaptability": null,
-     "batHand": "Switch",
-     "batting": {
-      "avoidK": 25,
-      "avoidKCur": 25,
-      "babip": 35,
-      "babipCur": 20,
-      "contact": 30,
-      "contactCur": 20,
-      "eye": 20,
-      "eyeCur": 20,
-      "gap": 20,
-      "gapCur": 20,
-      "power": 20,
-      "powerCur": 20,
-      "running": 30,
-      "speed": 45,
-      "steal": 30
-     },
-     "fielding": {
-      "cArm": 40,
-      "cBlocking": 35,
-      "cFraming": 20,
-      "ifArm": 60,
-      "ifError": 35,
-      "ifRange": 50,
-      "ofArm": 55,
-      "ofError": 60,
-      "ofRange": 55,
-      "turnDp": 60
-     },
-     "injuryProne": "Normal",
-     "intelligence": "N",
-     "leadership": "N",
-     "pitching": {
-      "armSlot": "Normal",
-      "control": 50,
-      "controlCur": 30,
-      "groundballType": "EX GB",
-      "hra": 65,
-      "hraCur": 65,
-      "movement": 65,
-      "movementCur": 65,
-      "pbabip": 65,
-      "pbabipCur": 65,
-      "pitches": [
-       {
-        "current": 60,
-        "name": "Fastball",
-        "potential": 65
-       },
-       {
-        "current": 35,
-        "name": "Slider",
-        "potential": 50
-       },
-       {
-        "current": 40,
-        "name": "Sinker",
-        "potential": 50
-       },
-       {
-        "current": 20,
-        "name": "Changeup",
-        "potential": 35
-       },
-       {
-        "current": 20,
-        "name": "Curveball",
-        "potential": 35
-       }
-      ],
-      "stamina": 35,
-      "stuff": 35,
-      "stuffCur": 20,
-      "velocity": "96-98"
-     },
-     "scoutingAccuracy": "Average",
-     "throwHand": "Right",
-     "workEthic": "N"
-    },
-    "rawOverallScore": 62.88453126376364,
-    "relieverComponent": 10.08,
-    "rule5Eligible": true,
-    "runningScoreComponent": null,
-    "starterComponent": 24.12,
-    "statsPlusUrl": "https://statsplus.net/goldenfx/player/1096",
-    "team": "Boise Double Bison Double",
     "throwHand": "Right",
     "type": "Pitcher",
     "wrcPlus": null
@@ -15636,10 +15636,10 @@
     "inGameOverall": 40,
     "inGamePotential": 45,
     "level": "A",
-    "modelScore": 58.13,
+    "modelScore": 58.62,
     "name": "Casey Norcross",
     "org": "Milwaukee Brewers",
-    "pitcherScore": 8.13,
+    "pitcherScore": 8.62,
     "position": "SP",
     "positionPlayerScore": null,
     "rank": 28,
@@ -15725,7 +15725,7 @@
      "throwHand": "Right",
      "workEthic": "N"
     },
-    "rawOverallScore": 58.12609141041936,
+    "rawOverallScore": 58.61891453936199,
     "relieverComponent": 8.31,
     "rule5Eligible": false,
     "runningScoreComponent": null,

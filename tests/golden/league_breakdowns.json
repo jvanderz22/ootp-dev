@@ -3386,7 +3386,7 @@
    "rankAdjust": {
     "modifiers": [],
     "preRank": 28,
-    "preScore": 58.13
+    "preScore": 58.62
    }
   },
   "1023": {
@@ -5032,8 +5032,8 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 18,
-    "preScore": 62.88
+    "preRank": 17,
+    "preScore": 63.68
    }
   },
   "1097": {
@@ -5102,7 +5102,7 @@
    "playerType": "Pitcher",
    "rankAdjust": {
     "modifiers": [],
-    "preRank": 17,
+    "preRank": 18,
     "preScore": 63.28
    }
   },

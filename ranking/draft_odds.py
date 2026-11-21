@@ -238,6 +238,15 @@ def knot_weights(age, knots) -> dict:
     return out
 
 
+def pitcher_ease(readiness, judgment):
+    """The share of the pitcher polish a pitcher of `readiness` WAR now (a
+    number or an array) gets: his percentile among 22-year-old pitchers, read
+    off `judgment`'s (WAR now, percentile) knots, 0 at `none`, 1 from `full`."""
+    war, pct = zip(*judgment["percentiles"])
+    at = np.interp(readiness, war, pct)
+    return np.clip((at - judgment["none"]) / (judgment["full"] - judgment["none"]), 0.0, 1.0)
+
+
 def _number(value, default) -> float:
     try:
         return float(value)
@@ -327,7 +336,19 @@ class DraftOdds:
         lo, hi = p["eligible"]
         eligible = np.clip((age - lo) / (hi - lo), 0.0, 1.0)
         ready = np.clip((cols["readiness"] - p["from"]) / (p["full"] - p["from"]), 0.0, 1.0)
-        return float(-p["share"] * ready * eligible * min(penalty, 0.0))
+        return float(-p["share"] * ready * eligible * min(penalty, 0.0)) + self.pitcher_polish(cols)
+
+    def pitcher_polish(self, cols) -> float:
+        """The logit the pitcher polish judgment (the artifact's, 2026-11-21)
+        adds: a pitcher's 22 age factor eased toward its `age_22_factor` by
+        his weight on the 22 knot and how advanced he is for a 22-year-old
+        pitcher - his percentile of WAR now among them, none at `none`, in
+        full from `full` up. 0 for a hitter, and without the judgment."""
+        p = self.a["judgment"].get("pitcher_polish")
+        if not p or not (cols["SP"] or cols["RP"]):
+            return 0.0
+        ease = pitcher_ease(cols["readiness"], p)
+        return float(ease * cols["age 22"] * np.log(p["age_22_factor"] / self.a["age"]["factor"]["22"]))
 
     def penalty(self, lp, at) -> float:
         """The age logit's drop between the polish judgment's `eased` ages at

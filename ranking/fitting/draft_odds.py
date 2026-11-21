@@ -132,6 +132,21 @@ POLISH = {"share": 0.5, "from": -2.0, "full": -0.5, "eligible": [20, 21], "eased
 # rose (top 25 4.73 -> 4.91, top 50 3.58 -> 3.67) and value now fell a little
 # (rho 0.400 -> 0.392); x0.7 lost on both
 AGE_22_FACTOR = 0.55
+# judgment (2026-11-21, you): a 22-year-old pitcher on track or ahead isn't
+# cut like a raw one. His 22 age factor eases toward AGE_22_FACTOR here, by
+# his weight on the 22 knot and how advanced he is for a 22-year-old pitcher:
+# his percentile of WAR now among them, none at NONE (behind the curve), in
+# full from FULL (the truly advanced), on top of POLISH. PERCENTILES are
+# 22-year-old pitchers' WAR now (ceiling 0.5+), pooled from yfmlb 2033-2041
+# and WBF 2109-2122 (1,676). An advanced arm with a sound ceiling (WBF 2122's
+# Doan, 55/45/65 at 22, the 73rd percentile, 68% of it) is nearer to paying
+# off, with less time to lose, than a raw teen with a borderline one (Kent,
+# 50/50/45 at 18). The data doesn't back it: held out, advanced 22-year-old
+# pitchers realized below their odds already
+PITCHER_POLISH = {
+    "age_22_factor": 1.0, "none": 0.25, "full": 0.95,
+    "percentiles": [[-1.23, 0.05], [-1.01, 0.1], [-0.72, 0.25], [-0.49, 0.5], [-0.16, 0.75], [0.38, 0.9], [0.82, 0.95]],
+}
 MAKEUP = {
     "WE H": lambda d: d.we == "H", "WE L": lambda d: d.we == "L",
     "INT H": lambda d: d["int"] == "H", "INT L": lambda d: d["int"] == "L",
@@ -510,7 +525,17 @@ def polish(d: pd.DataFrame, coef) -> np.ndarray:
     lo, hi = POLISH["eligible"]
     ready = np.clip((d.readiness.values - POLISH["from"]) / (POLISH["full"] - POLISH["from"]), 0, 1)
     w = POLISH["share"] * ready * np.clip((d.draft_age.values - lo) / (hi - lo), 0, 1)
-    return np.exp(-w * np.minimum(penalty, 0))
+    return np.exp(-w * np.minimum(penalty, 0)) * pitcher_polish(d, coef)
+
+
+def pitcher_polish(d: pd.DataFrame, coef) -> np.ndarray:
+    """The PITCHER_POLISH factor: a pitcher's 22 age factor (`coef`'s, a
+    fit's) eased to PITCHER_POLISH's, by his readiness and his weight on the
+    22 knot; 1 for a hitter."""
+    ease = board_odds.pitcher_ease(d.readiness.values, PITCHER_POLISH)
+    w22 = board_odds.knot_weights(d.draft_age.values, AGE_KNOTS)[22]
+    lift = np.exp(ease * w22 * (np.log(PITCHER_POLISH["age_22_factor"]) - coef[_column("age 22")]))
+    return np.where(d.group == "hitter", 1.0, lift)
 
 
 def held_out(d: pd.DataFrame, pool: pd.DataFrame, outcome: str, balance: tuple, reliever: float) -> tuple:
@@ -969,6 +994,7 @@ def main(argv=None):
         # ledger lines kept, a pitcher's velocity upside, and what's replaced
         "judgment": {"kept": list(KEPT), "velocity_steps": [list(s) for s in board_odds.VELOCITY_STEPS],
                      "replaces": list(board_odds.REPLACES), "polish": POLISH,
+                     "pitcher_polish": PITCHER_POLISH,
                      "teen_readiness": TEEN_READINESS, "age_22_factor": AGE_22_FACTOR,
                      "glove_weight": board_odds.GLOVE_WEIGHT, "share_cap": board_odds.SHARE_CAP},
         # a regular, on the full-time scale: the card's "chance he becomes a regular"
