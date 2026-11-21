@@ -230,7 +230,9 @@ class Value(BatchStage):
             self._modifiers(state, side, BATTING, war)
             switch = development.switch_hitter(war) if batting and batting.bats == "S" else None
             return self._odds(state, side, BATTING, war, "hitter", switch=switch,
-                              glove=parts["fielding"] + parts["utility"])
+                              glove=parts["fielding"] + parts["utility"],
+                              bat=parts["batting"] + parts["allowance"] + parts.get("platoon", 0.0),
+                              run=parts["running"])
         developing = self._development(state, war)
         if self.develops and batting and batting.bats == "S":
             developing.append(development.switch_hitter(war))
@@ -447,14 +449,15 @@ class Value(BatchStage):
             product *= factor
         write_runtime_component(player.id, f"{side_name}.modifier_total", product)
 
-    def _odds(self, state, side, side_name, war, group, floors=(), switch=None, glove=0.0) -> float:
+    def _odds(self, state, side, side_name, war, group, floors=(), switch=None, glove=0.0, bat=0.0, run=0.0) -> float:
         """The odds for a side: his ceiling (the WAR after its floors),
         then the lines that take it to what he's expected to realize, then the
         judgment the odds keep - the profile's remaining modifiers, a
         pitcher's velocity upside and the hitter-pitcher balance. Never below
         replacement: the odds order the bottom of the board. On the draft
         board the odds work from a ceiling with a hitter's `glove` (its WAR)
-        counted at GLOVE_WEIGHT."""
+        counted at GLOVE_WEIGHT, and a hitter's value takes the playing-time
+        factor on his `bat`, `glove` and `run` (their WAR at potential)."""
         player, ledger = state.player, state.ledger
         ceiling = SCALE * war
         for name, factor, note in floors:
@@ -487,6 +490,11 @@ class Value(BatchStage):
                 points += SCALE * amount
             else:
                 points = ledger.scale(DEVELOPMENT, label, points, amount, side_name, note)
+        if not self.prospects and group == "hitter":
+            catcher = side.role == "C"
+            plays = self.odds.playing(bat, developed, glove, run, age, catcher)
+            if plays != 1:
+                points = ledger.scale(DEVELOPMENT, "Playing time", points, plays, side_name)
         for name, factor in side.modifiers:
             points = ledger.scale(MODIFIERS, name, points, factor, side_name, _modifier_note(name, player))
         if side_name == PITCHING:
@@ -494,8 +502,9 @@ class Value(BatchStage):
             fast = draft_odds.velocity_factor(player.velocity, knuckleball)
             if fast != 1:
                 points = ledger.scale(MODIFIERS, "velocity", points, fast, side_name, f"{player.velocity} mph")
-            if self.odds.balance != 1:
-                points = ledger.scale(MODIFIERS, "pitcher balance", points, self.odds.balance, side_name)
+            balance = self.odds.balance if self.prospects else self.odds.pitcher_balance(points / SCALE)
+            if balance != 1:
+                points = ledger.scale(MODIFIERS, "pitcher balance", points, balance, side_name)
         modified = points / SCALE
         side.score = points
         if self.prospects:

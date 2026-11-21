@@ -66,6 +66,9 @@ def test_the_lines_take_his_ceiling_to_what_hes_expected_to_realize(ranked):
         # a hitter's static glove first, when it counts at less than all
         if labels[0] == "Glove":
             labels = labels[1:]
+        # and a hitter's playing time last, on the whole of it
+        if labels[-1] == "Playing time":
+            labels = labels[:-1]
         assert labels[0] == "Base rate" and labels[-1] == "Breakout"
         before_demand = sum(l.delta for l in lines if l.stage != DEMAND)
         assert before_demand == pytest.approx(r.pre_demand_score)
@@ -187,3 +190,53 @@ def test_a_hitters_glove_counts_at_the_glove_weight(ranked):
         assert line.delta < 0 and line.stat == f"counts {draft_odds.GLOVE_WEIGHT:.0%}"
         model = sum(l.delta for l in r.ledger.lines if l.stage == MODEL and r.ledger.counted(l))
         assert r.ceiling_war == pytest.approx((model - value.DISPLAY_OFFSET) / value.DISPLAY_SCALE, abs=0.01)
+
+
+def test_the_board_reads_the_playing_time_factor_the_fit_was_fit_on():
+    # the runtime factor is the fit's, row for row
+    odds = draft_odds.load()
+    p = odds.a["plays"]
+    w = np.array([p["intercept"], *p["coef"].values()])
+    rng = np.random.default_rng(1)
+    frame = pd.DataFrame({"group": "hitter", "pot_bat": rng.uniform(-1, 6, 40), "bat": rng.uniform(-5, 4, 40),
+                          "pot_glove": rng.uniform(-1, 2.5, 40), "pot_run": rng.uniform(-0.5, 0.9, 40),
+                          "draft_age": rng.uniform(16.5, 23.5, 40)})
+    frame["role"] = rng.choice(["C", "SS", "1B"], 40)
+    expected = fit.playing(w, p["reference"], frame)
+    runtime = [odds.playing(r.pot_bat, r.bat, r.pot_glove, r.pot_run, r.draft_age, r.role == "C") for r in frame.itertuples()]
+    assert runtime == pytest.approx(list(expected))
+
+
+def test_a_glove_or_speed_gets_a_weaker_bat_on_the_field():
+    # 2026-11-21: at the same bat, a good glove or good speed raises his
+    # playing time and a 1B / DH's glove lowers it; the average glove and run
+    # are 1
+    odds = draft_odds.load()
+    ref = odds.a["plays"]["reference"]
+    at = lambda glove, run: odds.playing(2.0, -1.0, glove, run, 21.0)   # noqa: E731
+    assert at(ref["glove"], ref["run"]) == pytest.approx(1.0)
+    assert at(1.0, ref["run"]) > 1 > at(-0.5, ref["run"])
+    assert at(ref["glove"], 0.4) > 1 > at(ref["glove"], -0.4)
+    # at most the cap; none for a catcher until catchers are revisited
+    assert odds.playing(0.5, -3.0, 2.5, 0.9, 21.0) == pytest.approx(odds.a["plays"]["cap"])
+    assert odds.playing(2.0, -1.0, 1.5, 0.4, 21.0, catcher=True) == 1.0
+
+
+def test_a_hitter_carries_a_playing_time_line_and_a_pitcher_none(ranked):
+    lines = [(r, l) for r in ranked for l in r.ledger.lines if l.label == "Playing time"]
+    assert lines
+    assert all(l.side == "batting" and l.stage == DEVELOPMENT and l.stat.startswith("x") for _, l in lines)
+    assert not [r for r, _ in lines if r.ledger.side == "batting" and r.ledger.role == "C"]
+
+
+def test_the_pitcher_balance_ramps_with_his_value():
+    # 2026-11-21: one factor left the top 25 hitter-heavy; the ramp lifts the
+    # best pitchers more, as the fit's balance does
+    odds = draft_odds.load()
+    r = odds.a["pitcher_ramp"]
+    assert odds.pitcher_balance(r["war"]) == pytest.approx(odds.balance)
+    if r["ramp"]:
+        assert odds.pitcher_balance(3.0) > odds.pitcher_balance(1.0) > odds.pitcher_balance(0.3)
+    frame = pd.DataFrame({"group": ["SP", "RP", "hitter"]})
+    assert list(fit.balanced(frame, [3.0, 0.3, 2.0], odds.balance, r["ramp"])) == pytest.approx(
+        [3.0 * odds.pitcher_balance(3.0), 0.3 * odds.pitcher_balance(0.3), 2.0])

@@ -58,6 +58,16 @@ low ceilings and doesn't carry. It's how much of what the fit predicts
 relievers realize there, against hitters in the same classes (whose careers
 are as short), times the fit's factor.
 
+A hitter's value then takes the playing-time factor (plans/draft-glove-plan.md,
+2026-11-21): how much bat he needs to get on the field depends on his glove
+and speed. The chance he plays is a logistic fit of his share of a regular's
+season at PLAYS_AGES, on the bat's ceiling and WAR now, the glove and run at
+potential and his draft age, on the hitters whose window is complete. The
+factor is his chance over a hitter's with the same bat and an average glove
+and run, to PLAYS_STRENGTH, so it never counts the bat twice. The board's
+odds read the ceiling with the glove at GLOVE_WEIGHT (`odds_view`); the fit
+itself is on the whole ceiling.
+
 Then, leaving one class out at a time, the fit's ranking against today's board
 (pre-demand) on both outcomes; and the pitcher share by rank bucket, with the
 one side-balance factor on pitchers that brings the buckets to 50/50 on
@@ -150,6 +160,25 @@ REFERENCE_YEARS = 7                 # years after the draft the odds are read at
 GROWTH_JUDGMENT = {"WE H": 1.30, "velocity": 1.06}
 JUDGMENT_SD = 0.05
 TOP_K = (25, 50, 100)
+# the chance he plays (plans/draft-glove-plan.md): his share of a regular's
+# season (REGULAR_PA, each season's share capped at 1), averaged over
+# PLAYS_AGES, for hitters whose window through B_LAST_AGE is complete
+REGULAR_PA = 600
+PLAYS_AGES = (24, 25, 26)
+PLAYS_SD = 3.0                      # a weak prior: the fit is on hundreds
+# the playing-time factor's strength (2026-11-21): held out on MLB WAR to 26,
+# the square root ranked best; in full it over-rewarded gloves (45%+ glove
+# realized 0.65 of predicted) and pulled the top 25 toward hitters
+PLAYS_STRENGTH = 0.5
+# its most (2026-11-21): about its 95th percentile. Past that it's elite
+# speed or glove on a weak bat, where the fit extrapolates (Maruri x2.32,
+# Bernier x2.07) and glove-first ceilings already realize less than predicted
+PLAYS_CAP = 1.5
+# the pitcher balance's ramp by value (2026-11-21, you: fix the mix): the
+# value it's read at, and the ramps tried
+RAMP_WAR = 1.0
+RAMPS = np.round(np.arange(0.0, 1.01, 0.05), 2)
+GLOVE_BANDS = ([-9, 0, 0.25, 0.45, 9], ["bat only", "glove 0-25%", "glove 25-45%", "glove 45%+"])
 
 
 def _raw_war(ranked) -> dict:
@@ -170,6 +199,118 @@ def _bat_war(ranked) -> dict:
 
     return {r.id: sum(line.delta for line in r.ledger.lines if line.stage == MODEL and line.side == BATTING
                       and line.label in BAT_LINES) / 10 for r in ranked}
+
+
+# a hitter's model lines by part (plans/draft-glove-plan.md): the bat has
+# potential ratings and the range of outcomes; the glove and the run game are
+# static
+PARTS = {"bat": BAT_LINES, "glove": ("fielding", "utility"), "run": ("baserunning",)}
+
+
+def _split_war(ranked) -> dict:
+    """{id: {part: WAR from the batting side's model lines in PARTS}}, whichever
+    side he's valued on; 0s for a pitcher without a batting side."""
+    from ranking.ledger import BATTING, MODEL
+
+    out = {}
+    for r in ranked:
+        lines = [line for line in r.ledger.lines if line.stage == MODEL and line.side == BATTING]
+        out[r.id] = {part: sum(line.delta for line in lines if line.label in labels) / 10 for part, labels in PARTS.items()}
+    return out
+
+
+def odds_view(d: pd.DataFrame) -> pd.DataFrame:
+    """The draftees as the board's odds read them: a hitter's ceiling with
+    his glove, when worth anything, counted at GLOVE_WEIGHT (the fit itself
+    is on the whole ceiling)."""
+    glove = np.where(d.group == "hitter", d.pot_glove.clip(lower=0), 0.0)
+    return d.assign(war_pot=d.war_pot - (1 - board_odds.GLOVE_WEIGHT) * glove)
+
+
+def plays_share(d: pd.DataFrame) -> pd.Series:
+    """His share of a regular's season over PLAYS_AGES."""
+    return d.pa_by_age.apply(lambda m: np.mean([min(m.get(a, 0) / REGULAR_PA, 1.0) for a in PLAYS_AGES]))
+
+
+def plays_design(d: pd.DataFrame) -> pd.DataFrame:
+    """The chance he plays' columns: the bat's ceiling and how developed it
+    is, the glove and run at potential, and his draft age on the odds' knots.
+    Run counts for about as much as the glove per typical player (an SD of
+    each: run's is a third of the glove's): speed reads as athleticism,
+    which gets a player on the field (2026-11-21). A catcher (his best
+    position at potential) plays less than his glove says: his glove carries
+    the catcher adjustment, and catchers come up late (C, 2026-11-21; other
+    positions add nothing held out)."""
+    weights = board_odds.knot_weights(d.draft_age.values, AGE_KNOTS)
+    cols = {"bat": d.pot_bat.values, "bat now": d.bat.clip(*READINESS_CLIP).values,
+            "glove": d.pot_glove.values, "run": d.pot_run.values}
+    for label, k in zip(AGE_LABELS, [k for k in AGE_KNOTS if k != AGE_REFERENCE]):
+        cols[f"age {label}"] = weights[k]
+    cols["C"] = (d.role == "C").values.astype(float)
+    return pd.DataFrame(cols, index=d.index)
+
+
+def fit_plays(d: pd.DataFrame) -> np.ndarray:
+    """[intercept, coefficients] of the chance he plays, a logistic fit of
+    his share of a regular's season, on `d`'s settled hitters."""
+    t = d[(d.group == "hitter") & d.b_settled]
+    x = plays_design(t)
+    return _map_logistic(x.values, plays_share(t).values, np.zeros(x.shape[1]), np.full(x.shape[1], PLAYS_SD))
+
+
+def plays(w, d: pd.DataFrame) -> np.ndarray:
+    return 1 / (1 + np.exp(-(w[0] + plays_design(d).values @ w[1:])))
+
+
+def plays_reference(d: pd.DataFrame) -> dict:
+    """The average glove and run at potential, among `d`'s hitters: the
+    draftee the playing-time factor compares a hitter to (a non-catcher)."""
+    h = d[d.group == "hitter"]
+    return {"glove": float(h.pot_glove.mean()), "run": float(h.pot_run.mean())}
+
+
+def playing(plays_w, reference: dict, d: pd.DataFrame) -> np.ndarray:
+    """The playing-time factor (plans/draft-glove-plan.md, 2026-11-21): his
+    chance of playing over a non-catcher's with the same bat and age and the
+    `reference` glove and run, to the PLAYS_STRENGTH, at most PLAYS_CAP; 1
+    for a pitcher, and for a catcher until catchers are revisited (you,
+    2026-11-21: his glove carries the catcher adjustment, so the factor
+    lifted catchers, who realize less than predicted in every version)."""
+    ref = d.assign(pot_glove=reference["glove"], pot_run=reference["run"], role="")
+    factor = np.minimum((plays(plays_w, d) / plays(plays_w, ref)) ** PLAYS_STRENGTH, PLAYS_CAP)
+    return np.where((d.group == "hitter") & (d.role != "C"), factor, 1.0)
+
+
+def predicted(d: pd.DataFrame, model, plays_w, reference: dict, balance=(1.0, 0.0)) -> np.ndarray:
+    """What the board expects him to realize: the odds on the ceiling it
+    reads (`odds_view`), the judgment lines (KEPT, POLISH) and the
+    playing-time factor; pitchers balanced by `balance` (factor, ramp)."""
+    o = odds_view(d)
+    value = model.predict(design(o).values) * kept(d) * polish(o, model.coef_) * playing(plays_w, reference, d)
+    return balanced(d, value, *balance)
+
+
+def catcher_factor(d: pd.DataFrame, model, plays_w, reference: dict) -> tuple:
+    """(the factor, its 90% range over resampled hitters): catchers' realized
+    share of their predicted MLB WAR to B_LAST_AGE over the other hitters',
+    on `d`'s settled hitters (open question 4, read as the reliever factor
+    was). A check, not applied: at any strength it ranked worse held out
+    (2026-11-21), and catchers are to be revisited another way."""
+    t = d[(d.group == "hitter") & d.b_settled]
+    t = t.assign(pred=predicted(t, model, plays_w, reference), y=t.b.clip(lower=0), c=t.role == "C")
+
+    def ratio(x):
+        c, o = x[x.c], x[~x.c]
+        return (c.y.sum() / c.pred.sum()) / (o.y.sum() / o.pred.sum())
+    rng = np.random.default_rng(0)
+    boots = [ratio(t.iloc[rng.integers(0, len(t), len(t))]) for _ in range(BOOTSTRAPS)]
+    return float(ratio(t)), [float(x) for x in np.percentile(boots, [5, 95])]
+
+
+def glove_bands(d: pd.DataFrame) -> pd.Series:
+    """A hitter's band by his glove's share of the (whole) ceiling."""
+    edges, labels = GLOVE_BANDS
+    return pd.cut((d.pot_glove / d.war_pot.clip(lower=MIN_POTENTIAL_WAR)).clip(-1, 1.5), edges, labels=labels)
 
 
 def developed(d: pd.DataFrame) -> pd.Series:
@@ -202,6 +343,14 @@ def _mlb_war_by_year(stats_dir) -> pd.DataFrame:
     return pd.concat(frames).groupby(["player_id", "year"]).war.sum().reset_index()
 
 
+def _mlb_pa_by_year(stats_dir) -> pd.DataFrame:
+    frames = []
+    for path in sorted((Path(stats_dir) / "bat").glob("*.csv")):
+        x = pd.read_csv(path, usecols=["player_id", "year", "split_id", "level_id", "pa"])
+        frames.append(x[(x.split_id == 1) & (x.level_id == 1)])
+    return pd.concat(frames).groupby(["player_id", "year"]).pa.sum().reset_index()
+
+
 def draftee_table(base: Path, league: str) -> pd.DataFrame:
     """One row per scored draftee of every class with an outcome to judge."""
     from eval_rankings import ARRIVAL_AGE, _class_players, read_classes, read_snapshot
@@ -210,10 +359,13 @@ def draftee_table(base: Path, league: str) -> pd.DataFrame:
     snap_dir = base / "league_snapshots" / league
     season = int(json.loads((snap_dir / "meta.json").read_text())["league_date"][:4])
     snapshot = read_snapshot(snap_dir / "players.csv")
-    now = _raw_war(_rank("full_time", [GamePlayer(r) for r in snapshot.values()]))
+    snap_ranked = _rank("full_time", [GamePlayer(r) for r in snapshot.values()])
+    now, now_split = _raw_war(snap_ranked), _split_war(snap_ranked)
     war = _mlb_war_by_year(base / "league_stats" / league)
     last_stats = int(war.year.max())
     seasons = {pid: dict(zip(g.year, g.war)) for pid, g in war.groupby("player_id")}
+    pa = _mlb_pa_by_year(base / "league_stats" / league)
+    pa_seasons = {pid: dict(zip(g.year, g.pa)) for pid, g in pa.groupby("player_id")}
     names = {f"{league}-{y}-draft" for y in range(FIT_CLASSES.start, season)}
     rows = []
     for name, class_rows in read_classes([Path("datasets"), base / "datasets"], league, names).items():
@@ -223,6 +375,7 @@ def draftee_table(base: Path, league: str) -> pd.DataFrame:
         board = {r.id: r for r in _rank("draft_class", players)}
         now_ranked = _rank("full_time", players)
         potential, current, bat = _raw_war(board.values()), _raw_war(now_ranked), _bat_war(now_ranked)
+        pot_split = _split_war(board.values())
         for r in class_rows:
             pid = r["ID"]
             if pid not in board:
@@ -243,6 +396,12 @@ def draftee_table(base: Path, league: str) -> pd.DataFrame:
                 "gone": snap is None, "age_now": age_now,
                 "a": 0.0 if snap is None else now[pid][0], "a_settled": age_now >= ARRIVAL_AGE,
                 "b": sum(w for y, w in seasons.get(int(pid), {}).items() if y <= last_b), "b_settled": last_b <= last_stats,
+                # the ceiling and value now by part (PARTS), and his MLB PA
+                # by his age that season, through B_LAST_AGE
+                **{f"pot_{part}": w for part, w in pot_split[pid].items()},
+                **{f"a_{part}": 0.0 if snap is None else now_split[pid][part] for part in PARTS},
+                "a_side": None if snap is None else now[pid][1],
+                "pa_by_age": {age + y - year: n for y, n in pa_seasons.get(int(pid), {}).items() if y <= last_b},
             })
         print(f"  {name}: {len(players)} draftees", file=sys.stderr)
     d = pd.DataFrame(rows)
@@ -295,12 +454,13 @@ def _column(name) -> int:
                                      "we": ["N"], "int": ["N"], "prone": ["Normal"]})).columns).index(name)
 
 
-def reliever_factor(d: pd.DataFrame, model: PoissonRegressor) -> tuple:
+def reliever_factor(d: pd.DataFrame, model: PoissonRegressor, plays_w, reference: dict) -> tuple:
     """(the factor, {group: realized / predicted}): on RELIEVER_CLASSES'
     settled draftees, the fit's reliever factor x relievers' realized share
-    of their predicted A over hitters'."""
+    of their predicted A over hitters' - hitters as the board reads them
+    (`odds_view`, the playing-time factor)."""
     t = d[d["class"].isin(RELIEVER_CLASSES) & d.a_settled & (d.war_pot >= MIN_POTENTIAL_WAR)]
-    t = t.assign(pred=model.predict(design(t).values), y=t.a.clip(lower=0))
+    t = t.assign(pred=model.predict(design(odds_view(t)).values) * playing(plays_w, reference, t), y=t.a.clip(lower=0))
     ratio = {g: float(x.y.sum() / x.pred.sum()) for g, x in t.groupby("group")}
     return float(np.exp(model.coef_[_column("RP")]) * ratio["RP"] / ratio["hitter"]), ratio
 
@@ -337,8 +497,13 @@ def kept(d: pd.DataFrame) -> np.ndarray:
     return lines * np.where(d.group == "hitter", 1.0, velocity)
 
 
-def balanced(d: pd.DataFrame, pred, balance: float) -> np.ndarray:
-    return np.where(d.group == "hitter", pred, pred * balance)
+def balanced(d: pd.DataFrame, pred, balance: float, ramp: float = 0.0) -> np.ndarray:
+    """Pitchers x `balance`, ramped by their value: x (value / RAMP_WAR) ^
+    `ramp` on top (2026-11-21), so the balance can lift the best pitchers
+    more than the rest."""
+    pred = np.asarray(pred, dtype=float)
+    ramped = balance * (np.maximum(pred, 1e-6) / RAMP_WAR) ** ramp
+    return np.where(d.group == "hitter", pred, pred * ramped)
 
 
 def polish(d: pd.DataFrame, coef) -> np.ndarray:
@@ -358,23 +523,40 @@ def polish(d: pd.DataFrame, coef) -> np.ndarray:
     return np.exp(-w * np.minimum(penalty, 0))
 
 
-def held_out(d: pd.DataFrame, outcome: str, fit_outcome: str, balance: float, reliever: float) -> pd.DataFrame:
-    """Mean per class, leaving each class out of a fit on `fit_outcome`
-    (pitchers x `balance`): rho and the mean `outcome` of the top k, for the
-    board and the fit."""
-    out = []
+def held_out(d: pd.DataFrame, pool: pd.DataFrame, outcome: str, balance: tuple, reliever: float) -> tuple:
+    """Leaving each class of `d` out of the fit (the odds on A, the chance he
+    plays on `pool`'s settled hitters; pitchers by `balance`, factor and ramp):
+    (rho and the mean `outcome` of the top k, mean per class, for the board,
+    the fit and the fit's hitters alone; the held-out predictions)."""
+    out, preds = [], []
     for year in sorted(d["class"].unique()):
-        train, test = d[d["class"] != year], d[d["class"] == year].copy()
-        train = train[train[f"{fit_outcome}_settled"]]
+        train, test = d[(d["class"] != year) & d.a_settled], d[d["class"] == year].copy()
         test = test[test[f"{outcome}_settled"]]
-        model = fit(train, fit_outcome, reliever)
-        test["fit"] = balanced(test, model.predict(design(test).values) * kept(test) * polish(test, model.coef_), balance)
+        rest = pool[pool["class"] != year]
+        model, plays_w, reference = fit(train, "a", reliever), fit_plays(rest), plays_reference(rest)
+        test["fit"] = predicted(test, model, plays_w, reference, balance)
         y = test[outcome].clip(lower=0)
-        for key in ("board", "fit"):
-            row = {"class": year, "key": key, "rho": spearmanr(test[key], y)[0]}
-            row.update({f"top {k}": y[test[key].nlargest(k).index].mean() for k in TOP_K})
+        hitters = test.group == "hitter"
+        for key, sub in (("board", test), ("fit", test), ("fit, hitters", test[hitters])):
+            score = sub["board" if key == "board" else "fit"]
+            row = {"class": year, "key": key, "rho": spearmanr(score, y[sub.index])[0]}
+            row.update({f"top {k}": y[score.nlargest(k).index].mean() for k in TOP_K})
             out.append(row)
-    return pd.DataFrame(out).groupby("key").mean().drop(columns="class")
+        preds.append(test)
+    return pd.DataFrame(out).groupby("key").mean().drop(columns="class"), pd.concat(preds)
+
+
+def glove_check(preds: pd.DataFrame, outcome: str) -> pd.DataFrame:
+    """Hitters' realized over predicted `outcome` by glove band and for
+    catchers, the predictions scaled to the hitters' total (the ship check:
+    flat across the bands, catchers near 1)."""
+    h = preds[preds.group == "hitter"]
+    y = h[outcome].clip(lower=0)
+    scale = y.sum() / h.fit.sum()
+    groups = {str(band): x.index for band, x in h.groupby(glove_bands(h), observed=True)}
+    groups["catchers"] = h.index[h.role == "C"]
+    return pd.DataFrame({label: {"n": len(i), "realized / predicted": y[i].sum() / (h.fit[i].sum() * scale)}
+                         for label, i in groups.items()}).T
 
 
 def pitcher_shares(d: pd.DataFrame, key: str) -> list:
@@ -392,6 +574,26 @@ def side_balance(d: pd.DataFrame, pred: pd.Series) -> float:
         shares = pitcher_shares(d.assign(x=balanced(d, pred, k)), "x")
         lo, hi = (k, hi) if np.mean(shares) < 0.5 else (lo, k)
     return float(np.sqrt(lo * hi))
+
+
+def side_ramp(d: pd.DataFrame, pred: pd.Series) -> tuple:
+    """(factor, ramp): the pitcher balance with a ramp by value that brings
+    every bucket nearest 50% (least squares over the buckets), the factor
+    set at each ramp so the buckets average 50%. The playing-time factor
+    spreads hitters' values, so one factor left the top 25 hitter-heavy
+    (38% pitchers) and the 101-400 buckets pitcher-heavy."""
+    best = None
+    for ramp in RAMPS:
+        lo, hi = 0.2, 5.0
+        for _ in range(40):
+            k = np.sqrt(lo * hi)
+            shares = pitcher_shares(d.assign(x=balanced(d, pred, k, ramp)), "x")
+            lo, hi = (k, hi) if np.mean(shares) < 0.5 else (lo, k)
+        k = float(np.sqrt(lo * hi))
+        miss = float(np.sum((np.array(pitcher_shares(d.assign(x=balanced(d, pred, k, ramp)), "x")) - 0.5) ** 2))
+        if best is None or miss < best[0]:
+            best = (miss, k, float(ramp))
+    return best[1], best[2]
 
 
 def growth_design(d: pd.DataFrame) -> pd.DataFrame:
@@ -464,6 +666,29 @@ def fit_growth(g: pd.DataFrame, outcome: str, judgment=True) -> np.ndarray:
 def growth_logit(w, d: pd.DataFrame) -> np.ndarray:
     """The growth odds' log-odds for `d`, read REFERENCE_YEARS after the draft."""
     return w[0] + growth_design(d.assign(years=REFERENCE_YEARS)).values @ w[1:]
+
+
+def report_plays(able: pd.DataFrame) -> np.ndarray:
+    """The chance he plays: the fit on every settled hitter, its 90% range
+    over resampled hitters, and held out a class at a time, predicted over
+    observed by glove band and for catchers."""
+    t = able[(able.group == "hitter") & able.b_settled]
+    w, names = fit_plays(t), ["intercept"] + list(plays_design(t.head(1)).columns)
+    rng = np.random.default_rng(0)
+    lo, hi = np.percentile([fit_plays(t.iloc[rng.integers(0, len(t), len(t))]) for _ in range(BOOTSTRAPS)], [5, 95], axis=0)
+    share = plays_share(t)
+    print(f"\nthe chance he plays: share of a {REGULAR_PA}-PA season at {PLAYS_AGES[0]}-{PLAYS_AGES[-1]}, "
+          f"{len(t)} hitters, classes {t['class'].min()}-{t['class'].max()}, mean {share.mean():.3f}")
+    for n, c, l, h in zip(names, w, lo, hi):
+        print(f"  {n:>10} {c:+.2f}   90% {l:+.2f} to {h:+.2f}")
+    p = pd.Series(np.nan, index=t.index)
+    for year in sorted(t["class"].unique()):
+        p[t["class"] == year] = plays(fit_plays(t[t["class"] != year]), t[t["class"] == year])
+    groups = {str(band): x.index for band, x in t.groupby(glove_bands(t), observed=True)}
+    groups["catchers"] = t.index[t.role == "C"]
+    print("  held out, predicted / observed: " + "   ".join(
+        f"{label} {p[i].mean():.3f}/{share[i].mean():.3f}" for label, i in groups.items()))
+    return w
 
 
 def report_growth(g: pd.DataFrame):
@@ -667,11 +892,16 @@ def main(argv=None):
     a, b = mature[mature.a_settled], mature[mature.b_settled]
     print(f"{len(d)} draftees, {len(able)} with {MIN_POTENTIAL_WAR}+ potential WAR; "
           f"fit on classes {FIT_CLASSES.start}-{FIT_CLASSES.stop - 1}")
+    plays_w, reference = report_plays(able), plays_reference(able)
     model_a, model_b = fit(a, "a"), fit(b, "b")
     report_fit("A: value now (the fit)", a, "a", model_a)
     report_fit(f"B: MLB WAR through {B_LAST_AGE} (the check)", b, "b", model_b)
     fitted = float(np.exp(model_a.coef_[_column("RP")]))
-    reliever, ratios = reliever_factor(d, model_a)
+    catcher, catcher_90 = catcher_factor(able, model_a, plays_w, reference)
+    print(f"\ncatchers, realized over predicted on MLB WAR to {B_LAST_AGE} against the other hitters (not applied): "
+          f"x{catcher:.2f} (90% x{catcher_90[0]:.2f} to x{catcher_90[1]:.2f}, "
+          f"{int(((able.group == 'hitter') & able.b_settled & (able.role == 'C')).sum())} catchers)")
+    reliever, ratios = reliever_factor(d, model_a, plays_w, reference)
     print(f"\nreliever factor, refit on classes {RELIEVER_CLASSES.start}-{RELIEVER_CLASSES.stop - 1}: "
           f"x{fitted:.2f} -> x{reliever:.2f} (realized / predicted: "
           + ", ".join(f"{g} {r:.2f}" for g, r in ratios.items()) + ")")
@@ -679,22 +909,26 @@ def main(argv=None):
     print(f"\nreference: hitter, 21 at the draft, {REFERENCE_WAR:g} WAR at potential, 0 WAR readiness, "
           "normal makeup (full weight)")
 
-    pred = model_a.predict(design(able).values) * kept(able) * polish(able, model_a.coef_)
-    balance = side_balance(able, pd.Series(pred, index=able.index))
+    pred = predicted(able, model_a, plays_w, reference)
+    balance = side_ramp(able, pd.Series(pred, index=able.index))
     print(f"\npitcher share by rank within class, classes {able['class'].min()}-{able['class'].max()}:")
     shares = {"board": pitcher_shares(able, "board"),
               "fit": pitcher_shares(able.assign(x=pred), "x"),
-              "fit, no judgment lines": pitcher_shares(able.assign(x=pred / kept(able) / polish(able, model_a.coef_)), "x"),
-              "fit, balanced": pitcher_shares(able.assign(x=balanced(able, pred, balance)), "x")}
+              "fit, no judgment lines": pitcher_shares(able.assign(x=model_a.predict(design(odds_view(able)).values)), "x"),
+              "fit, one factor": pitcher_shares(able.assign(x=balanced(able, pred, side_balance(able, pd.Series(pred, index=able.index)))), "x"),
+              "fit, balanced": pitcher_shares(able.assign(x=balanced(able, pred, *balance)), "x")}
     for label, s in shares.items():
-        print(_shares_line(label if label != "fit, balanced" else f"fit, pitchers x{balance:.2f}", s))
+        print(_shares_line(label if label != "fit, balanced" else f"fit, pitchers x{balance[0]:.2f} ramp {balance[1]:g}", s))
 
     print("\nheld out, one class at a time (mean per class), the fit with the judgment lines, balanced:")
     checks = {}
     for outcome, label in (("a", "A: value now"), ("b", f"B: MLB WAR to {B_LAST_AGE}")):
-        table = held_out(mature, outcome, "a", balance, reliever)
-        checks[outcome] = table.round(3).to_dict(orient="index")
+        table, preds = held_out(mature, able, outcome, balance, reliever)
+        glove = glove_check(preds, outcome)
+        checks[outcome] = {"rank": table.round(3).to_dict(orient="index"), "glove": glove.round(3).to_dict(orient="index")}
         print(f"  judged on {label}, fit on A\n" + "\n".join("    " + line for line in table.round(3).to_string().splitlines()))
+        print("  hitters' realized / predicted: " + "   ".join(
+            f"{band} {r['realized / predicted']:.2f} (n {r['n']:.0f})" for band, r in glove.iterrows()))
 
     print(f"\ngrowth odds: outgrowing the ceiling (+{ceiling_panel.MARGIN:g} WAR past draft day, and a regular):")
     g = growth_table(d, base, args.league, args.panel)
@@ -727,7 +961,20 @@ def main(argv=None):
                 "by_potential": {label: round(float(coef[f"age {label} x potential"]), 4) for label in AGE_LABELS}},
         "makeup": {label: round(float(np.exp(coef[label])), 4) for label in MAKEUP},
         "taper": [development.FULL_WEIGHT_WAR, development.TAPERED_WAR, development.TAPERED_WEIGHT],
-        "pitcher_balance": round(balance, 4),
+        "pitcher_balance": round(balance[0], 4),
+        # x (his value / war) ^ ramp on top, his value as the board has it
+        # before the balance
+        "pitcher_ramp": {"ramp": balance[1], "war": RAMP_WAR},
+        # a hitter's glove and run at potential count times the chance he
+        # plays: a logistic of his share of a regular's season on these
+        # columns (plays_design), the bat's ceiling and WAR now unlogged
+        "plays": {"intercept": round(float(plays_w[0]), 4),
+                  "coef": {n: round(float(c), 4) for n, c in zip(plays_design(able.head(1)).columns, plays_w[1:])},
+                  "regular_pa": REGULAR_PA, "ages": list(PLAYS_AGES), "clip": list(READINESS_CLIP),
+                  # the factor: his chance over the same bat's with this glove
+                  # and run, to the strength
+                  "reference": {k: round(v, 4) for k, v in reference.items()}, "strength": PLAYS_STRENGTH,
+                  "cap": PLAYS_CAP},
         # the judgment on top of the odds (ranking/draft_odds.py): these
         # ledger lines kept, a pitcher's velocity upside, and what's replaced
         "judgment": {"kept": list(KEPT), "velocity_steps": [list(s) for s in board_odds.VELOCITY_STEPS],
@@ -738,6 +985,7 @@ def main(argv=None):
         "regular": regular,
         "distribution": distribution.describe(list(growth_design(g.head(1)).columns), names),
         "check": {"held_out": checks, "pitcher_share": {k: [round(x, 3) for x in v] for k, v in shares.items()},
+                  "catcher": [round(catcher, 3), [round(x, 3) for x in catcher_90]],
                   "reliever": {"fit": round(fitted, 4),
                                "realized_over_predicted": {g: round(r, 3) for g, r in ratios.items()}},
                   "b_fit": {n: round(float(c), 4) for n, c in zip(names, model_b.coef_)},
