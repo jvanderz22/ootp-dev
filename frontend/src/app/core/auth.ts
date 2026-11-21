@@ -11,10 +11,27 @@ import { Observable, tap } from 'rxjs';
 
 const STORAGE_KEY = 'ootp-draft-auth';
 
+/**
+ * The Basic-auth header persists in localStorage so it survives new tabs and
+ * browser restarts; a 401 from the server (wrong / changed password) clears it.
+ * Sign-in and sign-out propagate to other open tabs via the storage event.
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private readonly router = inject(Router);
   private readonly _header = signal<string | null>(read());
   readonly authorized = this._header.asReadonly();
+
+  constructor() {
+    window.addEventListener('storage', (ev) => {
+      if (ev.key !== STORAGE_KEY && ev.key !== null) return;
+      const token = read();
+      if (token === this._header()) return;
+      this._header.set(token);
+      if (!token) this.router.navigate(['/login']);
+      else if (this.router.url.startsWith('/login')) this.router.navigate(['/']);
+    });
+  }
 
   header(): string | null {
     return this._header();
@@ -22,21 +39,39 @@ export class AuthService {
 
   login(username: string, password: string): void {
     const token = 'Basic ' + btoa(`${username}:${password}`);
-    sessionStorage.setItem(STORAGE_KEY, token);
+    write(token);
     this._header.set(token);
   }
 
   logout(): void {
-    sessionStorage.removeItem(STORAGE_KEY);
+    write(null);
     this._header.set(null);
   }
 }
 
 function read(): string | null {
   try {
-    return sessionStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return stored;
+    // one-time carry-over from the old per-tab session storage
+    const legacy = sessionStorage.getItem(STORAGE_KEY);
+    if (legacy) {
+      localStorage.setItem(STORAGE_KEY, legacy);
+      sessionStorage.removeItem(STORAGE_KEY);
+    }
+    return legacy;
   } catch {
     return null;
+  }
+}
+
+function write(token: string | null): void {
+  try {
+    if (token) localStorage.setItem(STORAGE_KEY, token);
+    else localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // storage blocked (private mode etc.): the in-memory signal still works for this tab
   }
 }
 
