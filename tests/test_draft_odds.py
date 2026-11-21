@@ -277,7 +277,7 @@ def test_the_share_of_his_ceiling_he_realizes_is_softly_capped():
     # 2026-11-21: stacked factors overshot at the top; a typical share barely
     # moves, a stacked one comes down, and the order never flips
     assert draft_odds.realistic(0.3 * 3.0, 3.0) == pytest.approx(3.0 * 0.3 / np.sqrt(1 + (0.3 / draft_odds.SHARE_CAP) ** 2))
-    assert draft_odds.realistic(0.89 * 2.62, 2.62) / 2.62 == pytest.approx(0.60, abs=0.01)
+    assert draft_odds.realistic(0.89 * 2.62, 2.62) / 2.62 == pytest.approx(0.44, abs=0.01)
     shares = np.linspace(0.01, 3, 50)
     assert np.all(np.diff(draft_odds.realistic(shares * 2.0, 2.0)) > 0)
     assert draft_odds.realistic(-0.5, 2.0) == -0.5

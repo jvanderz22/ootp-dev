@@ -61,15 +61,20 @@ GLOVE_WEIGHT = 0.5
 # to realize 50%+ of their ceiling realized 0.64 (value now) / 0.73 (MLB WAR
 # to 26) of it, 70%+ 0.38 / 0.67 - mostly high work ethic on a modest
 # ceiling (WBF 2122's Nakasone, 89% of 2.62). At 0.8, MLB WAR to 26's top 25
-# went 4.80 -> 4.86 and top 50 3.52 -> 3.65; tighter helped no further
-SHARE_CAP = 0.8
+# went 4.80 -> 4.86 and top 50 3.52 -> 3.65; tighter helped no further there.
+# Tightened to 0.5 (2026-11-21, you) on WBF's own classes (2109-2115, value
+# now, scored with the yfmlb fit): top-50 picks predicted to realize 35%+ of
+# their ceiling realized 0.52-0.64 of it, whatever their makeup (high work
+# ethic beat its odds at the top). WBF top 10 1.39 -> 1.63, top 25 1.33 ->
+# 1.35; yfmlb held out value now top 25 1.55 -> 1.63, top 100 1.11 -> 1.08
+SHARE_CAP = 0.5
 
 
 def realistic(value, ceiling):
     """`value` (a number or an array) with the share of `ceiling` (at least
     MIN_SHARE_CEILING) it comes to softly capped at SHARE_CAP: s / sqrt(1 +
-    (s / SHARE_CAP)^2). A typical draftee's 30% stays near 28%; 89% comes to
-    60%. Unchanged at or below 0."""
+    (s / SHARE_CAP)^2). A typical draftee's 30% comes to 26%; 89% comes to
+    44%. Unchanged at or below 0."""
     c = np.maximum(ceiling, MIN_SHARE_CEILING)
     share = np.asarray(value, dtype=float) / c
     capped = c * share / np.sqrt(1 + (share / SHARE_CAP) ** 2)
