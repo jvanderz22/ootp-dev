@@ -146,8 +146,9 @@ def test_a_draft_age_reads_between_the_knots(rows):
 
 def test_a_draftee_near_mlb_ready_keeps_half_his_age_penalty_from_21_5(rows):
     # judgment (2026-11-11): half the penalty of his age from 21.5 to 22 eased
-    # - none at -1 WAR now, half from 0 up - from a draft age of 20, in full
-    # from 21; the Regular chance eases with it
+    # - none at -2 WAR now, half from -0.5 up (2026-11-21, readiness the bat
+    # alone) - from a draft age of 20, in full from 21; the Regular chance
+    # eases with it
     odds = draft_odds.load()
 
     def lines(age, readiness):
@@ -156,7 +157,7 @@ def test_a_draftee_near_mlb_ready_keeps_half_his_age_penalty_from_21_5(rows):
         return dict((label, value) for _, label, value, _, _ in
                     odds.reaching(player, 4.0, readiness, "hitter", growth, age)[0])
 
-    full, part, none = lines(22.0, 0.5), lines(22.0, -0.5), lines(22.0, -1.5)
+    full, part, none = lines(22.0, 0.5), lines(22.0, -1.25), lines(22.0, -2.5)
     assert full["Age 22.0"] < 1
     # 21.5 to 22 is half the age line's drop from 21 to 22, on the logit
     assert full["Polish"] == pytest.approx(full["Age 22.0"] ** -0.25)

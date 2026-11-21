@@ -5,7 +5,8 @@ classes (ranking/fitting/draft_odds.py).
 His ceiling is his potential ratings' WAR in a full-time role (the draft
 profile's model lines). What he's expected to realize is a Poisson fit on the
 past classes' value now: the ceiling's base rate, then a factor each for how
-developed he already is (readiness: his current ratings' full-time WAR), his
+developed he already is (readiness: his current ratings' full-time WAR - a
+hitter's bat lines alone, 2026-11-20, since his glove is at its ceiling), his
 age, his role and his makeup (tapered by the ceiling, as ranking/development.py
 tapers it). His age is his draft age - on May 1 of the draft year, from his
 date of birth - blended between the fit's age knots, so a player who's nearly

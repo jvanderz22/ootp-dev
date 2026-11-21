@@ -458,16 +458,17 @@ class Value(BatchStage):
             ceiling = ledger.scale(MODEL, name, ceiling, factor, side_name, note)
         ceiling /= SCALE
         # the prospect odds read the side's own WAR now; the draft odds the
-        # side he's judged on now, as each was fit
+        # side he's judged on now, as each was fit. Both read how developed
+        # he is from a hitter's bat alone
         companion = state.companions["readiness"]
         readiness = companion.sides[side_name] if self.prospects else companion.model
+        developed = companion.bat if side_name == BATTING else readiness
         age = draft_odds.draft_age(player, self.draft_year)
         if self.prospects:
-            developed = companion.bat if side_name == BATTING else readiness
             lines, expected, parts = self.odds.reaching(player, ceiling, readiness, developed, group, age, switch)
         else:
-            growth = self.odds.growth_columns(player, ceiling, readiness, group, self.ratings.pitch_count(player), age)
-            lines, expected = self.odds.reaching(player, ceiling, readiness, group, growth, age, switch)
+            growth = self.odds.growth_columns(player, ceiling, developed, group, self.ratings.pitch_count(player), age)
+            lines, expected = self.odds.reaching(player, ceiling, developed, group, growth, age, switch)
         points = SCALE * ceiling
         for kind, label, amount, stat, note in lines:
             if kind == "add":
@@ -492,7 +493,7 @@ class Value(BatchStage):
         else:
             side.odds = {"ceiling": ceiling, "group": group, "expected": expected / (switch[1] if switch else 1.0),
                          "scale": modified / expected * (switch[1] if switch else 1.0) if expected > 0 else 0.0,
-                         "columns": self.odds.mean_columns(player, ceiling, readiness, group, age), "growth": growth,
+                         "columns": self.odds.mean_columns(player, ceiling, developed, group, age), "growth": growth,
                          "age": age}
         write_runtime_component(player.id, f"{side_name}.value.war", modified)
         return modified

@@ -128,7 +128,7 @@ def prospect_table(base: Path, league: str) -> pd.DataFrame:
         board = {x.id: x for x in _before_odds().rank(players, batch_size=max(len(players), 1))}
         potential = draft_odds._raw_war(board.values())
         now_ranked = draft_odds._rank("full_time", players)
-        current, bat = _side_war(now_ranked), _bat_war(now_ranked)
+        current, bat = _side_war(now_ranked), draft_odds._bat_war(now_ranked)
         pulled = _pulled(export, year)
         for r, player in zip(export, players):
             pid = r["ID"]
@@ -180,14 +180,6 @@ def _side_war(ranked) -> dict:
 
     return {r.id: {side: sum(line.delta for line in r.ledger.lines if line.stage == MODEL and line.side == side) / 10
                    for side in (BATTING, PITCHING)} for r in ranked}
-
-
-def _bat_war(ranked) -> dict:
-    """{id: WAR from the batting side's bat lines (BAT_LINES)}."""
-    from ranking.ledger import BATTING, MODEL
-
-    return {r.id: sum(line.delta for line in r.ledger.lines if line.stage == MODEL and line.side == BATTING
-                      and line.label in BAT_LINES) / 10 for r in ranked}
 
 
 def _pulled(export, year) -> date:

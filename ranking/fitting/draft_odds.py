@@ -33,12 +33,18 @@ and a college senior's penalty shrinks. Without that the fit drops 22-year-olds 
 ranks the top 25 no better than the board (step 2, 2026-11-09); velocity,
 Stuff, pitch count, a potential curve per side and weighting the top didn't
 help.
+Readiness is how developed he is (decided 2026-11-20, you): a hitter's bat
+WAR now alone (BAT_LINES), since his glove and legs have no potential ratings
+and are at their ceiling already - read whole, a raw-bat catcher with a good
+glove read as nearly ready - and a pitcher's WAR now, as the prospect fit
+reads it (`developed`).
 Readiness weighs by draft age, on the same knots (decided 2026-11-11): less
 for teens, who are all raw, and more from 21 on, as the pooled draftees and
 prospects show (plans/prospect-odds-plan.md, "On track"). On top of the fit,
-two judgments: the teens' readiness weight is held at the flat fit's
-(TEEN_READINESS), and a draftee near MLB-ready from 21 on keeps only half the
-penalty of his age from 21.5 to 22 (POLISH). The checks judge the board with
+three judgments: the teens' readiness weight is held at the flat fit's
+(TEEN_READINESS), a 22-year-old's age factor is held at AGE_22_FACTOR, and a
+draftee near MLB-ready from 21 on keeps only half the penalty of his age from
+21.5 to 22 (POLISH). The checks judge the board with
 them on.
 The makeup columns are tapered by potential WAR as ranking/development.py
 tapers them (decided 2026-11-09), so a fitted factor is its full-weight value.
@@ -75,6 +81,7 @@ from ranking import development
 from ranking import draft_odds as board_odds
 from ranking.fitting import ceiling_panel
 from ranking.hitter_talent import ARTIFACTS_DIR
+from ranking.stages.companion import BAT_LINES
 
 ARTIFACT = "draft_odds_v1"
 FIT_CLASSES = range(2033, 2038)     # old enough that outcome A has settled
@@ -104,8 +111,16 @@ TEEN_READINESS = 1.34
 # full past its end. The data doesn't back it (draft-odds D, "Advanced
 # college draftees"); it's the value of a player close to the majors in the
 # org right after the draft. Eased from 21.5, where whole ages had the 21s on
-# average, so blending ages doesn't grow it
-POLISH = {"share": 0.5, "from": -1.0, "full": 0.0, "eligible": [20, 21], "eased": [21.5, 22]}
+# average, so blending ages doesn't grow it. FROM and FULL moved from -1 and
+# 0 to -2 and -0.5 (2026-11-21, you) when readiness became the bat alone, which
+# reads lower than the whole player did
+POLISH = {"share": 0.5, "from": -2.0, "full": -0.5, "eligible": [20, 21], "eased": [21.5, 22]}
+# judgment (2026-11-21, you): a 22-year-old draftee's factor against a 21's,
+# held at this (the data's x0.41) - college bats like WBF 2122's Walata sat far
+# below where you'd take them. Held out, with the polish above, MLB WAR to 26
+# rose (top 25 4.73 -> 4.91, top 50 3.58 -> 3.67) and value now fell a little
+# (rho 0.400 -> 0.392); x0.7 lost on both
+AGE_22_FACTOR = 0.55
 MAKEUP = {
     "WE H": lambda d: d.we == "H", "WE L": lambda d: d.we == "L",
     "INT H": lambda d: d["int"] == "H", "INT L": lambda d: d["int"] == "L",
@@ -147,6 +162,20 @@ def _raw_war(ranked) -> dict:
         points = sum(line.delta for line in r.ledger.lines if line.stage == MODEL and r.ledger.counted(line))
         out[r.id] = ((points - 50) / 10, r.ledger.side, r.ledger.role)
     return out
+
+
+def _bat_war(ranked) -> dict:
+    """{id: WAR from the batting side's bat lines (BAT_LINES)}."""
+    from ranking.ledger import BATTING, MODEL
+
+    return {r.id: sum(line.delta for line in r.ledger.lines if line.stage == MODEL and line.side == BATTING
+                      and line.label in BAT_LINES) / 10 for r in ranked}
+
+
+def developed(d: pd.DataFrame) -> pd.Series:
+    """How developed he is, as the fit reads readiness: a hitter's bat WAR
+    now alone, a pitcher's WAR now."""
+    return pd.Series(np.where(d.group == "hitter", d.bat, d.readiness), index=d.index)
 
 
 def _factors(result) -> dict:
@@ -192,7 +221,8 @@ def draftee_table(base: Path, league: str) -> pd.DataFrame:
         players = _class_players(class_rows)
         ages = {p.id: board_odds.draft_age(p, year) for p in players}
         board = {r.id: r for r in _rank("draft_class", players)}
-        potential, current = _raw_war(board.values()), _raw_war(_rank("full_time", players))
+        now_ranked = _rank("full_time", players)
+        potential, current, bat = _raw_war(board.values()), _raw_war(now_ranked), _bat_war(now_ranked)
         for r in class_rows:
             pid = r["ID"]
             if pid not in board:
@@ -207,7 +237,7 @@ def draftee_table(base: Path, league: str) -> pd.DataFrame:
                 "velo": r.get("VT") or r.get("VELO"), "stuff": r.get("STU P"), "pitches": r.get("PIT"),
                 "stamina": r.get("STM"),
                 "war_pot": potential[pid][0], "side": potential[pid][1], "role": potential[pid][2],
-                "readiness": current[pid][0],
+                "readiness": current[pid][0], "bat": bat[pid],
                 "board": board[pid].pre_demand_score, "board_rank": board[pid].pre_demand_rank,
                 "factors": _factors(board[pid]),
                 "gone": snap is None, "age_now": age_now,
@@ -256,6 +286,7 @@ def fit(d: pd.DataFrame, outcome: str, reliever: float = None) -> PoissonRegress
     model.coef_, model.n_features_in_ = np.array([coef[c] for c in x.columns]), x.shape[1]
     if reliever is not None:
         model.coef_[_column("RP")] = np.log(reliever)
+    model.coef_[_column("age 22")] = np.log(AGE_22_FACTOR)
     return model
 
 
@@ -629,6 +660,8 @@ def main(argv=None):
         d = draftee_table(base, args.league)
         if args.table:
             d.to_pickle(args.table)
+    # every column and judgment that reads readiness reads how developed he is
+    d = d.assign(whole_readiness=d.readiness, readiness=developed(d))
     able = d[d.war_pot >= MIN_POTENTIAL_WAR]
     mature = able[able["class"].isin(FIT_CLASSES)]
     a, b = mature[mature.a_settled], mature[mature.b_settled]
@@ -699,7 +732,7 @@ def main(argv=None):
         # ledger lines kept, a pitcher's velocity upside, and what's replaced
         "judgment": {"kept": list(KEPT), "velocity_steps": [list(s) for s in board_odds.VELOCITY_STEPS],
                      "replaces": list(board_odds.REPLACES), "polish": POLISH,
-                     "teen_readiness": TEEN_READINESS},
+                     "teen_readiness": TEEN_READINESS, "age_22_factor": AGE_22_FACTOR},
         # a regular, on the full-time scale: the card's "chance he becomes a regular"
         "regular": regular,
         "distribution": distribution.describe(list(growth_design(g.head(1)).columns), names),
