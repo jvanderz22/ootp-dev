@@ -323,6 +323,43 @@ replacement.
   - The top 100: 37 pitchers (5 relievers), 23 aged 20 and under, 49 aged
     22–23.
 
+### The revisit (2026-11-12)
+
+You: older prospects are over-discounted (Kowalzek, Stickler, Milner,
+Lovell in YFMLB; Ellison in WBF), and gloves are overvalued (Maddux).
+- **One age curve** replaces the fitted age terms, on schedule and the
+  25–27 taper. The closing odds are fit at 21, times (judgment) 22 ×0.9,
+  23 ×0.8, 24 ×0.73, 25 ×0.6, 26 ×0.38, 27 ×0.15, 28+ ×0.05, linear
+  between. The data's own was about 23 ×0.64 and 25 ×0.13.
+- **Developed is the bat for hitters.** The closing odds read a hitter's
+  bat WAR now (batting, platoon), since his glove and legs have no
+  potential ratings. A pitcher's is still his WAR now. Held out, a glove
+  WAR counted about 80% of a bat WAR.
+- **Personality adds adaptability.** Fitted, in log-odds: WE H +0.48,
+  fragile −0.80, INT L −0.35, AD H +0.13.
+- **Two fixes so the curve doesn't drag the young down:**
+  - Keep's age slope is held at the pre-revisit fit's −0.31 a year. Fit
+    around the curve, it took the older prospects' shortfall instead
+    (−1.07).
+  - The closing odds' base is anchored so the 20–22-year-olds'
+    expectation matches what they realized (`ANCHOR_AGES`).
+- **The bridge reads a hitter on his bat too.** Maddux and Schmidt, both
+  glove-and-speed middle infielders, were valued past what the prospect
+  fit gives them. Schmidt's value was above his own ceiling. On young
+  hitters the draft fit is about as calibrated either way (realized /
+  predicted 0.93–0.94 on the whole WAR now, 0.97–1.08 on the bat).
+- **Velocity isn't in the data.** Held out, pitchers at 96–98 realized
+  0.84 of predicted and 98+ 1.04, against 0.89–1.09 for slower arms.
+  The 24-year-old arms stay low: Kowalzek 245, Stickler 681, Milner
+  1,212. You judged the rest decent.
+- **Held out**: value rho 0.559, top 25 2.71, top 50 2.33 (legacy 2.07 /
+  1.96).
+- **On 2042** (legacy → new): Canas 1 → 2, Metzen → 8, Schmidt → 15,
+  Calhoon 10 → 17, Thacker 12 → 21, Morrison → 23, Montano 436 → 35,
+  Blankenship 9 → 38, Mass 2 → 70, Englund 16 → 96, Maddux → 162. The top
+  25 has 7 starters; the top 100 has 43 pitchers, 33 aged 20 and under,
+  47 aged 21–23 and 20 aged 24 and over.
+
 ## Open questions
 
 1. **The gap form.** *Recommend it.* The draft's multiplier form overshoots
@@ -341,7 +378,8 @@ replacement.
 5. **Past the exports' ages** (decided 2026-11-11). Players past 25 stay
    on the board, but by then much more development is hard to get, even
    short of his potential. The closing odds taper from 25's to none at 27.
-   From 27 he's valued at the WAR now he holds.
+   From 27 he's valued at the WAR now he holds. *Revised 2026-11-12:* the
+   age curve takes the closing odds to ×0.15 at 27 and ×0.05 from 28.
 6. **The card** (decided 2026-11-11): the lines, e.g. "WAR now · keeps X%"
    and "Gap · closes Y%". Their breakdown into drivers comes second, but
    the model keeps its components visible (keep, close, WAR now, the gap)

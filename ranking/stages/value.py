@@ -463,7 +463,8 @@ class Value(BatchStage):
         readiness = companion.sides[side_name] if self.prospects else companion.model
         age = draft_odds.draft_age(player, self.draft_year)
         if self.prospects:
-            lines, expected, parts = self.odds.reaching(player, ceiling, readiness, group, age, switch)
+            developed = companion.bat if side_name == BATTING else readiness
+            lines, expected, parts = self.odds.reaching(player, ceiling, readiness, developed, group, age, switch)
         else:
             growth = self.odds.growth_columns(player, ceiling, readiness, group, self.ratings.pitch_count(player), age)
             lines, expected = self.odds.reaching(player, ceiling, readiness, group, growth, age, switch)

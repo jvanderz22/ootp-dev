@@ -44,6 +44,7 @@ from context import default_base_dir
 from ranking import development
 from ranking import draft_odds as board_odds
 from ranking.fitting import draft_odds
+from ranking.stages.companion import BAT_LINES
 from ranking.hitter_talent import ARTIFACTS_DIR
 from ranking.fitting.ceiling_panel import _prospects
 
@@ -52,30 +53,29 @@ PROSPECT_YEARS = range(2038, 2042)
 # A+: it's A there too). Level "-" is an unsigned amateur, off the board
 LEVELS = {"INT": 0, "R": 1, "A-": 2, "A": 3, "A+": 3, "AA": 4, "AAA": 5, "MLB": 6}
 ARTIFACT = "prospect_odds_v1"
-# his age on the export's day, between the knots and held at the ends: no
-# export settles a teen (the youngest settled were 20), and 20s realized what
-# 21s did, so below 21 the bridge takes the draft fit's teen factors relative
-# to its 21 (plans/prospect-odds-plan.md, open question 2)
-AGE_KNOTS = (21, 23, 25)
+# judgment (2026-11-12, you): the share of the gap he closes at each age, x
+# 21's - one smooth curve in place of the fitted age terms, the on-schedule
+# relief and the end of development (the data's own: 23 about x0.64, 25
+# x0.13, with a cliff wherever two of those met). Between the ages it's
+# linear, held at the ends; the rest of the fit is fit around it
+AGE_CURVE = ((21, 1.0), (22, 0.9), (23, 0.8), (24, 0.73), (25, 0.6), (26, 0.38), (27, 0.15), (28, 0.05))
+# the holding odds' age, held within these
+KEEP_AGES = (21, 25)
 AGE_REFERENCE = 23
-AGE_LABELS = [f"{k:g}" for k in AGE_KNOTS if k != AGE_REFERENCE]
 # judgment (2026-11-11, you): below BRIDGE's first age a prospect is valued
 # on the draft fit's expectation, as a draftee of his age, blended linearly
 # into this fit by its second - no export settles a teen, and a teen in the
-# minors is closer to a draftee than to a 21-year-old pro
+# minors is closer to a draftee than to a 21-year-old pro. It reads him as
+# developed as this fit does, a hitter on his bat (2026-11-12, you): a glove
+# and legs at their ceiling already put two teen infielders past it
 BRIDGE = (20, 22)
-# judgment (2026-11-11, you): past 25 much more development is hard to get,
-# even short of his potential; the closing odds taper from the first age's
-# to none at the second, and from there he's valued at the WAR now he holds
-DEVELOPMENT_END = (25, 27)
-# judgment (2026-11-11, you): a prospect at or below replacement is on
-# schedule through 23 (the typical WAR now at 22 is about -0.2), so his
-# closing odds and runway read the age curve as flat from the first age to
-# the second, then catch up to his age by the third - full relief at the
-# first WAR now, none from the second. The data has 22-23s closing far less
-# than 21s, and no lever across the board lifted them without moving the
-# rest (plans/prospect-odds-plan.md, "On schedule")
-ON_TRACK = {"ages": [21.5, 23.5, 24.5], "now": [0.0, 1.0]}
+# judgment (2026-11-12, you): the closing odds' base, at 21, set so the fit's
+# expectation for the prospects within these ages matches what they realized
+# - AGE_CURVE is judgment past them, and the older prospects' shortfall from
+# it otherwise pulls every age's base down
+ANCHOR_AGES = (20, 22)
+# personality in the closing odds: the draft fit's makeup, and adaptability
+MAKEUP = {**draft_odds.MAKEUP, "AD H": lambda d: d.ad == "H", "AD L": lambda d: d.ad == "L"}
 # years from the export to the outcome's snapshot the odds are read at
 REFERENCE_YEARS = 3.0
 # the WAR now the holding odds read, at most
@@ -84,15 +84,18 @@ RIDGE = 1e-3
 # judgment on the closing odds: {column: its coefficient}, held near it by a
 # tight prior, the rest fit around it
 # (2026-11-11, you):
-# - "log potential" 0, and its age terms: the share of the gap he closes
-#   doesn't fall as his ceiling rises, at any age (the data's -0.80 rests on
-#   a few dozen 5+ ceilings, judged at 25, before a high ceiling usually pays
-#   off; held alone, the refit moved it into the age terms)
+# - "log potential" 0: the share of the gap he closes doesn't fall as his
+#   ceiling rises (the data's -0.80 rests on a few dozen 5+ ceilings, judged
+#   at 25, before a high ceiling usually pays off)
 # - "SP" -0.40 (the data's -0.93): with UPSIDE, 6 starters in the 2042
 #   board's top 25 (at least 5, you'd take 10-12) and 36 pitchers in its top
 #   100 (about 30-35); a softer penalty adds pitchers to the top 100 faster
 #   than to the top 25
-CLOSE_JUDGMENT = {"log potential": 0.0, "age 21 x potential": 0.0, "age 25 x potential": 0.0, "SP": -0.40}
+CLOSE_JUDGMENT = {"log potential": 0.0, "SP": -0.40}
+# judgment on the holding odds, as CLOSE_JUDGMENT (2026-11-12, you): "age"
+# at the fit's own before AGE_CURVE (-0.31 a year); fit around the curve
+# it takes the older prospects' shortfall instead (-1.07)
+KEEP_JUDGMENT = {"age": -0.31}
 JUDGMENT_SD = 0.01
 # judgment (2026-11-11, you): the board weighs what he's expected to add by
 # developing this many times what he keeps of his WAR now - upside over
@@ -124,7 +127,8 @@ def prospect_table(base: Path, league: str) -> pd.DataFrame:
                    for r in export]
         board = {x.id: x for x in _before_odds().rank(players, batch_size=max(len(players), 1))}
         potential = draft_odds._raw_war(board.values())
-        current = _side_war(draft_odds._rank("full_time", players))
+        now_ranked = draft_odds._rank("full_time", players)
+        current, bat = _side_war(now_ranked), _bat_war(now_ranked)
         pulled = _pulled(export, year)
         for r, player in zip(export, players):
             pid = r["ID"]
@@ -142,6 +146,10 @@ def prospect_table(base: Path, league: str) -> pd.DataFrame:
                 "war_pot": potential[pid][0], "side": potential[pid][1], "role": potential[pid][2],
                 # his WAR now on his ceiling's side, as the board reads it
                 "readiness": current[pid].get(potential[pid][1], 0.0),
+                # how developed a hitter is: his bat's WAR now alone (batting
+                # and platoon) - his glove and legs have no potential ratings,
+                # so they're at their ceiling already
+                "bat": bat[pid],
                 "board": board[pid].pre_demand_score, "board_rank": board[pid].pre_demand_rank,
                 "factors": draft_odds._factors(board[pid]),
                 "gone": snap is None, "age_now": age_now, "years": season + 0.85 - year - pulled.timetuple().tm_yday / 365,
@@ -172,6 +180,14 @@ def _side_war(ranked) -> dict:
 
     return {r.id: {side: sum(line.delta for line in r.ledger.lines if line.stage == MODEL and line.side == side) / 10
                    for side in (BATTING, PITCHING)} for r in ranked}
+
+
+def _bat_war(ranked) -> dict:
+    """{id: WAR from the batting side's bat lines (BAT_LINES)}."""
+    from ranking.ledger import BATTING, MODEL
+
+    return {r.id: sum(line.delta for line in r.ledger.lines if line.stage == MODEL and line.side == BATTING
+                      and line.label in BAT_LINES) / 10 for r in ranked}
 
 
 def _pulled(export, year) -> date:
@@ -265,34 +281,38 @@ def gap(d: pd.DataFrame) -> pd.Series:
     return (d.war_pot - now_war(d)).clip(lower=0)
 
 
+def developed(d: pd.DataFrame) -> pd.Series:
+    """How developed he is, as the closing odds read it: a hitter's bat WAR
+    now alone (his glove and legs are at their ceiling already), a pitcher's
+    WAR now."""
+    return pd.Series(np.where(d.side == "batting", d.bat, d.readiness), index=d.index)
+
+
+def age_curve(age) -> np.ndarray:
+    """The share of the gap he closes at `age`, x 21's (AGE_CURVE)."""
+    ages, values = zip(*AGE_CURVE)
+    return np.interp(np.asarray(age, dtype=float), ages, values)
+
+
 def design(d: pd.DataFrame) -> pd.DataFrame:
-    """The closing odds' columns, the draft fit's shape on the prospects' age
-    knots (ages held at the end knots); the reference prospect is a hitter,
-    23, REFERENCE_WAR at potential, 0 WAR now, normal makeup, REFERENCE_YEARS
-    from the outcome."""
+    """The closing odds' columns, at 21 (AGE_CURVE takes it to his age); the
+    reference prospect is a hitter, REFERENCE_WAR at potential, 0 WAR
+    developed, normal makeup, REFERENCE_YEARS from the outcome."""
     taper = np.vectorize(development.weight)(d.war_pot)
     potential = np.log(d.war_pot.clip(lower=draft_odds.LOG_FLOOR) / draft_odds.REFERENCE_WAR)
-    cols = {"log potential": potential, "readiness": d.readiness.clip(*draft_odds.READINESS_CLIP)}
+    cols = {"log potential": potential, "developed": developed(d).clip(*draft_odds.READINESS_CLIP)}
     for g in ("SP", "RP"):
         cols[g] = (d.group == g).astype(float)
-    weights = board_odds.knot_weights(d.age_exact.values, AGE_KNOTS)
-    ages = {label: weights[k] for label, k in zip(AGE_LABELS, [k for k in AGE_KNOTS if k != AGE_REFERENCE])}
-    for label, w in ages.items():
-        cols[f"age {label}"] = w
-    for label, w in ages.items():
-        cols[f"age {label} x potential"] = potential * w
-    for label, w in ages.items():
-        cols[f"readiness x age {label}"] = cols["readiness"] * w
-    for label, test in draft_odds.MAKEUP.items():
+    for label, test in MAKEUP.items():
         cols[label] = test(d).astype(float) * taper
     cols["years"] = d.years - REFERENCE_YEARS
     return pd.DataFrame(cols, index=d.index)
 
 
 def keep_design(d: pd.DataFrame) -> pd.DataFrame:
-    """The holding odds' columns: his age (held within the knots), the years
+    """The holding odds' columns: his age (held within KEEP_AGES), the years
     to the outcome and his WAR now (to KEEP_NOW_CLIP)."""
-    return pd.DataFrame({"age": d.age_exact.clip(AGE_KNOTS[0], AGE_KNOTS[-1]) - AGE_REFERENCE,
+    return pd.DataFrame({"age": d.age_exact.clip(*KEEP_AGES) - AGE_REFERENCE,
                          "years": d.years - REFERENCE_YEARS,
                          "now": now_war(d).clip(upper=KEEP_NOW_CLIP)}, index=d.index)
 
@@ -303,18 +323,23 @@ class GapFit:
     columns held near their values by a tight prior (JUDGMENT_SD), the rest
     fit around them."""
 
-    def __init__(self, judgment=None):
+    def __init__(self, judgment=None, keep_judgment=None):
         self.judgment = CLOSE_JUDGMENT if judgment is None else judgment
+        self.keep_judgment = KEEP_JUDGMENT if keep_judgment is None else keep_judgment
 
     def fit(self, d: pd.DataFrame) -> "GapFit":
         x, k = design(d).values, keep_design(d).values
-        y, now, short = d.a.clip(lower=0).values, now_war(d).values, gap(d).values
+        y, now = d.a.clip(lower=0).values, now_war(d).values
+        short = gap(d).values * age_curve(d.age_exact.values)
         nx = x.shape[1] + 1
         names = list(design(d.head(1)).columns)
         held = np.array([n in self.judgment for n in names])
         mean = np.array([self.judgment.get(n, 0.0) for n in names])
         # the ridge on the free columns, the judgment's prior on the held
         weight = np.where(held, 0.5 / JUDGMENT_SD ** 2, RIDGE)
+        keep_names = list(keep_design(d.head(1)).columns)
+        keep_mean = np.array([self.keep_judgment.get(n, 0.0) for n in keep_names])
+        keep_weight = np.where([n in self.keep_judgment for n in keep_names], 0.5 / JUDGMENT_SD ** 2, RIDGE)
 
         def loss(w):
             b, c = w[:nx], w[nx:]
@@ -322,29 +347,40 @@ class GapFit:
             mu = np.clip(pk * now + pc * short, 1e-6, None)
             r = 1 - y / mu
             gk, gc = r * now * pk * (1 - pk), r * short * pc * (1 - pc)
-            value = np.sum(mu - y * np.log(mu)) + np.sum(weight * (b[1:] - mean) ** 2) + RIDGE * np.sum(c[1:] ** 2)
+            value = (np.sum(mu - y * np.log(mu)) + np.sum(weight * (b[1:] - mean) ** 2)
+                     + np.sum(keep_weight * (c[1:] - keep_mean) ** 2))
             grad = np.concatenate([[gc.sum()], x.T @ gc + 2 * weight * (b[1:] - mean), [gk.sum()],
-                                   k.T @ gk + 2 * RIDGE * c[1:]])
+                                   k.T @ gk + 2 * keep_weight * (c[1:] - keep_mean)])
             return value, grad
-        w0 = np.concatenate([[-1.0], mean, [0.0], np.zeros(k.shape[1])])
+        w0 = np.concatenate([[-1.0], mean, [0.0], keep_mean])
         w = optimize.minimize(loss, w0, jac=True, method="L-BFGS-B").x
         self.close, self.keep = w[:nx], w[nx:]
+        self._anchor(d)
         return self
 
+    def _anchor(self, d: pd.DataFrame):
+        """Shift the closing odds' intercept so the expectation for the
+        prospects within ANCHOR_AGES sums to what they realized."""
+        young = d[(d.age_exact >= ANCHOR_AGES[0]) & (d.age_exact < ANCHOR_AGES[1])]
+        realized = young.a.clip(lower=0).sum()
+
+        def short(shift):
+            self.close[0] += shift
+            out = self.predict(young, at_reference=False).sum() - realized
+            self.close[0] -= shift
+            return out
+        self.close[0] += optimize.brentq(short, -3, 3)
+
     def parts(self, d: pd.DataFrame, at_reference=True) -> tuple:
-        """(keep, close) per row, read REFERENCE_YEARS from the outcome."""
+        """(keep, close) per row, read REFERENCE_YEARS from the outcome; close
+        at his age (the odds at 21 x AGE_CURVE)."""
         e = d.assign(years=REFERENCE_YEARS) if at_reference else d
         return (_sigmoid(self.keep[0] + keep_design(e).values @ self.keep[1:]),
-                _sigmoid(self.close[0] + design(e).values @ self.close[1:]))
+                _sigmoid(self.close[0] + design(e).values @ self.close[1:]) * age_curve(d.age_exact.values))
 
-    def predict(self, d: pd.DataFrame, at_reference=True, judgment=False) -> np.ndarray:
-        """E[A]; with `judgment`, the closing odds read at his ON_TRACK age
-        and tapered by DEVELOPMENT_END (the bridge has nothing to judge here:
-        no teen is settled)."""
+    def predict(self, d: pd.DataFrame, at_reference=True) -> np.ndarray:
+        """E[A] (the bridge has nothing to judge here: no teen is settled)."""
         keep, close = self.parts(d, at_reference)
-        if judgment:
-            _, close = self.parts(d.assign(age_exact=on_track_age(d.age_exact.values, d.readiness.values)), at_reference)
-            close = close * development_left(d.age_exact.values)
         return keep * now_war(d).values + close * gap(d).values
 
     def value(self, d: pd.DataFrame) -> np.ndarray:
@@ -352,24 +388,7 @@ class GapFit:
         x what he's expected to add by developing, with the judgment."""
         keep, _ = self.parts(d)
         held = keep * now_war(d).values
-        return held + UPSIDE * (self.predict(d, judgment=True) - held)
-
-
-def on_track_age(age, readiness) -> np.ndarray:
-    """The age his closing odds read (ON_TRACK): his own, less up to two
-    years from 21.5 to 23.5 while he's near replacement."""
-    lo, top, end = ON_TRACK["ages"]
-    full, none = ON_TRACK["now"]
-    age = np.asarray(age, dtype=float)
-    relief = np.where(age <= top, np.clip(age - lo, 0, top - lo), (top - lo) * np.clip((end - age) / (end - top), 0, 1))
-    weight = np.clip((none - np.asarray(readiness, dtype=float)) / (none - full), 0, 1)
-    return age - weight * relief
-
-
-def development_left(age) -> np.ndarray:
-    """The share of his closing odds left at `age` (DEVELOPMENT_END)."""
-    start, end = DEVELOPMENT_END
-    return np.clip((end - np.asarray(age, dtype=float)) / (end - start), 0.0, 1.0)
+        return held + UPSIDE * (self.predict(d) - held)
 
 
 def able(prospects: pd.DataFrame) -> pd.DataFrame:
@@ -390,7 +409,7 @@ def held_out(d: pd.DataFrame, scale=None) -> tuple:
     for f in range(FOLDS):
         train, test = folds != f, folds == f
         model = GapFit().fit(d[train])
-        pred[test] = model.predict(d[test], judgment=True)
+        pred[test] = model.predict(d[test])
         value[test] = model.value(d[test])
     scale = 1.0 if scale is None else scale
     scores = {"board": d.board.values, "expected": pred * scale, f"value (upside x{UPSIDE:g})": value * scale}
@@ -494,27 +513,26 @@ def main(argv=None):
         "log_floor": draft_odds.LOG_FLOOR,
         "reference_war": draft_odds.REFERENCE_WAR,
         # E = keep x his WAR now (floored at 0) + close x (ceiling - WAR now),
-        # each odds = 1 / (1 + exp(-(intercept + sum coef x column)));
-        # columns as ranking/fitting/prospect_odds.py's design / keep_design,
-        # read REFERENCE_YEARS from the outcome (years = 0)
+        # each odds = 1 / (1 + exp(-(intercept + sum coef x column))), close
+        # at 21 times age_curve at his age; columns as
+        # ranking/fitting/prospect_odds.py's design / keep_design, read
+        # REFERENCE_YEARS from the outcome (years = 0). "developed" is a
+        # hitter's bat WAR now (bat_lines), a pitcher's WAR now
         "close": {"intercept": round(float(model.close[0]), 4),
                   "coef": {n: round(float(c), 4) for n, c in zip(close_names[1:], model.close[1:])},
-                  "readiness_clip": list(draft_odds.READINESS_CLIP), "judgment": CLOSE_JUDGMENT},
+                  "developed_clip": list(draft_odds.READINESS_CLIP), "judgment": CLOSE_JUDGMENT,
+                  "bat_lines": list(BAT_LINES)},
         "keep": {"intercept": round(float(model.keep[0]), 4),
                  "coef": {n: round(float(c), 4) for n, c in zip(keep_names[1:], model.keep[1:])},
                  "now_clip": KEEP_NOW_CLIP},
-        "age": {"knots": list(AGE_KNOTS), "reference": AGE_REFERENCE},
-        # judgment: the draft odds' expectation (as a draftee of his age)
-        # below `ages`' first, blended linearly into these by its second; the
-        # closing odds' share left tapers from development_end's first age
-        # to none at its second
-        "bridge": {"draft_odds": draft.version, "ages": list(BRIDGE)},
-        "development_end": list(DEVELOPMENT_END),
-        # judgment: near replacement, the closing odds and the bridge read his
-        # age with up to two years taken off from `ages`' first to its second,
-        # back to his own by its third; in full at `now`'s first WAR now, none
-        # from its second
-        "on_track": ON_TRACK,
+        # judgment: [age, share of the gap closed x 21's], linear between, held
+        # at the ends; the holding odds' age held within keep_ages
+        "age_curve": [list(x) for x in AGE_CURVE], "keep_ages": list(KEEP_AGES), "age_reference": AGE_REFERENCE,
+        # judgment: the draft odds' expectation (as a draftee of his age, his
+        # readiness "developed") below `ages`' first, blended linearly into
+        # these by its second; the closing odds' intercept matches what the
+        # prospects within anchor_ages realized
+        "bridge": {"draft_odds": draft.version, "ages": list(BRIDGE)}, "anchor_ages": list(ANCHOR_AGES),
         "taper": [development.FULL_WEIGHT_WAR, development.TAPERED_WAR, development.TAPERED_WEIGHT],
         "pitcher_balance": 1.0,
         # what the board ranks on: kept x WAR now + upside x (E - kept x WAR now)
