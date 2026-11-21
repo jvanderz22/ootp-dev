@@ -18,6 +18,7 @@ import {
   LEAGUE_GAME_LEAGUES,
   LEAGUE_ORG_RANKINGS,
   LEAGUE_REFRESH_STATUS,
+  LEAGUE_SCORING_PROGRESS,
   LEAGUE_SNAPSHOT,
   LEAGUE_SNAPSHOT_PLAYERS,
   LEAGUE_VIEW_DETAIL,
@@ -517,6 +518,23 @@ export class ApiService {
         }),
       );
       return res.data!.leagueRefreshStatus;
+    } catch (e) {
+      unwrap(e);
+    }
+  }
+
+  /** While a page load re-scores the league's `method` ranking, its running
+   *  line ("Scoring Prospects — 3,000 of 10,892 players"); null otherwise. */
+  async leagueScoringProgress(leagueId: string, method: string): Promise<string | null> {
+    try {
+      const res = await firstValueFrom(
+        this.apollo.query<{ leagueScoringProgress: string | null }>({
+          query: LEAGUE_SCORING_PROGRESS,
+          variables: { leagueId, method },
+          fetchPolicy: 'network-only',
+        }),
+      );
+      return res.data!.leagueScoringProgress;
     } catch (e) {
       unwrap(e);
     }

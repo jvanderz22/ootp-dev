@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
@@ -81,7 +82,9 @@ function defaultQuery(): RankedQuery {
   selector: 'app-league-view',
   imports: [RankedTableComponent],
   template: `
-    @if (methodNotReady() && !store.refreshing()) {
+    @if (scoring(); as line) {
+      <p class="notice">{{ line }}…</p>
+    } @else if (methodNotReady() && !store.refreshing()) {
       <p class="notice">
         The {{ methodLabel() }} model hasn't been run for this snapshot yet — it'll
         compute the first time you open it (about a minute).
@@ -246,6 +249,10 @@ export class LeagueViewPage {
     () => METHODS.find((m) => m.value === this.method())?.label ?? '',
   );
 
+  /** While a load re-scores the chosen ranking server-side, its running line
+   *  ("Scoring Prospects — 3,000 of 10,892 players"). */
+  protected readonly scoring = signal<string | null>(null);
+
   protected readonly rows = signal<RankedPlayer[]>([]);
   protected readonly totalRecords = signal(0);
   protected readonly loading = signal(false);
@@ -261,12 +268,14 @@ export class LeagueViewPage {
       `${this.leagueId()}:${this.method()}:${this.apiGroupBy()}:${this.apiGroupId() ?? ''}`,
   );
 
+  private destroyed = false;
   private hydrated = false;
   /** `fetchedAt` of the snapshot the current rows were loaded against — so a
    *  refresh landing under us triggers exactly one reload, not a loop. */
   private loadedFetchedAt: string | null | undefined = undefined;
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => (this.destroyed = true));
     effect(() => {
       const id = this.leagueId();
       if (id) untracked(() => void this.load(id));
@@ -318,12 +327,15 @@ export class LeagueViewPage {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const d = await this.api.leagueViewDetail(
+      const d = await this.whileScoring(
         id,
-        this.method(),
-        this.apiGroupBy(),
-        this.apiGroupId(),
-        this.queryState(),
+        this.api.leagueViewDetail(
+          id,
+          this.method(),
+          this.apiGroupBy(),
+          this.apiGroupId(),
+          this.queryState(),
+        ),
       );
       // The server served this against the on-disk snapshot; record its
       // `fetchedAt` so `store.init()`'s priming set no-ops but a later refresh
@@ -349,19 +361,46 @@ export class LeagueViewPage {
     }
   }
 
+  /** Await `request`, and if it's still out after a second (the server is
+   *  re-scoring the ranking), poll the scoring progress into `scoring` until
+   *  it settles. */
+  private async whileScoring<T>(id: string, request: Promise<T>): Promise<T> {
+    let settled = false;
+    const method = this.method();
+    const poll = async () => {
+      await new Promise((r) => setTimeout(r, 1000));
+      while (!settled && !this.destroyed) {
+        const line = await this.api.leagueScoringProgress(id, method).catch(() => null);
+        if (settled) break;
+        if (line) this.scoring.set(line);
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+    };
+    void poll();
+    try {
+      return await request;
+    } finally {
+      settled = true;
+      this.scoring.set(null);
+    }
+  }
+
   private async resetAndFetch(): Promise<void> {
     if (!this.store.snapshot()) return;
     this.loading.set(true);
     this.error.set(null);
     try {
       const wasNotReady = this.methodNotReady();
-      const batch = await this.api.leagueSnapshotPlayersPage(
+      const batch = await this.whileScoring(
         this.leagueId(),
-        this.method(),
-        this.apiGroupBy(),
-        this.apiGroupId(),
-        this.queryState(),
-        0,
+        this.api.leagueSnapshotPlayersPage(
+          this.leagueId(),
+          this.method(),
+          this.apiGroupBy(),
+          this.apiGroupId(),
+          this.queryState(),
+          0,
+        ),
       );
       this.rows.set(batch.rows);
       this.totalRecords.set(batch.totalRecords);

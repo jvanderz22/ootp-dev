@@ -441,6 +441,36 @@ def test_league_players_compare_both_engines_within_an_org(client):
     assert len(one) == 1 and one[0]["v2Rank"] in (1, 2)
 
 
+def test_league_scoring_progress_while_a_page_rescores(client, monkeypatch):
+    import league_snapshot
+    from web import service
+
+    lid = gql(client, 'mutation { createLeague(name: "YFp", leagueUrl: "yfmlb") { id } }')[
+        "createLeague"
+    ]["id"]
+    _seed_snapshot(lid)
+    seen, real = [], league_snapshot.ranked_rows
+
+    def watching(ctx, method, progress=None):
+        seen.append(service.league_scoring_progress(lid, method))
+
+        def report(done):
+            progress(done)
+            seen.append(service.league_scoring_progress(lid, method))
+        return real(ctx, method, progress=report)
+
+    monkeypatch.setattr(league_snapshot, "ranked_rows", watching)
+    q = (
+        "query($l: ID!) { leagueSnapshotPlayers(leagueId: $l, method: \"potential\","
+        " groupBy: LEAGUE, allRows: true) { totalRecords } }"
+    )
+    gql(client, q, l=lid)
+    assert seen[0] == "Scoring Prospects…"
+    assert seen[-1] == "Scoring Prospects — 2 of 2 players"
+    progress_q = "query($l: ID!) { leagueScoringProgress(leagueId: $l, method: \"potential\") }"
+    assert gql(client, progress_q, l=lid)["leagueScoringProgress"] is None
+
+
 def test_league_players_no_selection_is_empty_and_skips_scoring(client):
     lid = gql(client, 'mutation { createLeague(name: "YFn", leagueUrl: "yfmlb") { id } }')[
         "createLeague"

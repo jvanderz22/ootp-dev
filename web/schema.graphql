@@ -489,6 +489,8 @@ type Query {
   leagueGameLeagues(leagueId: ID!): [GameLeagueOption!]!
   "Status of the in-flight (or last) background refresh for this league."
   leagueRefreshStatus(leagueId: ID!): LeagueRefreshStatus!
+  "While a request re-scores this league's `method` ranking, its running line (e.g. 'Scoring Prospects — 3,000 of 10,892 players'); null otherwise."
+  leagueScoringProgress(leagueId: ID!, method: String!): String
   "How one player's score was built in a stored ranking (a row's `source`)."
   playerBreakdown(source: RankingSourceInput!, playerId: ID!): ScoreBreakdown
   """

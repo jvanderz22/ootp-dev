@@ -1011,6 +1011,25 @@ def _league_run_stamp(ctx, method):
     return (run["source_version"], run["scored_at"])
 
 
+# A request that finds its league ranking stale re-scores it in place (a minute
+# or so for a full league); while it does, the page polls
+# `leagueScoringProgress` for this running line. One process serves the app, so
+# memory is enough.
+_scoring_progress: "dict[tuple[str, str], str]" = {}
+
+
+def _scoring_line(label: str, done: int, total: int, step: str = None) -> str:
+    """'Scoring Prospects (model 2 of 2) — 3,000 of 10,892 players'."""
+    count = f"{done:,} of {total:,}" if total else f"{done:,}"
+    return f"Scoring {label}{f' ({step})' if step else ''} — {count} players"
+
+
+def league_scoring_progress(league_id: str, method: str):
+    """The running line of a re-score in flight for this league's `method`,
+    or None."""
+    return _scoring_progress.get((league_id, method))
+
+
 def _league_built_rows(league_id: str, method: str) -> list:
     lg, ctx = _league_ctx(league_id)
     if not ctx.data_file.exists():
@@ -1025,10 +1044,21 @@ def _league_built_rows(league_id: str, method: str) -> list:
             _league_payload_cache.move_to_end(key)
             return hit["rows"]
 
+    label = _METHOD_LABELS.get(method, method)
+    total = ctx.load_meta().get("player_count") or 0
+    progress_key = (league_id, method)
+
+    def _progress(done):
+        _scoring_progress[progress_key] = _scoring_line(label, done, total)
+
+    if stamp is None:
+        _scoring_progress[progress_key] = f"Scoring {label}…"
     try:
-        ranked = league_snapshot.ranked_rows(ctx, method)
+        ranked = league_snapshot.ranked_rows(ctx, method, progress=_progress)
     except ValueError as exc:  # method not in LEAGUE_RANKING_METHODS
         raise InvalidInput(str(exc)) from exc
+    finally:
+        _scoring_progress.pop(progress_key, None)
     stamp = _league_run_stamp(ctx, method)
     game_players, meta = _snapshot_side_tables(ctx)
     league_url = lg.get("league_url")
@@ -1659,10 +1689,7 @@ def _refresh_league_snapshot_sync(league_id: str):
         step = f"model {i} of {len(methods)}"
 
         def _progress(done, _label=label, _step=step):
-            pct = f" — {done:,} of {total:,}" if total else f" — {done:,}"
-            _set_refresh_progress(
-                league_id, f"Scoring {_label} ({_step}){pct} players"
-            )
+            _set_refresh_progress(league_id, _scoring_line(_label, done, total, _step))
 
         _set_refresh_progress(league_id, f"Scoring {label} ({step})…")
         try:

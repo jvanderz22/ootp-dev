@@ -364,6 +364,12 @@ export const LEAGUE_REFRESH_STATUS = gql`
   }
 `;
 
+export const LEAGUE_SCORING_PROGRESS = gql`
+  query LeagueScoringProgress($leagueId: ID!, $method: String!) {
+    leagueScoringProgress(leagueId: $leagueId, method: $method)
+  }
+`;
+
 export const CHECK_LEAGUE_SNAPSHOT_FRESHNESS = gql`
   ${LEAGUE_SNAPSHOT_FIELDS}
   mutation CheckLeagueSnapshotFreshness($leagueId: ID!) {
