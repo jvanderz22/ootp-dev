@@ -64,7 +64,7 @@ and speed. The chance he plays is a logistic fit of his share of a regular's
 season at PLAYS_AGES, on the bat's ceiling and WAR now, the glove and run at
 potential and his draft age, on the hitters whose window is complete. The
 factor is his chance over a hitter's with the same bat and an average glove
-and run, to PLAYS_STRENGTH, so it never counts the bat twice. The board's
+and run, to the shared strength (ranking/playing_time.py), so it never counts the bat twice. The board's
 odds read the ceiling with the glove at GLOVE_WEIGHT (`odds_view`); the fit
 itself is on the whole ceiling.
 
@@ -82,7 +82,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy import optimize, stats
+from scipy import stats
 from scipy.stats import spearmanr
 from sklearn.linear_model import LogisticRegression, PoissonRegressor
 
@@ -90,6 +90,7 @@ from context import default_base_dir
 from ranking import development
 from ranking import draft_odds as board_odds
 from ranking.fitting import ceiling_panel
+from ranking.fitting import playing_time as pt
 from ranking.hitter_talent import ARTIFACTS_DIR
 from ranking.stages.companion import BAT_LINES
 
@@ -160,20 +161,11 @@ REFERENCE_YEARS = 7                 # years after the draft the odds are read at
 GROWTH_JUDGMENT = {"WE H": 1.30, "velocity": 1.06}
 JUDGMENT_SD = 0.05
 TOP_K = (25, 50, 100)
-# the chance he plays (plans/draft-glove-plan.md): his share of a regular's
-# season (REGULAR_PA, each season's share capped at 1), averaged over
-# PLAYS_AGES, for hitters whose window through B_LAST_AGE is complete
-REGULAR_PA = 600
+# the chance he plays (plans/draft-glove-plan.md; ranking/playing_time.py has
+# the factor, its strength and cap): his share of a regular's season (each
+# season's share capped at 1), averaged over PLAYS_AGES, for hitters whose
+# window through B_LAST_AGE is complete
 PLAYS_AGES = (24, 25, 26)
-PLAYS_SD = 3.0                      # a weak prior: the fit is on hundreds
-# the playing-time factor's strength (2026-11-21): held out on MLB WAR to 26,
-# the square root ranked best; in full it over-rewarded gloves (45%+ glove
-# realized 0.65 of predicted) and pulled the top 25 toward hitters
-PLAYS_STRENGTH = 0.5
-# its most (2026-11-21): about its 95th percentile. Past that it's elite
-# speed or glove on a weak bat, where the fit extrapolates (Maruri x2.32,
-# Bernier x2.07) and glove-first ceilings already realize less than predicted
-PLAYS_CAP = 1.5
 # the pitcher balance's ramp by value (2026-11-21, you: fix the mix): the
 # value it's read at, and the ramps tried
 RAMP_WAR = 1.0
@@ -229,7 +221,7 @@ def odds_view(d: pd.DataFrame) -> pd.DataFrame:
 
 def plays_share(d: pd.DataFrame) -> pd.Series:
     """His share of a regular's season over PLAYS_AGES."""
-    return d.pa_by_age.apply(lambda m: np.mean([min(m.get(a, 0) / REGULAR_PA, 1.0) for a in PLAYS_AGES]))
+    return d.pa_by_age.apply(lambda m: pt.season_share(m, PLAYS_AGES))
 
 
 def plays_design(d: pd.DataFrame) -> pd.DataFrame:
@@ -254,31 +246,28 @@ def fit_plays(d: pd.DataFrame) -> np.ndarray:
     """[intercept, coefficients] of the chance he plays, a logistic fit of
     his share of a regular's season, on `d`'s settled hitters."""
     t = d[(d.group == "hitter") & d.b_settled]
-    x = plays_design(t)
-    return _map_logistic(x.values, plays_share(t).values, np.zeros(x.shape[1]), np.full(x.shape[1], PLAYS_SD))
+    return pt.fit(plays_design(t), plays_share(t).values)
 
 
 def plays(w, d: pd.DataFrame) -> np.ndarray:
-    return 1 / (1 + np.exp(-(w[0] + plays_design(d).values @ w[1:])))
+    return pt.chance(w, plays_design(d))
 
 
 def plays_reference(d: pd.DataFrame) -> dict:
     """The average glove and run at potential, among `d`'s hitters: the
     draftee the playing-time factor compares a hitter to (a non-catcher)."""
     h = d[d.group == "hitter"]
-    return {"glove": float(h.pot_glove.mean()), "run": float(h.pot_run.mean())}
+    return pt.reference(h.pot_glove, h.pot_run)
 
 
 def playing(plays_w, reference: dict, d: pd.DataFrame) -> np.ndarray:
     """The playing-time factor (plans/draft-glove-plan.md, 2026-11-21): his
     chance of playing over a non-catcher's with the same bat and age and the
-    `reference` glove and run, to the PLAYS_STRENGTH, at most PLAYS_CAP; 1
+    `reference` glove and run, to the shared strength, at most its cap; 1
     for a pitcher, and for a catcher until catchers are revisited (you,
     2026-11-21: his glove carries the catcher adjustment, so the factor
     lifted catchers, who realize less than predicted in every version)."""
-    ref = d.assign(pot_glove=reference["glove"], pot_run=reference["run"], role="")
-    factor = np.minimum((plays(plays_w, d) / plays(plays_w, ref)) ** PLAYS_STRENGTH, PLAYS_CAP)
-    return np.where((d.group == "hitter") & (d.role != "C"), factor, 1.0)
+    return pt.factor(plays_w, plays_design(d), reference, d.group == "hitter")
 
 
 def predicted(d: pd.DataFrame, model, plays_w, reference: dict, balance=(1.0, 0.0)) -> np.ndarray:
@@ -650,17 +639,7 @@ def _growth_prior(names) -> tuple:
     return mean, sd
 
 
-def _map_logistic(x, y, mean, sd, offset=0.0) -> np.ndarray:
-    """[intercept, coefficients] of a logistic fit, each coefficient with a
-    normal prior (`mean`, `sd`); the intercept is free."""
-    def loss(w):
-        z = w[0] + x @ w[1:] + offset
-        p = 1 / (1 + np.exp(-z))
-        r = (w[1:] - mean) / sd
-        value = -np.sum(y * z - np.logaddexp(0, z)) + 0.5 * np.sum(r ** 2)
-        grad = np.concatenate([[np.sum(p - y)], x.T @ (p - y) + r / sd])
-        return value, grad
-    return optimize.minimize(loss, np.concatenate([[0.0], mean]), jac=True, method="L-BFGS-B").x
+_map_logistic = pt.map_logistic
 
 
 def fit_growth(g: pd.DataFrame, outcome: str, judgment=True) -> np.ndarray:
@@ -687,7 +666,7 @@ def report_plays(able: pd.DataFrame) -> np.ndarray:
     rng = np.random.default_rng(0)
     lo, hi = np.percentile([fit_plays(t.iloc[rng.integers(0, len(t), len(t))]) for _ in range(BOOTSTRAPS)], [5, 95], axis=0)
     share = plays_share(t)
-    print(f"\nthe chance he plays: share of a {REGULAR_PA}-PA season at {PLAYS_AGES[0]}-{PLAYS_AGES[-1]}, "
+    print(f"\nthe chance he plays: share of a {pt.REGULAR_PA}-PA season at {PLAYS_AGES[0]}-{PLAYS_AGES[-1]}, "
           f"{len(t)} hitters, classes {t['class'].min()}-{t['class'].max()}, mean {share.mean():.3f}")
     for n, c, l, h in zip(names, w, lo, hi):
         print(f"  {n:>10} {c:+.2f}   90% {l:+.2f} to {h:+.2f}")
@@ -981,16 +960,11 @@ def main(argv=None):
         # the board ranks on value x upside: (ceiling / value / reference) ^
         # weight, reference a typical draftee's ceiling over his value
         "upside": {"weight": board_odds.UPSIDE_WEIGHT, "reference": round(upside_reference, 4)},
-        # a hitter's glove and run at potential count times the chance he
-        # plays: a logistic of his share of a regular's season on these
-        # columns (plays_design), the bat's ceiling and WAR now unlogged
-        "plays": {"intercept": round(float(plays_w[0]), 4),
-                  "coef": {n: round(float(c), 4) for n, c in zip(plays_design(able.head(1)).columns, plays_w[1:])},
-                  "regular_pa": REGULAR_PA, "ages": list(PLAYS_AGES), "clip": list(READINESS_CLIP),
-                  # the factor: his chance over the same bat's with this glove
-                  # and run, to the strength
-                  "reference": {k: round(v, 4) for k, v in reference.items()}, "strength": PLAYS_STRENGTH,
-                  "cap": PLAYS_CAP},
+        # the playing-time factor (ranking/playing_time.py): a logistic of
+        # his share of a regular's season on these columns (plays_design),
+        # the bat's ceiling and WAR now unlogged
+        "plays": pt.block(plays_w, plays_design(able.head(1)).columns, reference,
+                          regular_pa=pt.REGULAR_PA, ages=list(PLAYS_AGES), clip=list(READINESS_CLIP)),
         # the judgment on top of the odds (ranking/draft_odds.py): these
         # ledger lines kept, a pitcher's velocity upside, and what's replaced
         "judgment": {"kept": list(KEPT), "velocity_steps": [list(s) for s in board_odds.VELOCITY_STEPS],

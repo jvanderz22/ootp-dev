@@ -40,7 +40,7 @@ from functools import lru_cache
 import numpy as np
 from scipy import special, stats
 
-from ranking import development
+from ranking import development, playing_time
 from ranking.hitter_talent import ARTIFACTS_DIR
 
 ARTIFACT = "draft_odds_v1"
@@ -252,6 +252,7 @@ class DraftOdds:
         self.regular = artifact["regular"]
         self.balance = artifact["pitcher_balance"]
         self.ramp = artifact.get("pitcher_ramp", {"ramp": 0.0, "war": 1.0})
+        self.plays = playing_time.PlayingTime.of(artifact)
         dist = artifact["distribution"]
         self.growth = dist["growth"]
         self.sticks = dist["sticks"]
@@ -364,30 +365,14 @@ class DraftOdds:
         return float(self.balance * (max(war, 1e-6) / r["war"]) ** r["ramp"])
 
     def playing(self, bat, bat_now, glove, run, age, catcher=False) -> float:
-        """The playing-time factor (plans/draft-glove-plan.md, 2026-11-21): a
-        hitter's chance of playing - on his bat's ceiling and WAR now, his
-        glove and run at potential, his draft age and whether he's a catcher
-        - over a non-catcher's with the same bat and age and an average glove
-        and run, to the fit's strength, at most its cap. A good glove or good
-        speed gets a weaker bat on the field; a 1B or DH needs more bat. 1
-        without the fit, and for a catcher until catchers are revisited (you,
-        2026-11-21: his glove carries the catcher adjustment, so the factor
-        lifted catchers, who realize less than predicted)."""
-        p = self.a.get("plays")
-        if not p or catcher:
+        """The playing-time factor (ranking/playing_time.py) for a draftee:
+        on his bat's ceiling and WAR now, his glove and run at potential and
+        his draft age. 1 without the fit, and for a catcher."""
+        if self.plays is None:
             return 1.0
-        c = p["coef"]
-
-        def logit(glove, run, catcher):
-            z = p["intercept"] + c["bat"] * bat + c["bat now"] * float(np.clip(bat_now, *p["clip"]))
-            z += c["glove"] * glove + c["run"] * run + c["C"] * float(catcher)
-            return z + sum(c[f"age {label}"] * w for label, w in self.ages(age).items())
-
-        def chance(z):
-            return 1 / (1 + np.exp(-z))
-        ref = p["reference"]
-        factor = (chance(logit(glove, run, catcher)) / chance(logit(ref["glove"], ref["run"], False))) ** p["strength"]
-        return float(min(factor, p["cap"]))
+        cols = {"bat": bat, "bat now": float(np.clip(bat_now, *self.plays.block["clip"])), "glove": glove, "run": run,
+                **{f"age {label}": w for label, w in self.ages(age).items()}, playing_time.CATCHER: float(catcher)}
+        return self.plays.factor(cols, catcher)
 
     def outgrows(self, growth_cols) -> float:
         g = self.growth

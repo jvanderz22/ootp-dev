@@ -119,6 +119,9 @@ def prospect_table(base: Path, league: str) -> pd.DataFrame:
     season = int(json.loads((snap_dir / "meta.json").read_text())["league_date"][:4])
     snapshot = read_snapshot(snap_dir / "players.csv")
     now = draft_odds._raw_war(draft_odds._rank("full_time", [GamePlayer(r) for r in snapshot.values()]))
+    stats_dir = base / "league_stats" / league
+    war_seasons = {pid: dict(zip(g.year, g.war)) for pid, g in draft_odds._mlb_war_by_year(stats_dir).groupby("player_id")}
+    pa_seasons = {pid: dict(zip(g.year, g.pa)) for pid, g in draft_odds._mlb_pa_by_year(stats_dir).groupby("player_id")}
     rows = []
     for year in PROSPECT_YEARS:
         export = _prospects(base, league, year)
@@ -129,6 +132,7 @@ def prospect_table(base: Path, league: str) -> pd.DataFrame:
         potential = draft_odds._raw_war(board.values())
         now_ranked = draft_odds._rank("full_time", players)
         current, bat = _side_war(now_ranked), draft_odds._bat_war(now_ranked)
+        pot_split, now_split = draft_odds._split_war(board.values()), draft_odds._split_war(now_ranked)
         pulled = _pulled(export, year)
         for r, player in zip(export, players):
             pid = r["ID"]
@@ -154,6 +158,13 @@ def prospect_table(base: Path, league: str) -> pd.DataFrame:
                 "factors": draft_odds._factors(board[pid]),
                 "gone": snap is None, "age_now": age_now, "years": season + 0.85 - year - pulled.timetuple().tm_yday / 365,
                 "a": 0.0 if snap is None else now[pid][0], "a_settled": age_now >= ARRIVAL_AGE,
+                # his ceiling and WAR now by part (bat, glove, run:
+                # plans/draft-glove-plan.md), and his MLB WAR and PA each season
+                # from the export's on
+                **{f"pot_{k}": v for k, v in pot_split[pid].items()},
+                **{f"now_{k}": v for k, v in now_split[pid].items()},
+                "mlb_war": {y: w for y, w in war_seasons.get(int(pid), {}).items() if y >= year},
+                "mlb_pa": {y: n for y, n in pa_seasons.get(int(pid), {}).items() if y >= year},
             })
         print(f"  {league}-{year}-prospects: {len(export)}", file=sys.stderr)
     d = pd.DataFrame(rows)
