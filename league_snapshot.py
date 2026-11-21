@@ -494,14 +494,20 @@ def join_rows(ratings_csv: str, players_csv: str, teams_csv: str) -> list[dict]:
     """Left-join the ratings rows (the base population) onto players + teams and
     rename every column to its OOTP scouting-export header."""
     teams = {r["ID"]: r for r in _rows(teams_csv) if r.get("ID")}
-    players = {r["ID"]: r for r in _rows(players_csv) if r.get("ID")}
+    ratings = [r for r in _rows(ratings_csv) if (r.get("ID") or "").strip()]
+    rated_ids = {r["ID"].strip() for r in ratings}
+    # `/api/players/` carries every player the league has ever had - ~78k rows on
+    # `yfmlb` in Nov 2042, 82% of them retired - while the ratings export is the
+    # ~14k live pool. Keep only the rows that join: holding the rest as dicts
+    # cost ~250 MB and OOM-killed the 1 GB Fly machine mid-refresh.
+    players = {
+        pid: r for r in _rows(players_csv)
+        if (pid := (r.get("ID") or "").strip()) in rated_ids
+    }
     domestic = draft_nations(players.values())
     out = []
-    for rat in _rows(ratings_csv):
-        pid = (rat.get("ID") or "").strip()
-        if not pid:
-            continue
-        out.append(_map_row(rat, players.get(pid, {}), teams, domestic))
+    for rat in ratings:
+        out.append(_map_row(rat, players.get(rat["ID"].strip(), {}), teams, domestic))
     return out
 
 
